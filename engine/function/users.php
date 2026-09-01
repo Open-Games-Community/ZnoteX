@@ -39,14 +39,27 @@ function fetchMurders() {
 }
 
 // Fetch deaths score
-function fetchLoosers() {
-	$array = mysql_select_multi("SELECT `player_id`, (SELECT `name` FROM `players` WHERE `id` = `player_id`) AS `name`, COUNT(`player_id`) AS `Deaths` FROM `player_deaths` GROUP BY `player_id` ORDER BY COUNT(`player_id`) DESC LIMIT 0, 10;");
-	if ($array !== false) {
-		for ($i = 0; $i < count($array); $i++) {
-			unset($array[$i]['player_id']);
-		}
-	}
-	return $array;
+function fetchLoosers(): array {
+    $array = mysql_select_multi("
+        SELECT 
+            `player_id`,
+            (SELECT `name` FROM `players` WHERE `id` = `player_id`) AS `name`,
+            COUNT(`player_id`) AS `Deaths`
+        FROM `player_deaths`
+        GROUP BY `player_id`
+        ORDER BY COUNT(`player_id`) DESC
+        LIMIT 10;
+    ");
+
+    if (!is_array($array)) {
+        return [];
+    }
+
+    foreach ($array as &$row) {
+        unset($row['player_id']);
+    }
+
+    return $array;
 }
 
 // Fetch latest deaths
@@ -185,7 +198,11 @@ function setGlobalStorage($storage, $value) {
 
 	// If the storage does not exist yet
 	if (getGlobalStorage($storage) === false) {
-		mysql_insert("INSERT INTO `global_storage` (`key`, `world_id`, `value`) VALUES ('$storage', 0, '$value')");
+		if (engineIsCanary()) {
+			mysql_insert("INSERT INTO `global_storage` (`key`, `value`) VALUES ('$storage', '$value')");
+		} else {
+			mysql_insert("INSERT INTO `global_storage` (`key`, `world_id`, `value`) VALUES ('$storage', 0, '$value')");
+		}
 	} else {// If the storage exist
 		mysql_update("UPDATE `global_storage` SET `value`='$value' WHERE `key`='$storage'");
 	}
@@ -409,8 +426,11 @@ function get_guild_wars() {
 // Untested. (TFS 0.3 compatibility)
 function get_guild_wars03() {
 	$array = mysql_select_multi("SELECT `id`, `guild_id`, `enemy_id`, `status`, `begin`, `end` FROM `guild_wars` ORDER BY `begin` DESC LIMIT 0, 30");
-	if ($array !== false) {
-		for ($i = 0; $i < count($array); $i++) {
+	if (!is_array($array)) {
+		return false;
+	}
+
+	for ($i = 0, $c = count($array); $i < $c; $i++) {
 			// Generating TFS 0.2 key values for this 0.3 query for web cross compatibility
 			$array[$i]['guild1'] = $array[$i]['guild_id'];
 			$array[$i]['guild2'] = $array[$i]['enemy_id'];
@@ -419,7 +439,6 @@ function get_guild_wars03() {
 			$array[$i]['started'] = $array[$i]['begin'];
 			$array[$i]['ended'] = $array[$i]['end'];
 		}
-	}
 	return $array;
 }
 
@@ -489,7 +508,12 @@ function set_rule_violation($charname, $typeid, $actionid, $reasonid, $time, $co
 	$reasonid = (int)$reasonid;
 	$time = (int)($time + time());
 
-	$data = user_character_data($charid, 'account_id', 'lastip');
+	if (engineIsTFS16()) {
+		$data = mysql_select_single("SELECT `account_id`, " . sqlIpSelect('lastip', 'lastip') . " FROM `players` WHERE `id` = " . (int)$charid . ";");
+	} else {
+		$data = user_character_data($charid, 'account_id', 'lastip');
+	}
+	if (!is_array($data)) $data = array('account_id' => 0, 'lastip' => 0);
 
 	$accountid = $data['account_id'];
 	$charip = $data['lastip'];
@@ -532,7 +556,7 @@ function set_rule_violation($charname, $typeid, $actionid, $reasonid, $time, $co
 
 			switch ($typeid) {
 				case 1: // IP ban
-					mysql_insert("INSERT INTO `ip_bans` (`ip`, `reason`, `banned_at`, `expires_at`, `banned_by`) VALUES ('$charip', '$comment', '$now', '$time', '$bannedby');");
+					mysql_insert("INSERT INTO `ip_bans` (`ip`, `reason`, `banned_at`, `expires_at`, `banned_by`) VALUES (" . sqlIpWrite($charip) . ", '$comment', '$now', '$time', '$bannedby');");
 				break;
 
 				case 2: // namelock
@@ -603,7 +627,7 @@ function user_get_killer_m_name($mn) {
 // Count character deaths. Counts up 10.
 function user_count_deathlist($char_id) {
 	$char_id = (int)$char_id;
-	$data = mysql_select_single("SELECT COUNT('id') AS `id` FROM `player_deaths` WHERE `player_id`='$char_id' order by `time` DESC LIMIT 0, 10");
+	$data = mysql_select_single("SELECT COUNT(`id`) AS `id` FROM `player_deaths` WHERE `player_id`='$char_id' order by `time` DESC LIMIT 0, 10");
 	return ($data !== false) ? $data['id'] : false;
 }
 
@@ -706,7 +730,7 @@ function user_character_list_player_id($account_id) {
 // Parameter: accounts.id returns: number of characters on the account.
 function user_character_list_count($account_id) {
 	$account_id = sanitize($account_id);
-	$data = mysql_select_single("SELECT COUNT('id') AS `id` FROM `players` WHERE `account_id`='$account_id'");
+	$data = mysql_select_single("SELECT COUNT(`id`) AS `id` FROM `players` WHERE `account_id`='$account_id'");
 	return ($data !== false) ? $data['id'] : 0;
 }
 
@@ -854,7 +878,7 @@ function user_recover($mode, $edom, $email, $character, $ip) {
 						echo '<br><p>Your account number is:</p> <h3>'. $name_data['id'] .'</h3>';
 					}
 				} else {
-					$newpass = substr(sha1(rand(1000000, 99999999)), 8);
+					$newpass = substr(sha1(random_bytes(32)), 0, 12);
 					echo '<br><p>Your new password is:</p> <h3>'. $newpass .'</h3><p>Remember to login and change it!</p>';
 					user_change_password($account_id, $newpass);
 				}
@@ -887,8 +911,19 @@ function user_account_id_from_name($id) {
 function user_account_add_premdays($accid, $days) {
 	$accid = (int)$accid;
 	$days = (int)$days;
+
+	if (engineIsCanary()) {
+		mysql_update("
+			UPDATE `accounts`
+			SET `lastday` = GREATEST(`lastday`, UNIX_TIMESTAMP()),
+				`premdays` = `premdays` + {$days}
+			WHERE `id`='{$accid}';
+		");
+		return;
+	}
+
 	mysql_update("
-		UPDATE `accounts` 
+		UPDATE `accounts`
 		SET `premium_ends_at` = GREATEST(`premium_ends_at`, UNIX_TIMESTAMP()) + ({$days} * 86400)
 		WHERE `id`='{$accid}';
 	");
@@ -919,7 +954,7 @@ function user_account_fields_verify_value($verify_data) {
 	foreach ($verify_data as $field=>$data) {
 		$verify[] = '`'. $field .'` = \''. $data .'\'';
 	}
-	$data = mysql_select_single("SELECT COUNT('id') AS `count` FROM `accounts` WHERE ". implode(' AND ', $verify) .";");
+	$data = mysql_select_single("SELECT COUNT(`id`) AS `count` FROM `accounts` WHERE ". implode(' AND ', $verify) .";");
 	return ($data !== false && $data['count'] == 1) ? true : false;
 }
 
@@ -1175,12 +1210,16 @@ function user_create_character($character_data) {
 	}
 
 	$fields = array_keys($import_data); // Fetch select fields
-	$data = array_values($import_data); // Fetch insert data
 
 	$fields_sql = implode("`, `", $fields); // Convert array into SQL compatible string
-	$data_sql = implode("', '", $data); // Convert array into SQL compatible string
 
-	mysql_insert("INSERT INTO `players`(`$fields_sql`) VALUES ('$data_sql');");
+	$values = array();
+	foreach ($import_data as $field => $value) {
+		$values[] = ($field === 'lastip') ? sqlIpWrite($value) : "'" . $value . "'";
+	}
+	$data_sql = implode(", ", $values);
+
+	mysql_insert("INSERT INTO `players`(`$fields_sql`) VALUES ($data_sql);");
 
 	$created = time();
 	$charid = user_character_id($import_data['name']);
@@ -1204,7 +1243,7 @@ function user_count_online() {
 	$player = user_data(player_ID, 'name', 'level');
 	echo "Character name: ". $player['name'] .". Level: ". $player['level'];
 */
-function user_character_data($user_id) {
+function user_character_data($user_id): array|false {
 	$data = array();
 	$user_id = (int)$user_id;
 	$func_num_args = func_num_args();
@@ -1215,6 +1254,7 @@ function user_character_data($user_id) {
 		$data = mysql_select_single("SELECT $fields FROM `players` WHERE `id` = $user_id;");
 		return $data;
 	}
+	return false;
 }
 
 // return query data from znote_players table
@@ -1232,6 +1272,7 @@ function user_znote_character_data($character_id) {
 		$data = mysql_select_single("SELECT $fields FROM `znote_players` WHERE `player_id` = $charid;");
 		return $data;
 	}
+	return false;
 }
 
 // return query data from znote table
@@ -1316,7 +1357,7 @@ function user_data($user_id) {
 	if ($func_num_args > 1)  {
 		unset($func_get_args[0]);
 
-		$fields = '`'. implode('`, `', $func_get_args) .'`';
+		$fields = accountFieldList($func_get_args);
 		return mysql_select_single("SELECT $fields FROM `accounts` WHERE `id` = $user_id LIMIT 1;");
 	} else return false;
 }

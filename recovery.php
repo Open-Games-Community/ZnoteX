@@ -3,11 +3,11 @@ logged_in_redirect();
 include 'layout/overall/header.php';
 if ($config['mailserver']['accountRecovery']) {
 	// Fetch, sanitize and assign POST and GET variables.
-	$mode = (isset($_GET['mode']) && !empty($_GET['mode'])) ? getValue($_GET['mode']) : false;
-	$email = (isset($_POST['email']) && !empty($_POST['email'])) ? getValue($_POST['email']) : false;
-	$character = (isset($_POST['character']) && !empty($_POST['character'])) ? getValue($_POST['character']) : false;
-	$password = (isset($_POST['password']) && !empty($_POST['password'])) ? getValue($_POST['password']) : false;
-	$username = (isset($_POST['username']) && !empty($_POST['username'])) ? getValue($_POST['username']) : false;
+	$mode = (isset($_GET['mode']) && !empty($_GET['mode'])) ? getValue($_GET['mode'] ?? null) : false;
+	$email = (isset($_POST['email']) && !empty($_POST['email'])) ? getValue($_POST['email'] ?? null) : false;
+	$character = (isset($_POST['character']) && !empty($_POST['character'])) ? getValue($_POST['character'] ?? null) : false;
+	$password = (isset($_POST['password']) && !empty($_POST['password'])) ? getValue($_POST['password'] ?? null) : false;
+	$username = (isset($_POST['username']) && !empty($_POST['username'])) ? getValue($_POST['username'] ?? null) : false;
 	//data_dump($_GET, $_POST, "Posted data.");
 
 	if (!empty($_POST)) {
@@ -145,7 +145,7 @@ if ($config['mailserver']['accountRecovery']) {
 		$k = (isset($_GET['k']) && !empty($_GET['k'])) ? (int)$_GET['k'] : false;
 
 		// Remove Two-Factor Authentication
-		if ($a !== false && $k !== false) {
+		if ($a !== false && $k !== false && !engineIsCanary()) {
 			$account = mysql_select_single("SELECT `a`.`id`, `a`.`secret`, `za`.`secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id`=`za`.`account_id` WHERE `a`.`id`='$a' AND `za`.`activekey`='$k' LIMIT 1;");
 			if ($account !== false) {
 				mysql_update("UPDATE `accounts` SET `secret`=NULL WHERE `id`='$a' LIMIT 1;");

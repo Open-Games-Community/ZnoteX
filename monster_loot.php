@@ -31,6 +31,7 @@ $rarity = array(
 </script>
 
 <?php
+	$add = '';
 	if(isset($_GET['lootrate']))
 		$add = '&lootrate';
 	echo '<a href="' . htmlspecialchars($_SERVER['PHP_SELF'] . ($add ? '?lootrate' : '')) . '">Hide None</a> | ';

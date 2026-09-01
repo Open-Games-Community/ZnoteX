@@ -13,7 +13,7 @@ $loggedin = user_logged_in();
 $shop_list = $config['shop_offers'];
 
 if ($loggedin === true) {
-	if (!empty($_POST['buy']) && $_SESSION['shop_session'] == $_POST['session']) {
+	if (!empty($_POST['buy']) && isset($_SESSION['shop_session']) && $_SESSION['shop_session'] == ($_POST['session'] ?? null)) {
 		$time = time();
 		$player_points = (int)$user_znote_data['points'];
 		$cid = (int)$user_data['id'];
@@ -86,7 +86,7 @@ if ($shop['enabled']) {
 <h1>Shop Offers</h1>
 <?php
 if ($loggedin === true) {
-	if (!empty($_POST['buy']) && $_SESSION['shop_session'] == $_POST['session']) {
+	if (!empty($_POST['buy']) && isset($_SESSION['shop_session']) && $_SESSION['shop_session'] == ($_POST['session'] ?? null)) {
 		if ($user_znote_data['points'] >= $buy['points']) {
 			?><td>You have <?php echo (int)($user_znote_data['points'] - $buy['points']); ?> points. (<a href="buypoints.php">Buy points</a>).</td><?php
 		} else {

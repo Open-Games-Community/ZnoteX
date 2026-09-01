@@ -365,12 +365,12 @@ if (user_logged_in() === true) {
 
 <?php
 } else { // GUILD OVERVIEW
-	$guild = get_guild_data($_GET['name']);
-	$gid = (int)$guild['id'];
-	if ($gid === false) {
+	$guild = get_guild_data($_GET['name'] ?? '');
+	if (!is_array($guild) || empty($guild['id'])) {
 		header('Location: guilds.php');
 		exit();
 	}
+	$gid = (int)$guild['id'];
 	$gcount = count_guild_members($gid);
 	if ($gcount < 1) {
 		header('Location: guilds.php');

@@ -8,12 +8,17 @@
 	// Tested with TFS master items.xml (1.x)
 	$config['items'] = false;
 
-	// Available options: TFS_02, TFS_03, OTHIRE, TFS_10
+	// Available options: TFS_02, TFS_03, OTHIRE, TFS_10, TFS_16, CANARY
 	// OTHire = OTHIRE
 	// TFS 0.2 = TFS_02
 	// TFS 0.3 = TFS_03 (If you are using 0.3.6, set $config['salt'] to false)!
 	// TFS 0.4 = TFS_03
-	// TFS 1.x = TFS_10 (Current under development version)
+	// TFS 1.1 - 1.4 = TFS_10
+	// TFS 1.6 = TFS_16 (lastip and ip_bans.ip are varbinary(16) instead of int)
+	// Canary / OTServBR-Global = CANARY
+	//   Canary has no accounts.secret column, so two factor authentication is
+	//   force disabled. Premium is read from premdays + lastday instead of
+	//   premium_ends_at, and the house auction columns are named differently.
 	$config['ServerEngine'] = 'TFS_10';
 	// As far as I know, OTX is based on TFS_03, so make sure TFS version is configured TFS_03
 	$config['CustomVersion'] = false;

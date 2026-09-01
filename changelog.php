@@ -6,7 +6,7 @@ if (user_logged_in()) {
 		$status = true;
 		if (isset($_POST['changelogId'])) $changelogId = (int)$_POST['changelogId'];
 		else $status = false;
-		if (isset($_POST['changelogText'])) $changelogText = getValue($_POST['changelogText']);
+		if (isset($_POST['changelogText'])) $changelogText = getValue($_POST['changelogText'] ?? null);
 		else $status = false;
 
 		if (isset($_POST['action'])) $action = (int)$_POST['action'];

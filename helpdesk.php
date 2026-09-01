@@ -10,8 +10,8 @@ if ($view !== false) {
 		// Save ticket reply on database
 		$query = array(
 			'tid'   =>	$view,
-			'username'=>	getValue($_POST['username']),
-			'message' =>	getValue($_POST['reply_text']),
+			'username'=>	getValue($_POST['username'] ?? null),
+			'message' =>	getValue($_POST['reply_text'] ?? null),
 			'created' =>	time(),
 		);
 		$fields = '`'. implode('`, `', array_keys($query)) .'`';
@@ -92,6 +92,8 @@ if ($view !== false) {
 } else {
 
 	$account = mysql_select_single("SELECT name,email FROM accounts WHERE id = $session_user_id");
+	if (!is_array($account)) $account = array();
+	$account += array('name' => '', 'email' => '');
 	if (!empty($_POST)) {
 		$required_fields = array('username', 'email', 'subject', 'message');
 		foreach($_POST as $key=>$value) {
@@ -160,9 +162,9 @@ if ($view !== false) {
 			//Save ticket on database
 			$query = array(
 				'owner'   =>	$session_user_id,
-				'username'=>	getValue($_POST['username']),
-				'subject' =>	getValue($_POST['subject']),
-				'message' =>	getValue($_POST['message']),
+				'username'=>	getValue($_POST['username'] ?? null),
+				'subject' =>	getValue($_POST['subject'] ?? null),
+				'message' =>	getValue($_POST['message'] ?? null),
 				'ip'	  =>	getIPLong(),
 				'creation' =>	time(),
 				'status'  =>	'Open'

@@ -154,8 +154,9 @@ if($_SERVER['HTTP_USER_AGENT'] == "Mozilla/5.0" && $config['ServerEngine'] === '
 			$password = SHA1($client->password);
 			$token = (isset($client->token)) ? sanitize($client->token) : false;
 
-			$fields = '`id`, `premium_ends_at`';
-			if ($config['twoFactorAuthenticator']) $fields .= ', `secret`';
+			$fieldList = array('id', 'premium_ends_at');
+			if ($config['twoFactorAuthenticator']) $fieldList[] = 'secret';
+			$fields = accountFieldList($fieldList);
 
 			$account = false;
 
@@ -345,7 +346,7 @@ if (empty($_POST) === false) {
 					require_once("engine/function/rfc6238.php");
 
 					// Two factor authentication code / token
-					$authcode = (isset($_POST['authcode'])) ? getValue($_POST['authcode']) : false;
+					$authcode = (isset($_POST['authcode'])) ? getValue($_POST['authcode'] ?? null) : false;
 
 					// Load secret values from db
 					$query = mysql_select_single("SELECT `a`.`secret` AS `secret`, `za`.`secret` AS `znote_secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id` WHERE `a`.`id`='".(int)$login."' LIMIT 1;");

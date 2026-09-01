@@ -1,27 +1,25 @@
-<?php if (version_compare(phpversion(), '7.2', '<')) die('PHP version 7.2 or higher is required.');
-
-$l_time = microtime();
-$l_time = explode(' ', $l_time);
-$l_time = $l_time[1] + $l_time[0];
-$l_start = $l_time;
-
-function elapsedTime($l_start = false, $l_time = false) {
-	if ($l_start === false) global $l_start;
-	if ($l_time === false) global $l_time;
-
-	$l_time = explode(' ', microtime());
-	$l_finish = $l_time[1] + $l_time[0];
-	return round(($l_finish - $l_start), 4);
+<?php
+if (PHP_VERSION_ID < 80100) {
+    die('PHP 8.1 or higher is required.');
 }
 
+if (!isset($GLOBALS['__znote_start_time'])) {
+    $GLOBALS['__znote_start_time'] = microtime(true);
+}
+$l_start = $GLOBALS['__znote_start_time'];
+$start = $GLOBALS['__znote_start_time'];
+
 $time = time();
-$version = '2.0_DEV';
+$version = '2.0.0';
 
 $aacQueries = 0;
 $accQueriesData = array();
 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 ob_start();
+
 require_once 'config.php';
 $sessionPrefix = $config['session_prefix'];
 if ($config['paypal']['enabled'] || $config['use_captcha']) {
@@ -37,6 +35,15 @@ if ($config['use_captcha'] && !extension_loaded('openssl')) {
 if (!isset($config['TFSVersion'])) $config['TFSVersion'] = &$config['ServerEngine'];
 if (!isset($config['ServerEngine'])) $config['ServerEngine'] = &$config['TFSVersion'];
 
+$config['ServerEngineReal'] = $config['ServerEngine'];
+if (in_array($config['ServerEngineReal'], array('TFS_16', 'CANARY'), true)) {
+    $config['ServerEngine'] = 'TFS_10';
+    $config['TFSVersion'] = 'TFS_10';
+}
+if ($config['ServerEngineReal'] === 'CANARY') {
+    $config['twoFactorAuthenticator'] = false;
+}
+
 require_once 'database/connect.php';
 require_once 'function/general.php';
 require_once 'function/users.php';
@@ -45,16 +52,22 @@ require_once 'function/mail.php';
 require_once 'function/token.php';
 require_once 'function/itemparser/itemlistparser.php';
 
-if (isset($_SESSION['token'])) {
-	$_SESSION['old_token'] = $_SESSION['token'];
+if (!isset($_SESSION['token'])) {
+    Token::generate();
 }
-Token::generate();
 
 if (user_logged_in() === true) {
 	$session_user_id = (int)getSession('user_id');
 	$user_data = user_data($session_user_id, 'id', 'name', 'password', 'email', 'premium_ends_at');
-	$user_data['premdays'] = ($user_data['premium_ends_at'] - time() > 0) ? floor(($user_data['premium_ends_at'] - time()) / 86400) : 0;
+	if (!is_array($user_data)) $user_data = array();
+	$user_data += array('id' => 0, 'name' => '', 'password' => '', 'email' => '', 'premium_ends_at' => 0);
+
+	$premiumLeft = (int)$user_data['premium_ends_at'] - time();
+	$user_data['premdays'] = ($premiumLeft > 0) ? floor($premiumLeft / 86400) : 0;
+
 	$user_znote_data = user_znote_account_data($session_user_id, 'ip', 'created', 'points', 'cooldown', 'flag' ,'active_email');
+	if (!is_array($user_znote_data)) $user_znote_data = array();
+	$user_znote_data += array('ip' => 0, 'created' => 0, 'points' => 0, 'cooldown' => 0, 'flag' => '', 'active_email' => 0);
 }
 $errors = array();
 // Log IP

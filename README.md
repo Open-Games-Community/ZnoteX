@@ -1,180 +1,199 @@
-ZnoteAAC
-========
-[![CodeFactor](https://www.codefactor.io/repository/github/znote/znoteaac/badge)](https://www.codefactor.io/repository/github/znote/znoteaac)
-### Branch: v2
-The purpose of this branch is to server as code cleanup, and strip distro compatibility for anything below TFS 1.4. 
-I want to refactor some code, try to get Znote AAC a bit more lightweight. Remove single-use functions from globally included function files etc. 
+<div align="center">
 
-New features and bugfixes might arrive here first, and then backported to 1.5/6 (master branch).
+# Znote AAC
+
+**A complete website for your Open Tibia server.**
+
+Version 2.0.0 · Maintained by [Open Games Community](https://opengamescommunity.com)
+
+[Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Templates & plugins](https://otland.net/forums/website-applications.118/)
+
+</div>
 
 ---
 
-### What is Znote AAC?
+## About
 
-Znote AAC is a full-fledged website used together with an Open Tibia(OT) server.
-It aims to be super easy to install and compatible with all the popular OT distributions.
-It is created in PHP with a simple custom procedural framework.
+Znote AAC is a full automatic account creator (AAC) and website for Open Tibia servers — account
+registration, character management, highscores, guilds, houses, a forum, a shop and an admin panel,
+all in one package. It is written in PHP with a simple procedural framework, so it is easy to read
+and easy to modify.
 
-### Where do I download?
+The original Znote AAC went unmaintained for roughly five years. This repository picks the project
+back up rather than starting over — we think it is the strongest foundation among the available
+Open Tibia AAC projects, and we intend to keep building on it.
 
-We use github to distribute our versions, stable are tagged as releases, while development is the latest commit.
-* [Stable](https://github.com/Znote/ZnoteAAC/releases)
-* [Development](https://github.com/Znote/ZnoteAAC/archive/master.zip)
+---
 
-**NOTE:** Development version supports TFS 1.3, but you can expect bugs to occur.
+## Requirements
 
-### Compatible OT distributions
-Znote AAC primarily aims to be compatible with [Forgotten Server](https://github.com/otland/forgottenserver)
-Forgotten Server is commonly known as TFS (The Forgotten Server) and Znote AAC supports these versions:
-* TFS 0.2.13+ (Since initial release)
-* TFS 0.3.6+ (Since Znote AAC 1.2)
-* TFS 1.2+ (Since Znote AAC 1.5)
+| | |
+| --- | --- |
+| **PHP** | 8.1 or newer — 8.1, 8.2, 8.3, 8.4 and 8.5 all supported |
+| **Database** | MySQL or MariaDB |
+| **Required extension** | `mysqli` |
+| **Optional extensions** | `curl` (PayPal, reCaptcha, e-mail) · `openssl` (reCaptcha) · `gd` (guild images) |
 
-### Requirements
-* PHP Version 5.6 or higher. Mostly tested on 5.6 and 7.4. Most web stacks ships with this as default these days.
+> PHP 8.0 and older are **not** supported and will be refused at startup.
 
-### Optionals
-* For email registration verification and account recovery: [PHPMailer](https://github.com/PHPMailer/PHPMailer/releases) Version 6.x, extracted and renamed to just "PHPMailer" in Znote AAC directory.
-* PHP extension curl for PHPMailer, paypal and google reCaptcha services.
-* PHP extension openssl for google reCaptcha services.
+**Optional:** for e-mail verification and account recovery, download
+[PHPMailer 6.x](https://github.com/PHPMailer/PHPMailer/releases) and extract it into the Znote AAC
+directory as a folder named `PHPMailer`.
 
-### Installation instructions
+---
 
-1: Extract the .zip file to your web directory (Example: C:\UniServ\www\ )
-Without modifying config.php, enter the website and wait for mysql connection error.
-This will show you the rest of the instructions as well as the mysql schema.
+## Supported servers
 
-2: Edit config.php and:
-- modify $config['ServerEngine'] with correct TFS version you are running. (TFS_02, TFS_03, TFS_10, OTHIRE).
-- modify $config['page_admin_access'] with your admin account username(s).
+Set `$config['ServerEngine']` in `config.php` to match your server:
 
-3: Before inserting correct SQL connection details, visit the website ( http://127.0.0.1/ ), it will generate a mysql schema you should import to your OT servers database.
+| Server | `ServerEngine` |
+| --- | --- |
+| TFS 1.6 | `TFS_16` |
+| TFS 1.1 – 1.4.2 | `TFS_10` |
+| Canary / OTServBR-Global | `CANARY` |
+| TFS 0.3.6+ / 0.4 / OTX | `TFS_03` |
+| TFS 0.2.13+ | `TFS_02` |
+| OTHire | `OTHIRE` |
 
-4: Follow the steps on the website and import the SQL schema for Znote AAC, and edit config.php with correct mysql details.
+TFS 1.0 is not supported.
 
-5: IF you have existing database from active OT server, enter the folder called "special" and convert the database for Znote AAC support ( http://127.0.0.1/special/ )
+**Canary notes** — two-factor authentication is unavailable (Canary's account table has nowhere to
+store it), and the shop uses Znote's own points system rather than Canary coins.
 
-6: Enjoy Znote AAC. You can look around [HERE](https://otland.net/forums/website-applications.118/) for plugins and resources to Znote AAC, for instance various free templates to use.
+---
 
-7: Please note that you need PHP cURL enabled to make Paypal payments work.
+## Web server stacks
 
-8: You may need to change directory access rights of /engine/cache to allow writing.
+You need Apache (or nginx) + PHP 8.1+ + MySQL/MariaDB. On Windows, any of these bundles work — just
+make sure you grab a build that ships **PHP 8.1 or newer**.
 
-### Features:
-Znote AAC is very rich feature wise, here is an attempt at summarizing what we offer.
+| Stack | Download | Why pick it |
+| --- | --- | --- |
+| **Uniform Server** (UniServerZ) | [uniformserver.com](https://www.uniformserver.com/) · [SourceForge](https://sourceforge.net/projects/miniserver/) | Portable and very light on resources. No installer — unzip and run, easy to move or back up. A great default for a home-hosted server. |
+| **XAMPP** | [apachefriends.org](https://www.apachefriends.org/) | The most popular and the easiest to set up. Includes phpMyAdmin. Changing PHP version means installing a different XAMPP build. |
+| **WampServer** | [wampserver.com](https://www.wampserver.com/) | The fastest of the three, and you can switch PHP/MySQL versions from the tray icon. **Heavy on RAM** — MySQL has been seen using 5 GB+. Only worth it if the machine has memory to spare. |
 
-#### Server distribution compatibility:
-- OTHire
-- TFS 0.2
-- TFS 0.3/4
-- TFS 1.x
-- Distributions based on these (such as OTX).
+On a Linux VPS or shared hosting you do not need any of these. Just set the hosting panel to PHP 8.1
+or newer (8.3 / 8.4 recommended).
 
-#### General
-- Server wide latest death list
-- Server wide latest kills list
-- Server information with PvP settings, skill rates, experience stages (parses config.lua and stages.xml file)
-- Spells page with vocation filters (parses spells.xml file)
-- Item list showing equippable items (parses items.xml file)
+---
 
-#### Account & login:
-- Basic account registration
-- Change password and email
-- reCaptcha antibot(spam) system
-- Email verification & lost account interface
-- Two-factor authentication support
-- Hide characters from character list
-- Support helpdesk (tickets)
+## Installation
 
-#### Create character:
-- Supports custom vocations, starting skills, available towns
-- Character firstitems through provided Lua script
-- Soft character deletion
+**1. Upload the files**
 
-#### House:
-- Houses list with towns filter
-- House bidding
-- Direct house purchase with shop points
+Extract Znote AAC into your web directory (for example `C:\UniServer\www\` or `/var/www/html/`).
 
-#### Character profile
-- General information such as name, vocation, level, guild membership etc...
-- Obtained achievement list
-- Player comments
-- Death list
-- Quest progression
-- Character list
-- EQ shower, skills, full outfits
+**2. Create the database**
 
-#### Guilds
-- Configurable level and account type restrictions to create guild
-- Create and disband guilds
-- Invite and revoke players to guild
-- Change name of guild positions
-- Add nickname to guild members
-- Guild forum board accessible only for guild members & admin.
-- Upload guild image
-- Guild description
-- Invite, accept and cancel war declarations
-- View ongoing guild wars
+Import your OT server's own schema first, then import
+`engine/database/znote_schema.sql` into the same database.
 
-#### Item market
-- Want to buy list
-- Want to sell list
-- Item search
-- Compare item offer with other similar offers, as well as transaction history
+**3. Configure `config.php`**
 
-#### Downloads
-- Page with download links to client version and IP changer
-- Tutorial on how to connect to server
+```php
+$config['ServerEngine']     = 'TFS_10';   // see "Supported servers" above
+$config['page_admin_access'] = array('YourAccountName');
 
-#### Achievement system
-- List of all achievements and character obtained achievements in their profile.
+$config['sqlHost']     = '127.0.0.1';
+$config['sqlUser']     = 'your_db_user';
+$config['sqlPassword'] = 'your_db_password';
+$config['sqlDatabase'] = 'your_db_name';
+```
 
-#### Highscores
-- Vocation & skill type filters
+**4. Open the site**
 
-#### Buy shop points / digital currency
-- PayPal payment gateway
-- PayGol (SMS) payment gateway
-- PagSeguro payment gateway
+Visit your site in a browser. If anything is misconfigured, the page tells you what to fix.
 
-#### Shop system
-- Items
-- Premium days
-- Change character gender
-- Change character name
-- Outfits
-- Mounts
-- Custom offer types. (basic Lua knowledge required)
+**5. Existing server?**
 
-#### Forum
-- Create custom discussion boards
-- Level restriction to post
-- Player outfit as avatars
-- Player position
-- Guildboards
-- Feedback board where all threads are only visible for admins.
-- Hide thread, close thread, stick thread
-- Forum search
+If you already have an active OT server with players, open `/special/` to convert the existing
+database for Znote AAC.
 
-#### Cache system
-- Offload SQL load and CPU usage by loading treated data from a flatfile instead of raw SQL queries.
+**6. Permissions**
 
-#### Administration
-- Delete character
-- Ban character and/or account
-- Change password of account
-- Give character in-game position
-- Give shop points to character
-- Teleport a player or all players to home town, specific town or specific position.
-- Edit level and skills of player
-- View in-game bug reports and feedback on forum
-- Overview of shop transactions and their status
-- Moderate user submitted images to the gallery
-- Create news with a feature rich text editor
-- Add changelogs
-- Load and update server and spells information
-- Helpdesk
+Make sure `engine/cache/` is writable by the web server.
 
-### TODO List:
-* Check [Milestones](https://github.com/Znote/ZnoteAAC/milestones)
+---
+
+## Features
+
+<details open>
+<summary><b>Accounts &amp; characters</b></summary>
+
+- Account registration, password and e-mail changes
+- E-mail verification and lost-account recovery
+- Two-factor authentication
+- reCaptcha anti-spam
+- Character creation with custom vocations, starting skills and towns
+- Starting items via the included Lua script
+- Soft character deletion, and hiding characters from the public list
+- Support helpdesk with tickets
+
+</details>
+
+<details>
+<summary><b>Community</b></summary>
+
+- **Forum** — custom boards, guild boards, admin-only feedback board, level restrictions,
+  outfit avatars, player positions, sticky / closed / hidden threads, and search
+- **Guilds** — create and disband, invites, ranks, nicknames, guild images and descriptions,
+  war declarations and ongoing war tracking
+- **Character profiles** — vocation, level, guild, skills, full outfit and equipment display,
+  achievements, deaths, quest progression and player comments
+
+</details>
+
+<details>
+<summary><b>Server information</b></summary>
+
+- Highscores with vocation and skill filters
+- Latest deaths and latest kills
+- Server info page with PvP settings, rates and experience stages (reads `config.lua` and `stages.xml`)
+- Spells list with vocation filters (reads `spells.xml`)
+- Item list (reads `items.xml`)
+- Houses list with town filters, house bidding, and direct purchase with shop points
+- Downloads page with client links and a connection guide
+
+</details>
+
+<details>
+<summary><b>Shop &amp; payments</b></summary>
+
+- Shop offers: items, premium days, gender change, name change, outfits, mounts, and custom types
+- Item market: buy and sell listings, item search, price comparison and transaction history
+- Payment gateways: **PayPal**, **PagSeguro** and **PayGol** (SMS)
+
+</details>
+
+<details>
+<summary><b>Administration</b></summary>
+
+- Delete characters, ban characters and accounts
+- Change account passwords, grant in-game positions
+- Give shop points, edit player level and skills
+- Teleport one player or everyone to a town or position
+- Review in-game bug reports and forum feedback
+- Shop transaction overview
+- Moderate gallery uploads, post news and changelogs
+
+</details>
+
+<details>
+<summary><b>Performance</b></summary>
+
+- Built-in cache system that serves treated data from flat files instead of hitting MySQL on
+  every page load
+
+</details>
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome at
+[github.com/Open-Games-Community/ZnoteX](https://github.com/Open-Games-Community/ZnoteX).
+
+## License
+
+See [LICENSE](LICENSE). Original Znote AAC by Znote; layout by Blackwolf (Snavy).

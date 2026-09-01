@@ -39,7 +39,7 @@ if (isset($_GET['success']) === true && empty($_GET['success']) === true) {
 		);
 
 		$update_znote_data = array(
-			'flag' => getValue($_POST['new_flag']),
+			'flag' => getValue($_POST['new_flag'] ?? null),
 			'active_email' => '0'
 		);
 

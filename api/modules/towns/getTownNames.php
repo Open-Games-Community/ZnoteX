@@ -1,14 +1,23 @@
-<?php require_once '../../module.php';
+<?php
+require_once '../../module.php';
 
-// Configure module version number
+// Module version
 $response['version']['module'] = 1;
 
-// Fetch towns
-$response['data']['towns'] = $config['towns'];
+// Secure config access
+$towns = $config['towns'] ?? [];
+$availableTowns = $config['available_towns'] ?? [];
 
-// Fetch towns available under character creation
-foreach ($config['available_towns'] as $id) {
-	$response['data']['available'][$id] = $response['data']['towns'][$id];
+// Store all towns
+$response['data']['towns'] = $towns;
+
+// Store available towns only if they exist
+$response['data']['available'] = [];
+
+foreach ($availableTowns as $id) {
+    if (isset($towns[$id])) {
+        $response['data']['available'][$id] = $towns[$id];
+    }
 }
 
 SendResponse($response);

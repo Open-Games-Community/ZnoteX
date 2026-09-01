@@ -1,89 +1,40 @@
 <?php
-// List of characters: $, {}, []
-	class Token {
-		public static function generate() {
-			$token = sha1(uniqid(time(), true));
+class Token {
 
-			$_SESSION['token'] = $token;
-		}
-		/**
-		 * Displays a random token to prevent CSRF attacks.
-		 *
-		 * @access public
-		 * @static true
-		 * @return void
-		**/
-		public static function create() {
-			echo '<input type="hidden" name="token" value="' . self::get() . '" />';
-		}
+    public static function generate(): void {
+        $_SESSION['token'] = bin2hex(random_bytes(32));
+    }
 
+    public static function create(): void {
+        if (!self::get()) {
+            self::generate();
+        }
+        echo '<input type="hidden" name="token" value="' . self::get() . '">';
+    }
 
-		/**
-		 * Returns the active token, if there is one.
-		 *
-		 * @access public
-		 * @static true
-		 * @return mixed
-		**/
-		public static function get() {
-			return isset($_SESSION['token']) ? $_SESSION['token'] : false;
-		}
+    public static function get(): string|false {
+        return $_SESSION['token'] ?? false;
+    }
 
+    public static function isValid(?string $post): bool {
+        if (!config('use_token')) {
+            return true;
+        }
 
-		/**
-		 * Validates whether the active token is valid or not.
-		 *
-		 * @param  string $post
-		 * @access public
-		 * @static true
-		 * @return boolean
-		**/
-		public static function isValid($post) {
-			if (config('use_token')) {
-				// Token doesn't exist yet, return false.
-				if (!self::get()) {
-					return false;
-				}
+        if (!$post || !self::get()) {
+            return false;
+        }
 
-				// Token was invalid, return false.
-				if ($post == $_SESSION['old_token'] || $post == $_SESSION['token']) {
-					//self::_reset();
-					return true;
-				} else {
-					return false;
-				}
-			} else {
-				return true;
-			}
-		}
+        $valid = hash_equals($_SESSION['token'], $post);
 
+        // 🔐 IMPORTANT: token usage unique
+        self::_reset();
 
-		/**
-		 * Destroys the active token.
-		 *
-		 * @access protected
-		 * @static true
-		 * @return void
-		**/
-		protected static function _reset() {
-			unset($_SESSION['token']);
-		}
+        return $valid;
+    }
 
-
-		/**
-		 * Displays information on both the post token and the session token.
-		 *
-		 * @param  string $post
-		 * @access public
-		 * @static true
-		 * @return void
-		**/
-		public static function debug($post) {
-			echo '<pre>', var_dump(array(
-				'post' => $post,
-				'old_token' => $_SESSION['old_token'],
-				'token' => self::get()
-			)), '</pre>';
-		}
-	}
+    protected static function _reset(): void {
+        unset($_SESSION['token']);
+    }
+}
 ?>

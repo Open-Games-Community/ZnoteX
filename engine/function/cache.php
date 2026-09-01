@@ -2,166 +2,115 @@
 
 class Cache
 {
-	protected $_file = false;
-	protected $_lifespan = 0;
-	protected $_content;
-	protected $_memory = false;
-	protected $_canMemory = false;
+    protected string $_file;
+    protected int $_lifespan = 0;
+    protected mixed $_content = null;
+    protected bool $_memory = false;
+    protected bool $_canMemory = false;
 
-	const EXT = '.cache.php';
+    const EXT = '.cache';
 
+    public function __construct(string $file)
+    {
+        $cfg = function_exists('config')
+            ? config('cache')
+            : ($GLOBALS['config']['cache'] ?? []);
 
-	/**
-	 * @param  string $file
-	 * @access public
-	 * @return void
-	**/
-	public function __construct($file) {
-		$cfg = config('cache');
+        $this->_lifespan = (int)($cfg['lifespan'] ?? 60);
 
-		$this->setExpiration($cfg['lifespan']);
-		if (function_exists('apcu_fetch')) {
-			$this->_canMemory = true;
-			$this->_memory = $cfg['memory'];
-		}
-		$this->_file = $file . self::EXT;
+        if (function_exists('apcu_fetch')) {
+            $this->_canMemory = true;
+            $this->_memory = (bool)($cfg['memory'] ?? false);
+        }
 
-		if (!$this->_memory && $cfg['memory']) die("
-			<p><strong>Configuration error!</strong>
-			<br>Cannot save cache to memory, but it is configured to do so.
-			<br>You need to enable PHP extension APCu to enable memory cache.
-			<br>Install it or set \$config['cache']['memory'] to false!
-			<br><strong>Ubuntu install:</strong> sudo apt install php-apcu</p>
-		");
-	}
+        $this->_file = $file . self::EXT;
 
+        if (!$this->_canMemory && ($cfg['memory'] ?? false)) {
+            die(
+                "<p><strong>Configuration error!</strong><br>
+                APCu is not enabled.<br>
+                Disable memory cache or install php-apcu.</p>"
+            );
+        }
+    }
 
-	/**
-	 * Sets the cache expiration limit (IMPORTANT NOTE: seconds, NOT ms!).
-	 *
-	 * @param  integer $span
-	 * @access public
-	 * @return void
-	**/
-	public function setExpiration($span) {
-		$this->_lifespan = $span;
-	}
+    public function setExpiration(int $span): void
+    {
+        $this->_lifespan = $span;
+    }
 
+    public function useMemory(bool $bool): bool
+    {
+        if ($bool && $this->_canMemory) {
+            $this->_memory = true;
+            return true;
+        }
+        $this->_memory = false;
+        return false;
+    }
 
-	/**
-	 * Enable or disable memory RAM storage.
-	 *
-	 * @param  bool $bool
-	 * @access public
-	 * @return bool $status
-	**/
-	public function useMemory($bool) {
-		if ($bool and $this->_canMemory) {
-			$this->_memory = true;
-			return true;
-		}
-		$this->_memory = false;
-		return false;
-	}
+    public function setContent(mixed $content): void
+    {
+        $this->_content = is_array($content) ? json_encode($content) : $content;
+    }
 
+    public function hasExpired(): bool
+    {
+        if ($this->_memory) {
+            return !apcu_exists($this->_file);
+        }
 
-	/**
-	 * Set the content you'd like to cache.
-	 *
-	 * @param  mixed $content
-	 * @access public
-	 * @return void
-	**/
-	public function setContent($content) {
-		$this->_content = (!$this->_memory && strtolower(gettype($content)) == 'array') ? json_encode($content) : $content;
-	}
+        if (!is_file($this->_file)) {
+            return true;
+        }
 
+        return time() > filemtime($this->_file) + $this->_lifespan;
+    }
 
-	/**
-	 * Validates whether it is time to refresh the cache data or not.
-	 *
-	 * @access public
-	 * @return boolean
-	**/
-	public function hasExpired() {
-		if ($this->_memory) {
-			return !apcu_exists($this->_file);
-		}
-		if (is_file($this->_file) && time() < filemtime($this->_file) + $this->_lifespan) {
-			return false;
-		}
-		return true;
-	}
+    public function remainingTime(): int
+    {
+        if ($this->_memory && apcu_exists($this->_file)) {
+            $info = apcu_cache_info();
+            foreach ($info['cache_list'] ?? [] as $item) {
+                if (($item['info'] ?? null) === $this->_file) {
+                    return max(0, ($item['creation_time'] + $item['ttl']) - time());
+                }
+            }
+            return 0;
+        }
 
-	/**
-	 * Returns remaining time before scoreboard will update itself.
-	 *
-	 * @access public
-	 * @return integer
-	**/
-	public function remainingTime() {
-		$remaining = 0;
-		if ($this->_memory) {
-			if (apcu_exists($this->_file)) {
-				$meta = apc_cache_info('user');
-				foreach ($meta['cache_list'] AS $item) {
-					if ($item['info'] == $this->_file) {
-						$remaining = ($item['creation_time'] + $item['ttl']) - time();
-						return ($remaining > 0) ? $remaining : 0;
-					}
-				}
-			}
-			return $remaining;
-		}
-		if (!$this->hasExpired()) {
-			$remaining = (filemtime($this->_file) + $this->_lifespan) - time();
-		}
-		return $remaining;
-	}
+        if (!$this->hasExpired()) {
+            return max(0, (filemtime($this->_file) + $this->_lifespan) - time());
+        }
 
+        return 0;
+    }
 
-	/**
-	 * Saves the content into its appropriate cache file.
-	 *
-	 * @access public
-	 * @return void
-	**/
-	public function save() {
-		if ($this->_memory) {
-			return apcu_store($this->_file, $this->_content, $this->_lifespan);
-		}
-		$handle = fopen($this->_file, 'w');
-		fwrite($handle, $this->_content);
-		fclose($handle);
-	}
+    public function save(): bool
+    {
+        if ($this->_memory) {
+            return apcu_store($this->_file, $this->_content, $this->_lifespan);
+        }
 
+        return file_put_contents($this->_file, (string)$this->_content) !== false;
+    }
 
-	/**
-	 * Loads the content from a specified cache file.
-	 *
-	 * @access public
-	 * @return mixed
-	**/
-	public function load() {
-		if ($this->_memory) {
-			return apcu_fetch($this->_file);
-		}
-		if (!is_file($this->_file)) {
-			return false;
-		}
+    public function load(): mixed
+    {
+        if ($this->_memory) {
+            return apcu_fetch($this->_file);
+        }
 
-		ob_start();
-		include_once($this->_file);
-		$content = ob_get_clean();
+        if (!is_file($this->_file)) {
+            return false;
+        }
 
-		if (!isset($content) && strlen($content) == 0) {
-			return false;
-		}
+        $content = file_get_contents($this->_file);
+        if ($content === false || $content === '') {
+            return false;
+        }
 
-		if ($content = json_decode($content, true)) {
-			return (array) $content;
-		} else {
-			return $content;
-		}
-	}
+        $json = json_decode($content, true);
+        return (json_last_error() === JSON_ERROR_NONE) ? $json : $content;
+    }
 }

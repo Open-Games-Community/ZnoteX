@@ -621,7 +621,7 @@ if ($auction['characterAuction']) {
 	// If validation fails then explain why, but then head over to list regardless of status
 	if ($action === 'claim') {
 		$zaid = (isset($_POST['zaid']) && (int)$_POST['zaid'] > 0) ? (int)$_POST['zaid'] : false;
-		$name = (isset($_POST['name']) && !empty($_POST['name'])) ? getValue($_POST['name']) : false;
+		$name = (isset($_POST['name']) && !empty($_POST['name'])) ? getValue($_POST['name'] ?? null) : false;
 		$errors = array();
 		//data_dump($_POST, $name, "Post data:");
 		if ($zaid === false) {

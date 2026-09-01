@@ -19,8 +19,9 @@ if(!function_exists('curl_version')):
 	curl_setopt($request, CURLOPT_SSL_VERIFYPEER, false);
 
 	// Load contributors and close the request.
-	$developers = json_decode(curl_exec($request), true); // Sorted by contributions.
+	$developers = json_decode((string)curl_exec($request), true); // Sorted by contributions.
 	curl_close($request);
+	if (!is_array($developers)) $developers = array();
 	?>
 	<div class="developers">
 		<?php foreach ($developers as $developer): ?>

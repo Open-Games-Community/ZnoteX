@@ -3,10 +3,19 @@
 
 				<?php include 'layout/aside.php'; ?>
 			</div>
+			<?php
+			$aacQueries = $aacQueries ?? 0;
+			$accQueriesData = $accQueriesData ?? [];
+			?>
 
 			<footer class="well preventCollapse">
 				<div class="pull-left">
-					<p>&copy; <?php echo $config['site_title'];?>. <?php echo ' Page generated in '. elapsedTime() .' seconds. Q: '.$aacQueries; ?>. Designed By <a href="https://otland.net/members/snavy.155163/" target="_blank">Snavy</a>. Engine: <a href="credits.php">Znote AAC</a>.</p>
+					<p>&copy; <?= htmlspecialchars($config['site_title'], ENT_QUOTES, 'UTF-8') ?>.
+						Page generated in <?= elapsedTime() ?> seconds.
+						Q: <?= (int)$aacQueries ?>.
+						Designed By <a href="https://otland.net/members/snavy.155163/" target="_blank">Snavy</a>.
+						Engine: <a href="credits.php">Znote AAC</a>.
+					</p>
 				</div>
 				<div class="pull-right">
 					<p><?php echo 'Server date and clock is: '. getClock(false, true); ?></p>

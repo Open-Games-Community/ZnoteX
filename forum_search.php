@@ -27,9 +27,9 @@ function stripBBCode($text_to_search) {
 //data_dump($_GET, false, "Post data:");
 
 // Fetch and sanitize values:
-$type = getValue($_GET['type']);
+$type = getValue($_GET['type'] ?? null);
 if ($type !== false) $type = (int)$type;
-$text = getvalue($_GET['text']);
+$text = getvalue($_GET['text'] ?? null);
 
 $textTitleSql = "";
 $textPostSql = "";
@@ -68,6 +68,7 @@ if ($text !== false) {
 
 if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6) {
 	$forums = mysql_select_multi("SELECT `id` FROM `znote_forum` WHERE `access`='1' AND `guild_id`='0';");
+	if (!is_array($forums)) $forums = array();
 	$allowedForums = array();
 	foreach($forums as $forum) $allowedForums[] = $forum['id'];
 
@@ -78,6 +79,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 	switch ($type) {
 		case 1: // Search titles
 			$results = mysql_select_multi("SELECT `id` AS `thread_id`, `forum_id`, `title`, `text`, `player_name` FROM `znote_forum_threads` WHERE $textTitleSql ORDER BY `id` DESC LIMIT $searchResults;");
+			if (!is_array($results)) $results = array();
 			// Filter out search results in custom access boards.
 			for ($i = 0; $i < count($results); $i++)
 				if (!in_array($results[$i]['forum_id'], $allowedForums))
@@ -93,6 +95,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 
 		case 2: // Search posts
 			$results = mysql_select_multi("SELECT `thread_id`, `player_name`, `text` FROM `znote_forum_posts` WHERE $textPostSql ORDER BY `id` DESC LIMIT $searchResults;");
+			if (!is_array($results)) $results = array();
 			// Missing ['forum_id'], ['title'], lets get them
 			for ($i = 0; $i < count($results); $i++) {
 				// $results[$i]['asd']
@@ -113,6 +116,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 
 		case 3: // Search authors last threads
 			$results = mysql_select_multi("SELECT `id` AS `thread_id`, `forum_id`, `title`, `text`, `player_name` FROM `znote_forum_threads` WHERE $textAuthorSql ORDER BY `id` DESC LIMIT $searchResults;");
+			if (!is_array($results)) $results = array();
 			// Filter out search results in custom access boards.
 			for ($i = 0; $i < count($results); $i++)
 				if (!in_array($results[$i]['forum_id'], $allowedForums))
@@ -128,6 +132,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 
 		case 4: // Search authors last posts
 			$results = mysql_select_multi("SELECT `thread_id`, `player_name`, `text` FROM `znote_forum_posts` WHERE $textAuthorSql ORDER BY `id` DESC LIMIT $searchResults;");
+			if (!is_array($results)) $results = array();
 			// Missing ['forum_id'], ['title'], lets get them
 			for ($i = 0; $i < count($results); $i++) {
 				// $results[$i]['asd']
@@ -147,6 +152,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 
 		case 5: // Search latest titles
 			$results = mysql_select_multi("SELECT `id` AS `thread_id`, `forum_id`, `title`, `text`, `player_name` FROM `znote_forum_threads` ORDER BY `id` DESC LIMIT $searchResults;");
+			if (!is_array($results)) $results = array();
 			// Filter out search results in custom access boards.
 			for ($i = 0; $i < count($results); $i++)
 				if (!in_array($results[$i]['forum_id'], $allowedForums))
@@ -162,6 +168,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 
 		case 6: // Search posts
 			$results = mysql_select_multi("SELECT `thread_id`, `player_name`, `text` FROM `znote_forum_posts` ORDER BY `id` DESC LIMIT $searchResults;");
+			if (!is_array($results)) $results = array();
 			// Missing ['forum_id'], ['title'], lets get them
 			for ($i = 0; $i < count($results); $i++) {
 				// $results[$i]['asd']

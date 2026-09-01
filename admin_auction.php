@@ -2,35 +2,39 @@
 protect_page();
 admin_only($user_data);
 $auction = $config['shop_auction'];
-$step = $auction['step'];
-$step_duration = $auction['step_duration'];
+$storageAccountId = (int)($auction['storage_account_id'] ?? 0);
+$time = time();
+$step = (int)$auction['step'];
+$step_duration = (int)$auction['step_duration'];
 $loadOutfits = ($config['show_outfits']['highscores']) ? true : false;
-function toDuration($is) {
-	$duration['day'] = $is / (24 * 60 * 60);
-	if (($duration['day'] - (int)$duration['day']) > 0)
-		$duration['hour'] = ($duration['day'] - (int)$duration['day']) * 24;
-	if (isset($duration['hour'])) {
-		if (($duration['hour'] - (int)$duration['hour']) > 0)
-			$duration['minute'] = ($duration['hour'] - (int)$duration['hour']) * 60;
-		if (isset($duration['minute'])) {
-			if (($duration['minute'] - (int)$duration['minute']) > 0)
-				$duration['second'] = ($duration['minute'] - (int)$duration['minute']) * 60;
+function toDuration(int $seconds): string {
+	if ($seconds <= 0) {
+		return '0 seconds';
+	}
+
+	$units = [
+		'day'    => 86400,
+		'hour'   => 3600,
+		'minute' => 60,
+		'second' => 1,
+	];
+
+	$result = [];
+
+	foreach ($units as $name => $value) {
+		$qty = intdiv($seconds, $value);
+		if ($qty > 0) {
+			$seconds -= $qty * $value;
+			$result[] = $qty . ' ' . ($qty === 1 ? $name : $name . 's');
 		}
 	}
-	$tmp = array();
-	foreach ($duration as $type => $value) {
-		if ($value >= 1) {
-			$pluralType = ((int)$value === 1) ? $type : $type . 's';
-			if ($type !== 'second') $tmp[] = (int)$value . " $pluralType";
-			else $tmp[] = (int)$value . " $pluralType";
-		}
-	}
-	return implode(', ', $tmp);
+
+	return implode(', ', $result);
 }
 // start
 
 // Passive check to see if bid period has expired and someone won a deal
-$time = time();
+
 $expired_auctions = mysql_select_multi("
 	SELECT `id`
 	FROM `znote_auction_player`
@@ -47,9 +51,8 @@ if ($expired_auctions !== false) {
 	if (!empty($soldIds)) {
 		mysql_update("
 			UPDATE `znote_auction_player`
-			SET `sold`=1
-			WHERE `id` IN(".implode(',', $soldIds).")
-			LIMIT ".COUNT($soldIds).";
+			SET `sold` = 1
+			WHERE `id` IN (" . implode(',', array_map('intval', $soldIds)) . ")
 		");
 	}
 }
@@ -75,7 +78,7 @@ $pending = mysql_select_multi("
 	FROM `znote_auction_player` za
 	INNER JOIN `players` p
 		ON `za`.`player_id` = `p`.`id`
-	WHERE `p`.`account_id` = {$auction['storage_account_id']}
+	WHERE `p`.`account_id` = {$storageAccountId}
 	AND `za`.`claimed` = 0
 	AND `za`.`sold` = 1
 	ORDER BY `za`.`time_end` desc
@@ -99,7 +102,7 @@ $ongoing = mysql_select_multi("
 	FROM `znote_auction_player` za
 	INNER JOIN `players` p
 		ON `za`.`player_id` = `p`.`id`
-	WHERE `p`.`account_id` = {$auction['storage_account_id']}
+	WHERE `p`.`account_id` = {$storageAccountId}
 	AND `za`.`sold` = 0
 	ORDER BY `za`.`time_end` desc;
 ");
@@ -148,7 +151,11 @@ $completed = mysql_select_multi("
 		</tr>
 		<?php foreach($pending as $character): ?>
 			<tr>
-				<td><a href="/characterprofile.php?name=<?php echo $character['name']; ?>"><?php echo $character['name']; ?></a></td>
+				<td><?php $name = htmlspecialchars($character['name'], ENT_QUOTES, 'UTF-8'); $urlName = urlencode($character['name']); ?>
+					<a href="/characterprofile.php?name=<?= $urlName ?>">
+						<?= $name ?>
+					</a>
+				</td>
 				<td><?php echo $character['level']; ?></td>
 				<td><?php echo vocation_id_to_name($character['vocation']); ?></td>
 				<td><?php echo $character['price']; ?></td>
@@ -187,7 +194,7 @@ $completed = mysql_select_multi("
 				<td><?php echo $character['price']; ?></td>
 				<td><?php echo $character['bid']; ?></td>
 				<td><?php
-					$ended = (time() > $character['time_end']) ? true : false;
+					$ended = time() > (int)$character['time_end'];
 					echo getClock($character['time_begin'], true);
 					?>
 				</td>
@@ -210,7 +217,11 @@ if ($completed !== false): ?>
 		</tr>
 		<?php foreach($completed as $character): ?>
 			<tr>
-				<td><a href="/characterprofile.php?name=<?php echo $character['name']; ?>"><?php echo $character['name']; ?></a></td>
+				<td><?php $name = htmlspecialchars($character['name'], ENT_QUOTES, 'UTF-8'); $urlName = urlencode($character['name']); ?>
+					<a href="/characterprofile.php?name=<?= $urlName ?>">
+						<?= $name ?>
+					</a>
+				</td>
 				<td><?php echo $character['level']; ?></td>
 				<td><?php echo vocation_id_to_name($character['vocation']); ?></td>
 				<td><?php echo $character['price']; ?></td>
