@@ -1,13 +1,18 @@
-<?php
-	require_once 'layout/layout_config.php';
-	$launch_seconds = (strtotime($countDown) - time());
-	$delay_hide = $launch_seconds + $countDown_hide;
+<?php require_once 'layout/layout_config.php';
+
+$countDown = $countDown ?? null;
+$countDown_hide = $countDown_hide ?? 0;
+$countDown_complete = $countDown_complete ?? '';
+
+$launch_seconds = $countDown ? (strtotime($countDown) - time()) : 0;
+$delay_hide = $launch_seconds + $countDown_hide;
 ?>
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 	<head>
 		<meta charset="utf-8">
-		<title><?php echo $config['site_title']; ?></title>
+		<title><?= htmlspecialchars($config['site_title'], ENT_QUOTES, 'UTF-8') ?></title>
 
 		<!-- Stylesheet(s) -->
 		<link rel="stylesheet" href="layout/css/style.css?aio=1">
@@ -24,7 +29,7 @@
 		<script type="text/javascript">
 			$(document).ready(function(){
 				<?php if ($delay_hide > 0): ?>
-					countDown("countDownTimer", <?php echo $launch_seconds; ?>, "<?php echo $countDown_complete; ?>");
+					countDown("countDownTimer",	<?= (int)$launch_seconds ?>, <?= json_encode($countDown_complete) ?>);
 				<?php endif; ?>
 
 				$('.loginBtn').click(function(){
@@ -39,7 +44,7 @@
 			});
 		</script>
 	</head>
-	<body<?php if (isset($page_filename) && strlen($page_filename) > 0) echo " class='page_{$page_filename}'"; ?>>
+	<body<?= !empty($page_filename) ? ' class="page_'.htmlspecialchars($page_filename, ENT_QUOTES, 'UTF-8').'"' : '' ?>>
 		<!--
 			Layout author: Blackwolf (Snavy on otland)
 			Otland: https://otland.net/members/snavy.155163/

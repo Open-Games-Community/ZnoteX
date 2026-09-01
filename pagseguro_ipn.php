@@ -3,8 +3,8 @@
 	require 'config.php';
 
 	$pagseguro = $config['pagseguro'];
-	$notificationCode = $_POST['notificationCode'];
-	$notificationType = $_POST['notificationType'];
+	$notificationCode = $_POST['notificationCode'] ?? null;
+	$notificationType = $_POST['notificationType'] ?? null;
 
 	// Require the functions to connect to database
 	require 'engine/database/connect.php';
@@ -72,7 +72,10 @@
 	}
 
 	$rawPayment = VerifyPagseguroIPN($notificationCode);
-	$payment = simplexml_load_string($rawPayment);
+	$payment = simplexml_load_string((string)$rawPayment);
+	if ($payment === false) {
+		die('Error: invalid PagSeguro response.');
+	}
 	$paymentStatus = (int) $payment->status;
 	$paymentCode = sanitize($payment->code);
 
@@ -89,7 +92,7 @@
 		$status = true;
 		$custom = (int) $payment->reference;
 
-		if ($transaction['completed'] == '1') {
+		if (!is_array($transaction) || $transaction['completed'] == '1') {
 			$status = false;
 		}
 
@@ -105,8 +108,12 @@
 			$data = mysql_select_single("SELECT `points` AS `old_points` FROM `znote_accounts` WHERE `account_id`='$custom';");
 
 			// Give points to user
-			$new_points = $data['old_points'] + $item->quantity;
-			mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+			if (is_array($data)) {
+				$new_points = (int)$data['old_points'] + (int)$item->quantity;
+				mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+			} else {
+				report($notificationCode, 'No znote_accounts row for account_id ' . $custom);
+			}
 		}
 	} else if ($paymentStatus == 7) {
 		mysql_update('UPDATE `znote_pagseguro` SET `completed` = 1 WHERE `transaction` = \'' . $paymentCode . '\' ');

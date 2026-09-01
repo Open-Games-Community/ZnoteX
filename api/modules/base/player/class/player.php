@@ -82,26 +82,36 @@ class Player {
 	protected $_querylog = array();
 	protected $_errors = array();
 
-	public function __construct($name_id_array, $fields = false, $query = true) {
+	public function __construct(string|int|array $name_id_array, array|string|false $fields = false, bool $query = true) {
 
-		if (!is_array($name_id_array)) $this->_name_id = $name_id_array;
+		if (!is_array($name_id_array)) {
+			$this->_name_id = $name_id_array;
+		}
 
 		if ($name_id_array !== false) {
-			// Fetch player by name or id
-			if (is_string($name_id_array) || is_integer($name_id_array)) {
+
+			if (is_string($name_id_array) || is_int($name_id_array)) {
 				if ($query) {
 					$this->update($this->mysql_select($name_id_array, $fields));
 				}
+				return;
 			}
 
-			// Load these player data.
 			if (is_array($name_id_array)) {
-				if (isset($name_id_array['id'])) $this->_name_id = $name_id_array['id'];
-				elseif (isset($name_id_array['name'])) $this->_name_id = $name_id_array['name'];
+				if (isset($name_id_array['id'])) {
+					$this->_name_id = $name_id_array['id'];
+				} elseif (isset($name_id_array['name'])) {
+					$this->_name_id = $name_id_array['name'];
+				}
 
 				$this->update($name_id_array);
+				return;
 			}
-		} else die("Player construct takes arguments: string or id for fetch, array for load.");
+		}
+
+		throw new InvalidArgumentException(
+			'Player constructor expects string|int|array'
+		);
 	}
 
 	/**
@@ -112,7 +122,13 @@ class Player {
 	 * @return mixed (array 'field' => 'value', or false (bool))
 	**/
 	public function fetch($fields = false) {
-		if (is_string($fields)) $fields = array($fields);
+		if (is_string($fields)) {
+			$fields = [$fields];
+		}
+		if ($fields !== false && !is_array($fields)) {
+			return false;
+		}
+
 		// Return all data that is not null.
 		if (!$fields) {
 			$returndata = array();
@@ -166,7 +182,7 @@ class Player {
 	 * @access public
 	 * @return mixed (array, boolean)
 	**/
-	public function update($data) {
+	public function update(array $data): bool {
 		if (is_array($data) && !empty($data)) {
 			foreach ($data as $field => $value) {
 
@@ -228,19 +244,32 @@ class Player {
 				if (!in_array('id', $fields)) $fields[] = 'id';
 
 				// Loop through every field and generate the sql string
-				for ($i = 0; $i < count($fields); $i++) {
-					if ($i === 0) $field_elements = "`". getValue($fields[$i]) ."`";
-					else $field_elements .= ", `". getValue($fields[$i]) ."`";
+				$allowedFields = array_keys($this->_playerdata + $this->_znotedata);
+
+				$safeFields = [];
+
+				foreach ($fields as $field) {
+					if (!in_array($field, $allowedFields, true)) {
+						continue;
+					}
+					$safeFields[] = "`$field`";
 				}
+				if (empty($safeFields)) {
+					return false;
+				}
+				$field_elements = implode(', ', $safeFields);
 			break;
 		}
 
 		// Value logic
-		if (is_integer($name_id)) {
+		if (is_int($name_id)) {
 			$name_id = (int)$name_id;
 			$where = "`id` = '{$name_id}'";
 		} else {
 			$name_id = getValue($name_id);
+			if ($name_id === false) {
+				return false;
+			}
 			$where = "`name` = '{$name_id}'";
 		}
 
@@ -250,7 +279,11 @@ class Player {
 		$this->_querylog[] = $query;
 		// Fetch from players table
 		$data = mysql_select_single($query);
-		if (isset($data['conditions'])) unset($data['conditions']);
+		if ($data === false) {
+			return false;
+		}
+
+		unset($data['conditions']);
 
 		// Fetch from znote_players table if neccesary
 		if (!empty($znote_fields)) {
@@ -275,97 +308,107 @@ class Player {
 	 * @access public
 	 * @return bool $status
 	**/
-	public function create() {
-		// If player already have an id, the player already exist.
-		if (is_null($this->_playerdata['id']) && is_string($this->_playerdata['name'])) {
-
-			// Confirm player does not exist
-			$name = format_character_name($this->_playerdata['name']);
-			$name = validate_name($name);
-			$name = sanitize($name);
-			$exist = mysql_select_single("SELECT `id` FROM `players` WHERE `name`='{$name}' LIMIT 1;");
-			if ($exist !== false) {
-				$this->errors[] = "A player with the name [{$name}] already exist.";
-				return false;
-			}
-			$config = fullConfig();
-
-			if (user_character_exist($_POST['name']) !== false) {
-				$errors[] = 'Sorry, that character name already exist.';
-			}
-			if (!preg_match("/^[a-zA-Z_ ]+$/", $_POST['name'])) {
-				$errors[] = 'Your name may only contain a-z, A-Z and spaces.';
-			}
-			if (strlen($_POST['name']) < $config['minL'] || strlen($_POST['name']) > $config['maxL']) {
-				$errors[] = 'Your character name must be between ' . $config['minL'] . ' - ' . $config['maxL'] . ' characters long.';
-			}
-			// name restriction
-			$resname = explode(" ", $_POST['name']);
-			foreach($resname as $res) {
-				if(in_array(strtolower($res), $config['invalidNameTags'])) {
-					$errors[] = 'Your username contains a restricted word.';
-				}
-				else if(strlen($res) == 1) {
-					$errors[] = 'Too short words in your name.';
-				}
-			}
-			// Validate vocation id
-			if (!in_array((int)$_POST['selected_vocation'], $config['available_vocations'])) {
-				$errors[] = 'Permission Denied. Wrong vocation.';
-			}
-			// Validate town id
-			if (!in_array((int)$_POST['selected_town'], $config['available_towns'])) {
-				$errors[] = 'Permission Denied. Wrong town.';
-			}
-			// Validate gender id
-			if (!in_array((int)$_POST['selected_gender'], array(0, 1))) {
-				$errors[] = 'Permission Denied. Wrong gender.';
-			}
-			if (vocation_id_to_name($_POST['selected_vocation']) === false) {
-				$errors[] = 'Failed to recognize that vocation, does it exist?';
-			}
-			if (town_id_to_name($_POST['selected_town']) === false) {
-				$errors[] = 'Failed to recognize that town, does it exist?';
-			}
-			if (gender_exist($_POST['selected_gender']) === false) {
-				$errors[] = 'Failed to recognize that gender, does it exist?';
-			}
-			// Char count
-			$char_count = user_character_list_count($session_user_id);
-			if ($char_count >= $config['max_characters']) {
-				$errors[] = 'Your account is not allowed to have more than '. $config['max_characters'] .' characters.';
-			}
-			if (validate_ip(getIP()) === false && $config['validate_IP'] === true) {
-				$errors[] = 'Failed to recognize your IP address. (Not a valid IPv4 address).';
-			}
-
-			echo "create player";
-			// Make sure all neccesary values are set
-			//Register
-			$character_data = array(
-				'name'		=>	format_character_name($_POST['name']),
-				'account_id'=>	$session_user_id,
-				'vocation'	=>	$_POST['selected_vocation'],
-				'town_id'	=>	$_POST['selected_town'],
-				'sex'		=>	$_POST['selected_gender'],
-				'lastip'	=>	getIPLong(),
-				'created'	=>	time()
-			);
-
-			array_walk($character_data, 'array_sanitize');
-			$cnf = fullConfig();
-
-			if ($character_data['sex'] == 1) {
-				$outfit_type = $cnf['maleOutfitId'];
-			} else {
-				$outfit_type = $cnf['femaleOutfitId'];
-			}
-			// Create the player
-
-		} else {
-			echo "Player already exist.";
+	public function create(int $accountId): bool {
+		// Player already exists
+		if (!is_null($this->_playerdata['id'])) {
+			$this->_errors[] = 'Player already exists.';
 			return false;
 		}
+
+		// 🔐 SECURE POST ACCESS
+		$name       = $_POST['name'] ?? null;
+		$vocation   = $_POST['selected_vocation'] ?? null;
+		$town       = $_POST['selected_town'] ?? null;
+		$gender     = $_POST['selected_gender'] ?? null;
+
+		if (!$name || !$vocation || !$town || $gender === null) {
+			$this->_errors[] = 'Missing character creation data.';
+			return false;
+		}
+
+		// Format & validate name
+		$name = format_character_name($name);
+		$name = validate_name($name);
+		$name = sanitize($name);
+
+		if ($name === false) {
+			$this->_errors[] = 'Invalid character name.';
+			return false;
+		}
+
+		// Check name exists
+		$exist = mysql_select_single(
+			"SELECT `id` FROM `players` WHERE `name`='{$name}' LIMIT 1;"
+		);
+		if ($exist !== false) {
+			$this->_errors[] = "Character name already exists.";
+			return false;
+		}
+
+		$config = fullConfig();
+
+		// Validate vocation
+		if (!in_array((int)$vocation, $config['available_vocations'], true)) {
+			$this->_errors[] = 'Invalid vocation.';
+		}
+
+		// Validate town
+		if (!in_array((int)$town, $config['available_towns'], true)) {
+			$this->_errors[] = 'Invalid town.';
+		}
+
+		// Validate gender
+		if (!in_array((int)$gender, [0, 1], true)) {
+			$this->_errors[] = 'Invalid gender.';
+		}
+
+		// Stop if errors
+		if (!empty($this->_errors)) {
+			return false;
+		}
+
+		// Character count
+		$char_count = user_character_list_count($accountId);
+		if ($char_count >= $config['max_characters']) {
+			$this->_errors[] = 'Maximum characters reached.';
+			return false;
+		}
+
+		// Prepare insert data
+		$character_data = [
+			'name'       => $name,
+			'account_id' => $accountId,
+			'vocation'   => (int)$vocation,
+			'town_id'    => (int)$town,
+			'sex'        => (int)$gender,
+			'lastip'     => getIPLong(),
+			'created'    => time()
+		];
+
+		array_walk($character_data, 'array_sanitize');
+
+		// Outfit
+		$character_data['looktype'] = (
+			$gender == 1
+				? $config['maleOutfitId']
+				: $config['femaleOutfitId']
+		);
+
+		// INSERT PLAYER
+		mysql_insert(
+			"INSERT INTO `players`
+			(`name`,`account_id`,`vocation`,`town_id`,`sex`,`lastip`,`created`,`looktype`)
+			VALUES
+			('{$character_data['name']}',
+			'{$character_data['account_id']}',
+			'{$character_data['vocation']}',
+			'{$character_data['town_id']}',
+			'{$character_data['sex']}',
+			" . sqlIpWrite($character_data['lastip']) . ",
+			'{$character_data['created']}',
+			'{$character_data['looktype']}')"
+		);
+		return true;
 	}
 }
 

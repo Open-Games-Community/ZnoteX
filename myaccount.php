@@ -2,7 +2,7 @@
 protect_page();
 include 'layout/overall/header.php';
 #region CANCEL CHARACTER DELETE
-$undelete_id = @$_GET['cancel_delete_id'];
+$undelete_id = $_GET['cancel_delete_id'] ?? null;
 if($undelete_id) {
 	$undelete_id = (int)$undelete_id;
 	$undelete_q1 = mysql_select_single("
@@ -94,15 +94,15 @@ if (!empty($_POST['selected_character'])) {
 			exit();
 		}
 		// Sanitize values
-		$action = getValue($_POST['action']);
-		$char_name = getValue($_POST['selected_character']);
+		$action = getValue($_POST['action'] ?? null);
+		$char_name = getValue($_POST['selected_character'] ?? null);
 
 		// Handle actions
 		switch($action) {
 			// Change character comment PAGE2 (Success).
 			case 'update_comment':
 				if ((int)user_character_account_id($char_name) === $session_user_id) {
-					user_update_comment(user_character_id($char_name), getValue($_POST['comment']));
+					user_update_comment(user_character_id($char_name), getValue($_POST['comment'] ?? null));
 					echo 'Successfully updated comment.';
 				}
 				break;
@@ -134,7 +134,7 @@ if (!empty($_POST['selected_character'])) {
 			// CHANGE character name
 			case 'change_name':
 				$oldname = $char_name;
-				$newname = isset($_POST['newName']) ? getValue($_POST['newName']) : '';
+				$newname = isset($_POST['newName']) ? getValue($_POST['newName'] ?? null) : '';
 
 				$player = false;
 				$player = mysql_select_single("SELECT `id`, `account_id` FROM `players` WHERE `name` = '$oldname'");

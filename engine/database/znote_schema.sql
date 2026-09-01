@@ -73,6 +73,26 @@ CREATE TABLE IF NOT EXISTS `znote_paygol` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS `znote_pagseguro` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `transaction` varchar(36) NOT NULL,
+  `account` int NOT NULL,
+  `price` decimal(11,2) NOT NULL,
+  `points` int NOT NULL,
+  `payment_status` tinyint NOT NULL,
+  `completed` tinyint NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `transaction` (`transaction`)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `znote_pagseguro_notifications` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `notification_code` varchar(40) NOT NULL,
+  `details` text NOT NULL,
+  `receive_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS `znote_players` (
   `id` int NOT NULL AUTO_INCREMENT,
   `player_id` int NOT NULL,

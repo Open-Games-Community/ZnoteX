@@ -5,7 +5,7 @@ if ($config['log_ip']) {
 }
 
 // Fetch highscore type
-$type = (isset($_GET['type'])) ? (int)getValue($_GET['type']) : 7;
+$type = (isset($_GET['type'])) ? (int)getValue($_GET['type'] ?? null) : 7;
 if ($type > 9) $type = 7;
 
 // Fetch highscore vocation
@@ -23,7 +23,7 @@ if (isset($_GET['vocation']) && is_numeric($_GET['vocation'])) {
 }
 
 // Fetch highscore page
-$page = getValue(@$_GET['page']);
+$page = getValue($_GET['page'] ?? null);
 if (!$page || $page == 0) $page = 1;
 else $page = (int)$page;
 

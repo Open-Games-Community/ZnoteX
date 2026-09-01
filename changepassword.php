@@ -3,33 +3,38 @@ protect_page();
 
 if (empty($_POST) === false) {
 	/* Token used for cross site scripting security */
-	if (!Token::isValid($_POST['token'])) {
+	if (!Token::isValid($_POST['token'] ?? null)) {
 		$errors[] = 'Token is invalid.';
 	}
 
 	$required_fields = array('current_password', 'new_password', 'new_password_again');
 
-	foreach($_POST as $key=>$value) {
-		if (empty($value) && in_array($key, $required_fields) === true) {
+	foreach($required_fields as $key) {
+		if (empty($_POST[$key])) {
 			$errors[] = 'You need to fill in all fields.';
 			break 1;
 		}
 	}
 
 	$pass_data = user_data($session_user_id, 'password');
+	if (!is_array($pass_data)) $pass_data = array('password' => '');
 	//$pass_data['password'];
 	// $_POST['']
 
 	// .3 compatibility
 	if ($config['ServerEngine'] == 'TFS_03' && $config['salt'] === true) {
 		$salt = user_data($session_user_id, 'salt');
+		if (!is_array($salt)) $salt = array('salt' => '');
 	}
-	if (sha1($_POST['current_password']) === $pass_data['password'] || $config['ServerEngine'] == 'TFS_03' && $config['salt'] === true && sha1($salt['salt'].$_POST['current_password']) === $pass_data['password']) {
-		if (trim($_POST['new_password']) !== trim($_POST['new_password_again'])) {
+	$current_password = (string)($_POST['current_password'] ?? '');
+	$new_password = (string)($_POST['new_password'] ?? '');
+	$new_password_again = (string)($_POST['new_password_again'] ?? '');
+	if (sha1($current_password) === $pass_data['password'] || $config['ServerEngine'] == 'TFS_03' && $config['salt'] === true && sha1($salt['salt'].$current_password) === $pass_data['password']) {
+		if (trim($new_password) !== trim($new_password_again)) {
 			$errors[] = 'Your new passwords do not match.';
-		} else if (strlen($_POST['new_password']) < 6) {
+		} else if (strlen($new_password) < 6) {
 			$errors[] = 'Your new passwords must be at least 6 characters.';
-		} else if (strlen($_POST['new_password']) > 100) {
+		} else if (strlen($new_password) > 100) {
 			$errors[] = 'Your new passwords must be less than 100 characters.';
 		}
 	} else {

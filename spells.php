@@ -110,7 +110,7 @@ if ($spells) {
 	$itemServer = 'http://'.$config['shop']['imageServer'].'/';
 
 	// Filter spells by vocation
-	$getVoc = (isset($_GET['vocation'])) ? getValue($_GET['vocation']) : 'all';
+	$getVoc = (isset($_GET['vocation'])) ? getValue($_GET['vocation'] ?? null) : 'all';
 	if ($getVoc !== 'all') {
 		$getVoc = (int)$getVoc;
 		foreach ($types as $type)

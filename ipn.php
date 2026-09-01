@@ -52,7 +52,7 @@ function sanitize($data) {
 	return htmlentities(strip_tags(mysql_znote_escape_string($data)));
 }
 
-function VerifyPaypalIPN(array $IPN = null){
+function VerifyPaypalIPN(?array $IPN = null){
 	if(empty($IPN)){
 		$IPN = $_POST;
 	}
@@ -68,7 +68,6 @@ function VerifyPaypalIPN(array $IPN = null){
 	curl_setopt($cURL, CURLOPT_CAINFO, __DIR__ . '/engine/cert/cacert.pem');
 	curl_setopt($cURL, CURLOPT_URL, "https://{$PaypalHost}/cgi-bin/webscr");
 	curl_setopt($cURL, CURLOPT_ENCODING, 'gzip');
-	curl_setopt($cURL, CURLOPT_BINARYTRANSFER, true);
 	curl_setopt($cURL, CURLOPT_POST, true); // POST back
 	curl_setopt($cURL, CURLOPT_POSTFIELDS, $IPN); // the $IPN
 	curl_setopt($cURL, CURLOPT_HEADER, false);
@@ -107,15 +106,15 @@ if(!empty($_POST)){
 	$postdata.="&".http_build_query($_POST);
 }
 // Assign payment notification values to local variables
-$item_name        = $_POST['item_name'];
-$item_number      = $_POST['item_number'];
-$payment_status   = $_POST['payment_status'];
-$payment_amount   = $_POST['mc_gross'];
-$payment_currency = $_POST['mc_currency'];
-$txn_id           = getValue($_POST['txn_id']);
-$receiver_email   = getValue($_POST['receiver_email']);
-$payer_email      = getValue($_POST['payer_email']);
-$custom           = (int)$_POST['custom'];
+$item_name        = $_POST['item_name'] ?? null;
+$item_number      = $_POST['item_number'] ?? null;
+$payment_status   = $_POST['payment_status'] ?? null;
+$payment_amount   = $_POST['mc_gross'] ?? null;
+$payment_currency = $_POST['mc_currency'] ?? null;
+$txn_id           = getValue($_POST['txn_id'] ?? null);
+$receiver_email   = getValue($_POST['receiver_email'] ?? null);
+$payer_email      = getValue($_POST['payer_email'] ?? null);
+$custom           = (int)($_POST['custom'] ?? 0);
 
 $connectedIp = $_SERVER['REMOTE_ADDR'];
 mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '0', 'Connection from IP: $connectedIp', '0', '0', '0')");
@@ -128,7 +127,7 @@ if ($status) {
 
 		// Check that txn_id has not been previously processed
 		$txn_id_check = mysql_select_single("SELECT `txn_id` FROM `znote_paypal` WHERE `txn_id`='$txn_id'");
-		if ($txn_id_check !== true) {
+		if ($txn_id_check === false) {
 			// Check that receiver_email is your Primary PayPal email
 			if ($receiver_email == $paypal['email']) {
 
@@ -155,8 +154,12 @@ if ($status) {
 					$data = mysql_select_single("SELECT `points` AS `old_points` FROM `znote_accounts` WHERE `account_id`='$custom';");
 
 					// Give points to user
-					$new_points = $data['old_points'] + $paidPoints;
-					mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+					if (is_array($data)) {
+						$new_points = (int)$data['old_points'] + $paidPoints;
+						mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+					} else {
+						mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '$txn_id', 'ERROR: No znote_accounts row for account_id $custom', '0', '0', '0')");
+					}
 				}
 			}  else {
 				$pmail = $paypal['email'];

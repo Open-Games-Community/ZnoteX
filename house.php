@@ -9,7 +9,7 @@ if ($house !== false) {
 	$house_SQL = "
 		SELECT 
 			`h`.`id`, `h`.`owner`, `h`.`paid`, `h`.`name`, `h`.`rent`, `h`.`town_id`, 
-			`h`.`size`, `h`.`beds`, `h`.`bid`, `h`.`bid_end`, `h`.`last_bid`, `h`.`highest_bidder`, 
+			`h`.`size`, `h`.`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder'), 'h') . ", 
 			`p`.`name` AS `ownername`
 		FROM `houses` AS `h`
 		LEFT JOIN `players` AS `p`
@@ -18,6 +18,14 @@ if ($house !== false) {
 		WHERE `h`.`id`='{$house}';
 	";
 	$house = mysql_select_single($house_SQL);
+	if (!is_array($house)) {
+		?>
+		<h1>House not found.</h1>
+		<p>Go back to the <a href="houses.php">house list</a> and select a house for further details.</p>
+		<?php
+		include 'layout/overall/footer.php';
+		exit;
+	}
 	$minbid = $config['houseConfig']['minimumBidSQM'] * $house['size'];
 	if ($house['owner'] == 0) unset($house['ownername']);
 
@@ -45,7 +53,7 @@ if ($house !== false) {
 			WHERE `id`='$bid_char' LIMIT 1;
 		");
 
-		if (user_logged_in() === true && $player['account_id'] == $session_user_id) {
+		if (user_logged_in() === true && is_array($player) && $player['account_id'] == $session_user_id) {
 			// Does player have or need premium?
 			$premstatus = ($config['houseConfig']['requirePremium'] && $user_data['premdays']  == 0) ? false : true;
 			if ($premstatus) {
@@ -55,8 +63,8 @@ if ($house !== false) {
 					SELECT COUNT('id') AS `value` 
 					FROM `houses` 
 					WHERE (
-						(`highest_bidder`='{$bid_char}' AND `owner`='{$bid_char}') 
-						OR (`highest_bidder`='{$bid_char}') 
+						(`" . houseCol('highest_bidder') . "`='{$bid_char}' AND `owner`='{$bid_char}') 
+						OR (`" . houseCol('highest_bidder') . "`='{$bid_char}') 
 						OR (`owner`='{$bid_char}')
 					) 
 					AND `id`!='{$house['id']}' LIMIT 1;
@@ -86,16 +94,16 @@ if ($house !== false) {
 											mysql_update("
 												UPDATE `houses` 
 												SET 
-													`highest_bidder`='{$player['id']}', 
-													`bid`='{$bid_amount}', 
-													`last_bid`='{$lastbid}' 
+													`" . houseCol('highest_bidder') . "`='{$player['id']}', 
+													`" . houseCol('bid') . "`='{$bid_amount}', 
+													`" . houseCol('last_bid') . "`='{$lastbid}' 
 												WHERE `id`='{$house['id']}' LIMIT 1;
 											");
 
 											$house = mysql_select_single("
 												SELECT 
 													`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`, 
-													`beds`, `bid`, `bid_end`, `last_bid`, `highest_bidder` 
+													`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
 												FROM `houses` 
 												WHERE `id`='{$house['id']}';
 											");
@@ -108,17 +116,17 @@ if ($house !== false) {
 										mysql_update("
 											UPDATE `houses` 
 											SET 
-												`highest_bidder`='{$player['id']}', 
-												`bid`='{$bid_amount}', 
-												`last_bid`='{$lastbid}', 
-												`bid_end`='{$bidend}' 
+												`" . houseCol('highest_bidder') . "`='{$player['id']}', 
+												`" . houseCol('bid') . "`='{$bid_amount}', 
+												`" . houseCol('last_bid') . "`='{$lastbid}', 
+												`" . houseCol('bid_end') . "`='{$bidend}' 
 											WHERE `id`='{$house['id']}' LIMIT 1;
 										");
 
 										$house = mysql_select_single("
 											SELECT 
 												`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`, 
-												`beds`, `bid`, `bid_end`, `last_bid`, `highest_bidder` 
+												`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
 											FROM `houses` 
 											WHERE `id`='{$house['id']}';
 										");
@@ -137,14 +145,14 @@ if ($house !== false) {
 										
 										mysql_update("
 											UPDATE `houses` 
-											SET `last_bid`='$lastbid' 
+											SET `" . houseCol('last_bid') . "`='$lastbid' 
 											WHERE `id`='{$house['id']}' LIMIT 1;
 										");
 										
 										$house = mysql_select_single("
 											SELECT 
 												`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`, 
-												`beds`, `bid`, `bid_end`, `last_bid`, `highest_bidder` 
+												`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
 											FROM `houses` 
 											WHERE `id`='{$house['id']}';
 										");
@@ -187,8 +195,8 @@ if ($house !== false) {
 				SELECT COUNT('id') AS `value` 
 				FROM `houses` 
 				WHERE (
-					(`highest_bidder`='$bid_char' AND `owner`='$bid_char') 
-					OR (`highest_bidder`='$bid_char') 
+					(`" . houseCol('highest_bidder') . "`='$bid_char' AND `owner`='$bid_char') 
+					OR (`" . houseCol('highest_bidder') . "`='$bid_char') 
 					OR (`owner`='$bid_char')
 				) 
 				AND `id`!='{$house['id']}' LIMIT 1;

@@ -28,7 +28,7 @@ $response['version']['module'] = 1;
 	-Functions found in general.php
 		:When fetching GET or POST from parameters, ALWAYS use getValue($value)
 		:Etc if you want to fetch character name from url, do it like this:
-		$playername = getValue($_GET['name']);
+		$playername = getValue($_GET['name'] ?? null);
 		if ($playername !== false) {
 			// $playername either contains player name, or false if failed to fetch name from GET.
 		}

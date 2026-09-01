@@ -1,4 +1,3 @@
-
 <?php require_once 'engine/init.php'; include 'layout/overall/header.php';
 protect_page();
 error_reporting(E_ALL ^ E_NOTICE);
@@ -92,12 +91,12 @@ foreach($charData as $char) {
 	if ($char['guild'] > 0 && $char['guild_rank'] == 3) $leader = true;
 }
 if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
-	$admin_thread_delete = getValue($_POST['admin_thread_delete']);
-	$admin_thread_close = getValue($_POST['admin_thread_close']);
-	$admin_thread_open = getValue($_POST['admin_thread_open']);
-	$admin_thread_sticky = getValue($_POST['admin_thread_sticky']);
-	$admin_thread_unstick = getValue($_POST['admin_thread_unstick']);
-	$admin_thread_id = getValue($_POST['admin_thread_id']);
+	$admin_thread_delete = getValue($_POST['admin_thread_delete'] ?? null);
+	$admin_thread_close = getValue($_POST['admin_thread_close'] ?? null);
+	$admin_thread_open = getValue($_POST['admin_thread_open'] ?? null);
+	$admin_thread_sticky = getValue($_POST['admin_thread_sticky'] ?? null);
+	$admin_thread_unstick = getValue($_POST['admin_thread_unstick'] ?? null);
+	$admin_thread_id = getValue($_POST['admin_thread_id'] ?? null);
 
 	// delete thread
 	if ($admin_thread_delete !== false) {
@@ -183,31 +182,31 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 /////////////////
 // ADMIN FUNCT
 if ($admin && !empty($_POST)) {
-	$admin_post_id = getValue($_POST['admin_post_id']);
-	$admin_post_delete = getValue($_POST['admin_post_delete']);
+	$admin_post_id = getValue($_POST['admin_post_id'] ?? null);
+	$admin_post_delete = getValue($_POST['admin_post_delete'] ?? null);
 
-	$admin_category_delete = getValue($_POST['admin_category_delete']);
-	$admin_category_edit = getValue($_POST['admin_category_edit']);
-	$admin_category_id = getValue($_POST['admin_category_id']);
+	$admin_category_delete = getValue($_POST['admin_category_delete'] ?? null);
+	$admin_category_edit = getValue($_POST['admin_category_edit'] ?? null);
+	$admin_category_id = getValue($_POST['admin_category_id'] ?? null);
 
-	$admin_update_category = getValue($_POST['admin_update_category']);
-	$admin_category_name = getValue($_POST['admin_category_name']);
+	$admin_update_category = getValue($_POST['admin_update_category'] ?? null);
+	$admin_category_name = getValue($_POST['admin_category_name'] ?? null);
 
-	$admin_category_access = getValue($_POST['admin_category_access']);
-	$admin_category_closed = getValue($_POST['admin_category_closed']);
-	$admin_category_hidden = getValue($_POST['admin_category_hidden']);
-	$admin_category_guild_id = getValue($_POST['admin_category_guild_id']);
+	$admin_category_access = getValue($_POST['admin_category_access'] ?? null);
+	$admin_category_closed = getValue($_POST['admin_category_closed'] ?? null);
+	$admin_category_hidden = getValue($_POST['admin_category_hidden'] ?? null);
+	$admin_category_guild_id = getValue($_POST['admin_category_guild_id'] ?? null);
 
 	if ($admin_category_access === false) $admin_category_access = 0;
 	if ($admin_category_closed === false) $admin_category_closed = 0;
 	if ($admin_category_hidden === false) $admin_category_hidden = 0;
 	if ($admin_category_guild_id === false) $admin_category_guild_id = 0;
 
-	$admin_board_create_name = getValue($_POST['admin_board_create_name']);
-	$admin_board_create_access = getValue($_POST['admin_board_create_access']);
-	$admin_board_create_closed = getValue($_POST['admin_board_create_closed']);
-	$admin_board_create_hidden = getValue($_POST['admin_board_create_hidden']);
-	$admin_board_create_guild_id = getValue($_POST['admin_board_create_guild_id']);
+	$admin_board_create_name = getValue($_POST['admin_board_create_name'] ?? null);
+	$admin_board_create_access = getValue($_POST['admin_board_create_access'] ?? null);
+	$admin_board_create_closed = getValue($_POST['admin_board_create_closed'] ?? null);
+	$admin_board_create_hidden = getValue($_POST['admin_board_create_hidden'] ?? null);
+	$admin_board_create_guild_id = getValue($_POST['admin_board_create_guild_id'] ?? null);
 
 	if ($admin_board_create_access === false) $admin_board_create_access = 0;
 	if ($admin_board_create_closed === false) $admin_board_create_closed = 0;
@@ -350,34 +349,34 @@ if ($admin && !empty($_POST)) {
 
 // Fetching get values
 if (!empty($_GET)) {
-	$getCat = getValue($_GET['cat']);
-	$getForum = getValue($_GET['forum']);
-	$getThread = getValue($_GET['thread']);
+	$getCat = getValue($_GET['cat'] ?? null);
+	$getForum = getValue($_GET['forum'] ?? null);
+	$getThread = getValue($_GET['thread'] ?? null);
 
-	$new_thread_category = getValue($_POST['new_thread_category']);
-	$new_thread_cid = getValue($_POST['new_thread_cid']);
+	$new_thread_category = getValue($_POST['new_thread_category'] ?? null);
+	$new_thread_cid = getValue($_POST['new_thread_cid'] ?? null);
 
-	$create_thread_cid = getValue($_POST['create_thread_cid']);
-	$create_thread_title = getValue($_POST['create_thread_title']);
-	$create_thread_text = getValue($_POST['create_thread_text']);
-	$create_thread_category = getValue($_POST['create_thread_category']);
+	$create_thread_cid = getValue($_POST['create_thread_cid'] ?? null);
+	$create_thread_title = getValue($_POST['create_thread_title'] ?? null);
+	$create_thread_text = getValue($_POST['create_thread_text'] ?? null);
+	$create_thread_category = getValue($_POST['create_thread_category'] ?? null);
 
-	$update_thread_id = getValue($_POST['update_thread_id']);
-	$update_thread_title = getValue($_POST['update_thread_title']);
-	$update_thread_text = getValue($_POST['update_thread_text']);
+	$update_thread_id = getValue($_POST['update_thread_id'] ?? null);
+	$update_thread_title = getValue($_POST['update_thread_title'] ?? null);
+	$update_thread_text = getValue($_POST['update_thread_text'] ?? null);
 
-	$edit_thread = getValue($_POST['edit_thread']);
-	$edit_thread_id = getValue($_POST['edit_thread_id']);
+	$edit_thread = getValue($_POST['edit_thread'] ?? null);
+	$edit_thread_id = getValue($_POST['edit_thread_id'] ?? null);
 
-	$reply_thread = getValue($_POST['reply_thread']);
-	$reply_text = getValue($_POST['reply_text']);
-	$reply_cid = getValue($_POST['reply_cid']);
+	$reply_thread = getValue($_POST['reply_thread'] ?? null);
+	$reply_text = getValue($_POST['reply_text'] ?? null);
+	$reply_cid = getValue($_POST['reply_cid'] ?? null);
 
-	$edit_post = getValue($_POST['edit_post']);
-	$edit_post_id = getValue($_POST['edit_post_id']);
+	$edit_post = getValue($_POST['edit_post'] ?? null);
+	$edit_post_id = getValue($_POST['edit_post_id'] ?? null);
 
-	$update_post_id = getValue($_POST['update_post_id']);
-	$update_post_text = getValue($_POST['update_post_text']);
+	$update_post_id = getValue($_POST['update_post_id'] ?? null);
+	$update_post_text = getValue($_POST['update_post_text'] ?? null);
 
 	/////////////////////
 	// When you are POSTING in an existing thread
@@ -389,7 +388,8 @@ if (!empty($_GET)) {
 
 			$thread = mysql_select_single("SELECT `closed` FROM `znote_forum_threads` WHERE `id`='$reply_thread' LIMIT 1;");
 
-			if ($thread['closed'] == 1 && $admin === false) $access = false;
+			if (!is_array($thread) || !isset($charData[$reply_cid])) $access = false;
+			else if ($thread['closed'] == 1 && $admin === false) $access = false;
 			else $access = true;
 
 			if ($access) {
@@ -451,6 +451,7 @@ if (!empty($_GET)) {
 	if ($update_post_id !== false && $update_post_text !== false) {
 		// Fetch the post data
 		$post = mysql_select_single("SELECT `id`, `player_name`, `text`, `thread_id` FROM `znote_forum_posts` WHERE `id`='$update_post_id' LIMIT 1;");
+		if (!is_array($post)) $post = array('id' => 0, 'player_name' => '', 'text' => '', 'thread_id' => 0);
 		$thread = mysql_select_single("SELECT `closed` FROM `znote_forum_threads` WHERE `id`='". $post['thread_id'] ."' LIMIT 1;");
 
 		// Verify access
@@ -470,6 +471,7 @@ if (!empty($_GET)) {
 	if ($update_thread_id !== false && $update_thread_title !== false && $update_thread_text !== false) {
 		// Fetch the thread data
 		$thread = mysql_select_single("SELECT `id`, `player_name`, `title`, `text`, `closed` FROM `znote_forum_threads` WHERE `id`='$update_thread_id' LIMIT 1;");
+		if (!is_array($thread)) $thread = array('id' => 0, 'player_name' => '', 'title' => '', 'text' => '', 'closed' => 0);
 
 		// Verify access
 		$access = PlayerHaveAccess($yourChars, $thread['player_name']);
@@ -487,7 +489,9 @@ if (!empty($_GET)) {
 	if ($edit_post_id !== false && $edit_post !== false) {
 		// Fetch the post data
 		$post = mysql_select_single("SELECT `id`, `thread_id`, `text`, `player_name` FROM `znote_forum_posts` WHERE `id`='$edit_post_id' LIMIT 1;");
+		if (!is_array($post)) $post = array('id' => 0, 'thread_id' => 0, 'text' => '', 'player_name' => '');
 		$thread = mysql_select_single("SELECT `closed` FROM `znote_forum_threads` WHERE `id`='". $post['thread_id'] ."' LIMIT 1;");
+		if (!is_array($thread)) $thread = array('closed' => 0);
 		// Verify access
 		$access = PlayerHaveAccess($yourChars, $post['player_name']);
 		if ($thread['closed'] == 1 && $admin === false) $access = false;
@@ -758,8 +762,8 @@ if (!empty($_GET)) {
 			<p>Thread is unavailable for you, or do not exist any more.
 				<?php
 				if ($_GET['cat'] > 0 && !empty($_GET['forum'])) {
-					$tmpCat = getValue($_GET['cat']);
-					$tmpCatName = getValue($_GET['forum']);
+					$tmpCat = getValue($_GET['cat'] ?? null);
+					$tmpCatName = getValue($_GET['forum'] ?? null);
 					?>
 					<br><a href="forum.php?forum=<?php echo $tmpCatName; ?>&cat=<?php echo $tmpCat; ?>">Go back to: <?php echo $tmpCatName; ?></a></p>
 					<?php
@@ -911,7 +915,7 @@ if (!empty($_GET)) {
 		"SELECT `id`, `name`, `access`, `closed`, `hidden`, `guild_id` FROM `znote_forum` WHERE `access`<='$yourAccess' ORDER BY `name`;");
 		else $categories = mysql_select_multi("SELECT `id`, `name`, `access`, `closed`, `hidden`, `guild_id` FROM `znote_forum` ORDER BY `name`;");
 
-	$guildboard = false;
+	$guildboard = array();
 	?>
 	<table class="znoteTable table table-striped table-hover" id="forumCategoryTable">
 		<tr class="yellow">
@@ -992,7 +996,7 @@ if (!empty($_GET)) {
 	</table>
 	<hr class="bighr">
 	<?php
-	if ($guildboard !== false && $guild || $guildboard !== false && $admin) {
+	if (!empty($guildboard) && $guild || !empty($guildboard) && $admin) {
 		//
 		?>
 		<table class="table table-striped table-hover znoteTable" id="forumCategoryTable">

@@ -5,7 +5,7 @@ if ($config['log_ip']) {
 }
 
 if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
-	$name = getValue($_GET['name']);
+	$name = getValue($_GET['name'] ?? null);
 	$user_id = user_character_exist($name);
 
 	if ($user_id !== false) {

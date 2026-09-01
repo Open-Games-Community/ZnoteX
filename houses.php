@@ -73,7 +73,7 @@ if ($cache->hasExpired()) {
 	$houses = mysql_select_multi("
 		SELECT 
 			`id`, `owner`, `paid`, `warnings`, `name`, `rent`, `town_id`, 
-			`size`, `beds`, `bid`, `bid_end`, `last_bid`, `highest_bidder` 
+			`size`, `beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
 		FROM `houses` 
 		ORDER BY {$order} {$type};
 	");

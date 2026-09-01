@@ -1,34 +1,49 @@
 <?php
-/* Returns a PHP array $id => 'name'
-	 $items = getItemList();
-	 echo $items[2160]; // Returns 'Crystal Coin'
-*/
 
-function getItemList() {
-	return parseItems();
+function getItemList(): array {
+    return parseItems();
 }
 
-function getItemById($id) {
-	$items = parseItems();
-	if(isset($items[$id])) {
-		return $items[$id];
-	}
-	return false;
+function getItemById(int $id): string|false {
+    static $items = null;
+
+    if ($items === null) {
+        $items = parseItems();
+    }
+
+    return $items[$id] ?? false;
 }
 
-function parseItems() {
-	$file = Config('server_path') . '/data/items/items.xml';
-	if (file_exists($file)) {
-		$itemList = array();
-		$items = simplexml_load_file($file);
-		// Create our parsed item list
-		foreach ($items->children() as $item) {
-			if ($item['id'] && $item['name'] != NULL) {
-				$itemList[(int)$item['id']] = (string)$item['name'];
-			}
-		}
-		return $itemList;
-	}
-	return $file;
+function parseItems(): array {
+    // ZnoteAAC compatible
+    $serverPath = function_exists('Config')
+        ? Config('server_path')
+        : ($GLOBALS['config']['server_path'] ?? null);
+
+    if (!$serverPath) {
+        return [];
+    }
+
+    $file = $serverPath . '/data/items/items.xml';
+
+    if (!file_exists($file)) {
+        return [];
+    }
+
+    libxml_use_internal_errors(true);
+    $xml = simplexml_load_file($file);
+
+    if ($xml === false) {
+        return [];
+    }
+
+    $itemList = [];
+
+    foreach ($xml->children() as $item) {
+        if (isset($item['id'], $item['name'])) {
+            $itemList[(int)$item['id']] = (string)$item['name'];
+        }
+    }
+
+    return $itemList;
 }
-?>

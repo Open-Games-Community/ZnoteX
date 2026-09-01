@@ -1,36 +1,53 @@
 <!-- RIGHT PANE -->
 <div class="pull-right rightPane">
-	<?php
-	if (user_logged_in() === true) {
-		include 'layout/widgets/myaccount.php';
-		if (is_admin($user_data)) include 'layout/widgets/admin.php';
-	} else {
-		include 'layout/widgets/login.php';
+<?php
+
+if (user_logged_in() === true) {
+
+	include_once 'layout/widgets/myaccount.php';
+
+	if (isset($user_data) && is_admin($user_data)) {
+		include_once 'layout/widgets/admin.php';
 	}
-	if ($config['otservers_eu_voting']['enabled']) include 'layout/widgets/vote.php';
-	include 'layout/widgets/charactersearch.php';
-	include 'layout/widgets/topplayers.php';
-	include 'layout/widgets/highscore.php';
-	if ($config['powergamers']['enabled']) include 'layout/widgets/powergamers.php';
-	include 'layout/widgets/serverinfo.php';
-	if ($config['ServerEngine'] !== 'TFS_02') include 'layout/widgets/houses.php';
-	if ($follow["enabled"]): ?>
-		<div class="well">
-			<div class="header">
-				Follow Us
-			</div>
-			<div class="body">
-				<table class="smedia centralizeContent">
-					<tr>
-						<td><a href="<?php echo $follow["facebook"]; ?>" target="_blank"><i class="fa fa-facebook"></i> </a></td>
-						<td><a href="<?php echo $follow["twitter"]; ?>"  target="_blank"><i class="fa fa-twitter"></i> </a></td>
-						<td><a href="<?php echo $follow["youtube"]; ?>"  target="_blank"><i class="fa fa-youtube"></i> </a></td>
-						<td><a href="<?php echo $follow["twitch"]; ?>"   target="_blank"><i class="fa fa-twitch"></i> </a></td>
-					</tr>
-				</table>
-			</div>
+
+} else {
+	include_once 'layout/widgets/login.php';
+}
+
+if (!empty($config['otservers_eu_voting']['enabled'])) {
+	include_once 'layout/widgets/vote.php';
+}
+
+include_once 'layout/widgets/charactersearch.php';
+include_once 'layout/widgets/topplayers.php';
+include_once 'layout/widgets/highscore.php';
+
+if (!empty($config['powergamers']['enabled'])) {
+	include_once 'layout/widgets/powergamers.php';
+}
+
+include_once 'layout/widgets/serverinfo.php';
+
+if (!empty($config['ServerEngine']) && $config['ServerEngine'] !== 'TFS_02') {
+	include_once 'layout/widgets/houses.php';
+}
+
+/* FOLLOW BLOCK */
+if (!empty($follow['enabled'])): ?>
+	<div class="well">
+		<div class="header">Follow Us</div>
+		<div class="body">
+			<table class="smedia centralizeContent">
+				<tr>
+					<td><a href="<?= htmlspecialchars($follow['facebook'] ?? '#') ?>" target="_blank"><i class="fa fa-facebook"></i></a></td>
+					<td><a href="<?= htmlspecialchars($follow['twitter']  ?? '#') ?>" target="_blank"><i class="fa fa-twitter"></i></a></td>
+					<td><a href="<?= htmlspecialchars($follow['youtube']  ?? '#') ?>" target="_blank"><i class="fa fa-youtube"></i></a></td>
+					<td><a href="<?= htmlspecialchars($follow['twitch']   ?? '#') ?>" target="_blank"><i class="fa fa-twitch"></i></a></td>
+				</tr>
+			</table>
 		</div>
-	<?php endif;
+	</div>
+<?php endif; 
 	/*
 		<div class="well">
 			<div class="header">
@@ -68,6 +85,7 @@
 			</div>
 		</div>
 	*/
-	?>
+?>
+
 </div>
 <!-- RIGHT PANE END -->

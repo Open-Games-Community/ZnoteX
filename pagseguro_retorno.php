@@ -92,9 +92,13 @@
 		return trim($Response);
 	}
 
-	$transactionCode = getValue($_GET['transaction']);
+	$transactionCode = getValue($_GET['transaction'] ?? null);
 	$rawTransaction = VerifyPagseguroIPN($transactionCode);
-	$transaction = simplexml_load_string($rawTransaction);
+	$transaction = simplexml_load_string((string)$rawTransaction);
+	if ($transaction === false || !isset($transaction->items->item[0])) {
+		header('Location: shop.php');
+		exit;
+	}
 
 	$transactionStatus = (int) $transaction->status;
 	$completed = ($transactionStatus != 7) ? 0 : 1;

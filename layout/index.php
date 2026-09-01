@@ -95,16 +95,27 @@
 				<div class="container">
 					<div class="pull-left">
 						<ul>
-							<?php foreach ($menu_items as $category => $items){ ?>
-								<li><a><i class="fa fa-<?=$items["fontIcon"]?>"></i> <?=$category?></a>
-									<ul>
-										<?php foreach ($items as $item => $properties){
-											if($item == "fontIcon") continue; ?>
-											<li><a href="<?=($properties["isPage"] ? $url_param.$properties[0]:$properties[0])?>"><?=$properties[0]?></a> </li>
-										<?php } ?>
-									</ul>
-								</li>
-							<?php } ?>
+						<?php foreach ($menu_items as $category => $items): ?>
+							<?php $icon = $items['fontIcon'] ?? 'circle'; ?>
+							<li>
+								<a><i class="fa fa-<?= htmlspecialchars($icon) ?>"></i> <?= htmlspecialchars($category) ?></a>
+								<ul>
+									<?php foreach ($items as $item => $properties): ?>
+										<?php if ($item === 'fontIcon') continue; ?>
+										<?php
+											$target = $properties[0] ?? '';
+											$isPage = $properties['isPage'] ?? true;
+											$href = $isPage ? ($url_param . $target) : $target;
+										?>
+										<li>
+											<a href="<?= htmlspecialchars($href) ?>">
+												<?= htmlspecialchars($item) ?>
+											</a>
+										</li>
+									<?php endforeach; ?>
+								</ul>
+							</li>
+						<?php endforeach; ?>
 						</ul>
 					</div>
 					<div class="pull-right">
@@ -170,8 +181,8 @@
 						</div>
 						<div class="body">
 							<form class="loginForm" action="/?subtopic=accountmanagement" method="post">
-								<input type="password" name="accountLogin" placeholder="•••••••">
-								<input type="password" name="accountLogin" placeholder="••••••••">
+								<input type="text" name="accountLogin" placeholder="Account name">
+								<input type="password" name="accountPassword" placeholder="••••••••">
 								<button type="submit" name="submit">continue</button>
 							</form>
 						</div>
@@ -184,10 +195,10 @@
 						<div class="body">
 							<table class="smedia centralizeContent">
 								<tr>
-									<td><a href="<?=$follow["facebook"]?>" target="_blank"><i class="fa fa-facebook"></i> </a></td>
-									<td><a href="<?=$follow["twitter"]?>" target="_blank"><i class="fa fa-twitter"></i> </a></td>
-									<td><a href="<?=$follow["youtube"]?>" target="_blank"><i class="fa fa-youtube"></i> </a></td>
-									<td><a href="<?=$follow["twitch"]?>" target="_blank"><i class="fa fa-twitch"></i> </a></td>
+									<td><a href="<?= htmlspecialchars($follow['facebook'] ?? '#') ?>" target="_blank"><i class="fa fa-facebook"></i></a></td>
+									<td><a href="<?= htmlspecialchars($follow['twitter']  ?? '#') ?>" target="_blank"><i class="fa fa-twitter"></i></a></td>
+									<td><a href="<?= htmlspecialchars($follow['youtube']  ?? '#') ?>" target="_blank"><i class="fa fa-youtube"></i></a></td>
+									<td><a href="<?= htmlspecialchars($follow['twitch']   ?? '#') ?>" target="_blank"><i class="fa fa-twitch"></i></a></td>
 								</tr>
 							</table>
 

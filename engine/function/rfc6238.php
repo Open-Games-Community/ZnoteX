@@ -60,7 +60,7 @@ class Base32Static {
 	}
 
 	public static function decode($input) {
-		if(empty($input)) return;
+		if (empty($input)) return false;
 
 		$paddingCharCount = substr_count($input, self::$map[32]);
 		$allowedValues = array(6,4,3,1,0);
@@ -82,7 +82,7 @@ class Base32Static {
 			if(!in_array($input[$i], self::$map)) return false;
 
 			for($j=0; $j < 8; $j++) {
-				$x .= str_pad(base_convert(@self::$flippedMap[@$input[$i + $j]], 10, 2), 5, '0', STR_PAD_LEFT);
+				$x .= str_pad(base_convert(self::$flippedMap[$input[$i + $j] ?? ''] ?? '0', 10, 2), 5, '0', STR_PAD_LEFT);
 			}
 
 			$eightBits = str_split($x, 8);
@@ -109,13 +109,16 @@ class TokenAuth6238 {
 	 */
 	public static function verify($secretkey, $code, $rangein30s = 3) {
 		$key = base32static::decode($secretkey);
-		$unixtimestamp = time()/30;
+		$unixtimestamp = intdiv(time(), 30);
 
 		for($i=-($rangein30s); $i<=$rangein30s; $i++) {
 			$checktime = (int)($unixtimestamp+$i);
 			$thiskey = self::oath_hotp($key, $checktime);
 
-			if ((int)$code == self::oath_truncate($thiskey,6)) {
+			if (hash_equals(
+				str_pad((string)$code, 6, '0', STR_PAD_LEFT),
+				str_pad((string)self::oath_truncate($thiskey, 6), 6, '0', STR_PAD_LEFT)
+			)) {
 				return true;
 			}
 
@@ -127,7 +130,7 @@ class TokenAuth6238 {
 	public static function getTokenCode($secretkey,$rangein30s = 3) {
 		$result = "";
 		$key = base32static::decode($secretkey);
-		$unixtimestamp = time()/30;
+		$unixtimestamp = intdiv(time(), 30);
 
 		for($i=-($rangein30s); $i<=$rangein30s; $i++) {
 			$checktime = (int)($unixtimestamp+$i);
@@ -145,7 +148,7 @@ class TokenAuth6238 {
 		$key = base32static::decode($secretkey);
 		print "Key(base 32 decode): $key <br/>";
 
-		$unixtimestamp = time()/30;
+		$unixtimestamp = intdiv(time(), 30);
 		print "UnixTimeStamp (time()/30): $unixtimestamp <br/>";
 
 		for($i=-($rangein30s); $i<=$rangein30s; $i++) {
@@ -163,19 +166,23 @@ class TokenAuth6238 {
 	}
 
 	public static function getBarCodeUrl($username, $domain, $secretkey, $issuer) {
-		$url = "https://chart.apis.google.com/chart";
-		$url = $url."?chs=300x300&chld=M|0&cht=qr&chl=otpauth://totp/";
-		$url = $url.$username . "@" . $domain . "%3Fsecret%3D" . $secretkey . '%26issuer%3D' . rawurlencode($issuer);
-		return $url;
+		$label = rawurlencode($username . '@' . $domain);
+		$issuer = rawurlencode($issuer);
+
+		$otpauth = "otpauth://totp/{$label}?secret={$secretkey}&issuer={$issuer}";
+
+		return 'https://api.qrserver.com/v1/create-qr-code/?' . http_build_query([
+			'size' => '300x300',
+			'data' => $otpauth
+		]);
 	}
 
 	public static function generateRandomClue($length = 16) {
 		$b32 = "234567QWERTYUIOPASDFGHJKLZXCVBNM";
 		$s = "";
-
-		for ($i = 0; $i < $length; $i++)
-			$s .= $b32[rand(0,31)];
-
+		for ($i = 0; $i < $length; $i++) {
+			$s .= $b32[random_int(0, 31)];
+		}
 		return $s;
 	}
 

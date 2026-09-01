@@ -18,7 +18,8 @@ function SendGet($getArray, $location = 'error.php') {
 	$count = 0;
 	foreach ($getArray as $getKey => $getValue) {
 		if ($count > 0) $string .= '&';
-		$string .= "{$getKey}={$getValue}";
+		header('Location: ' . $location . '?' . http_build_query($getArray));
+		exit;
 	}
 	header("Location: {$location}?{$string}");
 	exit();
@@ -65,16 +66,8 @@ function accountAccess($accountId, $TFS) {
 	//
 }
 // Generate recovery key
-function generate_recovery_key($lenght) {
-	$lenght = (int)$lenght;
-	$tmp = rand(1000, 9000);
-	$tmp += time();
-	$tmp = sha1($tmp);
-
-	$results = '';
-	for ($i = 0; $i < $lenght; $i++) $results = $results.''.$tmp[$i];
-
-	return $results;
+function generate_recovery_key($length) {
+    return substr(bin2hex(random_bytes(32)), 0, (int)$length);
 }
 
 // Calculate discount
@@ -170,17 +163,12 @@ function something () {
 
 // Secret token
 function create_token() {
-	echo 'Checking whether to create token or not<br />';
-	#if (empty($_SESSION['token'])) {
-		echo 'Creating token<br />';
-		$token = sha1(uniqid(time(), true));
-		$token2 = $token;
-		var_dump($token, $token2);
-		$_SESSION['token'] = $token2;
-	#}
-
-	echo "<input type=\"hidden\" name=\"token\" value=\"". $_SESSION['token'] ."\" />";
+    if (empty($_SESSION['token'])) {
+        $_SESSION['token'] = bin2hex(random_bytes(32));
+    }
+    echo '<input type="hidden" name="token" value="'.$_SESSION['token'].'">';
 }
+
 function reset_token() {
 	echo 'Reseting token<br />';
 	unset($_SESSION['token']);
@@ -204,7 +192,7 @@ function minute_to_hour($minutes) {
 
 // 1 hour to 60 minutes
 function hour_to_minute($hours) {
-	return ($hour * 60);
+    return $hours * 60;
 }
 
 // seconds / 60 / 60 = hours.
@@ -225,7 +213,8 @@ function remaining_seconds_to_clock($seconds) {
  * @return string|boolean
  */
 function validate_name($string) {
-	return (str_word_count(trim($string)) > config('maxW')) ? false : trim($string);
+	$max = config('maxW') ?? 3;
+	return (str_word_count(trim($string)) > $max) ? false : trim($string);
 }
 
 // Checks if an IPv4(or localhost IPv6) address is valid
@@ -245,7 +234,68 @@ function validate_ip($ip) {
 // Fetch a config value. Etc config('vocations') will return vocation array from config.php.
 function config($value) {
 	global $config;
-	return $config[$value];
+	return $config[$value] ?? null;
+}
+
+function serverEngineReal() {
+	global $config;
+	return $config['ServerEngineReal'] ?? ($config['ServerEngine'] ?? 'TFS_10');
+}
+
+function engineIsCanary() {
+	return serverEngineReal() === 'CANARY';
+}
+
+function engineIsTFS16() {
+	return serverEngineReal() === 'TFS_16';
+}
+
+function accountField($field) {
+	if (engineIsCanary()) {
+		if ($field === 'premium_ends_at') return '(`lastday` + (`premdays` * 86400)) AS `premium_ends_at`';
+		if ($field === 'secret') return 'NULL AS `secret`';
+	}
+	return '`' . $field . '`';
+}
+
+function accountFieldList(array $fields) {
+	return implode(', ', array_map('accountField', $fields));
+}
+
+function houseCol($name) {
+	if (!engineIsCanary()) return $name;
+	$map = array(
+		'bid'            => 'internal_bid',
+		'bid_end'        => 'bid_end_date',
+		'last_bid'       => 'highest_bid',
+		'highest_bidder' => 'bidder',
+	);
+	return $map[$name] ?? $name;
+}
+
+function houseSelect(array $fields, $prefix = '') {
+	$p = ($prefix !== '') ? '`' . $prefix . '`.' : '';
+	$out = array();
+	foreach ($fields as $f) {
+		$phys = houseCol($f);
+		$out[] = ($phys === $f) ? $p . '`' . $f . '`' : $p . '`' . $phys . '` AS `' . $f . '`';
+	}
+	return implode(', ', $out);
+}
+
+function sqlIpWrite($ipLong) {
+	if (engineIsTFS16()) {
+		return "INET6_ATON('" . mysql_znote_escape_string(long2ip((int)$ipLong)) . "')";
+	}
+	return "'" . (int)$ipLong . "'";
+}
+
+function sqlIpSelect($column, $alias, $prefix = '') {
+	$p = ($prefix !== '') ? '`' . $prefix . '`.' : '';
+	if (engineIsTFS16()) {
+		return 'INET_ATON(INET6_NTOA(' . $p . '`' . $column . '`)) AS `' . $alias . '`';
+	}
+	return $p . '`' . $column . '` AS `' . $alias . '`';
 }
 
 // Some functions uses several configurations from config.php, so it sounds
@@ -291,11 +341,7 @@ function getIPLong() {
 
 // Deprecated, just use count($array) instead.
 function array_length($ar) {
-	$r = 1;
-	foreach($ar as $a) {
-		$r++;
-	}
-	return $r;
+    return count($ar);
 }
 // Parameter: level, returns experience for that level from an experience table.
 function level_to_experience($level) {
@@ -339,8 +385,8 @@ function vocation_name_to_id($name) {
 
 // Parameter: players.group_id. Returns: Configured group name.
 function group_id_to_name($id) {
-	$positions = config('ingame_positions');
-	return ($positions[$id] >= 0) ? $positions[$id] : false;
+    $positions = config('ingame_positions');
+    return $positions[$id] ?? false;
 }
 
 function gender_exist($gender) {
@@ -353,19 +399,19 @@ function gender_exist($gender) {
 }
 
 function skillid_to_name($skillid) {
-	$skillname = array(
-		0 => 'fist fighting',
-		1 => 'club fighting',
-		2 => 'sword fighting',
-		3 => 'axe fighting',
-		4 => 'distance fighting',
-		5 => 'shielding',
-		6 => 'fishing',
-		7 => 'experience', // Hardcoded, does not actually exist in database as a skillid.
-		8 => 'magic level' // Hardcoded, does not actually exist in database as a skillid.
-	);
+    $skillname = [
+        0 => 'fist fighting',
+        1 => 'club fighting',
+        2 => 'sword fighting',
+        3 => 'axe fighting',
+        4 => 'distance fighting',
+        5 => 'shielding',
+        6 => 'fishing',
+        7 => 'experience',
+        8 => 'magic level'
+    ];
 
-	return ($skillname[$skillid] >= 0) ? $skillname[$skillid] : false;
+    return $skillname[$skillid] ?? false;
 }
 
 // Parameter: players.town_id. Returns: Configured town name.
@@ -374,21 +420,23 @@ function town_id_to_name($id) {
 	return (array_key_exists($id, $towns)) ? $towns[$id] : 'Missing Town';
 }
 
-// Unless you have an internal mail server then mail sending will not be supported in this version.
+// On this version we included From, because without that nowdays the email is classed directly as spam, using a From prevents that.
 function email($to, $subject, $body) {
-	mail($to, $subject, $body, 'From: TEST');
+	$headers = "From: noreply@znoteaac.com\r\nContent-Type: text/plain; charset=UTF-8";
+	mail($to, $subject, $body, $headers);
 }
 
 function logged_in_redirect() {
 	if (user_logged_in() === true) {
 		header('Location: myaccount.php');
+		exit;
 	}
 }
 
 function protect_page() {
 	if (user_logged_in() === false) {
 		header('Location: protected.php');
-		exit();
+		exit;
 	}
 }
 
@@ -404,10 +452,11 @@ function admin_only($user_data) {
 }
 
 function is_admin($user_data) {
+	if (!is_array($user_data)) return false;
 	if (config('ServerEngine') === 'OTHIRE')
-		return in_array($user_data['id'], config('page_admin_access')) ? true : false;
+		return in_array($user_data['id'] ?? null, config('page_admin_access')) ? true : false;
 	else
-		return in_array($user_data['name'], config('page_admin_access')) ? true : false;
+		return in_array($user_data['name'] ?? null, config('page_admin_access')) ? true : false;
 }
 
 function array_sanitize(&$item) {
@@ -415,7 +464,7 @@ function array_sanitize(&$item) {
 }
 
 function sanitize($data) {
-	return htmlentities(strip_tags(mysql_znote_escape_string($data)));
+    return htmlspecialchars(strip_tags((string)($data ?? '')), ENT_QUOTES, 'UTF-8');
 }
 
 function output_errors($errors) {
@@ -425,7 +474,9 @@ function output_errors($errors) {
 // Resize images and create image
 function resize_imagex($file, $width, $height) {
 	list($w, $h) = getimagesize($file['tmp']);
-
+	if (!function_exists('imagecreatefromstring')) {
+		return false;
+	}
 	$ratio = max($width/$w, $height/$h);
 	$h = ceil($height / $ratio);
 	$x = ($w - $width / $ratio) / 2;
@@ -464,41 +515,35 @@ function check_image($image) {
 
 	if ($image_data['type'] !== 'image/gif') {
 		header('Location: guilds.php?error=Only gif images are accepted, you uploaded:['.$image_data['type'].'].&name='. $_GET['name']);
-		exit();
+		exit;
 	}
 
 	$check = getimagesize($image_data['tmp']);
 	if (!$check) {
 		header('Location: guilds.php?error=Uploaded image is invalid.&name='. $_GET['name']);
-		exit();
+		exit;
 	}
 
 	if ($check['mime'] !== 'image/gif') {
 		header('Location: guilds.php?error=Only gif images accepted, you uploaded:['.$check['mime'].'].&name='. $_GET['name']);
-		exit();
+		exit;
 	}
 	
 	$path_info = pathinfo($image_data['name']);
 	if ($path_info['extension'] !== 'gif') {
 		header('Location: guilds.php?error=Only gif images accepted, you uploaded:['.$path_info['extension'].'].&name='. $_GET['name']);
-		exit();
+		exit;
 	}
 	
 	// Resize image
 	if (resize_imagex($image_data, 100, 100)) {
 		header('Location: guilds.php?name='. $_GET['name']);
-		exit();
+		exit;
 	}
 }
 
 function generateRandomString($length = 16) {
-	$characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-	$charactersLength = strlen($characters);
-	$randomString = '';
-	for ($i = 0; $i < $length; $i++) {
-		$randomString .= $characters[rand(0, $charactersLength - 1)];
-	}
-	return $randomString;
+    return substr(strtoupper(bin2hex(random_bytes($length))), 0, $length);
 }
 
 function verifyGoogleReCaptcha($postResponse = null) {

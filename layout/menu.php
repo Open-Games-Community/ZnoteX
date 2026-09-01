@@ -22,7 +22,7 @@
 						<li><a href="forum.php">Forum</a> </li>
 						<li><a href="guilds.php">Guilds</a> </li>
 						<li><a href="highscores.php">Highscores</a> </li>
-						<?php if ($config['powergamers']['enabled']): ?><li><a href="powergamers.php">Powergamers</a> </li><?php endif; ?>
+						<?php if (!empty($config['powergamers']['enabled'])): ?><li><a href="powergamers.php">Powergamers</a> </li><?php endif; ?>
 						<li><a href="houses.php">Houses</a> </li>
 						<li><a href="killers.php">Killstatistics</a> </li>
 						<li><a href="deaths.php">Latest deaths</a> </li>
@@ -31,7 +31,7 @@
 				</li>
 				<li><a href="serverinfo.php"><i class="fa fa-book"></i> Library</a>
 					<ul>
-						<?php if ($config['items'] == true): ?>
+						<?php if (!empty($config['items'])): ?>
 							<li><a href="items.php">Items</a> </li>
 						<?php endif; ?>
 						<li><a href="serverinfo.php">Serverinfo</a> </li>
@@ -47,7 +47,7 @@
 				<li><a href="shop.php"><i class="fa fa-shopping-cart"></i> Shop</a>
 					<ul>
 						<li><a href="buypoints.php">Buy points</a> </li>
-						<?php if ($config['shop_auction']['characterAuction']): ?>
+						<?php if (!empty($config['shop_auction']['characterAuction'])): ?>
 							<li><a href="auctionChar.php">Character Auction</a> </li>
 						<?php endif; ?>
 						<li><a href="shop.php">Shop</a> </li>
