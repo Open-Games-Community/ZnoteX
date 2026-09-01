@@ -6,7 +6,7 @@
 
 Version 2.0.0 · Maintained by [Open Games Community](https://opengamescommunity.com)
 
-[Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Templates & plugins](https://otland.net/forums/website-applications.118/)
+[Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Templates & plugins](#)
 
 </div>
 
