@@ -1,6 +1,6 @@
 <div align="center">
 
-# Znote AAC
+# ZnoteX
 
 **A complete website for your Open Tibia server.**
 
@@ -14,12 +14,12 @@ Version 2.0.0 · Maintained by [Open Games Community](https://opengamescommunity
 
 ## About
 
-Znote AAC is a full automatic account creator (AAC) and website for Open Tibia servers — account
+ZnoteX is a full automatic account creator (AAC) and website for Open Tibia servers — account
 registration, character management, highscores, guilds, houses, a forum, a shop and an admin panel,
 all in one package. It is written in PHP with a simple procedural framework, so it is easy to read
 and easy to modify.
 
-The original Znote AAC went unmaintained for roughly five years. This repository picks the project
+The original ZnoteX went unmaintained for roughly five years. This repository picks the project
 back up rather than starting over — we think it is the strongest foundation among the available
 Open Tibia AAC projects, and we intend to keep building on it.
 
@@ -37,7 +37,7 @@ Open Tibia AAC projects, and we intend to keep building on it.
 > PHP 8.0 and older are **not** supported and will be refused at startup.
 
 **Optional:** for e-mail verification and account recovery, download
-[PHPMailer 6.x](https://github.com/PHPMailer/PHPMailer/releases) and extract it into the Znote AAC
+[PHPMailer 6.x](https://github.com/PHPMailer/PHPMailer/releases) and extract it into the ZnoteX
 directory as a folder named `PHPMailer`.
 
 ---
@@ -82,7 +82,7 @@ or newer (8.3 / 8.4 recommended).
 
 **1. Upload the files**
 
-Extract Znote AAC into your web directory (for example `C:\UniServer\www\` or `/var/www/html/`).
+Extract ZnoteX into your web directory (for example `C:\UniServer\www\` or `/var/www/html/`).
 
 **2. Create the database**
 
@@ -108,7 +108,7 @@ Visit your site in a browser. If anything is misconfigured, the page tells you w
 **5. Existing server?**
 
 If you already have an active OT server with players, open `/special/` to convert the existing
-database for Znote AAC.
+database for ZnoteX.
 
 **6. Permissions**
 
@@ -196,4 +196,4 @@ Issues and pull requests are welcome at
 
 ## License
 
-See [LICENSE](LICENSE). Original Znote AAC by Znote; layout by Blackwolf (Snavy).
+See [LICENSE](LICENSE). Original ZnoteX by Znote; layout by Blackwolf (Snavy).
