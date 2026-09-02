@@ -19,7 +19,7 @@ $install = "
 <h2>Install:</h2>
 <ol>
 	<li>Import TFS database schema.</li>
-	<li>Import <a href='/engine/database/znote_schema.sql'>Znote AAC schema</a>.</li>
+	<li>Import <a href='/SQL/znote_schema.sql'>Znote AAC schema</a>.</li>
 	<li>Edit config.php with correct MySQL details.</li>
 </ol>
 ";
