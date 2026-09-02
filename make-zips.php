@@ -32,8 +32,24 @@ const SKIP = array('default', '_example', '_childexample');
 
 // ---------------------------------------------------------------------------
 
-$root   = dirname(__DIR__);
-$out    = __DIR__;
+// Where ZnoteX lives, and where the archives are written.
+//
+// This script sits on the layouts branch, next to the archives it produces,
+// which is a different folder from the ZnoteX code it packages. So the code
+// root is passed in, and defaults to the sibling folder:
+//
+//   cd f:/znotex-layouts
+//   php make-zips.php ../ZnoteX
+//
+$root = isset($argv[1]) ? rtrim(strtr($argv[1], '\\', '/'), '/') : dirname(__DIR__);
+$out  = __DIR__;
+
+if (!is_dir($root . '/layouts')) {
+	fwrite(STDERR, "No layouts/ folder in {$root}." . PHP_EOL
+		. "Pass the path to your ZnoteX install:  php make-zips.php ../ZnoteX" . PHP_EOL);
+	exit(1);
+}
+
 $rawUrl = 'https://raw.githubusercontent.com/' . GITHUB_OWNER . '/' . GITHUB_REPO . '/' . GITHUB_BRANCH;
 $webUrl = 'https://github.com/' . GITHUB_OWNER . '/' . GITHUB_REPO . '/tree/' . GITHUB_BRANCH;
 
