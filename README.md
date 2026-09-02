@@ -6,7 +6,7 @@
 
 Version 2.0.0 · Maintained by [Open Games Community](https://opengamescommunity.com)
 
-[Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Templates & plugins](#)
+[Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Themes](layouts/README.md) · [Plugins](plugins/README.md)
 
 </div>
 
@@ -80,39 +80,76 @@ or newer (8.3 / 8.4 recommended).
 
 ## Installation
 
-**1. Upload the files**
+### The installer
 
-Extract ZnoteX into your web directory (for example `C:\UniServer\www\` or `/var/www/html/`).
+Extract ZnoteX into your web directory and open **`/install/`** in a browser. Six steps:
 
-**2. Create the database**
+| | |
+| --- | --- |
+| **1. Requirements** | PHP version, `mysqli`, and whether `engine/cache/` is writable |
+| **2. Database** | Credentials, and a check that your **OT server's own schema is already imported** |
+| **3. Server** | Which engine this site sits in front of, the site name and its URL |
+| **4. Schema** | Imports `SQL/znote_schema.sql` — only the `znote_*` tables |
+| **5. Administrator** | Creates an account and a character, and remembers the name |
+| **6. Finish** | Writes `config.local.php` and locks the installer |
 
-Import your OT server's own schema first, then import
-`engine/database/znote_schema.sql` into the same database.
+**Import your OT server's schema first.** ZnoteX reads `accounts` and `players`; it has never
+created them and will not pretend to. Step 2 refuses to continue until they exist — importing
+TFS/Canary's own `schema.sql` afterwards would overwrite what the installer is about to write.
 
-**3. Configure `config.php`**
+Step 5 creates a real, working administrator: the account, a character on it, and the password
+hashed the way `login.php` expects on your engine. Step 6 puts that character name in
+`page_admin_access`, so you can reach `/admin/` the moment the installer finishes. It writes to
+**`config.local.php`**, not `config.php` — see below — though a checkbox on the last step will
+write the admin name into `config.php` instead if you prefer.
+
+When it is done, **delete the `install/` folder**. It refuses to run again on its own (step 6
+leaves a lock file), but there is no reason to leave it on a public server.
+
+### config.php and config.local.php
+
+`config.php` holds every default and every comment. `config.local.php` holds only what is
+specific to *this* install — database credentials, engine, site name, admin names — and is
+included last, so it wins.
+
+That split is what makes updating painless: a new ZnoteX release can ship a new `config.php`
+without touching your settings. **Keep `config.local.php` out of version control.**
+
+Most other settings are editable from **Admin Panel → Settings** without opening a file at all.
+
+### Installing by hand
+
+If you would rather not use the installer, or it cannot write the config file:
+
+1. Import your OT server's schema, then `SQL/znote_schema.sql`, into the same database.
+2. Create `config.local.php` next to `config.php`:
 
 ```php
-$config['ServerEngine']     = 'TFS_10';   // see "Supported servers" above
-$config['page_admin_access'] = array('YourAccountName');
-
+<?php
 $config['sqlHost']     = '127.0.0.1';
 $config['sqlUser']     = 'your_db_user';
 $config['sqlPassword'] = 'your_db_password';
 $config['sqlDatabase'] = 'your_db_name';
+
+$config['ServerEngine'] = 'TFS_10';   // see "Supported servers" above
+$config['site_title']   = 'My Server';
+$config['site_url']     = 'https://example.com/';
+
+$config['page_admin_access'] = array('YourCharacterName');
 ```
 
-**4. Open the site**
+3. Make `engine/cache/` writable by the web server.
+4. Open the site. If anything is misconfigured, the page tells you what to fix.
 
-Visit your site in a browser. If anything is misconfigured, the page tells you what to fix.
+### Already have players?
 
-**5. Existing server?**
+Open **`/special/`** to convert an existing OT database for ZnoteX.
 
-If you already have an active OT server with players, open `/special/` to convert the existing
-database for ZnoteX.
+### Upgrading
 
-**6. Permissions**
-
-Make sure `engine/cache/` is writable by the web server.
+Replace everything **except** `config.local.php`, `layouts/`, `plugins/` and `engine/cache/`.
+Then apply any new file in `SQL/migrations/`, and check **Admin Panel → Plugins** in case a
+plugin has an update waiting.
 
 ---
 
@@ -160,7 +197,7 @@ Make sure `engine/cache/` is writable by the web server.
 <details>
 <summary><b>Shop &amp; payments</b></summary>
 
-- Shop offers: items, premium days, gender change, name change, outfits, mounts, and custom types
+- Database shop offers managed from the admin panel: items, premium days, gender change, name change, outfits, mounts, and custom types
 - Item market: buy and sell listings, item search, price comparison and transaction history
 - Payment gateways: **PayPal**, **PagSeguro** and **PayGol** (SMS)
 
@@ -169,13 +206,31 @@ Make sure `engine/cache/` is writable by the web server.
 <details>
 <summary><b>Administration</b></summary>
 
+- New built-in admin control panel available at `/admin/`
+- Responsive sidebar layout with day/night theme switch
+- Dashboard with accounts, characters, online players, guilds, houses, shop points and moderation queues
 - Delete characters, ban characters and accounts
 - Change account passwords, grant in-game positions
 - Give shop points, edit player level and skills
 - Teleport one player or everyone to a town or position
-- Review in-game bug reports and forum feedback
-- Shop transaction overview
+- Review in-game bug reports, helpdesk tickets and forum feedback
+- Shop Manager for adding, previewing, hiding and removing database shop offers
+- Shop Pending / History page for pending deliveries and completed orders
 - Moderate gallery uploads, post news and changelogs
+
+</details>
+
+<details>
+<summary><b>Setup, themes &amp; extensions</b></summary>
+
+- Six-step web installer at `/install/` that checks requirements, verifies your OT schema is
+  present, imports the ZnoteX tables, creates the first administrator and writes the config
+- Theme system: every theme is a folder of plain HTML and CSS under `layouts/`, switchable from
+  the admin panel, with per-theme options, child themes and one-click install from a repository
+- Plugin system: add pages, admin pages, tables and behaviour from `plugins/` with no core edit,
+  install and update from the admin panel
+- Settings editor for most of `config.php`, and a menu builder for the site navigation
+- Maintenance mode that keeps administrators and the login page reachable
 
 </details>
 
@@ -189,6 +244,110 @@ Make sure `engine/cache/` is writable by the web server.
 
 ---
 
+## Admin Control Panel
+
+ZnoteX now includes a modern admin control panel at `/admin/`. Access is controlled by
+`$config['page_admin_access']` in `config.php`.
+
+Included modules:
+
+- **Dashboard** - server overview, environment details, recent accounts, recent characters, top point balances and open queues
+- **Player Tools** - account lookup, character lookup, password changes, points, access, positions and teleport actions
+- **Character Skills** - edit level, magic level, health, mana and skills from one admin page
+- **News** - create and manage website news and changelog posts
+- **Gallery** - review and moderate uploaded gallery images
+- **Bug Reports** - review in-game bug reports
+- **Helpdesk** - manage support tickets
+- **Feedback Board** - quick access to admin feedback threads
+- **Shop Manager** - add, preview, hide and delete database shop offers
+- **Shop Pending / History** - view pending shop deliveries and completed purchases
+- **Character Auctions** - manage character auction settings and activity
+- **Layouts** - switch theme, edit its options, browse and install themes from a repository
+- **Menus** - build the site navigation without touching a template
+- **Settings** - edit most of `config.php` from the browser
+- **Plugins** - install, update, enable and disable what is in `plugins/`
+- **Accounts** - browse and inspect accounts
+- **Visitors** - who has been on the site
+
+Shop offers are no longer configured through `$config['shop_offers']`. They are stored in
+`znote_shop_offers` and managed from **Admin Panel > Shop Manager**.
+
+---
+
+## Themes
+
+Every theme is a folder under `layouts/`. A theme is **plain HTML and CSS** — the PHP stays in
+ZnoteX, so editing one is editing markup, not untangling a template engine. `layouts/default/`
+is the theme that ships; `layouts/_example/` is a documented skeleton to copy.
+
+Everything below is in **Admin Panel → Layouts**.
+
+**Switching.** Every installed theme is listed with a screenshot, 12 per page. Click one to make
+it active. It applies to the public site only — the admin panel never changes.
+
+**Options.** A theme can declare its own settings in `theme.json` — social links, a tagline, a
+colour. They then appear under *Options* on that theme's card and are stored in the database, so
+you change them from the panel instead of editing the theme's files.
+
+**Installing one.** Two ways:
+
+- *Manually* — unzip the theme folder into `layouts/`. It appears on the next page load.
+- *From a repository* — press **Browse themes** to list themes hosted elsewhere and install one
+  with a button.
+
+The repository is configured by `$config['layout_repository']` in `config.php`, and points at
+this project's `layouts` branch by default. Downloads are refused unless the URL is **https** and
+its host is on `allowed_hosts` — a theme is code that runs on your server, so only point it at a
+repository you trust. The tooling that packages themes and regenerates a catalogue lives on the
+`layouts` branch, alongside the archives themselves.
+
+**Child themes.** A theme can name another as its `parent` and override only the files it wants.
+The rest falls through to the parent, so a colour change is one stylesheet rather than a fork —
+and the parent can still be updated underneath it.
+
+See [layouts/README.md](layouts/README.md) for the full contract.
+
+---
+
+## Plugins
+
+A plugin is a folder under `plugins/` that adds public pages, admin pages, database tables and
+behaviour **without editing a single ZnoteX file** — so an update never costs you your work.
+
+```
+plugins/my_plugin/
+  plugin.json        name, version, author, description   [required]
+  plugin.php         registers hooks
+  pages/<page>.php   public page at page.php?plugin=my_plugin&p=<page>
+  admin/<mod>.php    admin page, listed in the sidebar
+  install.sql        tables, created on install
+  assets/            css, js, images
+```
+
+Everything below is in **Admin Panel → Plugins**.
+
+**Installing one.** Download it, unzip the folder into `plugins/`, reload the panel, press
+**Install**. That runs its `install.sql` and switches it on. ZnoteX **never downloads a plugin by
+itself**: a plugin is PHP that runs on every page of your site, so putting the files there stays
+a deliberate act rather than a button.
+
+**Updating one.** Replace the folder with the newer version. If its `plugin.json` carries a
+higher version than the one recorded at install time, an **Update** button appears and applies
+whatever the new version needs.
+
+**Removing one.** *Disable* stops a plugin; *Uninstall* also forgets its version. Neither ever
+drops a table — removing a plugin for good means deleting its folder and dropping its tables
+yourself.
+
+> A plugin runs with the same privileges as the rest of the site, and nothing sandboxes it.
+> Install plugins whose author you know or whose code you have read.
+
+`plugins/shop_coupons/` is a working example — redeemable codes that either credit shop points or
+take a percentage off the next purchase — and is commented as a tutorial. See
+[plugins/README.md](plugins/README.md) for the contract and the list of hooks.
+
+---
+
 ## Contributing
 
 Issues and pull requests are welcome at
@@ -196,4 +355,4 @@ Issues and pull requests are welcome at
 
 ## License
 
-See [LICENSE](LICENSE). Original ZnoteX by Znote; layout by Blackwolf (Snavy).
+See [LICENSE](LICENSE). Original ZnoteAAC modified by Alex renamed to ZnoteX; layout by Blackwolf (Snavy).
