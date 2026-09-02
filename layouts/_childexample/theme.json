@@ -1,0 +1,7 @@
+{
+  "name": "Child Example",
+  "author": "Alex - opengamescommunity.com",
+  "version": "1.0.0",
+  "parent": "default",
+  "description": "Shows what a child theme is: it ships one stylesheet and inherits everything else from its parent. Change \"parent\" to any installed theme and copy this folder to base a variant on it."
+}

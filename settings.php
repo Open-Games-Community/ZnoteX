@@ -1,7 +1,7 @@
 <?php
 require_once 'engine/init.php';
 protect_page();
-include 'layout/overall/header.php';
+theme_open();
 require_once('config.countries.php');
 
 if (empty($_POST) === false) {
@@ -26,68 +26,42 @@ if (empty($_POST) === false) {
 		}
 	}
 }
-?>
-<h1>Settings</h1>
 
-<?php
+/**
+ * What the view has to render: 'success', 'errors' or 'form'.
+ * The account write stays here - a theme must never carry it.
+ */
+$formState = 'form';
+
 if (isset($_GET['success']) === true && empty($_GET['success']) === true) {
-	echo 'Your settings have been updated.';
-} else {
-	if (empty($_POST) === false && empty($errors) === true) {
-		$update_data = array(
-			'email' => $_POST['new_email']
-		);
+	$formState = 'success';
 
-		$update_znote_data = array(
-			'flag' => getValue($_POST['new_flag'] ?? null),
-			'active_email' => '0'
-		);
+} elseif (empty($_POST) === false && empty($errors) === true) {
 
-		// If he had previously verified his email address, remove the previously aquired bonus points
-		if ($user_znote_data['active_email'] > 0) {
-			$update_znote_data['points'] = $user_znote_data['points'] - $config['mailserver']['verify_email_points'];
-		}
+	$update_data = array(
+		'email' => $_POST['new_email']
+	);
 
-		user_update_account($update_data);
-		user_update_znote_account($update_znote_data);
-		header('Location: settings.php?success');
-		exit();
+	$update_znote_data = array(
+		'flag' => getValue($_POST['new_flag'] ?? null),
+		'active_email' => '0'
+	);
 
-	} else if (empty($errors) === false) {
-		echo output_errors($errors);
+	// If the address was previously verified, take back the bonus points.
+	if ($user_znote_data['active_email'] > 0) {
+		$update_znote_data['points'] = $user_znote_data['points'] - $config['mailserver']['verify_email_points'];
 	}
-	?>
 
-	<form action="" method="post">
-		<ul>
-			<li>
-				email:<br>
-				<input type="text" name="new_email" value="<?php echo $user_data['email']; ?>">
-			</li>
-			<li>
-				Country:<br>
-				<select name="new_flag" id="flag_select">
-					<option value="">(Please choose)</option>
-					<?php
-					foreach(array('pl', 'se', 'br', 'us', 'gb', ) as $c)
-						echo '<option value="' . $c . '">' . $config['countries'][$c] . '</option>';
+	user_update_account($update_data);
+	user_update_znote_account($update_znote_data);
 
-						echo '<option value="">----------</option>';
-						foreach($config['countries'] as $code => $c)
-							echo '<option value="' . $code . '"' . (isset($user_znote_data['flag']) && $user_znote_data['flag'] == $code ? ' selected' : '') . '>' . $c . '</option>';
-					?>
-				</select>
-			</li>
-			<?php
-				/* Form file */
-				Token::create();
-			?>
-			<li>
-				<input type="submit" value="Update settings">
-			</li>
-		</ul>
-	</form>
-<?php
+	header('Location: settings.php?success');
+	exit;
+
+} elseif (empty($errors) === false) {
+	$formState = 'errors';
 }
-include 'layout/overall/footer.php';
-?>
+
+view('settings');
+
+theme_close();

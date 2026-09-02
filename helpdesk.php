@@ -1,7 +1,7 @@
 <?php
 require_once 'engine/init.php';
 protect_page();
-include 'layout/overall/header.php';
+theme_open();
 
 $view = (isset($_GET['view']) && (int)$_GET['view'] > 0) ? (int)$_GET['view'] : false;
 if ($view !== false) {
@@ -23,7 +23,7 @@ if ($view !== false) {
 
 	if(!$ticketData || $ticketData['owner'] != $session_user_id) {
 		echo 'You can not view this ticket!';
-		include 'layout/overall/footer.php';
+		theme_close();
 		die;
 	}
 	?>
@@ -223,5 +223,5 @@ if ($view !== false) {
 		<?php
 	}
 }
-include 'layout/overall/footer.php';
+theme_close();
 ?>

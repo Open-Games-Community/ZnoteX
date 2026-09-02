@@ -298,7 +298,7 @@ if($_SERVER['HTTP_USER_AGENT'] == "Mozilla/5.0" && $config['ServerEngine'] === '
 } // End client 11 loginWebService
 
 logged_in_redirect();
-include 'layout/overall/header.php';
+theme_open();
 
 if (empty($_POST) === false) {
 
@@ -412,4 +412,4 @@ if (empty($errors) === false) {
 	echo output_errors($errors);
 }
 
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

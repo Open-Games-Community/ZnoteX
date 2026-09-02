@@ -1,6 +1,6 @@
 <?php require_once 'engine/init.php';
 protect_page();
-include 'layout/overall/header.php';
+theme_open();
 #region CANCEL CHARACTER DELETE
 $undelete_id = $_GET['cancel_delete_id'] ?? null;
 if($undelete_id) {
@@ -423,5 +423,5 @@ if ($render_page) {
 	</script>
 	<?php
 }
-include 'layout/overall/footer.php';
+theme_close();
 ?>

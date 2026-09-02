@@ -18,8 +18,6 @@ if (empty($_POST) === false) {
 
 	$pass_data = user_data($session_user_id, 'password');
 	if (!is_array($pass_data)) $pass_data = array('password' => '');
-	//$pass_data['password'];
-	// $_POST['']
 
 	// .3 compatibility
 	if ($config['ServerEngine'] == 'TFS_03' && $config['salt'] === true) {
@@ -42,55 +40,36 @@ if (empty($_POST) === false) {
 	}
 }
 
-include 'layout/overall/header.php'; ?>
+/**
+ * What the view has to render: 'success', 'errors' or 'form'.
+ * The password write itself stays here - a theme must never carry it.
+ */
+$formState = 'form';
 
-<h1>Change Password:</h1>
-
-<?php
 if (isset($_GET['success']) && empty($_GET['success'])) {
-	echo 'Your password has been changed.<br>You will need to login again with the new password.';
-	session_destroy();
-	header("refresh:2;url=index.php");
-	exit();
-} else {
-	if (empty($_POST) === false && empty($errors) === true) {
-		//Posted the form without errors
-		if ($config['ServerEngine'] == 'TFS_02' || $config['ServerEngine'] == 'TFS_10' || $config['ServerEngine'] == 'OTHIRE') {
-			user_change_password($session_user_id, $_POST['new_password']);
-		} else if ($config['ServerEngine'] == 'TFS_03') {
-			user_change_password03($session_user_id, $_POST['new_password']);
-		}
-		header('Location: changepassword.php?success');
-	} else if (empty($errors) === false){
-		echo '<font color="red"><b>';
-		echo output_errors($errors);
-		echo '</b></font>';
-	}
-	?>
+	$formState = 'success';
 
-	<form action="" method="post">
-		<ul>
-			<li>
-				Current password:<br>
-				<input type="password" name="current_password">
-			</li>
-			<li>
-				New password:<br>
-				<input type="password" name="new_password">
-			</li>
-			<li>
-				New password again:<br>
-				<input type="password" name="new_password_again">
-			</li>
-			<?php
-				/* Form file */
-				Token::create();
-			?>
-			<li>
-				<input type="submit" value="Change password">
-			</li>
-		</ul>
-	</form>
-<?php
+	// The password changed, so this session is no longer valid.
+	session_destroy();
+	header('refresh:2;url=index.php');
+
+} elseif (empty($_POST) === false && empty($errors) === true) {
+
+	if ($config['ServerEngine'] == 'TFS_02' || $config['ServerEngine'] == 'TFS_10' || $config['ServerEngine'] == 'OTHIRE') {
+		user_change_password($session_user_id, $_POST['new_password']);
+	} else if ($config['ServerEngine'] == 'TFS_03') {
+		user_change_password03($session_user_id, $_POST['new_password']);
+	}
+
+	header('Location: changepassword.php?success');
+	exit;
+
+} elseif (empty($errors) === false) {
+	$formState = 'errors';
 }
-include 'layout/overall/footer.php'; ?>
+
+theme_open();
+
+view('changepassword');
+
+theme_close();

@@ -1,4 +1,4 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php';
+<?php require_once 'engine/init.php'; theme_open();
 
 $server = $config['shop']['imageServer'];
 $imageType = $config['shop']['imageType'];
@@ -16,7 +16,7 @@ if (is_array($items) === false):
 	<p>Configure correct 'server_path' in config.php.</p>
 	<p>If the path is correct, make sure your web user has access to read it.</p>
 	<?php
-	include 'layout/overall/footer.php';
+	theme_close();
 	die();
 endif;
 
@@ -217,4 +217,4 @@ if (!$compare) {
 	</table>
 	<?php
 }
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

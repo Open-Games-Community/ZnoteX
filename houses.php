@@ -1,6 +1,6 @@
 <?php
 require_once 'engine/init.php';
-include 'layout/overall/header.php';
+theme_open();
 
 if ($config['log_ip'])
 	znote_visitor_insert_detailed_data(3);
@@ -151,4 +151,4 @@ if ($houses !== false || !empty($houses)) {
 	echo "<h1>Failed to fetch data from sql->houses table.</h1><p>Is the table empty?</p>";
 }
 
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

@@ -1,6 +1,5 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php'; ?>
+<?php require_once 'engine/init.php'; theme_open();
 
-<h1>Contact</h1>
-<p>TODO: Edit the contact details here.</p>
+view('contact');
 
-<?php include 'layout/overall/footer.php'; ?>
+theme_close();

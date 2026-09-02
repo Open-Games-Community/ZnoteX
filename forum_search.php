@@ -1,4 +1,4 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php'; protect_page();
+<?php require_once 'engine/init.php'; theme_open(); protect_page();
 
 // Search CONFIG
 $searchResults = 30; // How many max search results
@@ -227,5 +227,5 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 	} else echo "No results.";
 } else echo "<br><b>You must fill in all fields!</b>";
 
-include 'layout/overall/footer.php';
+theme_close();
 ?>
