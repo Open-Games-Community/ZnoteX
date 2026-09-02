@@ -1,0 +1,8 @@
+{
+  "name": "Shop Coupons",
+  "version": "1.0.0",
+  "author": "Alex - opengamescommunity.com",
+  "description": "Redeemable codes that credit shop points. Adds a public redeem page, an admin module to create and track codes, and its own table. Written as the reference example of a ZnoteX plugin.",
+  "url": "https://opengamescommunity.com",
+  "requires": "2.0.0"
+}

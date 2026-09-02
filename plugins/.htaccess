@@ -1,0 +1,16 @@
+# Nothing inside a plugin is meant to be requested directly: public pages are
+# served through page.php, admin pages through admin/index.php. Reaching a file
+# here on its own means running it outside engine/init.php, with no $config and
+# no session - unpredictable at best, and a way to read source or SQL at worst.
+#
+# assets/ still works: images, css and js do not match the list below.
+
+<FilesMatch "\.(php|phtml|php[0-9]|inc|sql|json|md|txt|ya?ml|ini|log|bak|dist|example)$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order deny,allow
+		Deny from all
+	</IfModule>
+</FilesMatch>
