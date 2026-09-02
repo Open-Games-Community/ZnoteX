@@ -174,7 +174,7 @@ function acp_theme_page_url(int $page, string $search): string {
 	}
 	return acp_url('layouts', $params);
 }
-$hasTable = (mysql_select_single("SELECT `value` FROM `znote_config` WHERE `key` = 'layout' LIMIT 1;") !== false);
+$hasTable = znote_table_exists('znote_config');
 ?>
 
 <?php if (!$hasTable): ?>

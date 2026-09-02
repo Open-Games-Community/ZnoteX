@@ -160,8 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $schema   = acp_settings_schema();
-$hasTable = (mysql_select_single("SELECT `key` FROM `znote_config` LIMIT 1;") !== false)
-	|| (mysql_select_multi("SHOW TABLES LIKE 'znote_config';") !== false);
+$hasTable = znote_table_exists('znote_config');
 ?>
 
 <?php if (!$hasTable): ?>

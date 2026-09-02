@@ -25,7 +25,7 @@ if (!isset($locations[$location])) {
 	$location = (string)array_key_first($locations);
 }
 
-$hasTable = (mysql_select_multi("SHOW TABLES LIKE 'znote_menu';") !== false);
+$hasTable = znote_table_exists('znote_menu');
 
 // ---------------------------------------------------------------------------
 // Mutations

@@ -10,6 +10,25 @@
  * handful of short rows, so one query covers every lookup on the page.
  */
 
+/**
+ * Does this table exist?
+ *
+ * SHOW TABLES is the only honest answer. Selecting a row and treating an empty
+ * result as "missing" gets it wrong on every fresh install, where the table is
+ * there and simply has nothing in it yet.
+ */
+function znote_table_exists(string $table): bool {
+	static $known = array();
+
+	if (isset($known[$table])) {
+		return $known[$table];
+	}
+
+	$safe = mysql_znote_escape_string($table);
+
+	return $known[$table] = (mysql_select_multi("SHOW TABLES LIKE '{$safe}';") !== false);
+}
+
 function znote_settings_all(bool $refresh = false): array {
 	static $settings = null;
 
