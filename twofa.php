@@ -1,4 +1,4 @@
-<?php require_once 'engine/init.php'; if ($config['twoFactorAuthenticator'] === false) die("twoFactorAuthenticator is disabled in config.php"); protect_page(); include 'layout/overall/header.php';
+<?php require_once 'engine/init.php'; if ($config['twoFactorAuthenticator'] === false) die("twoFactorAuthenticator is disabled in config.php"); protect_page(); theme_open();
 // Two-Factor Authentication setup page
 if ($config['ServerEngine'] !== 'TFS_10') {
 	?>
@@ -54,4 +54,4 @@ if ($config['ServerEngine'] !== 'TFS_10') {
 	</ol>
 	<?php
 }
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

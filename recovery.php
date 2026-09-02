@@ -1,6 +1,6 @@
 <?php require_once 'engine/init.php';
 logged_in_redirect();
-include 'layout/overall/header.php';
+theme_open();
 if ($config['mailserver']['accountRecovery']) {
 	// Fetch, sanitize and assign POST and GET variables.
 	$mode = (isset($_GET['mode']) && !empty($_GET['mode'])) ? getValue($_GET['mode'] ?? null) : false;
@@ -209,4 +209,4 @@ if ($config['mailserver']['accountRecovery']) {
 	<p>The admin have disabled automatic account recovery.</p>
 	<?php
 }
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

@@ -1,7 +1,7 @@
 <?php
 require_once 'engine/init.php';
 logged_in_redirect();
-include 'layout/overall/header.php';
+theme_open();
 require_once('config.countries.php');
 
 if (empty($_POST) === false) {
@@ -137,6 +137,13 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 		);
 
 		user_create_account($register_data, $config['mailserver']);
+
+		// Plugins can react to a new account: a welcome bonus, a webhook, an
+		// entry in a referral ledger.
+		znote_hook('account.registered', array(
+			'name'  => $register_data['name'] ?? '',
+			'email' => $register_data['email'] ?? '',
+		));
 		if (!$config['mailserver']['debug']) header('Location: register.php?success');
 		exit();
 		//End register
@@ -216,5 +223,5 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 	</form>
 <?php
 }
-include 'layout/overall/footer.php';
+theme_close();
 ?>

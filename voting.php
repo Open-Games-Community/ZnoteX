@@ -1,6 +1,6 @@
 <?php
 require_once 'engine/init.php';
-include 'layout/overall/header.php';
+theme_open();
 
 $otservers_eu_voting = $config['otservers_eu_voting'];
 
@@ -38,7 +38,7 @@ if ($otservers_eu_voting['enabled']) {
 	echo '<p>Voting is not enabled.</p>';
 }
 
-include 'layout/overall/footer.php';
+theme_close();
 
 function vote($otUserId, $otservers_eu_voting) {
 	$context  = stream_context_create([

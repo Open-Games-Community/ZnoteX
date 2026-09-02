@@ -626,4 +626,24 @@ if(!function_exists('hash_equals')) {
 		return !$ret;
     }
 }
-?>
+/**
+ * Path to the CA bundle shipped with ZnoteX, or '' when the PHP install
+ * already has one configured.
+ *
+ * PHP on Windows ships without a certificate store: unless curl.cainfo is set
+ * in php.ini, every HTTPS request fails with curl error 60. The repo carries a
+ * bundle for exactly this reason - ipn.php has always pointed CURLOPT_CAINFO
+ * at it - so anything making outbound HTTPS calls should use this rather than
+ * asking the admin to edit php.ini.
+ *
+ * Absolute on purpose: callers may run with any working directory.
+ */
+function znote_cainfo() {
+	if (ini_get('curl.cainfo') !== '' || ini_get('openssl.cafile') !== '') {
+		return '';
+	}
+
+	$bundle = dirname(__DIR__) . '/cert/cacert.pem';
+
+	return is_file($bundle) ? $bundle : '';
+}

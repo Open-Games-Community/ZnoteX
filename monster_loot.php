@@ -1,101 +1,113 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php'; ?>
+<?php require_once 'engine/init.php'; theme_open();
 
-<?php
-###### MONSTER LOOT CHECKER ######
-###### VERSION: 1.5
+/**
+ * Monster loot checker.
+ *
+ * Reads the server's own XML files and flattens every monster's loot tree into
+ * plain rows, so the view only has to print them:
+ *
+ *   $monsterLootError  message when an XML file could not be read, else ''
+ *   $itemList          [item id => item name]
+ *   $rarity            [label => minimum percent]
+ *   $monsterList       one entry per monster:
+ *                        name   monster name
+ *                        state  'loot' | 'empty' | 'failed'
+ *                        file   the monster file, for the 'failed' message
+ *                        loot   rows of [level, id, count, chance]
+ */
 
 $otdir = 'misc/';
 
 // In percent (highest first).
 $rarity = array(
-	'Not Rare'	=> 7,
-	'Semi Rare'	=> 2,
-	'Rare'		=> 0.5,
-	'Very Rare'	=> 0
+	'Not Rare'  => 7,
+	'Semi Rare' => 2,
+	'Rare'      => 0.5,
+	'Very Rare' => 0
 );
-?>
-<script language="javascript">
-	function toggleVisibility(obj) {
-		var el = document.getElementById('d' + obj.id);
-		var name = obj.innerHTML.substring(4);
 
-		if(el.style.display == 'none') {
-			obj.innerHTML = '[ -]';
-			el.style.display = 'block';
-		} else {
-			obj.innerHTML = '[+]';
-			el.style.display = 'none';
+$monsterLootError = '';
+$itemList         = array();
+$monsterList      = array();
+$lootRate         = 1;
+
+/** Flatten one monster's nested <item> tree into rows. */
+function znote_flatten_loot($loot, int $level, array &$rows, float $lootRate): void {
+	if (empty($loot)) {
+		return;
+	}
+
+	foreach ($loot as $entry) {
+		$chance = (float)$entry['chance'];
+		if (!$chance) {
+			$chance = (float)$entry['chance1'];
 		}
-		obj.innerHTML += ' ' + name;
-	}
-</script>
 
-<?php
-	$add = '';
-	if(isset($_GET['lootrate']))
-		$add = '&lootrate';
-	echo '<a href="' . htmlspecialchars($_SERVER['PHP_SELF'] . ($add ? '?lootrate' : '')) . '">Hide None</a> | ';
-	echo '<a href="?hidefail' . $add . '">Hide Not Found</a> | ';
-	echo '<a href="?hideempty' . $add . '">Hide Monsters Without Loot</a> | ';
-	echo '<a href="?hideempty&hidefail' . $add . '">Hide All</a> | ';
-	echo '<a href="monsters_loot.php">Use Normal Loot Rate</a> | ';
-	echo '<a href="?lootrate">Use Server Loot Rate</a>';
-?>
-<br><br>
+		$rows[] = array(
+			'level'  => $level,
+			'id'     => (int)$entry['id'],
+			'count'  => (int)$entry['countmax'],
+			'chance' => ($chance / 1000) * $lootRate,
+		);
 
-<?php
-	$items = simplexml_load_file($otdir . '/data/items/items.xml') or die('<b>Could not load items!</b>');
-	foreach($items->item as $v)
-		$itemList[(int)$v['id']] = $v['name'];
-
-	if(isset($_GET['lootrate'])) {
-		$config = parse_ini_file($otdir . '/config.lua');
-		$lootRate = $config['rate_loot'];
-	}
-
-	$monsters = simplexml_load_file($otdir . '/data/monster/monsters.xml') or die('<b>Could not load monsters!</b>');
-	foreach($monsters->monster as $monster) {
-		$loot = simplexml_load_file($otdir . '/data/monster/' . $monster['file']);
-		if($loot) {
-			if($item = $loot->loot->item) {
-				echo '
-					<a id="' . ++$i . '" style="text-decoration: none; font: bold 14px verdana; color: orange;" href="javascript:void(0);" onclick="toggleVisibility(this)">[+] ' . $monster['name'] . '</a>
-					<br><div style="display: none;" id="d' . $i . '"><br>';
-				addLoot($item);
-				echo '<br></pre></div>';
-			} elseif(!isset($_GET['hideempty']))
-				echo '<span style="font: bold 14px verdana; color: red;">[x] ' . $monster['name'] . '</span><br>';
-		} elseif(!isset($_GET['hidefail']))
-			echo '<span style="color: white;">Failed to load monster <b>' . $monster[name] . '</b> <i>(' . $monster[file] . ')</i><br>';
-	}
-
-function addLoot($loot, $level=1) {
-	foreach($loot as $test) {
-		$chance = $test['chance'];
-		if(!$chance)
-			$chance = $test['chance1'];
-
-		printLoot($level, $test['id'], $test['countmax'], $chance);
-		foreach($test as $k => $v)
-			addLoot($v->item, $level + 1);
-	}
-}
-
-function printLoot($level, $itemid, $count, $chance) {
-	global $itemList, $rarity;
-
-	$chance /= 1000;
-	if(isset($_GET['lootrate'])) {
-		global $lootRate;
-		$chance *= $lootRate;
-	}
-
-	foreach($rarity as $lootRarity => $percent){
-		if($chance >= $percent) {
-			echo str_repeat("... ", $level) . '<u>' . ($count ? $count : 1) . '</u> <span style="color: #7878FF; font-weight: bold;">' . $itemList[(int)$itemid] . '</span> - <span style="color: #C45; font-weight: bold;">' . $lootRarity . '</span> (<span style="color: #FF9A9A;">' . $chance . '%</span>)<br>';
-			break;
+		foreach ($entry as $child) {
+			znote_flatten_loot($child->item, $level + 1, $rows, $lootRate);
 		}
 	}
 }
-?>
-<?php include 'layout/overall/footer.php'; ?>
+
+$items = @simplexml_load_file($otdir . '/data/items/items.xml');
+
+if ($items === false) {
+	$monsterLootError = 'Could not load items!';
+} else {
+
+	foreach ($items->item as $item) {
+		$itemList[(int)$item['id']] = (string)$item['name'];
+	}
+
+	if (isset($_GET['lootrate'])) {
+		// Not $config: that would overwrite the whole site configuration.
+		$serverLua = @parse_ini_file($otdir . '/config.lua');
+		if (is_array($serverLua) && isset($serverLua['rate_loot'])) {
+			$lootRate = (float)$serverLua['rate_loot'];
+		}
+	}
+
+	$monsters = @simplexml_load_file($otdir . '/data/monster/monsters.xml');
+
+	if ($monsters === false) {
+		$monsterLootError = 'Could not load monsters!';
+	} else {
+
+		foreach ($monsters->monster as $monster) {
+			$loot = @simplexml_load_file($otdir . '/data/monster/' . $monster['file']);
+
+			if ($loot === false) {
+				$monsterList[] = array(
+					'name'  => (string)$monster['name'],
+					'state' => 'failed',
+					'file'  => (string)$monster['file'],
+					'loot'  => array(),
+				);
+				continue;
+			}
+
+			$rows = array();
+			if (isset($loot->loot->item)) {
+				znote_flatten_loot($loot->loot->item, 1, $rows, $lootRate);
+			}
+
+			$monsterList[] = array(
+				'name'  => (string)$monster['name'],
+				'state' => $rows ? 'loot' : 'empty',
+				'file'  => (string)$monster['file'],
+				'loot'  => $rows,
+			);
+		}
+	}
+}
+
+view('monster_loot');
+
+theme_close();

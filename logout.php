@@ -1,5 +1,5 @@
 <?php
-require_once 'engine/init.php'; include 'layout/overall/header.php';
+require_once 'engine/init.php'; theme_open();
 
 	if (isset($_SESSION)) {
 		session_destroy();

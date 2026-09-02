@@ -1,4 +1,4 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php';
+<?php require_once 'engine/init.php'; theme_open();
 
 if ($config['log_ip']) {
 	znote_visitor_insert_detailed_data(4);
@@ -870,4 +870,4 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 } else {
 	header('Location: index.php');
 }
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

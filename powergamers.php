@@ -1,8 +1,8 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php';
+<?php require_once 'engine/init.php'; theme_open();
 
 if (!$config['powergamers']['enabled']) {
 	echo 'This page has been disabled at config.php.';
-	include 'layout/overall/footer.php';
+	theme_close();
 	exit();
 }
 
@@ -119,44 +119,7 @@ $dates = mysql_select_single("
 	    FROM_UNIXTIME(UNIX_TIMESTAMP() - 1 * 24 * 60 * 60, '%d %b') AS `d1ago`,
 	    FROM_UNIXTIME(UNIX_TIMESTAMP(), '%d %b') AS `d0ago`
 ");
-?>
-<table id="tbl_powergamers">
-	<thead>
-		<tr>
-			<th colspan="9"><h1>Powergamers</h1></th>
-		</tr>
-		<tr>
-			<th>Name</th>
-			<th>k Diff</th>
-			<th><?php echo $dates['d0ago']; ?></th>
-			<th><?php echo $dates['d1ago']; ?></th>
-			<th><?php echo $dates['d2ago']; ?></th>
-			<th><?php echo $dates['d3ago']; ?></th>
-			<th><?php echo $dates['d4ago']; ?></th>
-			<th><?php echo $dates['d5ago']; ?></th>
-			<th><?php echo $dates['d6ago']; ?></th>
-		</tr>
-	</thead>
-	<tbody>
-		<?php foreach($players AS $i => $player): ?>
-			<tr>
-				<td><?php echo $i+1 .". "; ?><a href="/characterprofile.php?name=<?php echo $player['name']; ?>"><?php echo $player['name']; ?></a></td>
-				<td><?php echo number_format($player['diff_exp'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_0'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_1'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_2'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_3'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_4'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_5'] / 1000,0,'',' '); ?></td>
-				<td><?php echo number_format($player['diff_6'] / 1000,0,'',' '); ?></td>
-			</tr>
-		<?php endforeach; ?>
-	</tbody>
-</table>
-<style type="text/css">
-	#tbl_powergamers {
-		padding:  0;
-	}
-</style>
-<?php
-include 'layout/overall/footer.php'; ?>
+
+view('powergamers');
+
+theme_close();

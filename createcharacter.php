@@ -1,6 +1,6 @@
 <?php require_once 'engine/init.php';
 protect_page();
-include 'layout/overall/header.php';
+theme_open();
 
 if (empty($_POST) === false) {
 	// $_POST['']
@@ -76,94 +76,47 @@ if (empty($_POST) === false) {
 		}
 	}
 }
-?>
 
-<h1>Create Character</h1>
-<?php
+/**
+ * What the view has to render: 'success', 'errors' or 'form'.
+ * The character creation stays here - a theme must never carry it.
+ */
+$formState = 'form';
+
 if (isset($_GET['success']) && empty($_GET['success'])) {
-	echo 'Congratulations! Your character has been created. See you in-game!';
-} else {
-	if (empty($_POST) === false && empty($errors) === true) {
-		if ($config['log_ip']) {
-			znote_visitor_insert_detailed_data(2);
-		}
-		//Register
-		$character_data = array(
-			'name'		=>	format_character_name($_POST['name']),
-			'account_id'=>	$session_user_id,
-			'vocation'	=>	$_POST['selected_vocation'],
-			'town_id'	=>	$_POST['selected_town'],
-			'sex'		=>	$_POST['selected_gender'],
-			'lastip'	=>	getIPLong(),
-			'created'	=>	time()
-		);
+	$formState = 'success';
 
-		user_create_character($character_data);
-		header('Location: createcharacter.php?success');
-		exit();
-		//End register
+} elseif (empty($_POST) === false && empty($errors) === true) {
 
-	} else if (empty($errors) === false){
-		echo '<font color="red"><b>';
-		echo output_errors($errors);
-		echo '</b></font>';
+	if ($config['log_ip']) {
+		znote_visitor_insert_detailed_data(2);
 	}
-	?>
-	<form action="" method="post">
-		<ul>
-			<li>
-				Name:<br>
-				<input type="text" name="name">
-			</li>
-			<li>
-				<!-- Available vocations to select from when creating character -->
-				Vocation:<br>
-				<select name="selected_vocation">
-				<?php foreach ($config['available_vocations'] as $id) { ?>
-				<option value="<?php echo $id; ?>"><?php echo vocation_id_to_name($id); ?></option>
-				<?php } ?>
-				</select>
-			</li>
-			<li>
-				<!-- Available genders to select from when creating character -->
-				Gender:<br>
-				<select name="selected_gender">
-				<option value="1">Male(boy)</option>
-				<option value="0">Female(girl)</option>
-				</select>
-			</li>
-			<?php
-			$available_towns = $config['available_towns'];
-			if (count($available_towns) > 1):
-				?>
-				<li>
-					<!-- Available towns to select from when creating character -->
-					Town:<br>
-					<select name="selected_town">
-						<?php
-						foreach ($available_towns as $tid):
-							?>
-							<option value="<?php echo $tid; ?>"><?php echo town_id_to_name($tid); ?></option>
-							<?php
-						endforeach;
-						?>
-					</select>
-				</li>
-				<?php
-			else:
-				?>
-				<input type="hidden" name="selected_town" value="<?php echo end($available_towns); ?>">
-				<?php
-			endif;
 
-			/* Form file */
-			Token::create();
-			?>
-			<li>
-				<input type="submit" value="Create Character">
-			</li>
-		</ul>
-	</form>
-	<?php
+	$character_data = array(
+		'name'       => format_character_name($_POST['name']),
+		'account_id' => $session_user_id,
+		'vocation'   => $_POST['selected_vocation'],
+		'town_id'    => $_POST['selected_town'],
+		'sex'        => $_POST['selected_gender'],
+		'lastip'     => getIPLong(),
+		'created'    => time()
+	);
+
+	user_create_character($character_data);
+
+	znote_hook('character.created', array(
+		'name'       => $character_data['name'],
+		'account_id' => $character_data['account_id'],
+		'vocation'   => $character_data['vocation'],
+	));
+
+	header('Location: createcharacter.php?success');
+	exit;
+
+} elseif (empty($errors) === false) {
+	$formState = 'errors';
 }
-include 'layout/overall/footer.php'; ?>
+
+view('createcharacter');
+
+theme_close();

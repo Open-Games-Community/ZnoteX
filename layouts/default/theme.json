@@ -1,0 +1,10 @@
+{
+  "name": "Default",
+  "author": "Blackwolf (Snavy) - converted by Znote",
+  "version": "2.0.0",
+  "description": "The classic Znote AAC layout. Also the fallback: any file a theme leaves out is taken from here.",
+  "url": "https://otland.net/members/snavy.155163/",
+  "menus": {
+    "main": "Main navigation"
+  }
+}

@@ -51,6 +51,26 @@ require_once 'function/cache.php';
 require_once 'function/mail.php';
 require_once 'function/token.php';
 require_once 'function/itemparser/itemlistparser.php';
+require_once 'function/settings.php';
+require_once 'function/theme.php';
+require_once 'function/menus.php';
+require_once 'function/plugins.php';
+
+// Settings saved from the admin panel override the values in config.php.
+znote_apply_settings();
+
+// Enabled plugins register their hooks here, once the database and settings
+// are available and before any page has done anything.
+znote_plugins_load();
+
+// The active theme's own config file (defines $follow, the countdown, ...).
+// Loaded here, at global scope, so shells, menus, widgets and views all see
+// those variables through $GLOBALS.
+$themeConfigFile = theme_file('layout_config.php');
+if ($themeConfigFile !== null) {
+	require_once $themeConfigFile;
+}
+
 
 if (!isset($_SESSION['token'])) {
     Token::generate();
@@ -69,6 +89,46 @@ if (user_logged_in() === true) {
 	if (!is_array($user_znote_data)) $user_znote_data = array();
 	$user_znote_data += array('ip' => 0, 'created' => 0, 'points' => 0, 'cooldown' => 0, 'flag' => '', 'active_email' => 0);
 }
+// ---------------------------------------------------------------------------
+// Maintenance mode
+//
+// Checked here, after the session is up, so is_admin() is available: an admin
+// browsing a closed site sees it normally and can keep working. Everyone else
+// gets the message and nothing else - no queries, no layout, no theme.
+// ---------------------------------------------------------------------------
+if (!empty($config['maintenance'])) {
+	$maintenanceAdmin = (user_logged_in() === true) && isset($user_data) && is_admin($user_data);
+
+	// The admin panel is always reachable, otherwise you could lock yourself
+	// out of the switch that turns this off.
+	$maintenanceScript = basename($_SERVER['SCRIPT_NAME'] ?? '');
+	$maintenanceExempt = in_array($maintenanceScript, array('login.php', 'logout.php'), true)
+		|| strpos((string)($_SERVER['SCRIPT_NAME'] ?? ''), '/admin/') !== false;
+
+	if (!$maintenanceAdmin && !$maintenanceExempt) {
+		http_response_code(503);
+		header('Retry-After: 3600');
+		?><!DOCTYPE html>
+		<html lang="en"><head><meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title><?= htmlspecialchars($config['site_title'], ENT_QUOTES, 'UTF-8') ?></title>
+		<style>
+			body{margin:0;min-height:100vh;display:grid;place-items:center;background:#14181f;color:#dfe4ec;
+			     font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:24px}
+			.box{max-width:520px;text-align:center}
+			h1{font-size:22px;margin:0 0 14px}
+			p{color:#93a0b2;margin:0 0 18px}
+			a{color:#d1a233}
+		</style></head><body>
+		<div class="box">
+			<h1><?= htmlspecialchars($config['site_title'], ENT_QUOTES, 'UTF-8') ?></h1>
+			<p><?= nl2br(htmlspecialchars((string)$config['maintenance_message'], ENT_QUOTES, 'UTF-8')) ?></p>
+			<p><a href="login.php">Staff login</a></p>
+		</div></body></html><?php
+		exit;
+	}
+}
+
 $errors = array();
 // Log IP
 if ($config['log_ip']) {
@@ -150,13 +210,15 @@ $filename = explode('/', $_SERVER['SCRIPT_NAME']);
 $filename = $filename[count($filename) - 1];
 $page_filename = str_replace('.php', '', $filename);
 if ($config['allowSubPages']) {
-	require_once 'layout/sub.php';
+	$subFile = theme_file('sub.php');
+	if ($subFile !== null) require_once $subFile;
 	if (isset($subpages) && !empty($subpages)) {
 		foreach ($subpages as $page) {
 			if ($page['override'] && $page['file'] === $filename) {
-				require_once 'layout/overall/header.php';
-				require_once 'layout/sub/'.$page['file'];
-				require_once 'layout/overall/footer.php';
+				theme_open();
+				$subPage = theme_file('sub/'.$page['file']);
+				if ($subPage !== null) require_once $subPage;
+				theme_close();
 				exit;
 			}
 		}
@@ -165,8 +227,8 @@ if ($config['allowSubPages']) {
 		<div style="background-color: white; padding: 20px; width: 100%; float:left;">
 			<h2 style="color: black;">Old layout!</h2>
 			<p style="color: black;">The layout is running an outdated sub system which is not compatible with this version of Znote AAC.</p>
-			<p style="color: black;">The file /layout/sub.php is outdated.
-			<br>Please update it to look like <a style="color: orange;" target="_BLANK" href="https://github.com/Znote/ZnoteAAC/blob/master/layout/sub.php">THIS.</a>
+			<p style="color: black;">The file layouts/&lt;theme&gt;/sub.php is outdated.
+			<br>Please update it to look like <a style="color: orange;" target="_BLANK" href="https://github.com/Znote/ZnoteAAC/blob/master/layout/sub.php" >THIS.</a> (ZnoteX: layouts/https://github.com/Znote/ZnoteAAC/blob/master/layout/sub.phplt;themehttps://github.com/Znote/ZnoteAAC/blob/master/layout/sub.phpgt;/sub.php)<a href="">THIS.</a>
 			</p>
 		</div>
 		<?php

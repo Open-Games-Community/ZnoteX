@@ -1,6 +1,5 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php'; ?>
+<?php require_once 'engine/init.php'; theme_open();
 
-<h1>Blank</h1>
-<p>This is a blank sample page.</p>
+view('blank');
 
-<?php include 'layout/overall/footer.php'; ?>
+theme_close();

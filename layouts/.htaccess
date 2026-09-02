@@ -1,0 +1,17 @@
+# Nothing inside a theme is meant to be requested directly: ZnoteX includes its
+# shells and views from the page that owns them. Reaching one on its own means
+# running it outside engine/init.php, with no $config and no session -
+# unpredictable at best, and a way to read a theme's source at worst.
+#
+# The theme's own css, js, images and fonts still work: they do not match the
+# list below.
+
+<FilesMatch "\.(php|phtml|php[0-9]|inc|sql|json|md|txt|ya?ml|ini|log|bak|dist|example)$">
+	<IfModule mod_authz_core.c>
+		Require all denied
+	</IfModule>
+	<IfModule !mod_authz_core.c>
+		Order deny,allow
+		Deny from all
+	</IfModule>
+</FilesMatch>

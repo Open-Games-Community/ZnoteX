@@ -1,0 +1,19 @@
+/* ---------------------------------------------------------------------------
+   Child theme example - the ONLY file this theme ships.
+
+   theme.json names "default" as the parent. Because the chain is searched
+   child -> parent -> default, this file wins wherever the parent asks for
+   css/style.css, and everything else - shells, parts, views, pages, images,
+   scripts - still comes from the parent.
+
+   Point "parent" at any installed theme, adjust the import path below to match
+   where that theme keeps its stylesheet, and you have a variant of it that
+   survives the parent being updated underneath you.
+
+   Import the parent's sheet first, then override only what you want.
+   --------------------------------------------------------------------------- */
+
+@import url("../../../default/assets/css/style.css");
+
+/* Example override: shift the whole palette. Delete this and start yours. */
+body { filter: hue-rotate(200deg); }

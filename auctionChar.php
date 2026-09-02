@@ -1,6 +1,6 @@
 <?php require_once 'engine/init.php';
 protect_page();
-include 'layout/overall/header.php';
+theme_open();
 // Convert a seconds integer value into days, hours, minutes and seconds string.
 function toDuration($is) {
 	$duration['day'] = $is / (24 * 60 * 60);
@@ -38,12 +38,12 @@ if ($auction['characterAuction']) {
 
 	if ($config['ServerEngine'] != 'TFS_10') {
 		echo "<p>Character shop auction system is currently only available for ServerEngine TFS_10.</p>";
-		include 'layout/overall/footer.php';
+		theme_close();
 		die();
 	}
 	if ((int)$auction['storage_account_id'] === (int)$this_account_id) {
 		echo "<p>The storage account cannot use the character auction.</p>";
-		include 'layout/overall/footer.php';
+		theme_close();
 		die();
 	}
 	$step = $auction['step'];
@@ -839,7 +839,7 @@ if ($auction['characterAuction']) {
 		//data_dump($characters, false, "List characters");
 		if ($is_admin) {
 			?>
-			<p>Admin: <a href="/admin_auction.php">Character auction history</a></p>
+			<p>Admin: <a href="/admin/index.php?p=auction">Character auction history</a></p>
 			<?php
 		}
 		if (is_array($characters) && !empty($characters)):
@@ -955,4 +955,4 @@ if ($auction['characterAuction']) {
 		}
 	}
 } else echo "<p>Character shop auctioning system is disabled.</p>";
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

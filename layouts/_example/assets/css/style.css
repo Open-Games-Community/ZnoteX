@@ -1,0 +1,181 @@
+/* ===========================================================================
+   Example theme
+   ---------------------------------------------------------------------------
+   Deliberately plain. It is a starting point, not a design.
+
+   The bottom half of this file is the CSS CONTRACT: the classes the root
+   pages emit in their own markup. Style those and every page of the site is
+   readable, even the ones you never wrote a view for. Skip them and those
+   pages render unstyled.
+   =========================================================================== */
+
+:root {
+	--ex-bg:      #14171d;
+	--ex-panel:   #1d222b;
+	--ex-line:    #2c333f;
+	--ex-text:    #dfe4ec;
+	--ex-muted:   #93a0b2;
+	--ex-accent:  #d1a233;
+	--ex-radius:  6px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	background: var(--ex-bg);
+	color: var(--ex-text);
+	font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+a { color: var(--ex-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; height: auto; }
+
+/* --------------------------------------------------------------- Chrome --
+   These belong to this theme's shell (shells/default.php). Rename them
+   freely - nothing outside your theme refers to them. */
+
+.ex-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 26px;
+	padding: 14px 24px;
+	background: var(--ex-panel);
+	border-bottom: 2px solid var(--ex-accent);
+}
+
+.ex-logo {
+	font-size: 20px;
+	font-weight: 700;
+	color: #fff;
+}
+.ex-logo:hover { text-decoration: none; }
+
+.ex-nav { display: flex; flex-wrap: wrap; gap: 18px; }
+.ex-nav a { color: var(--ex-muted); font-size: 14px; }
+.ex-nav a:hover { color: var(--ex-accent); text-decoration: none; }
+
+.ex-main {
+	max-width: 1100px;
+	margin: 26px auto;
+	padding: 0 20px;
+}
+
+.ex-footer {
+	max-width: 1100px;
+	margin: 40px auto 24px;
+	padding: 18px 20px 0;
+	border-top: 1px solid var(--ex-line);
+	color: var(--ex-muted);
+	font-size: 13px;
+}
+
+/* ============================================================ CSS CONTRACT
+   Emitted by the root pages themselves, not by your theme. Every theme has
+   to style these or those pages look broken. This is the whole list.
+   ======================================================================== */
+
+h1, h2, h3 { line-height: 1.25; margin: 1.4em 0 .6em; }
+h1 { font-size: 26px; }
+h2 { font-size: 20px; }
+
+/* Tables - highscores, guilds, deaths, online list, forum, ... */
+table,
+.table,
+.znoteTable,
+.ThreadTable {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 14px 0;
+	background: var(--ex-panel);
+	border-radius: var(--ex-radius);
+	overflow: hidden;
+}
+
+table td, table th {
+	padding: 9px 12px;
+	border-bottom: 1px solid var(--ex-line);
+	text-align: left;
+}
+
+/* Header rows. Znote marks them with .yellow, not with <th>. */
+tr.yellow td,
+tr.yellow th,
+.yellow {
+	background: #262d38;
+	color: #fff;
+	font-weight: 700;
+}
+
+.table-striped tbody tr:nth-child(odd) td { background: rgba(255, 255, 255, .02); }
+.table-hover tbody tr:hover td,
+.tbl-hover tr:hover td { background: rgba(209, 162, 51, .08); }
+
+tr.special td { font-weight: 600; }
+
+/* Buttons and form controls */
+.btn,
+button,
+input[type="submit"],
+input[type="button"] {
+	display: inline-block;
+	padding: 8px 16px;
+	border: 0;
+	border-radius: var(--ex-radius);
+	background: var(--ex-accent);
+	color: #14171d;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.btn:hover { filter: brightness(1.1); text-decoration: none; }
+
+.btn-primary { background: #3c8dbc; color: #fff; }
+.btn-success { background: #2ea36c; color: #fff; }
+.btn-warning { background: #e6a532; color: #14171d; }
+.btn-danger  { background: #e05563; color: #fff; }
+.btn-info    { background: #17a2b8; color: #fff; }
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+select,
+textarea,
+.form-control {
+	padding: 8px 11px;
+	border: 1px solid var(--ex-line);
+	border-radius: var(--ex-radius);
+	background: #12161c;
+	color: var(--ex-text);
+	font: inherit;
+	max-width: 100%;
+}
+
+textarea { min-height: 120px; }
+.forumReply { width: 100%; }
+
+/* Odds and ends the pages use */
+.txt          { color: var(--ex-muted); }
+.zheadline    { font-size: 22px; font-weight: 700; margin: 1.2em 0 .5em; }
+.bighr        { border: 0; border-top: 1px solid var(--ex-line); margin: 24px 0; }
+.outfitColumn { width: 64px; text-align: center; }
+.span12       { width: 100%; }
+.show         { display: block; }
+.wtf          { overflow-x: auto; }
+.nav_link     { display: inline-block; padding: 4px 8px; }
+
+/* The sidebar widgets, if your shell calls theme_sidebar() or widget().
+   This theme's shell does not, so these are here only for reference. */
+.well    { background: var(--ex-panel); border-radius: var(--ex-radius); padding: 14px; margin-bottom: 16px; }
+.widget  { margin-bottom: 16px; }
+.header  { font-weight: 700; margin-bottom: 8px; }
+
+@media (max-width: 720px) {
+	.ex-header { flex-direction: column; align-items: flex-start; }
+	.ex-main   { padding: 0 14px; }
+	table      { font-size: 14px; }
+}

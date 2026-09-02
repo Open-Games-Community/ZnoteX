@@ -219,7 +219,7 @@ function cancel_war_invitation($cid, $gid) {
 	mysql_update("UPDATE `guild_wars` SET `status` = 3, `ended` = '{$time}' WHERE `guild2` = '{$cid}' AND `guild1` = '{$gid}';");
 }
 
-include 'layout/overall/header.php';
+theme_open();
 
 if (user_logged_in() === true) {
 	// fetch data
@@ -574,7 +574,7 @@ if (user_logged_in() === true) {
 			
 			if ($join_account !== $session_user_id) {
 				echo '<font color="red" size="4">Join guild request sent from wrong account.</font>';
-				include 'layout/overall/footer.php';
+				theme_close();
 				exit();
 			}
 
@@ -611,7 +611,7 @@ if (user_logged_in() === true) {
 			$leave_account = (int)user_character_account_id($name);
 			if ($leave_account !== $session_user_id) {
 				echo '<font color="red" size="4">Leave guild request sent from wrong account.</font>';
-				include 'layout/overall/footer.php';
+				theme_close();
 				exit();
 			}
 
@@ -1246,4 +1246,4 @@ if (user_logged_in() === true) {
 		} // display form if user has a character in guild
 	} // user logged in
 } // end view specific guild
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

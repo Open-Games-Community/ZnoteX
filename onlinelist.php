@@ -1,4 +1,4 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php'; 
+<?php require_once 'engine/init.php'; theme_open(); 
 
 $history = array(
 	"enabled" => true,
@@ -29,6 +29,17 @@ if ($cache->hasExpired()) {
 	$array = $cache->load();
 }
 // End cache
+
+/**
+ * Players-online record.
+ *
+ * Updated here because this page already knows the current count - checking it
+ * anywhere else would mean an extra query on every page load. Stored in
+ * znote_config, see znote_record_update().
+ */
+$onlineNow    = is_array($array) ? count($array) : 0;
+$onlineBroken = znote_record_update($onlineNow);
+$onlineRecord = znote_record_get();
 
 // 5 minute logout history cache
 if ($history["enabled"]) {
@@ -78,86 +89,7 @@ if ($history["enabled"]) {
 		$recents = $cache->load();
 	}
 }
-// End cache
 
-?>
-<h1>Who is online?</h1>
-<?php
+view('onlinelist');
 
-// Players currently logged in
-if (!empty($array) && $array !== false): ?>
-	<h2>Currently online:</h2>
-	<table id="onlinelistTable" class="table table-striped table-hover">
-		<tr class="yellow">
-			<?php if ($loadOutfits) echo "<th>Outfit</th>"; ?>
-			<th>Name:</th>
-			<th>Guild:</th>
-			<th>Level:</th>
-			<th>Vocation:</th>
-		</tr>
-		<?php
-		foreach ($array as $value):
-			$url = url("characterprofile.php?name=". $value['name']);
-			$flag = ($loadFlags === true && strlen($value['flag']) > 1) ? '<img src="' . $config['country_flags']['server'] . '/' . $value['flag'] . '.png">  ' : '';
-			$guildname = (!empty($value['gname'])) ? '<a href="guilds.php?name='. $value['gname'] .'">'. $value['gname'] .'</a>' : '';
-			?>
-			<tr class="special">
-				<?php if ($loadOutfits): ?>
-					<td class="outfitColumn"><img src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $value['type']; ?>&addons=<?php echo $value['addons']; ?>&head=<?php echo $value['head']; ?>&body=<?php echo $value['body']; ?>&legs=<?php echo $value['legs']; ?>&feet=<?php echo $value['feet']; ?>" alt="img"></td>
-				<?php endif; ?>
-				<td><?php echo $flag; ?><a href="characterprofile.php?name=<?php echo $value['name']; ?>"><?php echo $value['name']; ?></a></td>
-				<td><?php echo $guildname; ?></td>
-				<td><?php echo $value['level']; ?></td>
-				<td><?php echo vocation_id_to_name($value['vocation']); ?></td>
-			</tr>
-			<?php
-		endforeach; ?>
-	</table>
-	<?php
-else:
-	?>
-	<p>Nobody is online.</p>
-	<?php
-endif;
-
-// Players online logout history
-if ($history["enabled"]) {
-	$time = time();
-	if (!empty($recents) && $recents !== false): ?>
-		<h2>Online past <?php echo $history['days']; ?> days:</h2>
-		<table id="recentlistTable" class="table table-striped table-hover">
-			<tr class="yellow">
-				<?php if ($loadOutfits) echo "<th>Outfit</th>"; ?>
-				<th>Name:</th>
-				<th>Guild:</th>
-				<th>Level:</th>
-				<th>Logout [days] - date</th>
-			</tr>
-			<?php
-			foreach ($recents as $value):
-				$days = floor(($time - $value['lastlogout']) / 86400);
-				$url = url("characterprofile.php?name=". $value['name']);
-				$flag = ($loadFlags === true && strlen($value['flag']) > 1) ? '<img src="' . $config['country_flags']['server'] . '/' . $value['flag'] . '.png">  ' : '';
-				$guildname = (!empty($value['gname'])) ? '<a href="guilds.php?name='. $value['gname'] .'">'. $value['gname'] .'</a>' : '';
-				?>
-				<tr class="special">
-					<?php if ($loadOutfits): ?>
-						<td class="outfitColumn"><img src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $value['type']; ?>&addons=<?php echo $value['addons']; ?>&head=<?php echo $value['head']; ?>&body=<?php echo $value['body']; ?>&legs=<?php echo $value['legs']; ?>&feet=<?php echo $value['feet']; ?>" alt="img"></td>
-					<?php endif; ?>
-					<td><?php echo $flag; ?><a href="characterprofile.php?name=<?php echo $value['name']; ?>"><?php echo $value['name']; ?></a></td>
-					<td><?php echo $guildname; ?></td>
-					<td><?php echo $value['level']; ?></td>
-					<td><?php echo "{$days}D: " . getClock($value['lastlogout'], true); ?></td>
-				</tr>
-				<?php
-			endforeach; ?>
-		</table>
-		<?php
-	else:
-		?>
-		<p>Nobody has logged in past <?php echo $history['days']; ?> days.</p>
-		<?php
-	endif;
-}
-
-include 'layout/overall/footer.php'; ?>
+theme_close();

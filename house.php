@@ -1,4 +1,4 @@
-<?php require_once 'engine/init.php'; include 'layout/overall/header.php';
+<?php require_once 'engine/init.php'; theme_open();
 if ($config['log_ip']) {
 	znote_visitor_insert_detailed_data(3);
 }
@@ -23,7 +23,7 @@ if ($house !== false) {
 		<h1>House not found.</h1>
 		<p>Go back to the <a href="houses.php">house list</a> and select a house for further details.</p>
 		<?php
-		include 'layout/overall/footer.php';
+		theme_close();
 		exit;
 	}
 	$minbid = $config['houseConfig']['minimumBidSQM'] * $house['size'];
@@ -352,4 +352,4 @@ if ($house !== false) {
 	<p>Go back to the <a href="houses.php">house list</a> and select a house for further details.</p>
 	<?php
 }
-include 'layout/overall/footer.php'; ?>
+theme_close(); ?>

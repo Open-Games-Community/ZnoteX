@@ -1,3 +1,18 @@
 *.cache.php
 engine/cache/*
 .idea
+# Theme packaging and its output. This belongs on the layouts branch, not here:
+# the code branch stays small, and cloning it does not drag the themes along.
+upload_github/
+
+# Written by the installer: database credentials and the admin names for THIS
+# install. It must never reach a public repository.
+config.local.php
+config.php.bak
+
+# The installer's lock, created when it finishes.
+install/installed.lock
+
+*.rar
+# The pull-request description. Written to be pasted into GitHub, not shipped.
+PULL_REQUEST.md
