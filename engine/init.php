@@ -44,6 +44,29 @@ if ($config['ServerEngineReal'] === 'CANARY') {
     $config['twoFactorAuthenticator'] = false;
 }
 
+if (PHP_SAPI !== 'cli'
+    && !is_file(__DIR__ . '/../config.local.php')
+    && !is_file(__DIR__ . '/../install/installed.lock')
+    && is_file(__DIR__ . '/../install/index.php')
+) {
+    $znoteRoot = str_replace('\\', '/', (string)realpath(__DIR__ . '/..'));
+    $scriptDir = str_replace('\\', '/', (string)realpath(dirname((string)($_SERVER['SCRIPT_FILENAME'] ?? ''))));
+
+    $depth = 0;
+    if ($znoteRoot !== '' && $scriptDir !== '' && strpos($scriptDir . '/', $znoteRoot . '/') === 0) {
+        $below = trim(substr($scriptDir, strlen($znoteRoot)), '/');
+        $depth = ($below === '') ? 0 : count(explode('/', $below));
+    }
+
+    $segments = array_values(array_filter(explode('/', str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '')))), 'strlen'));
+    if ($depth > 0) {
+        $segments = array_slice($segments, 0, max(0, count($segments) - $depth));
+    }
+
+    header('Location: ' . ($segments ? '/' . implode('/', $segments) : '') . '/install/');
+    exit;
+}
+
 require_once 'database/connect.php';
 require_once 'function/general.php';
 require_once 'function/users.php';

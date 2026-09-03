@@ -22,7 +22,7 @@ function install_config_contents(bool $includeAdmin = true): string {
 		return "'" . str_replace(array('\\', "'"), array('\\\\', "\\'"), $value) . "'";
 	};
 
-	$admin = (string)install_get('admin_character');
+	$admin = (string)install_get('admin_account');
 	$nl    = "\n";
 
 	$out  = '<?php' . $nl;
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	// Do this first: if it fails we fall back to config.local.php rather than
 	// finishing with an admin who cannot reach the panel.
 	if ($adminInMain) {
-		$result = install_write_admin_to_config((string)install_get('admin_character'));
+		$result = install_write_admin_to_config((string)install_get('admin_account'));
 		if ($result !== '') {
 			$adminNote   = $result . ' The admin name went to config.local.php instead.';
 			$adminInMain = false;
@@ -148,7 +148,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		<tr><td>Server engine</td><td><code><?= ih(install_get('ServerEngine')) ?></code></td></tr>
 		<tr><td>Site name</td><td><?= ih(install_get('site_title')) ?></td></tr>
 		<tr><td>Site URL</td><td><?= ih(install_get('site_url')) ?></td></tr>
-		<tr><td>Administrator</td><td><?= ih(install_get('admin_character')) ?> <span class="detail">(character name)</span></td></tr>
+		<tr><td>Administrator</td><td><?= ih(install_get('admin_account')) ?> <span class="detail">(account name &mdash; this is what grants panel access)</span></td></tr>
+		<tr><td>Character</td><td><?= ih(install_get('admin_character')) ?></td></tr>
 	</table>
 
 	<?php if ($writeErr !== ''): ?>

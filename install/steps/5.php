@@ -2,9 +2,8 @@
 /**
  * Step 5 - the administrator.
  *
- * Creates an account, a character on it, and remembers the character name so
- * the last step can put it in page_admin_access. ZnoteX has no admin flag in
- * the database: being an admin means your character name is in that array.
+ * Creates an account, a character on it, and remembers the account name so the
+ * last step can put it in page_admin_access.
  *
  * The account is created the way register.php does it, so the password hash
  * matches what login.php expects on this engine.
@@ -115,8 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done) {
 <?php if ($done): ?>
 
 	<p class="good">
-		<strong><?= ih(install_get('admin_character')) ?></strong> was created and will be given
-		panel access at the next step.
+		Account <strong><?= ih(install_get('admin_account')) ?></strong> and character
+		<strong><?= ih(install_get('admin_character')) ?></strong> were created. The account
+		is given panel access at the next step.
 	</p>
 	<div class="actions">
 		<a class="btn" href="<?= install_url(6) ?>">Continue</a>
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done) {
 
 	<p class="lead">
 		An account to log in with, and a character on it. ZnoteX grants admin rights by
-		<em>character name</em>, so the name below is what unlocks the panel.
+		<em>account name</em>, so the account name below is what unlocks the panel.
 	</p>
 
 	<form method="post">
@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done) {
 		<div class="field">
 			<label class="lbl" for="character">Character name</label>
 			<input type="text" id="character" name="character" maxlength="20" required>
-			<p class="hint">Letters and spaces only. This is the name that gets admin access.</p>
+			<p class="hint">Letters and spaces only. Your character in game &mdash; panel access comes from the account name above.</p>
 		</div>
 
 		<div class="info">
