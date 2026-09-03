@@ -32,7 +32,7 @@ Open Tibia AAC projects, and we intend to keep building on it.
 | **PHP** | 8.1 or newer — 8.1, 8.2, 8.3, 8.4 and 8.5 all supported |
 | **Database** | MySQL or MariaDB |
 | **Required extension** | `mysqli` |
-| **Optional extensions** | `curl` (PayPal, reCaptcha, e-mail) · `openssl` (reCaptcha) · `gd` (guild images) |
+| **Optional extensions** | `curl` (PayPal, reCaptcha, e-mail) · `openssl` (reCaptcha) · `gd` (guild images) · `apcu` (memory cache) |
 
 > PHP 8.0 and older are **not** supported and will be refused at startup.
 
@@ -98,7 +98,7 @@ created them and will not pretend to. Step 2 refuses to continue until they exis
 TFS/Canary's own `schema.sql` afterwards would overwrite what the installer is about to write.
 
 Step 5 creates a real, working administrator: the account, a character on it, and the password
-hashed the way `login.php` expects on your engine. Step 6 puts that character name in
+hashed the way `login.php` expects on your engine. Step 6 puts that **account name** in
 `page_admin_access`, so you can reach `/admin/` the moment the installer finishes. It writes to
 **`config.local.php`**, not `config.php` — see below — though a checkbox on the last step will
 write the admin name into `config.php` instead if you prefer.
@@ -134,12 +134,60 @@ $config['sqlDatabase'] = 'your_db_name';
 $config['ServerEngine'] = 'TFS_10';   // see "Supported servers" above
 $config['site_title']   = 'My Server';
 $config['site_url']     = 'https://example.com/';
-
-$config['page_admin_access'] = array('YourCharacterName');
+$config['page_admin_access'] = array('YourAccountName');
 ```
 
 3. Make `engine/cache/` writable by the web server.
 4. Open the site. If anything is misconfigured, the page tells you what to fix.
+
+### Memory cache (APCu)
+
+ZnoteX caches highscores, news and similar pages. It can keep that cache in files under
+`engine/cache/`, or in RAM via the **APCu** extension.
+
+`config.php` ships with `'memory' => true`, so a fresh install without APCu stops on every cached
+page with *"Configuration error! APCu is not enabled."* If you see that, you have two choices —
+install APCu, or switch to the file cache by putting this in `config.local.php`:
+
+```php
+$config['cache']['memory'] = false;
+```
+
+The file cache needs no extension, works everywhere, and only requires `engine/cache/` to be
+writable.
+
+**APCu is optional.** It saves a few disk reads per request. On a local or low-traffic server you
+will not notice the difference — it is worth installing once you have real player traffic.
+
+#### Installing APCu on Windows
+
+Download from **[pecl.php.net/package/APCu/5.1.28](https://pecl.php.net/package/APCu/5.1.28)** and
+click the **DLL** link. The build must match your PHP exactly — check yours with `php -i` or
+`phpinfo()`:
+
+| Filename part | Comes from |
+| --- | --- |
+| `8.3` | your PHP version |
+| `ts` / `nts` | *Thread Safety* — `enabled` means **ts** |
+| `vs16` / `vs17` | *Compiler* — Visual C++ 2019 is `vs16`, 2022 is `vs17` |
+| `x64` / `x86` | *Architecture* |
+
+Uniform Server is thread-safe, so with PHP 8.3 it needs
+`php_apcu-5.1.28-8.3-ts-vs16-x64.zip`. Most Windows guides say `nts` because that is what other
+stacks use — picking the wrong one means the DLL is ignored with no error.
+
+1. Copy `php_apcu.dll` from the zip into your PHP `extensions` (or `ext`) folder — the path in
+   `extension_dir`.
+2. Add to your `php.ini`:
+   ```ini
+   extension=apcu
+   apc.enabled=1
+   ```
+   Uniform Server has no single `php.ini`: the web server reads `php_production.ini` or
+   `php_development.ini` from `core/php83/` depending on the mode it is running in.
+3. Restart Apache, then set `memory` to `true`.
+
+On Linux, `pecl install apcu` or your distribution's `php-apcu` package.
 
 ### Already have players?
 

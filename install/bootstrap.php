@@ -333,21 +333,10 @@ function install_write_admin_to_config(string $character): string {
 		return 'Could not rewrite the array in config.php.';
 	}
 
-	$tmp = $file . '.installer-check';
-	if (@file_put_contents($tmp, $updated) === false) {
-		return 'Could not write a temporary file next to config.php.';
-	}
-
-	$output = array();
-	$status = 0;
-	@exec(escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($tmp) . ' 2>&1', $output, $status);
-	@unlink($tmp);
-
-	// A non-zero status means the edit would not parse. If exec is disabled the
-	// status stays 0 and the write goes ahead, which is no worse than editing
-	// the file by hand.
-	if ($status !== 0) {
-		return 'The edit would have broken config.php, so nothing was changed.';
+	try {
+		token_get_all($updated, TOKEN_PARSE);
+	} catch (ParseError $e) {
+		return 'The edit would have broken config.php, so nothing was changed: ' . $e->getMessage();
 	}
 
 	@copy($file, $file . '.bak');
