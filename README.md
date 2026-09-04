@@ -193,6 +193,11 @@ On Linux, `pecl install apcu` or your distribution's `php-apcu` package.
 
 Open **`/special/`** to convert an existing OT database for ZnoteX.
 
+Coming from another AAC instead? **Admin Panel → Settings → Convert SQL** takes a **MyAAC** or
+**Gesior2012** database dump and gives you back a ZnoteX conversion SQL — accounts, players,
+news, gallery and the rest. Tables ZnoteX has no equivalent for are preserved rather than
+dropped.
+
 ### Upgrading
 
 Replace everything **except** `config.local.php`, `layouts/`, `plugins/` and `engine/cache/`.
@@ -234,11 +239,16 @@ plugin has an update waiting.
 
 - Highscores with vocation and skill filters
 - Latest deaths and latest kills
-- Server info page with PvP settings, rates and experience stages (reads `config.lua` and `stages.xml`)
-- Spells list with vocation filters (reads `spells.xml`)
-- Item list (reads `items.xml`)
+- Server info page with PvP settings, rates and experience stages (from your `config.lua` and `stages.xml`)
+- Spells list with vocation filters (from `spells.xml`)
+- Item list (from `items.xml`)
+- Creature library and monster loot tables (from your `data/monster/` folder)
+- Interactive world map from your OTClient `.otmm` minimap: drag, zoom, floor by floor
 - Houses list with town filters, house bidding, and direct purchase with shop points
 - Downloads page with client links and a connection guide
+
+All of the above are uploaded once in **Admin Panel → Server Info** — no FTP, no pasting file
+contents into a public page.
 
 </details>
 
@@ -265,6 +275,10 @@ plugin has an update waiting.
 - Shop Manager for adding, previewing, hiding and removing database shop offers
 - Shop Pending / History page for pending deliveries and completed orders
 - Moderate gallery uploads, post news and changelogs
+- Server Info pages that import `config.lua`, `stages.xml`, `items.xml`, `spells.xml`, your
+  monster folder and an OTClient `.otmm` minimap
+- Convert a **MyAAC** or **Gesior2012** database into ZnoteX from the panel
+- Rename characters, and search every page *and setting* from the top bar
 
 </details>
 
@@ -274,7 +288,9 @@ plugin has an update waiting.
 - Six-step web installer at `/install/` that checks requirements, verifies your OT schema is
   present, imports the ZnoteX tables, creates the first administrator and writes the config
 - Theme system: every theme is a folder of plain HTML and CSS under `layouts/`, switchable from
-  the admin panel, with per-theme options, child themes and one-click install from a repository
+  the admin panel, with child themes and one-click install from a repository
+- Per-theme options edited from the panel: background image, logos, links, and an editable line of
+  footer text — images can be uploaded, and are stored outside the theme so an update keeps them
 - Plugin system: add pages, admin pages, tables and behaviour from `plugins/` with no core edit,
   install and update from the admin panel
 - Settings editor for most of `config.php`, and a menu builder for the site navigation
@@ -294,31 +310,69 @@ plugin has an update waiting.
 
 ## Admin Control Panel
 
-ZnoteX now includes a modern admin control panel at `/admin/`. Access is controlled by
-`$config['page_admin_access']` in `config.php`.
+Everything below lives at **`/admin/`**. Access is controlled by
+`$config['page_admin_access']` in `config.php`. The panel is grouped the way the sidebar is.
 
-Included modules:
+### Overview
 
-- **Dashboard** - server overview, environment details, recent accounts, recent characters, top point balances and open queues
-- **Player Tools** - account lookup, character lookup, password changes, points, access, positions and teleport actions
-- **Character Skills** - edit level, magic level, health, mana and skills from one admin page
-- **News** - create and manage website news and changelog posts
-- **Gallery** - review and moderate uploaded gallery images
-- **Bug Reports** - review in-game bug reports
-- **Helpdesk** - manage support tickets
-- **Feedback Board** - quick access to admin feedback threads
-- **Shop Manager** - add, preview, hide and delete database shop offers
-- **Shop Pending / History** - view pending shop deliveries and completed purchases
-- **Character Auctions** - manage character auction settings and activity
-- **Layouts** - switch theme, edit its options, browse and install themes from a repository
-- **Menus** - build the site navigation without touching a template
-- **Settings** - edit most of `config.php` from the browser
-- **Plugins** - install, update, enable and disable what is in `plugins/`
-- **Accounts** - browse and inspect accounts
-- **Visitors** - who has been on the site
+- **Search** — every page *and every setting*, by name or by what it does. Typing `download`
+  reaches the client URL fields under Settings, not just a page whose title happens to match.
+- **Dashboard** — server and community at a glance: environment, recent accounts and characters,
+  top point balances, open queues.
+- **Visitors** — traffic ZnoteX has been recording all along.
 
-Shop offers are no longer configured through `$config['shop_offers']`. They are stored in
-`znote_shop_offers` and managed from **Admin Panel > Shop Manager**.
+### Content
+
+- **News** — write, edit and remove front-page articles, with a BBCode editor.
+- **Changelog** — the entries shown on the public changelog page.
+- **Gallery** — moderate player screenshot submissions.
+- **Menus** — build the site navigation without touching a template. A top-level entry is a
+  *category*: a heading that opens its children rather than a link of its own, so it needs no URL.
+
+### Players
+
+- **Accounts** — search an account, see its characters, points and history.
+- **Player Tools** — punish, move, rename and maintain characters and their accounts.
+- **Character Skills** — read and rewrite level, vocation, health, mana and skills.
+
+### Server Info
+
+Your server's own files, uploaded once here instead of pasted into public pages.
+
+- **Server Information** — upload `config.lua`, `stages.xml`, `items.xml`, `spells.xml` and your
+  monster folder. Each one is parsed on upload and published to the page that uses it:
+  `serverinfo.php`, `items.php`, `spells.php`, `creatures.php` and `monster_loot.php`. For the
+  monsters, `monsters.xml` alone gives you the names; a **`.zip` of `data/monster/`** also gives
+  health, experience, speed and race.
+- **Minimap** — import the `.otmm` your OTClient/OTCv8 writes. ZnoteX converts it into map tiles
+  and shows a pan/zoom viewer with floor arrows on Server Information. Nothing is rendered at all
+  unless a minimap is imported.
+
+`config.lua` is parsed on upload and **never written to disk** — it carries your MySQL password,
+and `engine/XML/` is served by the web server. Only the whitelisted settings are kept.
+
+### Economy
+
+- **Shop Manager** — add, preview, hide and remove shop offers. They live in `znote_shop_offers`
+  now, not in `$config['shop_offers']`.
+- **Payments** — gateways, credentials and the point packages players can buy.
+- **Shop Pending / History** — pending deliveries and completed purchases.
+- **Character Auctions** — ongoing, unclaimed and completed character sales.
+
+### Support
+
+- **Bug Reports** — triage in-game reports, reward reporters, publish changelogs.
+- **Helpdesk** — answer, close and delete support tickets.
+- **Feedback Board** — forum threads awaiting a staff reply.
+
+### Settings
+
+- **Layout** — switch theme, edit its options, browse and install themes from a repository.
+- **Plugins** — install, update, enable and disable what is in `plugins/`.
+- **Settings** — most of `config.php`, from the browser.
+- **Convert SQL** — upload a **MyAAC** or **Gesior2012** database dump and download a ZnoteX
+  conversion SQL. Tables ZnoteX has no equivalent for are kept rather than dropped, and each
+  converted row is mapped back to the row it came from, so a conversion can be traced and re-run.
 
 ---
 
@@ -333,9 +387,19 @@ Everything below is in **Admin Panel → Layouts**.
 **Switching.** Every installed theme is listed with a screenshot, 12 per page. Click one to make
 it active. It applies to the public site only — the admin panel never changes.
 
-**Options.** A theme can declare its own settings in `theme.json` — social links, a tagline, a
-colour. They then appear under *Options* on that theme's card and are stored in the database, so
-you change them from the panel instead of editing the theme's files.
+**Options.** A theme declares its own settings in `theme.json` — a background image, its logos,
+social links, a tagline, a colour, an editable line of footer text. They appear under *Options* on
+that theme's card and are stored in the database, so you change them from the panel instead of
+editing the theme's files, and updating the theme cannot lose them.
+
+An option of type `image` shows the current picture, its path, and an upload field. Uploads land
+in `engine/img/theme/<theme>/`, deliberately outside `layouts/`, so replacing or re-extracting a
+theme leaves them alone. An image that only exists inside a static stylesheet is reachable too:
+the option declares the CSS rule that places it and ZnoteX writes that into the page head, so no
+theme file has to change.
+
+The footer option is one line of your own, rendered above the credits — the copyright and engine
+credits stay in the theme's files on purpose, not in the panel.
 
 **Installing one.** Two ways:
 
