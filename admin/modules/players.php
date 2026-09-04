@@ -3,7 +3,7 @@
  * Title: Player Tools
  * Icon: fa-users
  * Group: Players
- * Order: 10
+ * Order: 20
  * Description: Punish, move and maintain characters and their accounts.
  */
 
@@ -17,6 +17,17 @@ if (!defined('ACP_ROOT')) {
 $enc = 100;
 
 $legacyEngines = ['TFS_02', 'TFS_10', 'OTHIRE'];
+
+function acp_players_table_exists(string $table): bool {
+	return mysql_select_single("SHOW TABLES LIKE '" . esc($table) . "';") !== false;
+}
+
+function acp_players_column_exists(string $table, string $column): bool {
+	return mysql_select_single("
+		SHOW COLUMNS FROM `" . esc($table) . "`
+		LIKE '" . esc($column) . "';
+	") !== false;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -81,6 +92,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 
 		acp_flash_error('Character <strong>' . h($char) . '</strong> does not exist.');
+		acp_redirect('players');
+	}
+
+	// ---------------------------------------------------- Rename character
+	if (!empty($_POST['rename_character'])) {
+		$currentName = trim((string)($_POST['rename_current'] ?? ''));
+		$newNameInput = trim((string)($_POST['rename_new'] ?? ''));
+		$newName = validate_name($newNameInput);
+		$problems = [];
+
+		$onlineSelect = acp_players_column_exists('players', 'online') ? ', `online`' : '';
+		$character = $currentName !== '' ? mysql_select_single("
+			SELECT `id`, `name`{$onlineSelect}
+			FROM `players`
+			WHERE `name` = '" . esc($currentName) . "'
+			LIMIT 1;
+		") : false;
+
+		if (!is_array($character)) {
+			$problems[] = 'The current character does not exist.';
+		}
+		if ($newName === false) {
+			$problems[] = 'The new name contains too many words.';
+		} else {
+			$newName = format_character_name($newName);
+			if (!preg_match('/^[a-zA-Z ]+$/', $newName)) {
+				$problems[] = 'The new name may only contain letters and spaces.';
+			}
+			$minLength = (int)($config['minL'] ?? 3);
+			$maxLength = (int)($config['maxL'] ?? 20);
+			if (strlen($newName) < $minLength || strlen($newName) > $maxLength) {
+				$problems[] = "The new name must be between {$minLength} and {$maxLength} characters.";
+			}
+			foreach (explode(' ', $newName) as $word) {
+				if (strlen($word) === 1) {
+					$problems[] = 'Every word in the new name must contain at least two letters.';
+					break;
+				}
+				if (in_array(strtolower($word), $config['invalidNameTags'] ?? [], true)) {
+					$problems[] = 'The new name contains a restricted word.';
+					break;
+				}
+			}
+			if (in_array(strtolower($newName), $config['creatureNameTags'] ?? [], true)) {
+				$problems[] = 'The new name is reserved for a creature.';
+			}
+		}
+
+		if (is_array($character) && isset($character['online']) && (int)$character['online'] !== 0) {
+			$problems[] = 'The character must be offline before it can be renamed.';
+		}
+
+		if (!$problems && is_array($character)) {
+			$characterId = (int)$character['id'];
+			$duplicate = mysql_select_single("
+				SELECT `id` FROM `players`
+				WHERE `name` = '" . esc((string)$newName) . "'
+				AND `id` <> {$characterId}
+				LIMIT 1;
+			");
+			if (is_array($duplicate)) {
+				$problems[] = 'Another character already uses that name.';
+			}
+		}
+
+		if ($problems) {
+			acp_flash_error(implode(' ', array_map('h', $problems)));
+			acp_redirect('players');
+		}
+
+		$oldName = (string)$character['name'];
+		$characterId = (int)$character['id'];
+		if (strcasecmp($oldName, (string)$newName) === 0 && $oldName === $newName) {
+			acp_flash_error('The current and new character names are identical.');
+			acp_redirect('players');
+		}
+
+		if (!mysql_update("
+			UPDATE `players`
+			SET `name` = '" . esc((string)$newName) . "'
+			WHERE `id` = {$characterId}
+			LIMIT 1;
+		")) {
+			acp_flash_error('The character could not be renamed.');
+			acp_redirect('players');
+		}
+
+		foreach (['znote_forum_threads', 'znote_forum_posts'] as $forumTable) {
+			if (acp_players_table_exists($forumTable)) {
+				mysql_update("
+					UPDATE `{$forumTable}`
+					SET `player_name` = '" . esc((string)$newName) . "'
+					WHERE `player_id` = {$characterId};
+				");
+			}
+		}
+
+		znote_hook('character.renamed', [
+			'player_id' => $characterId,
+			'old_name' => $oldName,
+			'new_name' => $newName,
+		]);
+		acp_flash_success('<strong>' . h($oldName) . '</strong> renamed to <strong>' . h((string)$newName) . '</strong>.');
 		acp_redirect('players');
 	}
 
@@ -249,6 +363,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				<p class="acp-hint">Your own account is redirected to the normal change-password page.</p>
 				<div class="acp-actions">
 					<button class="acp-btn acp-btn--amber" type="submit"><i class="fa fa-key"></i> Reset password</button>
+				</div>
+			</form>
+		</div>
+	</section>
+
+	<!-- ------------------------------------------------ Rename character -->
+	<section class="acp-card">
+		<header class="acp-card-head">
+			<h2>Rename character</h2>
+			<p>The character must be offline</p>
+		</header>
+		<div class="acp-card-body">
+			<form method="post">
+				<?= acp_csrf_field() ?>
+				<input type="hidden" name="rename_character" value="1">
+				<div class="acp-row">
+					<div class="acp-field">
+						<label class="acp-label" for="rename_current">Current name</label>
+						<input class="acp-input" id="rename_current" name="rename_current" placeholder="Current character name" required>
+					</div>
+					<div class="acp-field">
+						<label class="acp-label" for="rename_new">New name</label>
+						<input class="acp-input" id="rename_new" name="rename_new" placeholder="New character name" required>
+					</div>
+				</div>
+				<div class="acp-actions">
+					<button class="acp-btn acp-btn--blue" type="submit"><i class="fa fa-pencil"></i> Rename character</button>
 				</div>
 			</form>
 		</div>

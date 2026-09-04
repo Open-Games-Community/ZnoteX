@@ -81,12 +81,13 @@ function acp_redirect(string $module = 'dashboard', array $params = []): void {
 }
 
 const ACP_GROUP_ORDER = [
-	'Overview' => 10,
-	'Players'  => 20,
-	'Content'  => 30,
-	'Support'  => 40,
-	'Economy'  => 50,
-	'Plugins'  => 60,
+	'Overview'    => 10,
+	'Content'     => 20,
+	'Players'     => 30,
+	'Server Info' => 40,
+	'Economy'     => 50,
+	'Support'     => 60,
+	'Settings'    => 70,
 ];
 
 function acp_parse_module_header(string $file): array {
@@ -146,7 +147,7 @@ function acp_modules(): array {
 				'file'        => $file,
 				'title'       => $meta['title'] ?? ucwords(str_replace('_', ' ', $key)),
 				'icon'        => $meta['icon'] ?? 'fa-plug',
-				'group'       => $meta['group'] ?? 'Plugins',
+				'group'       => $meta['group'] ?? 'Settings',
 				'order'       => isset($meta['order']) ? (int)$meta['order'] : 100,
 				'description' => $meta['description'] ?? '',
 				'url'         => $meta['url'] ?? null,

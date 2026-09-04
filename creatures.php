@@ -4,9 +4,9 @@ theme_open();
 /**
  * Creature library.
  *
- * Reads the server's own monsters.xml and the per-monster files it points at.
- * That is 870+ file reads on a full data set, so the result is cached: without
- * it every visitor would re-parse the whole monster folder.
+ * The monster data is uploaded and parsed in the admin panel, under Server Info.
+ * An install that still points $config['server_path'] at the server folder keeps
+ * working: that is the fallback source when nothing was uploaded.
  *
  * Prepared for the view:
  *   $creaturesPath   the data folder used, for the "not configured" message
@@ -22,68 +22,21 @@ $creatureRaces  = array();
 $creatureSearch = trim((string)($_GET['search'] ?? ''));
 $creatureRace   = trim((string)($_GET['race'] ?? ''));
 
-// The server folder, from config.php. Fall back to the layout monster_loot
-// uses so both pages agree on where the data lives.
-$creaturesPath = rtrim((string)($config['server_path'] ?? ''), '/\\');
-if ($creaturesPath === '') {
-	$creaturesPath = 'misc';
-}
+$creatureSource = serverdata_creature_source();
+$creaturesPath  = $creatureSource['label'];
 
-$cache = new Cache('engine/cache/creatures');
-$cache->useMemory(false);
+$loaded = serverdata_load('creatures');
 
-// Parsing 870 monster files takes seconds, so this must not follow the site's
-// general cache lifespan - that is tuned for data which changes constantly and
-// can be as low as 5 seconds. Monster files change when the server is updated,
-// so once a day is generous. Delete engine/cache/creatures.cache to force a
-// rebuild after editing the server's data.
-$cache->setExpiration(86400);
-
-if ($cache->hasExpired()) {
-
-	$index = @simplexml_load_file($creaturesPath . '/data/monster/monsters.xml');
-
-	if ($index === false) {
-		$creatureError = 'Could not read data/monster/monsters.xml. Check $config[\'server_path\'].';
+if ($loaded === false) {
+	$rebuildError = null;
+	if (serverdata_rebuild('creatures', $rebuildError)) {
+		$loaded = serverdata_load('creatures');
 	} else {
-		foreach ($index->monster as $entry) {
-			$file = (string)$entry['file'];
-			if ($file === '') {
-				continue;
-			}
-
-			$monster = @simplexml_load_file($creaturesPath . '/data/monster/' . $file);
-			if ($monster === false) {
-				// A missing file is the server's problem, not ours: skip it
-				// rather than abort the whole page.
-				continue;
-			}
-
-			$health = isset($monster->health) ? (int)$monster->health['max'] : 0;
-			$look   = isset($monster->look) ? (int)$monster->look['type'] : 0;
-
-			$creatures[] = array(
-				'name'       => (string)($entry['name'] ?? $monster['name']),
-				'health'     => $health,
-				'experience' => (int)$monster['experience'],
-				'speed'      => (int)$monster['speed'],
-				'race'       => (string)$monster['race'],
-				'looktype'   => $look,
-			);
-		}
-
-		usort($creatures, static function (array $a, array $b): int {
-			return strcasecmp($a['name'], $b['name']);
-		});
-
-		$cache->setContent($creatures);
-		$cache->save();
+		$creatureError = (string)$rebuildError;
 	}
-
-} else {
-	$loaded    = $cache->load();
-	$creatures = is_array($loaded) ? $loaded : array();
 }
+
+$creatures = is_array($loaded) ? $loaded : array();
 
 // Races present, for the filter row.
 foreach ($creatures as $creature) {

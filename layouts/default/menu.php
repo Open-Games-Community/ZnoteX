@@ -28,13 +28,23 @@ $menuFallback = !$menuItems;
 				<ul>
 					<?php foreach ($menuItems as $item): ?>
 						<li>
-							<a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>"
-							   <?= $item['target'] !== '' ? 'target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '" rel="noopener"' : '' ?>>
-								<?php if ($item['icon'] !== ''): ?>
-									<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
-								<?php endif; ?>
-								<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
-							</a>
+							<?php // A category carries no URL: it opens its children, it does not navigate. ?>
+							<?php if ($item['url'] === ''): ?>
+								<span class="menuCategory">
+									<?php if ($item['icon'] !== ''): ?>
+										<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
+									<?php endif; ?>
+									<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+								</span>
+							<?php else: ?>
+								<a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>"
+								   <?= $item['target'] !== '' ? 'target="' . htmlspecialchars($item['target'], ENT_QUOTES, 'UTF-8') . '" rel="noopener"' : '' ?>>
+									<?php if ($item['icon'] !== ''): ?>
+										<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
+									<?php endif; ?>
+									<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+								</a>
+							<?php endif; ?>
 
 							<?php if ($item['children']): ?>
 								<ul>

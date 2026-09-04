@@ -16,3 +16,6 @@ install/installed.lock
 *.rar
 # The pull-request description. Written to be pasted into GitHub, not shipped.
 PULL_REQUEST.md
+
+# Theme background/logo images uploaded from the admin panel.
+engine/img/theme/

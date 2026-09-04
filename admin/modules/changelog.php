@@ -3,7 +3,7 @@
  * Title: Changelog
  * Icon: fa-list-ul
  * Group: Content
- * Order: 15
+ * Order: 20
  * Description: Write and manage the entries shown on the public changelog page.
  */
 

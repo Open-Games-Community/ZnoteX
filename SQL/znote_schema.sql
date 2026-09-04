@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `znote_images` (
   `desc` text NOT NULL,
   `date` int NOT NULL,
   `status` int NOT NULL,
-  `image` varchar(50) NOT NULL,
+  `image` varchar(255) NOT NULL,
   `delhash` varchar(30) NOT NULL,
   `account_id` int NOT NULL,
   PRIMARY KEY (`id`)
@@ -194,6 +194,59 @@ CREATE TABLE IF NOT EXISTS `znote_menu` (
   `active` tinyint NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `loc_sort` (`location`, `active`, `sort_order`, `id`)
+) ENGINE=InnoDB;
+
+-- Database-backed pages, used by importers and editable site content.
+CREATE TABLE IF NOT EXISTS `znote_pages` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `slug` varchar(64) NOT NULL,
+  `title` varchar(100) NOT NULL,
+  `body` mediumtext NOT NULL,
+  `created` int NOT NULL DEFAULT '0',
+  `updated` int NOT NULL DEFAULT '0',
+  `player_id` int NOT NULL DEFAULT '0',
+  `access` tinyint NOT NULL DEFAULT '0',
+  `active` tinyint NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`)
+) ENGINE=InnoDB;
+
+-- Keeps legacy imports idempotent and stores source ids for follow-up imports.
+CREATE TABLE IF NOT EXISTS `znote_convert_map` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `source` varchar(32) NOT NULL,
+  `source_table` varchar(64) NOT NULL,
+  `source_id` varchar(64) NOT NULL,
+  `target_table` varchar(64) NOT NULL,
+  `target_id` int NOT NULL,
+  `created` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `source_row` (`source`, `source_table`, `source_id`, `target_table`)
+) ENGINE=InnoDB;
+
+-- Raw archive of legacy AAC tables, including custom columns ZnoteX does not
+-- understand yet. This keeps migrations lossless.
+CREATE TABLE IF NOT EXISTS `znote_legacy_tables` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `source` varchar(32) NOT NULL,
+  `table_name` varchar(64) NOT NULL,
+  `schema_sql` longtext NOT NULL,
+  `row_count` int NOT NULL DEFAULT '0',
+  `captured` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `source_table` (`source`, `table_name`)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `znote_legacy_rows` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `source` varchar(32) NOT NULL,
+  `table_name` varchar(64) NOT NULL,
+  `source_pk` varchar(128) NOT NULL DEFAULT '',
+  `row_json` longtext NOT NULL,
+  `captured` int NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `source_table` (`source`, `table_name`),
+  KEY `source_pk` (`source`, `table_name`, `source_pk`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS `znote_visitors` (
