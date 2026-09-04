@@ -32,6 +32,49 @@ function acp_url(string $module = 'dashboard', array $params = []): string {
 	return 'index.php?' . http_build_query(array_merge(['p' => $module], $params));
 }
 
+function acp_editor_assets(): void {
+	static $loaded = false;
+	if ($loaded) return;
+	$loaded = true;
+	$v = '3.2.1';
+	$base = '../assets/sceditor/';
+	?>
+	<link rel="stylesheet" href="<?= $base ?>themes/defaultdark.min.css?v=<?= $v ?>">
+	<link rel="stylesheet" href="<?= $base ?>znote-editor-acp.css?v=<?= $v ?>">
+	<script src="<?= $base ?>sceditor.min.js?v=<?= $v ?>"></script>
+	<script src="<?= $base ?>formats/bbcode.min.js?v=<?= $v ?>"></script>
+	<script src="<?= $base ?>icons/material.min.js?v=<?= $v ?>"></script>
+	<script src="<?= $base ?>plugins/undo.min.js?v=<?= $v ?>"></script>
+	<script src="<?= $base ?>plugins/autoyoutube.min.js?v=<?= $v ?>"></script>
+	<script src="<?= $base ?>znote-editor.js?v=<?= $v ?>"></script>
+	<?php
+}
+
+/**
+ * A BBCode editor bound to $name. $maxlength reflects a column limit and is
+ * shown as a live counter, because BBCode tags count toward it.
+ */
+function acp_editor(string $name, string $value = '', array $options = []): void {
+	$height    = (int)($options['height'] ?? 260);
+	$maxlength = (int)($options['maxlength'] ?? 0);
+	$toolbar   = (string)($options['toolbar'] ?? '');
+	$note      = (string)($options['note'] ?? '');
+	?>
+	<div class="znote-editor-wrap">
+		<textarea class="znote-editor" id="<?= h($name) ?>" name="<?= h($name) ?>"
+			data-asset-base="../assets/sceditor/"
+			data-content-css="znote-content-acp.css"
+			data-height="<?= $height ?>"
+			<?php if ($maxlength > 0): ?>data-maxlength="<?= $maxlength ?>"<?php endif; ?>
+			<?php if ($toolbar !== ''): ?>data-toolbar="<?= h($toolbar) ?>"<?php endif; ?>><?= h($value) ?></textarea>
+	</div>
+	<?php if ($note !== ''): ?>
+		<p class="znote-editor-note"><?= h($note) ?></p>
+	<?php endif; ?>
+	<?php
+	acp_editor_assets();
+}
+
 function acp_redirect(string $module = 'dashboard', array $params = []): void {
 	header('Location: ' . acp_url($module, $params));
 	exit;
@@ -87,6 +130,7 @@ function acp_modules(): array {
 			'description' => $meta['description'] ?? '',
 			'url'         => $meta['url'] ?? null,
 			'target'      => $meta['target'] ?? null,
+			'hidden'      => !empty($meta['hidden']) && strtolower((string)$meta['hidden']) !== 'false',
 		];
 	}
 
@@ -125,9 +169,134 @@ function acp_modules(): array {
 function acp_nav_groups(): array {
 	$groups = [];
 	foreach (acp_modules() as $key => $module) {
+		if (!empty($module['hidden'])) {
+			continue;
+		}
 		$groups[$module['group']][$key] = $module;
 	}
 	return $groups;
+}
+
+/**
+ * Everything the top-bar search can find: the modules themselves and every
+ * field they expose. The point is that "download" reaches the client URL
+ * fields under Settings, not just a module whose title happens to match.
+ *
+ * The schemas are read from _partials/, which only return arrays - including
+ * the module itself would run its POST handling and print its page.
+ */
+function acp_search_index(): array {
+	static $index = null;
+	if ($index !== null) {
+		return $index;
+	}
+
+	$index = [];
+
+	foreach (acp_modules() as $key => $module) {
+		if (!empty($module['hidden'])) {
+			continue;
+		}
+		$index[] = [
+			'kind'    => 'page',
+			'title'   => $module['title'],
+			'context' => $module['group'],
+			'detail'  => $module['description'],
+			'url'     => $module['url'] ?: acp_url($key),
+			'icon'    => $module['icon'],
+			'haystack' => strtolower($key . ' ' . $module['title'] . ' ' . $module['group'] . ' ' . $module['description']),
+		];
+	}
+
+	$settings = ACP_ROOT . '/modules/_partials/settings_schema.php';
+	if (is_file($settings)) {
+		foreach ((array)require $settings as $section => $fields) {
+			foreach ((array)$fields as $key => $field) {
+				$index[] = [
+					'kind'    => 'setting',
+					'title'   => $field['label'] ?? $key,
+					'context' => 'Settings &rsaquo; ' . $section,
+					'detail'  => $field['help'] ?? '',
+					'url'     => acp_url('settings') . '#set_' . $key,
+					'icon'    => 'fa-cogs',
+					'haystack' => strtolower($key . ' ' . ($field['label'] ?? '') . ' ' . ($field['help'] ?? '') . ' ' . $section),
+				];
+			}
+		}
+	}
+
+	$payments = ACP_ROOT . '/modules/_partials/payments_schema.php';
+	if (is_file($payments)) {
+		foreach ((array)require $payments as $groupName => $group) {
+			foreach ((array)($group['fields'] ?? []) as $key => $field) {
+				$index[] = [
+					'kind'    => 'setting',
+					'title'   => $field['label'] ?? $key,
+					'context' => 'Payments &rsaquo; ' . $groupName,
+					'detail'  => $field['help'] ?? '',
+					'url'     => acp_url('payments') . '#pay_' . $key,
+					'icon'    => 'fa-credit-card',
+					'haystack' => strtolower($key . ' ' . ($field['label'] ?? '') . ' ' . ($field['help'] ?? '') . ' ' . $groupName),
+				];
+			}
+		}
+	}
+
+	if (function_exists('theme_list') && function_exists('theme_options')) {
+		foreach (theme_list() as $themeKey => $theme) {
+			foreach (theme_options($themeKey) as $optKey => $opt) {
+				$index[] = [
+					'kind'    => 'setting',
+					'title'   => $opt['label'] ?? $optKey,
+					'context' => 'Layout &rsaquo; ' . ($theme['name'] ?? $themeKey) . ' options',
+					'detail'  => $opt['help'] ?? '',
+					'url'     => acp_url('layouts', ['options' => $themeKey]),
+					'icon'    => 'fa-paint-brush',
+					'haystack' => strtolower($optKey . ' ' . ($opt['label'] ?? '') . ' ' . ($opt['help'] ?? '') . ' ' . $themeKey),
+				];
+			}
+		}
+	}
+
+	return $index;
+}
+
+/** Rank matches: whole-word and title hits first. */
+function acp_search(string $query, int $limit = 40): array {
+	$query = trim(strtolower($query));
+	if ($query === '') {
+		return [];
+	}
+
+	$terms = preg_split('/\s+/', $query) ?: [$query];
+	$hits  = [];
+
+	foreach (acp_search_index() as $row) {
+		$score = 0;
+		foreach ($terms as $term) {
+			if ($term === '' || strpos($row['haystack'], $term) === false) {
+				$score = 0;
+				break;
+			}
+			$score += 1;
+			if (strpos(strtolower($row['title']), $term) !== false) {
+				$score += 3;
+			}
+			if (preg_match('/\b' . preg_quote($term, '/') . '\b/', $row['haystack'])) {
+				$score += 2;
+			}
+		}
+		if ($score > 0) {
+			$row['score'] = $score + ($row['kind'] === 'page' ? 1 : 0);
+			$hits[] = $row;
+		}
+	}
+
+	usort($hits, static function (array $a, array $b): int {
+		return $b['score'] <=> $a['score'] ?: strcmp($a['title'], $b['title']);
+	});
+
+	return array_slice($hits, 0, $limit);
 }
 
 function acp_badge(string $key): ?int {

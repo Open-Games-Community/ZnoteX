@@ -1,0 +1,131 @@
+.znote-editor-wrap {
+	max-width: 100%;
+	margin: 0 0 6px;
+}
+
+div.sceditor-container {
+	width: 100% !important;
+	max-width: 100%;
+	border: 1px solid var(--acp-line, #d7dce2);
+	border-radius: var(--acp-radius, 4px);
+	background: var(--acp-panel, #fff);
+	font-family: inherit;
+	resize: vertical;
+	overflow: hidden;
+}
+
+div.sceditor-container.sourceMode textarea,
+div.sceditor-container iframe {
+	background: var(--acp-panel, #fff) !important;
+	color: var(--acp-fg, #15191f);
+}
+
+div.sceditor-container.sourceMode textarea {
+	font-family: Consolas, "Courier New", monospace;
+	font-size: 13px;
+	padding: 6px 8px;
+	border: 0;
+}
+
+div.sceditor-toolbar {
+	background: var(--acp-bg, #ececec);
+	border-bottom: 1px solid var(--acp-line, #d7dce2);
+	padding: 3px;
+}
+
+div.sceditor-group {
+	background: transparent;
+	margin: 1px 3px 1px 0;
+	padding: 0;
+	border-radius: 3px;
+}
+
+a.sceditor-button {
+	border-radius: 3px;
+	opacity: .8;
+	padding: 4px;
+	width: 24px;
+	height: 24px;
+	transition: background .12s, opacity .12s;
+}
+
+a.sceditor-button.disabled { opacity: .3; }
+
+a.sceditor-button:hover,
+a.sceditor-button.active {
+	opacity: 1;
+	background: var(--acp-line-soft, rgba(128, 128, 128, .18));
+}
+
+/* The material icon pack draws SVG, so the theme's sprite background would
+   only produce a 404 for famfamfam.png. */
+.sceditor-button div {
+	background-image: none !important;
+	width: 16px;
+	height: 16px;
+}
+
+.sceditor-button svg {
+	fill: var(--acp-muted, #5d6878);
+	stroke: var(--acp-muted, #5d6878);
+}
+
+a.sceditor-button:hover svg,
+a.sceditor-button.active svg {
+	fill: var(--acp-fg, #15191f);
+	stroke: var(--acp-fg, #15191f);
+}
+
+div.sceditor-grip { background-image: none; }
+
+div.sceditor-dropdown {
+	background: var(--acp-panel, #fff);
+	border: 1px solid var(--acp-line, #d7dce2);
+	color: var(--acp-fg, #15191f);
+	border-radius: var(--acp-radius, 4px);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+
+div.sceditor-dropdown a,
+div.sceditor-dropdown label { color: var(--acp-fg, #15191f); }
+
+div.sceditor-dropdown input,
+div.sceditor-dropdown textarea {
+	background: var(--acp-bg, #ececec);
+	border: 1px solid var(--acp-line, #d7dce2);
+	color: var(--acp-fg, #15191f);
+	border-radius: 3px;
+	padding: 4px 6px;
+}
+
+div.sceditor-dropdown input[type=button] {
+	background: var(--acp-green, #2f9d68);
+	color: #fff;
+	border: 0;
+	cursor: pointer;
+	padding: 5px 12px;
+	border-radius: 3px;
+}
+
+.znote-editor-note {
+	font-size: 12px;
+	color: var(--acp-muted, #5d6878);
+	margin: 4px 0 0;
+}
+
+.znote-editor-warning {
+	color: var(--acp-red, #d64b4b);
+	font-size: 13px;
+	margin: 6px 0 0;
+}
+
+.znote-editor-count {
+	font-size: 12px;
+	color: var(--acp-muted, #5d6878);
+	margin: 4px 0 0;
+}
+
+.znote-editor-count.is-over {
+	color: var(--acp-red, #d64b4b);
+	font-weight: 600;
+}

@@ -16,7 +16,7 @@
 			<tr>
 				<td>
 					<b><?= htmlspecialchars(getClock((int)($changelog['time'] ?? 0), true, true), ENT_QUOTES, 'UTF-8') ?></b><br>
-					<?= $changelog['text'] ?>
+					<?= znote_bbcode_raw($changelog['text']) ?>
 				</td>
 			</tr>
 		<?php endforeach; ?>

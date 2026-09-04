@@ -142,6 +142,21 @@ if (($_GET['tab'] ?? '') === 'browse') {
 	return;
 }
 
+// Options get a page of their own. Resolved against the full theme list, before
+// the search and paging below narrow it - a theme on page 3 has options too.
+$optionTheme = theme_sanitize((string)($_GET['options'] ?? ''));
+if ($optionTheme !== '' && isset($themes[$optionTheme])) {
+	$optionList = theme_options($optionTheme);
+
+	if ($optionList) {
+		include ACP_ROOT . '/modules/_partials/layouts_options.php';
+		return;
+	}
+
+	acp_flash_error('That theme has no options to set.');
+	acp_redirect('layouts');
+}
+
 // ---------------------------------------------------------------------------
 // Search and paging.
 //
@@ -361,58 +376,6 @@ $hasTable = znote_table_exists('znote_config');
 			Next <i class="fa fa-angle-right"></i>
 		</a>
 	</nav>
-<?php endif; ?>
-
-<?php
-$optionTheme = theme_sanitize((string)($_GET['options'] ?? ''));
-$optionList  = ($optionTheme !== '' && isset($themes[$optionTheme])) ? theme_options($optionTheme) : array();
-
-if ($optionList):
-?>
-	<section class="acp-card" id="theme-options">
-		<header class="acp-card-head">
-			<h2><?= h($themes[$optionTheme]['name']) ?> &mdash; options</h2>
-			<p>Saved per theme, in the database. The theme's files are never modified.</p>
-		</header>
-		<div class="acp-card-body">
-			<form method="post">
-				<?= acp_csrf_field() ?>
-				<input type="hidden" name="theme_options" value="<?= h($optionTheme) ?>">
-
-				<?php foreach ($optionList as $optKey => $opt):
-					$value = theme_option($optKey, '', $optionTheme);
-				?>
-					<div class="acp-field">
-						<label class="acp-label" for="opt_<?= h($optKey) ?>"><?= h($opt['label']) ?></label>
-
-						<?php if ($opt['type'] === 'textarea'): ?>
-							<textarea class="acp-textarea" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]" rows="3"><?= h($value) ?></textarea>
-						<?php elseif ($opt['type'] === 'checkbox'): ?>
-							<label style="display:flex;align-items:center;gap:8px;font-weight:400;">
-								<input type="checkbox" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]" value="1" <?= $value !== '' ? 'checked' : '' ?>>
-								<span class="is-muted">Enabled</span>
-							</label>
-						<?php else: ?>
-							<input class="acp-input" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]"
-								   type="<?= $opt['type'] === 'url' ? 'url' : 'text' ?>"
-								   value="<?= h($value) ?>"
-								   placeholder="<?= h($opt['default']) ?>">
-						<?php endif; ?>
-
-						<?php if ($opt['help'] !== ''): ?>
-							<p class="acp-hint"><?= h($opt['help']) ?></p>
-						<?php endif; ?>
-					</div>
-				<?php endforeach; ?>
-
-				<div class="acp-actions">
-					<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> Save options</button>
-					<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('layouts')) ?>">Close</a>
-					<span class="acp-hint">Leave a field empty to fall back to the theme's own default.</span>
-				</div>
-			</form>
-		</div>
-	</section>
 <?php endif; ?>
 
 <section class="acp-card">

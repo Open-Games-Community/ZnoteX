@@ -546,6 +546,8 @@
 	// How to design/display hidden/closed/sticky threads.
 	$config['forum'] = array(
 		'enabled' => true,
+		// Images allowed per post. 0 blocks images entirely.
+		'maxImagesPerPost' => 1,
 		'outfit_avatars' => true, // Show character outfit as forum avatar?
 		'player_position' => true, // Show character position? ex: Tutor, Community Manager, God
 		'guildboard' => true,
@@ -729,6 +731,9 @@
 		'max_character' => 1, // create char
 		'max_forum_post' => 1, // create threads and post in forum
 	);
+
+	// Buy points page. Off hides buypoints.php whichever gateways are configured.
+	$config['buypoints_enabled'] = true;
 
 	//////////////
 	/// PAYPAL ///

@@ -2,6 +2,12 @@
 protect_page();
 theme_open();
 
+if (empty($config['buypoints_enabled'])) {
+	echo '<p>Buying points is currently disabled.</p>';
+	theme_close();
+	exit();
+}
+
 // Import from config:
 $pagseguro = $config['pagseguro'];
 $paypal = $config['paypal'];

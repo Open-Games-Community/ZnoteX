@@ -55,8 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		acp_redirect('changelog', $id > 0 ? ['action' => 'edit', 'id' => $id] : []);
 	}
 
-	// The column is varchar(255); cut here rather than let MySQL truncate.
-	$text = substr($text, 0, 254);
+	// The column is varchar(255). Cutting is no longer safe now that the text can
+	// carry BBCode - substr() would happily slice [b]word[/b] into [b]word[/ and
+	// leave the tag dangling on the public page. Refuse instead and say why.
+	if (strlen($text) > 254) {
+		acp_flash_error('Too long: ' . strlen($text) . ' of 254 characters. BBCode tags count toward the limit.');
+		acp_redirect('changelog', $id > 0 ? ['action' => 'edit', 'id' => $id] : []);
+	}
 
 	if ($do === 'update' && $id > 0) {
 		mysql_update("
@@ -146,8 +151,13 @@ foreach ($entries as $entry) {
 
 				<div class="acp-field">
 					<label class="acp-label" for="text">Text</label>
-					<textarea class="acp-textarea" id="text" name="text" rows="6" maxlength="254" required><?= $editing !== null ? h((string)$editing['text']) : '' ?></textarea>
-					<p class="acp-hint">254 characters maximum. Basic HTML is rendered as-is on the public page.</p>
+					<?php acp_editor('text', $editing !== null ? (string)$editing['text'] : '', [
+						'height'    => 150,
+						'maxlength' => 254,
+						// A changelog line is one sentence in a varchar(255), so the
+						// toolbar stays small - lists and images would not fit.
+						'toolbar'   => 'bold,italic,underline,strike|color,removeformat|link,unlink|undo,redo,source',
+					]); ?>
 				</div>
 
 				<div class="acp-actions">

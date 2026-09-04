@@ -19,32 +19,86 @@ if (!$config['forum']['enabled']) admin_only($user_data);
 	Changelog (1.3 -> 1.4):
 	- Fix SQL query error when editing Board name.
 */
-// BBCODE support:
-function TransformToBBCode($string) {
-	$tags = array(
-		'[center]{$1}[/center]' => '<center>$1</center>',
-		'[b]{$1}[/b]' => '<b>$1</b>',
-		'[img]{$1}[/img]'    => '<a href="$1" target="_BLANK"><img src="$1" alt="image" style="width: 100%"></a>',
-		'[link]{$1}[/link]'    => '<a href="$1">$1</a>',
-		'[link={$1}]{$2}[/link]'   => '<a href="$1" target="_BLANK">$2</a>',
-		'[url={$1}]{$2}[/url]'   => '<a href="$1" target="_BLANK">$2</a>',
-		'[color={$1}]{$2}[/color]' => '<font color="$1">$2</font>',
-		'[*]{$1}[/*]' => '<li>$1</li>',
-		'[youtube]{$1}[/youtube]' => '<div class="youtube"><div class="aspectratio"><iframe src="//www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe></div></div>',
-	);
+// BBCode rendering now lives in engine/function/bbcode.php as znote_bbcode().
 
-	foreach ($tags as $tag => $value) {
-		$code = preg_replace('/placeholder([0-9]+)/', '(.*?)', preg_quote(preg_replace('/\{\$([0-9]+)\}/', 'placeholder$1', $tag), '/'));
-		$string = preg_replace('/'.$code.'/i', $value, $string);
-		if (strpos($string, "<a href=") !== false) {
-			if (strpos($string, "http") === false) {
-				$string = substr_replace($string, "//", 9, 0);
-			}
-		}
-	}
-
-	return $string;
+function znote_forum_editor_assets() {
+	static $loaded = false;
+	if ($loaded) return;
+	$loaded = true;
+	$v = '3.2.1';
+	?>
+	<link rel="stylesheet" href="assets/sceditor/themes/defaultdark.min.css?v=<?php echo $v; ?>">
+	<link rel="stylesheet" href="assets/sceditor/znote-editor.css?v=<?php echo $v; ?>">
+	<script src="assets/sceditor/sceditor.min.js?v=<?php echo $v; ?>"></script>
+	<script src="assets/sceditor/formats/bbcode.min.js?v=<?php echo $v; ?>"></script>
+	<script src="assets/sceditor/icons/material.min.js?v=<?php echo $v; ?>"></script>
+	<script src="assets/sceditor/plugins/undo.min.js?v=<?php echo $v; ?>"></script>
+	<script src="assets/sceditor/plugins/autoyoutube.min.js?v=<?php echo $v; ?>"></script>
+	<script src="assets/sceditor/znote-editor.js?v=<?php echo $v; ?>"></script>
+	<?php
 }
+
+function znote_forum_editor($name, $value = '', $height = 260) {
+	global $config;
+	znote_forum_style();
+	$max = (int)($config['forum']['maxImagesPerPost'] ?? 1);
+	?>
+	<div class="znote-editor-wrap">
+		<textarea class="znote-editor" name="<?php echo $name; ?>"
+			data-max-images="<?php echo $max; ?>"
+			data-height="<?php echo (int)$height; ?>"
+			data-asset-base="assets/sceditor/"><?php echo $value; ?></textarea>
+	</div>
+	<p class="znote-editor-note"><?php
+		echo ($max > 0)
+			? 'Up to ' . $max . ' image' . ($max === 1 ? '' : 's') . ' per post.'
+			: 'Images are not allowed in forum posts.';
+	?></p>
+	<?php
+	znote_forum_editor_assets();
+}
+
+/**
+ * "Post as <character>" picker plus the submit button.
+ *
+ * This used to be a <select multiple>, which browsers draw as a scrolling list
+ * box with nothing selected by default - so submitting without first clicking a
+ * name posted no character id at all and the action silently did nothing. A
+ * plain dropdown always has a value, and when the account has a single
+ * character there is nothing to choose, so it is shown as a label instead.
+ */
+function znote_forum_style() {
+	static $done = false;
+	if ($done) return;
+	$done = true;
+	echo '<link rel="stylesheet" href="assets/forum.css?v=2.0.0">' . "\n";
+}
+
+function znote_forum_character_picker(array $chars, string $field, string $submitLabel, string $submitClass = 'btn btn-primary') {
+	znote_forum_style();
+	$only = (count($chars) === 1) ? reset($chars) : null;
+	?>
+	<div class="znote-postas">
+		<span class="znote-postas-label">Post as</span>
+
+		<?php if ($only !== null): ?>
+			<input type="hidden" name="<?php echo htmlspecialchars($field, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo (int)$only['id']; ?>">
+			<span class="znote-postas-single"><?php echo htmlspecialchars($only['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+		<?php else: ?>
+			<select class="znote-postas-select form-control" name="<?php echo htmlspecialchars($field, ENT_QUOTES, 'UTF-8'); ?>">
+				<?php foreach ($chars as $char): ?>
+					<option value="<?php echo (int)$char['id']; ?>"><?php echo htmlspecialchars($char['name'], ENT_QUOTES, 'UTF-8'); ?></option>
+				<?php endforeach; ?>
+			</select>
+		<?php endif; ?>
+
+		<button type="submit" class="znote-postas-btn <?php echo htmlspecialchars($submitClass, ENT_QUOTES, 'UTF-8'); ?>">
+			<?php echo htmlspecialchars($submitLabel, ENT_QUOTES, 'UTF-8'); ?>
+		</button>
+	</div>
+	<?php
+}
+
 Function PlayerHaveAccess($yourChars, $playerName){
 	$access = false;
 	foreach($yourChars as $char) {
@@ -378,6 +432,26 @@ if (!empty($_GET)) {
 	$update_post_id = getValue($_POST['update_post_id'] ?? null);
 	$update_post_text = getValue($_POST['update_post_text'] ?? null);
 
+	// Image cap. The editor checks this too, but that check is a convenience -
+	// this one is the rule, because a POST does not have to come from the editor.
+	// Blanking the field makes the save branches below skip, since each requires
+	// its text to be !== false.
+	$forumImageLimit = (int)($config['forum']['maxImagesPerPost'] ?? 1);
+	$forumImageDenied = false;
+	foreach (array('create_thread_text', 'update_thread_text', 'reply_text', 'update_post_text') as $forumField) {
+		if ($$forumField !== false && znote_bbcode_count_images($$forumField) > $forumImageLimit) {
+			$forumImageDenied = true;
+			$$forumField = false;
+		}
+	}
+	if ($forumImageDenied) {
+		echo '<p><b><font color="red">'
+			. ($forumImageLimit > 0
+				? 'Too many images: only ' . $forumImageLimit . ' allowed per post. Nothing was saved.'
+				: 'Images are not allowed in forum posts. Nothing was saved.')
+			. '</font></b></p>';
+	}
+
 	/////////////////////
 	// When you are POSTING in an existing thread
 	if ($reply_thread !== false && $reply_text !== false && $reply_cid !== false) {
@@ -502,7 +576,7 @@ if (!empty($_GET)) {
 			<h1>Edit Post</h1>
 			<form type="" method="post">
 				<input name="update_post_id" type="hidden" value="<?php echo $post['id']; ?>">
-				<textarea name="update_post_text" style="width: 610px; height: 300px"><?php echo $post['text']; ?></textarea><br>
+				<?php znote_forum_editor('update_post_text', $post['text'], 300); ?>
 				<input type="submit" value="Update Post" class="btn btn-success">
 			</form>
 			<?php
@@ -525,7 +599,7 @@ if (!empty($_GET)) {
 			<form type="" method="post">
 				<input name="update_thread_id" type="hidden" value="<?php echo $thread['id']; ?>">
 				<input name="update_thread_title" type="text" value="<?php echo $thread['title']; ?>" style="width: 500px;"><br><br>
-				<textarea name="update_thread_text" style="width: 610px; height: 300px"><?php echo $thread['text']; ?></textarea><br>
+				<?php znote_forum_editor('update_thread_text', $thread['text'], 300); ?>
 				<input type="submit" value="Update Thread" class="btn btn-success">
 			</form>
 			<?php
@@ -588,7 +662,7 @@ if (!empty($_GET)) {
 						</td>
 						<?php endif; ?>
 						<td>
-							<p><?php echo nl2br(TransformToBBCode($threadData['text'])); ?></p>
+							<p><?php echo znote_bbcode($threadData['text']); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -704,7 +778,7 @@ if (!empty($_GET)) {
 								</td>
 								<?php endif; ?>
 								<td>
-									<p><?php echo nl2br(TransformToBBCode($post['text'])); ?></p>
+									<p><?php echo znote_bbcode($post['text']); ?></p>
 								</td>
 							</tr>
 						</table>
@@ -738,17 +812,8 @@ if (!empty($_GET)) {
 						<form action="" method="post">
 							<input name="reply_thread" type="hidden" value="<?php echo $threadData['id']; ?>"><br>
 
-<p style="font-size: 13px; padding-left: 10px; padding-top: 10px; height: 5px; width: 600px; border-top: 1px solid black;"><b>[b]Bold Text[/b]</b>, [img]<a href="https://imgur.com/">Direct Image Link</a>[/img], [center]Centered Text[/center],<br> [link]<a href="https://youtube.com/" target="_BLANK">https://youtube.com/</a>[/link], [color=<font color="green">GREEN</font>]<font color="green">Green Text!</font>[/color], [*] - Dotted [/*]</p><br>
-
-							<textarea class="forumReply" name="reply_text" style="width: 610px; height: 150px"></textarea><br>
-							<select name="reply_cid" multiple="multiple">
-								<?php
-								foreach($yourChars as $char) {
-									echo "<option value='". $char['id'] ."'>". $char['name'] ."</option>";
-								}
-								?>
-							</select>
-							<input name="" type="submit" value="Post Reply" class="btn btn-primary">
+							<?php znote_forum_editor('reply_text', '', 200); ?>
+							<?php znote_forum_character_picker($yourChars, 'reply_cid', 'Post Reply', 'btn btn-primary'); ?>
 						</form>
 						<?php
 					} else echo '<p><b>You don\'t have permission to post on this thread. [Thread: Closed]</b></p>';
@@ -800,13 +865,23 @@ if (!empty($_GET)) {
 			if ($access) {
 				?>
 				<h1>Create new thread</h1>
-				<form type="" method="post">
-					<input type="text" disabled value="<?php echo $charData[$new_thread_cid]['name']; ?>" style="width: 100px;">
+				<form type="" method="post" class="znote-newthread">
 					<input name="create_thread_cid" type="hidden" value="<?php echo $new_thread_cid; ?>">
 					<input name="create_thread_category" type="hidden" value="<?php echo $new_thread_category; ?>">
-					<input name="create_thread_title" type="text" placeholder="Thread title" style="width: 500px;"><br><br>
-					<textarea name="create_thread_text" style="width: 610px; height: 300px" placeholder="Thread text"></textarea><br>
-					<input type="submit" value="Create Thread" class="btn btn-success">
+
+					<div class="znote-newthread-head">
+						<span class="znote-postas-label">Post as</span>
+						<span class="znote-postas-single"><?php echo htmlspecialchars($charData[$new_thread_cid]['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+					</div>
+
+					<input class="znote-newthread-title form-control" name="create_thread_title" type="text" placeholder="Thread title" maxlength="60" required>
+
+					<?php znote_forum_editor('create_thread_text', '', 300); ?>
+
+					<div class="znote-newthread-actions">
+						<button type="submit" class="btn btn-success">Create Thread</button>
+						<a class="btn btn-default" href="forum.php?cat=<?php echo (int)$new_thread_category; ?>">Cancel</a>
+					</div>
 				</form>
 				<?php
 			} else echo '<p><b><font color="red">Permission to create thread denied.</font></b></p>';
@@ -892,14 +967,7 @@ if (!empty($_GET)) {
 					?>
 					<form action="" method="post">
 						<input type="hidden" value="<?php echo $getCat; ?>" name="new_thread_category">
-						<select name="new_thread_cid" multiple="multiple">
-							<?php
-							foreach($yourChars as $char) {
-								echo "<option value='". $char['id'] ."'>". $char['name'] ."</option>";
-							}
-							?>
-						</select>
-						<input type="submit" value="Create new thread" class="btn btn-primary">
+						<?php znote_forum_character_picker($yourChars, 'new_thread_cid', 'Create new thread', 'btn btn-primary'); ?>
 					</form>
 					<?php
 				} else echo '<p>This board is closed.</p>';

@@ -30,7 +30,7 @@ $acp_engine   = serverEngineReal();
 	<title><?= h($acp_title) ?> &middot; <?= h($acp_siteName) ?> ACP</title>
 
 	<link rel="stylesheet" href="../assets/fontawesome/css/font-awesome.min.css?acp=1">
-	<link rel="stylesheet" href="assets/acp.css?acp=1">
+	<link rel="stylesheet" href="assets/acp.css?acp=4">
 
 	<script>
 		// Applied before first paint so the theme never flashes light-then-dark.
@@ -106,6 +106,19 @@ $acp_engine   = serverEngineReal();
 				<strong><?= h($acp_siteName) ?></strong>
 				<span><?= h($acp_engine) ?> control panel</span>
 			</div>
+			<form class="acp-top-search" method="get" action="index.php" role="search">
+				<input type="hidden" name="p" value="search">
+				<i class="fa fa-search"></i>
+				<input type="search" name="q" list="acpSearchList"
+					   value="<?= h($acp_page === 'search' ? ($_GET['q'] ?? '') : '') ?>"
+					   placeholder="Search the panel..." autocomplete="off" aria-label="Search the panel">
+				<datalist id="acpSearchList">
+					<?php foreach (array_slice(acp_search_index(), 0, 300) as $acp_hit): ?>
+						<option value="<?= h($acp_hit['title']) ?>"></option>
+					<?php endforeach; ?>
+				</datalist>
+			</form>
+
 			<div class="acp-top-actions">
 				<a class="acp-icon-btn" href="../index.php" title="View site" aria-label="View site">
 					<i class="fa fa-globe"></i>
@@ -153,6 +166,6 @@ $acp_engine   = serverEngineReal();
 	</section>
 </div>
 
-<script src="assets/acp.js?acp=1"></script>
+<script src="assets/acp.js?acp=2"></script>
 </body>
 </html>

@@ -1,0 +1,36 @@
+html, body {
+	margin: 0;
+	padding: 6px 8px;
+	background: transparent;
+	color: #c8cedb;
+	font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	word-wrap: break-word;
+}
+
+body { min-height: 100%; }
+
+a { color: #d9a441; }
+
+img {
+	max-width: 100%;
+	height: auto;
+}
+
+blockquote {
+	margin: 8px 0;
+	padding: 6px 12px;
+	border-left: 3px solid #d9a441;
+	background: rgba(255, 255, 255, .04);
+}
+
+code, pre {
+	font-family: Consolas, "Courier New", monospace;
+	background: rgba(0, 0, 0, .3);
+}
+
+pre {
+	padding: 8px 10px;
+	overflow-x: auto;
+}
+
+ul, ol { padding-left: 22px; }

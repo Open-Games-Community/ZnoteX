@@ -197,3 +197,23 @@
 		}
 	});
 })();
+
+/* Arriving from search: highlight the field the anchor points at. */
+(function () {
+	var id = (window.location.hash || '').replace('#', '');
+	if (!id) return;
+
+	var el = document.getElementById(id);
+	if (!el) return;
+
+	var field = el.closest ? el.closest('.acp-field') : null;
+	var target = field || el;
+
+	target.classList.add('acp-field--found');
+	setTimeout(function () { target.classList.remove('acp-field--found'); }, 2600);
+
+	setTimeout(function () {
+		target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		if (el.focus && el.type !== 'checkbox') { try { el.focus({ preventScroll: true }); } catch (e) {} }
+	}, 60);
+})();

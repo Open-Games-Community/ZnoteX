@@ -97,19 +97,71 @@ function znote_apply_settings(): void {
 		}
 
 		$name = substr($key, 7);
-		if ($name === '' || !array_key_exists($name, $config)) {
-			// Never invent a key: only override something config.php declares.
+		if ($name === '') {
 			continue;
 		}
 
-		if (is_bool($config[$name])) {
-			$config[$name] = ($value !== '' && $value !== '0');
-		} elseif (is_int($config[$name])) {
-			$config[$name] = (int)$value;
-		} else {
-			$config[$name] = $value;
-		}
+		znote_setting_apply($config, explode('.', $name), $value);
 	}
+}
+
+/**
+ * Write one value into $config at $path, keeping the type config.php declared.
+ *
+ * Nested paths are stored dotted - "config:shop.enabled" reaches
+ * $config['shop']['enabled'] - because most of what the panel edits lives one
+ * or two levels down. A path is only followed while it already exists, so a
+ * stale row from a removed setting can never invent a key.
+ */
+function znote_setting_apply(array &$config, array $path, string $value): void {
+	$leaf = array_pop($path);
+	$node = &$config;
+
+	foreach ($path as $step) {
+		if (!is_array($node) || !array_key_exists($step, $node) || !is_array($node[$step])) {
+			return;
+		}
+		$node = &$node[$step];
+	}
+
+	if (!is_array($node) || !array_key_exists($leaf, $node)) {
+		return;
+	}
+
+	if (is_array($node[$leaf])) {
+		// Whole lists - the shop price tiers, for instance - are stored as JSON,
+		// since one znote_config row holds a string. A malformed row is ignored
+		// so config.php keeps providing the list.
+		$decoded = json_decode($value, true);
+		if (is_array($decoded)) {
+			$node[$leaf] = $decoded;
+		}
+		return;
+	}
+
+	if (is_bool($node[$leaf])) {
+		$node[$leaf] = ($value !== '' && $value !== '0');
+	} elseif (is_int($node[$leaf])) {
+		$node[$leaf] = (int)$value;
+	} elseif (is_float($node[$leaf])) {
+		$node[$leaf] = (float)$value;
+	} else {
+		$node[$leaf] = $value;
+	}
+}
+
+/** Read one dotted path out of $config, or $default when it is not there. */
+function znote_config_path(array $config, string $path, $default = null) {
+	$node = $config;
+
+	foreach (explode('.', $path) as $step) {
+		if (!is_array($node) || !array_key_exists($step, $node)) {
+			return $default;
+		}
+		$node = $node[$step];
+	}
+
+	return $node;
 }
 
 /**

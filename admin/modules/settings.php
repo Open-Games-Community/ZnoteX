@@ -23,106 +23,7 @@ if (!defined('ACP_ROOT')) {
  *   type: text | textarea | bool | int | select
  */
 function acp_settings_schema(): array {
-	global $config;
-
-	return array(
-
-		'Site' => array(
-			'site_title' => array(
-				'label' => 'Site title',
-				'type'  => 'text',
-				'help'  => 'Shown in the browser tab, the footer and the social banners.',
-			),
-			'site_title_context' => array(
-				'label' => 'Tagline',
-				'type'  => 'text',
-			),
-			'site_url' => array(
-				'label' => 'Site URL',
-				'type'  => 'text',
-				'help'  => 'Used in e-mails and absolute links. No trailing slash.',
-			),
-		),
-
-		'Maintenance' => array(
-			'maintenance' => array(
-				'label' => 'Maintenance mode',
-				'type'  => 'bool',
-				'help'  => 'Visitors see the message below. Admins keep full access.',
-			),
-			'maintenance_message' => array(
-				'label' => 'Maintenance message',
-				'type'  => 'textarea',
-			),
-		),
-
-		'Game server' => array(
-			'client' => array(
-				'label' => 'Client version',
-				'type'  => 'int',
-				'help'  => 'For example 1098 for client 10.98.',
-			),
-			'port' => array(
-				'label' => 'Game server port',
-				'type'  => 'int',
-			),
-			'freePremium' => array(
-				'label' => 'Free premium',
-				'type'  => 'bool',
-			),
-		),
-
-		'Characters' => array(
-			'max_characters' => array(
-				'label' => 'Characters per account',
-				'type'  => 'int',
-			),
-			'minL' => array(
-				'label' => 'Minimum name length',
-				'type'  => 'int',
-			),
-			'maxL' => array(
-				'label' => 'Maximum name length',
-				'type'  => 'int',
-			),
-			'maxW' => array(
-				'label' => 'Maximum words in a name',
-				'type'  => 'int',
-			),
-			'create_guild_level' => array(
-				'label' => 'Level required to create a guild',
-				'type'  => 'int',
-			),
-		),
-
-		'Content' => array(
-			'news_per_page' => array(
-				'label' => 'News articles per page',
-				'type'  => 'int',
-			),
-			'UseChangelogTicker' => array(
-				'label' => 'Changelog ticker on the front page',
-				'type'  => 'bool',
-			),
-			'allowSubPages' => array(
-				'label' => 'Allow theme sub pages',
-				'type'  => 'bool',
-			),
-		),
-
-		'Privacy' => array(
-			'log_ip' => array(
-				'label' => 'Log visitor IPs',
-				'type'  => 'bool',
-				'help'  => 'Feeds the Visitors page. Turning it off stops the collection entirely.',
-			),
-			'admin_show_queries' => array(
-				'label' => 'Show SQL queries to admins',
-				'type'  => 'bool',
-				'help'  => 'Debug overlay at the top of every page, admins only.',
-			),
-		),
-	);
+	return require __DIR__ . '/_partials/settings_schema.php';
 }
 
 /** Cast a submitted value for storage. */
@@ -192,7 +93,13 @@ $hasTable = znote_table_exists('znote_config');
 				<div class="acp-card-body">
 					<?php foreach ($fields as $key => $field):
 						$stored  = setting('config:' . $key, null);
-						$current = ($stored !== null) ? $stored : (string)($config[$key] ?? '');
+						$fromFile = znote_config_path($config, $key, '');
+						if (is_bool($fromFile)) {
+							$fromFile = $fromFile ? '1' : '0';
+						} elseif (is_array($fromFile)) {
+							$fromFile = '';
+						}
+						$current = ($stored !== null) ? $stored : (string)$fromFile;
 						$fromDb  = ($stored !== null);
 					?>
 						<div class="acp-field">

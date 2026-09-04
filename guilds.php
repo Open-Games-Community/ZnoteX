@@ -41,6 +41,14 @@ function get_guild_position($rid) {
 
 // Check guild logo
 function logo_exists($guild) {
+	if (function_exists('theme_guild_logo')) {
+		$themed = theme_guild_logo($guild);
+		if ($themed !== null) {
+			echo $themed;
+			return;
+		}
+	}
+
 	$guild = sanitize($guild);
 	echo (file_exists('engine/guildimg/'.$guild.'.gif')) ? 'engine/guildimg/'.$guild.'.gif' : 'engine/guildimg/default@logo.gif';
 }
@@ -246,6 +254,9 @@ $guilds = guild_list($config['ServerEngine']);
 
 if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 	//data_dump($guilds, false, "Guilds");
+	if (theme_file('views/guilds.php') !== null) {
+		view('guilds', array('guilds' => $guilds));
+	} else {
 	?>
 	<style type="text/css">
 		#guildsTable tr {
@@ -284,7 +295,8 @@ if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 			}
 			?>
 	</table>
-	<?php 
+	<?php
+	}
 } else echo '<p>Guild list is empty.</p>';?>
 
 <!-- POST action: create guild -->
