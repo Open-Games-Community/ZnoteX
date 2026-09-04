@@ -69,6 +69,7 @@ if (PHP_SAPI !== 'cli'
 
 require_once 'database/connect.php';
 require_once 'function/general.php';
+require_once 'function/bbcode.php';
 require_once 'function/users.php';
 require_once 'function/cache.php';
 require_once 'function/mail.php';

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!empty($config['UseChangelogTicker'])) {
 	//////////////////////
 	// Changelog ticker //
@@ -50,38 +50,6 @@ if ($news) {
 	$page_amount = ceil($total_news / $config['news_per_page']);
 	$current = $config['news_per_page'] * $page;
 
-	if (!function_exists('TransformToBBCode')) {
-		function TransformToBBCode(string $string): string {
-			$tags = [
-				'[center]{$1}[/center]' => '<center>$1</center>',
-				'[b]{$1}[/b]' => '<b>$1</b>',
-				'[size={$1}]{$2}[/size]' => '<font size="$1">$2</font>',
-				'[img]{$1}[/img]' => '<a href="$1" target="_blank"><img src="$1" alt="image" style="width:100%"></a>',
-				'[link]{$1}[/link]' => '<a href="$1">$1</a>',
-				'[link={$1}]{$2}[/link]' => '<a href="$1" target="_blank">$2</a>',
-				'[color={$1}]{$2}[/color]' => '<font color="$1">$2</font>',
-				'[*]{$1}[/*]' => '<li>$1</li>',
-				'[youtube]{$1}[/youtube]' =>
-					'<div class="youtube"><div class="aspectratio">
-						<iframe src="//www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>
-					</div></div>',
-			];
-
-			foreach ($tags as $tag => $value) {
-				$code = preg_replace(
-					'/placeholder([0-9]+)/',
-					'(.*?)',
-					preg_quote(
-						preg_replace('/\{\$([0-9]+)\}/', 'placeholder$1', $tag),
-						'/'
-					)
-				);
-				$string = preg_replace('/' . $code . '/i', $value, $string);
-			}
-			return $string;
-		}
-	}
-
 	if ($view !== "") { // We want to view a specific news post
 		$si = false;
 		if (ctype_digit($view) === false) {
@@ -105,12 +73,12 @@ if ($news) {
 							. '">'
 							. htmlspecialchars($news[$si]['name'], ENT_QUOTES, 'UTF-8')
 							. '</a> - <b>'
-							. TransformToBBCode($news[$si]['title'])
+							. znote_bbcode_raw($news[$si]['title'])
 							. '</b>';
 						?>
 					</div>
 					<div class="body">
-						<p><?php echo TransformToBBCode(nl2br($news[$si]['text'])); ?></p>
+						<p><?php echo znote_bbcode_raw($news[$si]['text']); ?></p>
 					</div>
 				</div>
 			</div>
@@ -146,12 +114,12 @@ if ($news) {
 								. '">'
 								. htmlspecialchars($news[$i]['name'], ENT_QUOTES, 'UTF-8')
 								. '</a> - <b>'
-								. TransformToBBCode($news[$i]['title'])
+								. znote_bbcode_raw($news[$i]['title'])
 								. '</b>';
 							?>
 						</div>
 						<div class="body">
-							<p><?php echo TransformToBBCode(nl2br($news[$i]['text'])); ?></p>
+							<p><?php echo znote_bbcode_raw($news[$i]['text']); ?></p>
 						</div>
 					</div>
 				</div>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Front page.
  *
@@ -41,24 +41,6 @@
 			$page_amount = ceil($total_news / $config['news_per_page']);
 			$current = $config['news_per_page'] * $page;
 
-			function TransformToBBCode($string) {
-				$tags = array(
-					'[center]{$1}[/center]' => '<center>$1</center>',
-					'[b]{$1}[/b]' => '<b>$1</b>',
-					'[size={$1}]{$2}[/size]' => '<font size="$1">$2</font>',
-					'[img]{$1}[/img]'    => '<a href="$1" target="_BLANK"><img src="$1" alt="image" style="width: 100%"></a>',
-					'[link]{$1}[/link]'    => '<a href="$1">$1</a>',
-					'[link={$1}]{$2}[/link]'   => '<a href="$1" target="_BLANK">$2</a>',
-					'[color={$1}]{$2}[/color]' => '<font color="$1">$2</font>',
-					'[*]{$1}[/*]' => '<li>$1</li>',
-					'[youtube]{$1}[/youtube]' => '<div class="youtube"><div class="aspectratio"><iframe src="//www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe></div></div>',
-				);
-				foreach ($tags as $tag => $value) {
-					$code = preg_replace('/placeholder([0-9]+)/', '(.*?)', preg_quote(preg_replace('/\{\$([0-9]+)\}/', 'placeholder$1', $tag), '/'));
-					$string = preg_replace('/'.$code.'/i', $value, $string);
-				}
-				return $string;
-			}
 
 			if ($view !== "") { // We want to view a specific news post
 				$si = false;
@@ -72,11 +54,11 @@
 					?>
 					<table id="news">
 						<tr class="yellow">
-							<td class="zheadline"><?php echo '<a href="?view='.$news[$si]['id'].'">[#'.$news[$si]['id'].']</a> '. getClock($news[$si]['date'], true) .' by <a href="characterprofile.php?name='. $news[$si]['name'] .'">'. $news[$si]['name'] .'</a> - <b>'. TransformToBBCode($news[$si]['title']) .'</b>'; ?></td>
+							<td class="zheadline"><?php echo '<a href="?view='.$news[$si]['id'].'">[#'.$news[$si]['id'].']</a> '. getClock($news[$si]['date'], true) .' by <a href="characterprofile.php?name='. $news[$si]['name'] .'">'. $news[$si]['name'] .'</a> - <b>'. znote_bbcode_raw($news[$si]['title']) .'</b>'; ?></td>
 						</tr>
 						<tr>
 							<td>
-								<p><?php echo TransformToBBCode(nl2br($news[$si]['text'])); ?></p>
+								<p><?php echo znote_bbcode_raw($news[$si]['text']); ?></p>
 							</td>
 						</tr>
 					</table>
@@ -103,11 +85,11 @@
 						?>
 						<table id="news">
 							<tr class="yellow">
-								<td class="zheadline"><?php echo '<a href="?view='.urlencode($news[$i]['title']).'">'.getClock($news[$i]['date'], true).'</a> by <a href="characterprofile.php?name='. $news[$i]['name'] .'">'. $news[$i]['name'] .'</a> - <b>'. TransformToBBCode($news[$i]['title']) .'</b>'; ?></td>
+								<td class="zheadline"><?php echo '<a href="?view='.urlencode($news[$i]['title']).'">'.getClock($news[$i]['date'], true).'</a> by <a href="characterprofile.php?name='. $news[$i]['name'] .'">'. $news[$i]['name'] .'</a> - <b>'. znote_bbcode_raw($news[$i]['title']) .'</b>'; ?></td>
 							</tr>
 							<tr>
 								<td>
-									<p><?php echo TransformToBBCode(nl2br($news[$i]['text'])); ?></p>
+									<p><?php echo znote_bbcode_raw($news[$i]['text']); ?></p>
 								</td>
 							</tr>
 						</table>

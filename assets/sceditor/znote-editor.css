@@ -1,0 +1,191 @@
+.znote-editor-wrap {
+	max-width: 100%;
+	margin: 0 0 12px;
+}
+
+div.sceditor-container {
+	width: 100% !important;
+	max-width: 100%;
+	border: 1px solid var(--border, #2b2f38);
+	border-radius: 4px;
+	background: var(--secondary, #191c21);
+	font-family: inherit;
+	resize: vertical;
+	overflow: hidden;
+}
+
+div.sceditor-container.sourceMode textarea,
+div.sceditor-container iframe {
+	background: var(--secondary, #191c21) !important;
+	color: var(--font-color, #9ba2b1);
+}
+
+div.sceditor-container.sourceMode textarea {
+	font-family: Consolas, "Courier New", monospace;
+	font-size: 13px;
+	padding: 6px 8px;
+	border: 0;
+}
+
+div.sceditor-toolbar {
+	background: var(--primary, #1e2128);
+	border-bottom: 1px solid var(--border, #2b2f38);
+	padding: 3px;
+}
+
+div.sceditor-group {
+	background: transparent;
+	border-radius: 3px;
+	margin: 1px 3px 1px 0;
+	padding: 0;
+}
+
+a.sceditor-button {
+	border-radius: 3px;
+	opacity: .75;
+	padding: 4px;
+	width: 24px;
+	height: 24px;
+	transition: background .12s, opacity .12s;
+}
+
+a.sceditor-button.disabled { opacity: .3; }
+
+a.sceditor-button:hover,
+a.sceditor-button.active {
+	opacity: 1;
+	background: rgba(255, 255, 255, .09);
+}
+
+/* The material icon pack draws SVG into the buttons, so the theme's
+   sprite background would only produce a 404 for famfamfam.png. */
+.sceditor-button div {
+	background-image: none !important;
+	width: 16px;
+	height: 16px;
+}
+
+.sceditor-button svg {
+	fill: var(--font-color, #9ba2b1);
+	stroke: var(--font-color, #9ba2b1);
+}
+
+a.sceditor-button:hover svg,
+a.sceditor-button.active svg {
+	fill: var(--anchor, #d9a441);
+	stroke: var(--anchor, #d9a441);
+}
+
+div.sceditor-grip { background-image: none; }
+
+/* Dropdowns (colour picker, font size, link/image prompts) */
+div.sceditor-dropdown {
+	background: var(--primary, #1e2128);
+	border: 1px solid var(--border, #2b2f38);
+	color: var(--font-color, #9ba2b1);
+	border-radius: 4px;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+}
+
+div.sceditor-dropdown a,
+div.sceditor-dropdown label { color: var(--font-color, #9ba2b1); }
+
+div.sceditor-dropdown input,
+div.sceditor-dropdown textarea {
+	background: var(--secondary, #191c21);
+	border: 1px solid var(--border, #2b2f38);
+	color: var(--font-color, #9ba2b1);
+	border-radius: 3px;
+	padding: 4px 6px;
+}
+
+div.sceditor-dropdown input[type=button] {
+	background: var(--anchor, #d9a441);
+	color: #16181d;
+	border: 0;
+	cursor: pointer;
+	padding: 5px 12px;
+}
+
+.znote-editor-note {
+	font-size: 12px;
+	color: var(--font-color, #9ba2b1);
+	opacity: .7;
+	margin: 4px 0 10px;
+}
+
+.znote-editor-warning {
+	color: #e06c6c;
+	font-size: 13px;
+	margin: 6px 0 0;
+}
+
+.znote-editor-count {
+	font-size: 12px;
+	opacity: .6;
+	margin: 4px 0 0;
+}
+
+.znote-editor-count.is-over {
+	color: #e06c6c;
+	opacity: 1;
+	font-weight: 600;
+}
+
+/* ---- rendered post body ---- */
+.zbb-img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 3px;
+}
+
+.zbb-quote {
+	margin: 8px 0;
+	padding: 8px 14px;
+	border-left: 3px solid var(--anchor, #d9a441);
+	background: rgba(255, 255, 255, .04);
+	border-radius: 0 3px 3px 0;
+}
+
+.zbb-quote cite {
+	display: block;
+	font-style: normal;
+	font-weight: 600;
+	opacity: .8;
+	margin-bottom: 4px;
+}
+
+.zbb-code {
+	margin: 8px 0;
+	padding: 10px 12px;
+	background: rgba(0, 0, 0, .3);
+	border: 1px solid var(--border, #2b2f38);
+	border-radius: 3px;
+	overflow-x: auto;
+	font-family: Consolas, "Courier New", monospace;
+	font-size: 13px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.zbb-list {
+	padding-left: 24px;
+	margin: 6px 0;
+}
+
+.zbb-video {
+	position: relative;
+	width: 100%;
+	max-width: 640px;
+	aspect-ratio: 16 / 9;
+	margin: 10px 0;
+}
+
+.zbb-video iframe {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	border-radius: 3px;
+}

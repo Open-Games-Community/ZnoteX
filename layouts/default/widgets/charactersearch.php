@@ -4,12 +4,7 @@
 	</div>
 	<div class="body">
 		<div class="relative">
-			<div id="name_suggestion">
-				<div class="sname"><a href="characterprofile.php?name=Luxitur">Luxitur</a></div>
-				<div class="sname">
-					<a href="characterprofile.php?name=Luxitur">Luxitur</a>
-				</div>
-			</div>
+			<div id="name_suggestion"></div>
 		</div>
 		<form class="searchForm" action="characterprofile.php" method="get">
 			<label for="src_name">Search: </label><input autocomplete="off" type="text" name="name" id="src_name" class="search" placeholder="Name . . .">

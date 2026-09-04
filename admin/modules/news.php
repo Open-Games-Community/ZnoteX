@@ -111,15 +111,18 @@ if ($action === 'add') {
 }
 
 $bbcodeHelp = [
-	'[b]Bold text[/b]',
-	'[size=5]Size 5 text[/size]',
+	'[b]Bold[/b]  [i]Italic[/i]  [u]Underline[/u]  [s]Struck[/s]',
+	'[size=5]Larger text[/size]   (1 to 7)',
+	'[color=#4da3ff]Coloured text[/color]',
+	'[center]Centered[/center]  [left]..[/left]  [right]..[/right]',
+	'[ul][li]Bullet item[/li][/ul]',
+	'[ol][li]Numbered item[/li][/ol]',
+	'[quote]Quoted text[/quote]',
+	'[quote=Someone]Attributed quote[/quote]',
+	'[code]Preformatted code[/code]',
+	'[url=https://example.com]Link text[/url]',
 	'[img]https://example.com/image.png[/img]',
-	'[center]Centered text[/center]',
-	'[link]https://youtube.com/[/link]',
-	'[link=https://youtube.com/]Click to view[/link]',
-	'[color=GREEN]Green text[/color]',
 	'[youtube]wK0w0x62PjA[/youtube]',
-	'[*]Noted text[/*]',
 ];
 ?>
 
@@ -143,9 +146,6 @@ $bbcodeHelp = [
 </div>
 
 <?php if ($action === 'add' || $editing !== null): ?>
-	<script src="../engine/js/nicedit.js"></script>
-	<script>bkLib.onDomLoaded(nicEditors.allTextAreas);</script>
-
 	<div class="acp-grid acp-grid--2">
 		<section class="acp-card">
 			<header class="acp-card-head">
@@ -188,7 +188,7 @@ $bbcodeHelp = [
 
 					<div class="acp-field">
 						<label class="acp-label" for="text">Body</label>
-						<textarea class="acp-textarea" id="text" name="text" rows="14"><?= $editing !== null ? h((string)$editing['text']) : '' ?></textarea>
+						<?php acp_editor('text', $editing !== null ? (string)$editing['text'] : '', ['height' => 340]); ?>
 					</div>
 
 					<div class="acp-actions">
@@ -204,7 +204,7 @@ $bbcodeHelp = [
 		<section class="acp-card">
 			<header class="acp-card-head">
 				<h2>Formatting</h2>
-				<p>BBCode understood by the news renderer</p>
+				<p>The toolbar writes these for you &mdash; this is what the news renderer understands</p>
 			</header>
 			<div class="acp-card-body">
 				<pre class="acp-dump"><?= h(implode("\n", $bbcodeHelp)) ?></pre>
