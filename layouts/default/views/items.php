@@ -2,8 +2,7 @@
 /**
  * Equipable items browser.
  *
- * Prepared by items.php: $itemsEnabled, $itemsAdmin, $itemsUpdated,
- * $itemsFailed and $items. Nothing is loaded here.
+ * Prepared by items.php: $itemsEnabled and $items. Nothing is loaded here.
  */
 ?>
 <?php if (!$itemsEnabled): ?>
@@ -11,20 +10,6 @@
 	Items' page not enabled.
 
 <?php else: ?>
-
-	<?php if ($itemsUpdated): ?>
-		<p><strong>Logged in as admin, loading engine/XML/items.xml file and updating cache.</strong></p>
-	<?php endif; ?>
-
-	<?php if ($itemsFailed): ?>
-		<p><strong>Failed to load engine/XML/items.xml file.</strong></p>
-	<?php endif; ?>
-
-	<?php if ($itemsAdmin && !$itemsUpdated): ?>
-		<form action="">
-			<input type="submit" name="update" value="Generate new cache">
-		</form>
-	<?php endif; ?>
 
 <?php
 if ($items) {

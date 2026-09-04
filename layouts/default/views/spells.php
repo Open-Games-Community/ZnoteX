@@ -5,20 +5,6 @@
  * Prepared by spells.php - see the docblock there for the variables.
  */
 ?>
-<?php if ($spellsUpdated): ?>
-	<p><strong>Logged in as admin, loading engine/XML/spells.xml file and updating cache.</strong></p>
-<?php endif; ?>
-
-<?php if ($spellsFailed): ?>
-	<p><strong>Failed to load engine/XML/spells.xml file.</strong></p>
-<?php endif; ?>
-
-<?php if ($showSpellsForm): ?>
-	<form action="">
-		<input type="submit" name="update" value="Generate new cache">
-	</form>
-<?php endif; ?>
-
 <?php
 
 if ($spells) {

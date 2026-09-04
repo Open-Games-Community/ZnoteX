@@ -6,31 +6,10 @@
  */
 ?>
 
-<?php if ($stagesUpdated): ?>
-	<p><strong>Logged in as admin, loading engine/XML/stages.xml file and updating cache.</strong></p>
-<?php endif; ?>
-
-<?php if ($stagesFailed): ?>
-	<p><strong>Failed to load engine/XML/stages.xml file.</strong></p>
-<?php endif; ?>
-
-<?php if ($showStagesForm): ?>
-	<form action="">
-		<input type="submit" name="loadStages" value="Load stages.xml">
-	</form>
-<?php endif; ?>
-
-<?php if ($showConfigForm): ?>
-	<br>
-	<form action="" method="POST">
-		<label for="configData">Find your OT server folder, put the text inside config.lua into this text field:</label><br>
-		<textarea name="configData" placeholder="Open config.lua and copy the content into this text area."></textarea><br>
-		<input type="submit" name="loadConfig" value="Load config data">
-	</form>
-<?php endif; ?>
-
 <h1>Server Information</h1>
 <p>Here you will find all basic information about <b><?php echo $config['site_title']; ?></b></p>
+
+<?php minimap_render(); ?>
 
 <?php 
 if (
