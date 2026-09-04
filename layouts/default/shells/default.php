@@ -85,6 +85,10 @@ $aacQueries = $aacQueries ?? 0;
 		</div>
 
 		<footer class="well preventCollapse">
+			<?php $footerText = theme_option('footer_html'); ?>
+			<?php if ($footerText !== ''): ?>
+				<div class="well preventCollapse footerCustom"><?= $footerText ?></div>
+			<?php endif; ?>
 			<div class="pull-left">
 				<p>&copy; <?= theme_title() ?>.
 					Page generated in <?= elapsedTime() ?> seconds.

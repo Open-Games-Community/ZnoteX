@@ -239,7 +239,7 @@ function theme_list(): array {
 // "theme:<theme>:<key>", so a theme keeps its settings when you switch away
 // and back, and nothing is ever written into the theme's files.
 //
-// Supported types: text, url, textarea, checkbox.
+// Supported types: text, url, textarea, checkbox, image, datetime-local.
 // ---------------------------------------------------------------------------
 
 /** The options a theme declares, normalised. Keyed by option key. */
@@ -263,7 +263,7 @@ function theme_options(?string $theme = null): array {
 		}
 
 		$type = strtolower((string)($option['type'] ?? 'text'));
-		if (!in_array($type, array('text', 'url', 'textarea', 'checkbox'), true)) {
+		if (!in_array($type, array('text', 'url', 'textarea', 'checkbox', 'image', 'datetime-local'), true)) {
 			$type = 'text';
 		}
 
@@ -273,6 +273,10 @@ function theme_options(?string $theme = null): array {
 			'type'    => $type,
 			'default' => (string)($option['default'] ?? ''),
 			'help'    => (string)($option['help'] ?? ''),
+			// An image option may carry the CSS rule that puts it on the page,
+			// with %s where the URL goes. The engine then writes that rule into
+			// the head itself, so no theme file has to know about the option.
+			'css'     => (string)($option['css'] ?? ''),
 		);
 	}
 
@@ -879,6 +883,10 @@ function theme_close(): void {
 	$injectHead = function_exists('znote_hook_collect') ? znote_hook_collect('page.head') : '';
 	$injectFoot = function_exists('znote_hook_collect') ? znote_hook_collect('page.footer') : '';
 
+	// Background and logo overrides set in the admin panel. Written here rather
+	// than by each theme, so a theme only has to declare the option.
+	$injectHead = theme_style_overrides() . $injectHead;
+
 	// A shell is included from inside this function, so without this it would
 	// see none of the page's variables - unlike views and widgets, which do.
 	extract($GLOBALS, EXTR_SKIP);
@@ -1031,4 +1039,144 @@ function theme_body_class(): string {
 	}
 
 	return htmlspecialchars(implode(' ', $classes), ENT_QUOTES, 'UTF-8');
+}
+
+
+// ---------------------------------------------------------------------------
+// Image options
+// ---------------------------------------------------------------------------
+
+/**
+ * Where uploaded theme images live. Outside layouts/, so updating a theme or
+ * re-extracting its archive cannot take them with it.
+ */
+function theme_image_dir(string $theme): string {
+	return dirname(__DIR__, 2) . '/engine/img/theme/' . theme_sanitize($theme);
+}
+
+function theme_image_url_base(string $theme): string {
+	return 'engine/img/theme/' . theme_sanitize($theme) . '/';
+}
+
+/**
+ * A value safe to drop inside url(...). The template comes from the theme, but
+ * the value comes from the admin form, so anything that could close the url()
+ * and start another declaration is refused.
+ */
+function theme_css_url(string $value): string {
+	$value = trim($value);
+
+	if ($value === '' || preg_match('~[\s"\'()\\\\;{}<>]~', $value)) {
+		return '';
+	}
+	if (preg_match('~^(https?:)?//~i', $value)) {
+		return $value;
+	}
+	if (strpos($value, '..') === false && preg_match('#^[A-Za-z0-9._~/?=&-]+$#', $value)) {
+		return $value;
+	}
+
+	return '';
+}
+
+/**
+ * The style block for the active theme's image options: every option that
+ * declares a css template and holds a value. theme_close() injects it into the
+ * head, so this works even for a theme that knows nothing about it.
+ */
+function theme_style_overrides(?string $theme = null): string {
+	$theme = $theme ?? theme_active();
+	$rules = array();
+
+	foreach (theme_options($theme) as $key => $option) {
+		if ($option['css'] === '' || strpos($option['css'], '%s') === false) {
+			continue;
+		}
+
+		$url = theme_css_url(theme_option($key, '', $theme));
+		if ($url === '') {
+			continue;
+		}
+
+		$rules[] = str_replace('%s', $url, $option['css']);
+	}
+
+	if (!$rules) {
+		return '';
+	}
+
+	return '<style id="znote-theme-options">' . "\n" . implode("\n", $rules) . "\n" . '</style>' . "\n";
+}
+
+const THEME_IMAGE_MAX_BYTES = 4194304;
+
+/**
+ * Save an uploaded theme image and return the path to store in the option.
+ * The extension comes from what GD actually recognises, never from the name.
+ */
+function theme_image_store(string $theme, string $key, string $tmpFile, ?string &$error = null): string {
+	$error = null;
+	$theme = theme_sanitize($theme);
+	$key   = preg_replace('/[^a-z0-9_]/', '', strtolower($key));
+
+	if ($theme === '' || $key === '') {
+		$error = 'Invalid theme or option.';
+		return '';
+	}
+	if (!is_file($tmpFile) || filesize($tmpFile) < 1) {
+		$error = 'The uploaded file is empty.';
+		return '';
+	}
+	if (filesize($tmpFile) > THEME_IMAGE_MAX_BYTES) {
+		$error = 'Images must be ' . (int)(THEME_IMAGE_MAX_BYTES / 1048576) . ' MB or smaller.';
+		return '';
+	}
+
+	$info = @getimagesize($tmpFile);
+	$types = array(
+		IMAGETYPE_JPEG => 'jpg',
+		IMAGETYPE_PNG  => 'png',
+		IMAGETYPE_GIF  => 'gif',
+		IMAGETYPE_WEBP => 'webp',
+	);
+
+	if (!$info || !isset($types[$info[2]])) {
+		$error = 'Only JPG, PNG, GIF and WebP images are accepted.';
+		return '';
+	}
+
+	$dir = theme_image_dir($theme);
+	if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+		$error = 'Could not create engine/img/theme/' . $theme . '/.';
+		return '';
+	}
+	if (!is_writable($dir)) {
+		$error = 'engine/img/theme/' . $theme . '/ is not writable by the web server.';
+		return '';
+	}
+
+	// One file per option: replacing an image never leaves the old one behind.
+	foreach ($types as $extension) {
+		if (is_file($dir . '/' . $key . '.' . $extension)) {
+			@unlink($dir . '/' . $key . '.' . $extension);
+		}
+	}
+
+	$name = $key . '.' . $types[$info[2]];
+	if (!@copy($tmpFile, $dir . '/' . $name)) {
+		$error = 'Could not write the image.';
+		return '';
+	}
+
+	return theme_image_url_base($theme) . $name;
+}
+
+/**
+ * An image option ready to drop into a src="" or url(): validated the same way
+ * as the CSS overrides, then HTML-escaped. Falls back when unset or refused.
+ */
+function theme_image(string $key, string $fallback = '', ?string $theme = null): string {
+	$value = theme_css_url(theme_option($key, '', $theme));
+
+	return htmlspecialchars($value !== '' ? $value : $fallback, ENT_QUOTES, 'UTF-8');
 }

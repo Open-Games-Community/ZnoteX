@@ -50,7 +50,7 @@ $backUrl  = acp_url('layouts');
 			the theme cannot lose these. Leave a field empty to fall back to the theme's own default.
 		</p>
 
-		<form method="post">
+		<form method="post" enctype="multipart/form-data">
 			<?= acp_csrf_field() ?>
 			<input type="hidden" name="theme_options" value="<?= h($optionTheme) ?>">
 
@@ -67,9 +67,22 @@ $backUrl  = acp_url('layouts');
 							<input type="checkbox" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]" value="1" <?= $value !== '' ? 'checked' : '' ?>>
 							<span class="is-muted">Enabled</span>
 						</label>
+					<?php elseif ($opt['type'] === 'image'): ?>
+						<?php $shown = ($value !== '') ? $value : $opt['default']; ?>
+						<?php if ($shown !== ''): ?>
+							<p style="margin:0 0 8px;">
+								<img src="<?= h(acp_site($shown)) ?>" alt=""
+									 style="max-width:260px;max-height:110px;border:1px solid var(--acp-line);background:#0b0d10;">
+							</p>
+						<?php endif; ?>
+						<input class="acp-input" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]"
+							   type="text" value="<?= h($value) ?>"
+							   placeholder="<?= h($opt['default'] !== '' ? $opt['default'] : 'engine/img/theme/... or https://...') ?>">
+						<p class="acp-hint" style="margin:6px 0 4px;">Current path above. Or upload a new image, which replaces it:</p>
+						<input class="acp-input" type="file" name="optfile[<?= h($optKey) ?>]" accept="image/png,image/jpeg,image/gif,image/webp">
 					<?php else: ?>
 						<input class="acp-input" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]"
-							   type="<?= $opt['type'] === 'url' ? 'url' : 'text' ?>"
+							   type="<?= in_array($opt['type'], array('url', 'datetime-local'), true) ? h($opt['type']) : 'text' ?>"
 							   value="<?= h($value) ?>"
 							   placeholder="<?= h($opt['default']) ?>">
 					<?php endif; ?>

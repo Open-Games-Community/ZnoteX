@@ -6,5 +6,28 @@
   "url": "https://otland.net/members/snavy.155163/",
   "menus": {
     "main": "Main navigation"
-  }
+  },
+  "options": [
+    {
+      "key": "background_image",
+      "label": "Page background image",
+      "type": "image",
+      "css": "body{background-image:url('%s')!important;background-size:cover;background-attachment:fixed;background-position:center top;}",
+      "help": "Tiled behind the whole site. Leave empty for the theme's flat background."
+    },
+    {
+      "key": "logo_header",
+      "label": "Header banner logo",
+      "type": "image",
+      "default": "layouts/default/assets/img/header.png",
+      "css": ".banner{background-image:url('%s')!important;}",
+      "help": "The wide banner above the content. 1000x240 or the same ratio."
+    },
+    {
+      "key": "footer_html",
+      "label": "Footer text",
+      "type": "textarea",
+      "help": "Your own line in the footer, above the credits. HTML is allowed. The copyright and engine credits stay in the theme files and are not editable here."
+    }
+  ]
 }

@@ -2,8 +2,8 @@
 /**
  * Title: Layout
  * Icon: fa-paint-brush
- * Group: Content
- * Order: 5
+ * Group: Settings
+ * Order: 10
  * Description: Pick the theme the public site is dressed in.
  */
 
@@ -57,14 +57,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 		acp_redirect('layouts');
 	}
 
-	$saved = 0;
-	$failed = 0;
+	$saved   = 0;
+	$failed  = 0;
+	$uploads = 0;
+	$errors  = array();
+
 	foreach ($options as $key => $option) {
-		$value = ($option['type'] === 'checkbox')
-			? (empty($_POST['opt'][$key]) ? '' : '1')
-			: trim((string)($_POST['opt'][$key] ?? ''));
+
+		if ($option['type'] === 'checkbox') {
+			$value = empty($_POST['opt'][$key]) ? '' : '1';
+		} else {
+			$value = trim((string)($_POST['opt'][$key] ?? ''));
+		}
+
+		// An uploaded image wins over whatever the path field says: the admin
+		// picked a file, so that is the intent.
+		if ($option['type'] === 'image') {
+			$file = $_FILES['optfile']['tmp_name'][$key] ?? '';
+			$code = $_FILES['optfile']['error'][$key] ?? UPLOAD_ERR_NO_FILE;
+
+			if ($code === UPLOAD_ERR_OK && is_uploaded_file((string)$file)) {
+				$error  = null;
+				$stored = theme_image_store($target, $key, (string)$file, $error);
+
+				if ($stored !== '') {
+					$value = $stored;
+					$uploads++;
+				} else {
+					$errors[] = $option['label'] . ': ' . (string)$error;
+					continue;
+				}
+			} elseif ($code === UPLOAD_ERR_INI_SIZE || $code === UPLOAD_ERR_FORM_SIZE) {
+				$errors[] = $option['label'] . ': the file is larger than upload_max_filesize in php.ini.';
+				continue;
+			}
+		}
 
 		setting_set(theme_option_key($target, $key), $value) ? $saved++ : $failed++;
+	}
+
+	foreach ($errors as $message) {
+		acp_flash_error($message);
+	}
+
+	if ($uploads > 0) {
+		acp_flash_info($uploads . ' image(s) uploaded to <code>engine/img/theme/' . h($target) . '/</code>.');
 	}
 
 	if ($failed > 0) {
@@ -167,7 +204,17 @@ if ($optionTheme !== '' && isset($themes[$optionTheme])) {
 const ACP_THEMES_PER_PAGE = 12;
 
 $search = trim((string)($_GET['q'] ?? ''));
-$total  = count($themes);
+
+// The _-prefixed folders are references to copy, not themes to run. They get a
+// line in the "making a theme" card at the bottom instead of a card each up
+// here, where they only push real themes onto a second page. One that somehow
+// ended up active still shows, so it can be switched away from.
+$examples = array_filter($themes, static function (array $t) use ($active): bool {
+	return !empty($t['is_example']) && $t['key'] !== $active;
+});
+$themes = array_diff_key($themes, $examples);
+
+$total = count($themes);
 
 if ($search !== '') {
 	$needle  = strtolower($search);
@@ -398,6 +445,24 @@ $hasTable = znote_table_exists('znote_config');
 			the theme folder &mdash; nothing to declare, drop it in and reload this page.
 			Any size works; roughly 3:2 shows best.
 		</p>
+		<?php if ($examples): ?>
+			<p>
+				Two folders in <code>layouts/</code> are starting points rather than themes, so they
+				are kept out of the grid above:
+			</p>
+			<ul>
+				<?php foreach ($examples as $exampleKey => $example): ?>
+					<li>
+						<code><?= h('layouts/' . $exampleKey . '/') ?></code>
+						&mdash; <?= h($example['description'] !== '' ? $example['description'] : $example['name']) ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+			<p>
+				Copy one, rename the folder, and it appears above on the next page load. Never edit
+				them in place: they are the reference every other theme is copied from.
+			</p>
+		<?php endif; ?>
 		<p>
 			Full instructions, including the list of CSS classes the pages emit, are in
 			<code>layouts/README.md</code>.
