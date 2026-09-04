@@ -3,7 +3,7 @@
  * Title: Accounts
  * Icon: fa-address-card-o
  * Group: Players
- * Order: 5
+ * Order: 10
  * Description: Search an account, see its characters, points and history.
  */
 

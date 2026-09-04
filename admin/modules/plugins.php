@@ -2,8 +2,8 @@
 /**
  * Title: Plugins
  * Icon: fa-plug
- * Group: Plugins
- * Order: 10
+ * Group: Settings
+ * Order: 20
  * Description: Install, update, enable and disable what is in plugins/.
  */
 

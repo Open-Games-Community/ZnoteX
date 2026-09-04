@@ -3,7 +3,7 @@
  * Title: Visitors
  * Icon: fa-line-chart
  * Group: Overview
- * Order: 30
+ * Order: 20
  * Description: Traffic ZnoteX has been recording all along.
  */
 

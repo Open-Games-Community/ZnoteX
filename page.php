@@ -24,9 +24,30 @@ $file = ($pluginName !== '')
 	: (($requested !== '') ? theme_file('pages/' . $requested . '.php') : null);
 
 if ($file === null) {
+	if ($pluginName === '' && $requested !== '' && function_exists('znote_table_exists') && znote_table_exists('znote_pages')) {
+		$dbPage = mysql_select_single("
+			SELECT `slug`, `title`, `body`, `access`
+			FROM `znote_pages`
+			WHERE `slug` = '" . mysql_znote_escape_string($requested) . "'
+			AND `active` = 1
+			LIMIT 1;
+		");
+
+		if (is_array($dbPage)) {
+			if ((int)$dbPage['access'] > 0) {
+				protect_page();
+			}
+			$page_filename = 'page_' . $requested;
+			theme_open();
+			echo '<h1>' . htmlspecialchars((string)$dbPage['title'], ENT_QUOTES, 'UTF-8') . '</h1>';
+			echo znote_bbcode_raw((string)$dbPage['body']);
+			theme_close();
+			exit;
+		}
+	}
+
 	http_response_code(404);
 	$page_filename = 'page_not_found';
-
 	theme_open();
 	echo '<h1>Page not found</h1>';
 	if ($pluginName !== '') {

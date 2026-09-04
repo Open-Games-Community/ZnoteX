@@ -3,7 +3,7 @@
  * Title: Gallery
  * Icon: fa-picture-o
  * Group: Content
- * Order: 20
+ * Order: 30
  * Description: Moderate player screenshot submissions.
  */
 

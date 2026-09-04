@@ -2,8 +2,8 @@
 /**
  * Title: Settings
  * Icon: fa-cogs
- * Group: Overview
- * Order: 20
+ * Group: Settings
+ * Order: 30
  * Description: Change the settings that used to mean editing config.php by FTP.
  */
 

@@ -3,7 +3,7 @@
  * Title: Character Skills
  * Icon: fa-bolt
  * Group: Players
- * Order: 20
+ * Order: 30
  * Description: Read and rewrite a character's level, vocation and skills.
  */
 
