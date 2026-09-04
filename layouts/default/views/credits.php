@@ -1,5 +1,17 @@
 <?php ?>
 
+<h1>ZnoteX</h1>
+<p>This website is powered by <a href="https://github.com/Open-Games-Community/ZnoteX">ZnoteX</a>, a remaster of Znote AAC rebuilt on a modern codebase: PHP 8, a full admin control panel, a theme system, plugins and a web installer.</p>
+
+<h2>Maintained by:</h2>
+<div class="developers">
+	<div class="developer">
+		<div class="avatar"><img src="<?php echo $creditsMaintainer['avatar']; ?>" alt="Avatar of: <?php echo $creditsMaintainer['login']; ?>"></div>
+		<p class="username"><a href="<?php echo $creditsMaintainer['url']; ?>" target="_blank" rel="noopener"><?php echo $creditsMaintainer['login']; ?></a>
+			<br><?php echo $creditsMaintainer['role']; ?></p>
+	</div>
+</div>
+
 <h1>Znote AAC</h1>
 <p>This website is powered by the <a href="https://github.com/Znote/ZnoteAAC">Znote AAC</a> engine.</p>
 <p>An OT website (<strong>A</strong>utomatic <strong>A</strong>ccount <strong>C</strong>reator) created by <a href="https://otland.net/members/znote.5993/">Znote</a> from the OT forum community <a href="https://otland.net">otland.net</a>.</p>
