@@ -3,7 +3,7 @@
  * Title: Menus
  * Icon: fa-bars
  * Group: Content
- * Order: 20
+ * Order: 40
  * Description: Add, reorder and hide the links your theme shows.
  */
 
@@ -35,13 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$do  = (string)($_POST['do'] ?? '');
 	$id  = intv($_POST['id'] ?? 0);
 	$loc = preg_replace('/[^a-z0-9_-]/', '', strtolower((string)($_POST['location'] ?? $location)));
+	if (!isset($locations[$loc])) {
+		$loc = $location;
+	}
 
 	if ($do === 'delete' && $id > 0) {
-		// Orphaned children would vanish from the menu without explanation, so
-		// lift them to the top level instead of deleting them silently.
-		mysql_update("UPDATE `znote_menu` SET `parent_id` = 0 WHERE `parent_id` = {$id};");
+		$entry = mysql_select_single("SELECT `parent_id` FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
+		if (is_array($entry) && (int)$entry['parent_id'] === 0) {
+			acp_flash_error('Menu categories cannot be deleted. Delete or move their entries instead.');
+			acp_redirect('menus', array('loc' => $loc));
+		}
 		mysql_delete("DELETE FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
-		acp_flash_success('Entry deleted. Any sub-entries were moved to the top level.');
+		acp_flash_success('Entry deleted.');
 		acp_redirect('menus', array('loc' => $loc));
 	}
 
@@ -64,18 +69,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$visibility = (string)($_POST['visibility'] ?? 'all');
 		$parent     = intv($_POST['parent_id'] ?? 0);
 		$order      = intv($_POST['sort_order'] ?? 0);
+		$existing   = $id > 0 ? mysql_select_single("
+			SELECT `id`, `parent_id`, `location`
+			FROM `znote_menu`
+			WHERE `id` = {$id}
+			LIMIT 1;
+		") : false;
+		$editingCategory = is_array($existing) && (int)$existing['parent_id'] === 0;
 
 		if (!isset(ACP_MENU_VISIBILITY[$visibility])) {
 			$visibility = 'all';
 		}
-		// An entry cannot be its own parent, nor can it nest below a child.
-		if ($parent === $id) {
-			$parent = 0;
+		// A top-level entry is a category: a heading that opens its children,
+		// not a link of its own. Everything nested under one still needs a URL.
+		$isCategory = ($parent === 0);
+
+		if ($label === '') {
+			acp_flash_error('A label is required.');
+			acp_redirect('menus', array('loc' => $loc));
+		}
+		if (!$isCategory && $url === '') {
+			acp_flash_error('An entry inside a category needs a URL.');
+			acp_redirect('menus', array('loc' => $loc));
 		}
 
-		if ($label === '' || $url === '') {
-			acp_flash_error('A label and a URL are both required.');
+		if ($id > 0 && !is_array($existing)) {
+			acp_flash_error('The menu entry no longer exists.');
 			acp_redirect('menus', array('loc' => $loc));
+		}
+
+		if ($editingCategory) {
+			$parent = 0;
+		} else {
+			$category = $parent > 0 ? mysql_select_single("
+				SELECT `id`
+				FROM `znote_menu`
+				WHERE `id` = {$parent}
+				AND `location` = '" . esc($loc) . "'
+				AND `parent_id` = 0
+				LIMIT 1;
+			") : false;
+			if (!is_array($category)) {
+				acp_flash_error('Choose an existing category before saving this menu entry.');
+				acp_redirect('menus', array('loc' => $loc));
+			}
 		}
 
 		$fields = "`label` = '" . esc($label) . "',
@@ -122,6 +159,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 		}
 	}
 }
+$editingCategory = is_array($editing) && (int)$editing['parent_id'] === 0;
 
 // Top-level entries, for the parent dropdown.
 $parents = array();
@@ -163,6 +201,12 @@ foreach ($entries as $entry) {
 			<p>to <?= h($locations[$location]) ?></p>
 		</header>
 		<div class="acp-card-body">
+			<?php if ($editing === null && !$parents): ?>
+				<div class="acp-flash acp-flash--error">
+					<i class="fa fa-exclamation-triangle"></i>
+					<span>No category exists in this menu location, so entries cannot be added.</span>
+				</div>
+			<?php endif; ?>
 			<form method="post">
 				<?= acp_csrf_field() ?>
 				<input type="hidden" name="do" value="save">
@@ -179,9 +223,10 @@ foreach ($entries as $entry) {
 					</div>
 					<div class="acp-field">
 						<label class="acp-label" for="url">URL</label>
-						<input class="acp-input" id="url" name="url" required
+						<input class="acp-input" id="url" name="url"
 							   placeholder="highscores.php"
 							   value="<?= h((string)($editing['url'] ?? '')) ?>">
+						<p class="acp-hint">Leave empty on a category, so its heading opens the submenu instead of navigating.</p>
 					</div>
 				</div>
 
@@ -193,15 +238,20 @@ foreach ($entries as $entry) {
 						<p class="acp-hint">Font Awesome class. Themes may ignore it.</p>
 					</div>
 					<div class="acp-field">
-						<label class="acp-label" for="parent_id">Under</label>
-						<select class="acp-select" id="parent_id" name="parent_id">
-							<option value="0">Top level</option>
-							<?php foreach ($parents as $pid => $plabel): ?>
-								<option value="<?= $pid ?>" <?= (int)($editing['parent_id'] ?? 0) === $pid ? 'selected' : '' ?>>
-									<?= h($plabel) ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
+						<label class="acp-label" for="parent_id">Category</label>
+						<?php if ($editingCategory): ?>
+							<input type="hidden" name="parent_id" value="0">
+							<input class="acp-input" id="parent_id" value="Top-level category" disabled>
+						<?php else: ?>
+							<select class="acp-select" id="parent_id" name="parent_id" required>
+								<option value="" disabled <?= (int)($editing['parent_id'] ?? 0) === 0 ? 'selected' : '' ?>>Choose a category</option>
+								<?php foreach ($parents as $pid => $plabel): ?>
+									<option value="<?= $pid ?>" <?= (int)($editing['parent_id'] ?? 0) === $pid ? 'selected' : '' ?>>
+										<?= h($plabel) ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						<?php endif; ?>
 					</div>
 				</div>
 
@@ -231,7 +281,7 @@ foreach ($entries as $entry) {
 				</div>
 
 				<div class="acp-actions">
-					<button class="acp-btn acp-btn--green" type="submit">
+					<button class="acp-btn acp-btn--green" type="submit" <?= $editing === null && !$parents ? 'disabled' : '' ?>>
 						<i class="fa fa-check"></i> <?= $editing !== null ? 'Save entry' : 'Add entry' ?>
 					</button>
 					<?php if ($editing !== null): ?>
@@ -336,13 +386,15 @@ foreach ($entries as $entry) {
 										<i class="fa fa-pencil"></i>
 									</a>
 
-									<form class="acp-inline-form" method="post" data-confirm="Delete this menu entry?">
-										<?= acp_csrf_field() ?>
-										<input type="hidden" name="do" value="delete">
-										<input type="hidden" name="id" value="<?= $id ?>">
-										<input type="hidden" name="location" value="<?= h($location) ?>">
-										<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i></button>
-									</form>
+									<?php if ($child): ?>
+										<form class="acp-inline-form" method="post" data-confirm="Delete this menu entry?">
+											<?= acp_csrf_field() ?>
+											<input type="hidden" name="do" value="delete">
+											<input type="hidden" name="id" value="<?= $id ?>">
+											<input type="hidden" name="location" value="<?= h($location) ?>">
+											<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i></button>
+										</form>
+									<?php endif; ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>

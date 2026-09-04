@@ -63,7 +63,17 @@ nav .container { padding-left: 10px; }
 nav .container > div > ul > li,
 .modIcon:hover > i:nth-child(2) { display: inline-block; }
 
-nav .container > div > ul > li > a { padding: 20px; }
+nav .container > div > ul > li > a,
+nav .container > div > ul > li > .menuCategory { padding: 20px; }
+
+/* A top-level category is a heading, not a link: same look, no navigation. */
+nav .container > div > ul > li > .menuCategory {
+	display: block;
+	z-index: 1;
+	color: var(--anchor);
+	cursor: default;
+}
+nav .container > div > ul > li:hover > .menuCategory { color: var(--anchor-hover); }
 nav .container > div > ul > li:hover > ul,
 nav .container > div > ul > li > a,
 nav .container > div > ul > li > ul > li > a { display: block; z-index: 1; }
