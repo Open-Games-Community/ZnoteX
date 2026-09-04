@@ -78,6 +78,7 @@ require_once 'function/itemparser/itemlistparser.php';
 require_once 'function/settings.php';
 require_once 'function/theme.php';
 require_once 'function/menus.php';
+require_once 'function/landing.php';
 require_once 'function/minimap.php';
 require_once 'function/serverdata.php';
 require_once 'function/plugins.php';
