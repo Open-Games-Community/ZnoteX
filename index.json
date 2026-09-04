@@ -1,12 +1,22 @@
 [
-    {
-        "key": "tibiacom_v1",
-        "name": "TibiaCOM v1",
-        "version": "1.1.2",
-        "author": "Alex - opengamescommunity.com",
-        "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
-        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.zip",
-        "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/tibiacom_v1",
-        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.png"
-    }
+  {
+    "key": "tibiacom_v1",
+    "name": "TibiaCOM v1",
+    "version": "1.1.2",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.zip",
+    "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/tibiacom_v1",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.png"
+  },
+  {
+    "key": "old_school",
+    "name": "Old School",
+    "version": "1.0.0",
+    "author": "Hemrenus321",
+    "description": "old_school theme converted by alexv45 for ZnoteX.",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.zip",
+    "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/old_school",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.png"
+  }
 ]
