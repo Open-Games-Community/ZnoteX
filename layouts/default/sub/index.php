@@ -12,7 +12,7 @@ if (!empty($config['UseChangelogTicker'])) {
 		<div class="well">
 			<table id="changelogTable">
 				<tr class="yellow">
-					<td colspan="2">Latest Changelog Updates (<a href="changelog.php">Click here to see full changelog</a>)</td>
+					<td colspan="2"><?= h(t('news.changelog_ticker')) ?> (<a href="changelog.php"><?= h(t('news.changelog_full')) ?></a>)</td>
 				</tr>
 				<?php
 				for ($i = 0; $i < count($changelogs) && $i < 5; $i++) {
@@ -27,7 +27,7 @@ if (!empty($config['UseChangelogTicker'])) {
 			</table>
 		</div>
 		<?php
-	} else echo "No changelogs submitted.";
+	} else echo h(t('news.no_changelogs'));
 }
 
 $page = isset($page) && is_numeric($page) ? (int)$page : 0;
@@ -59,7 +59,6 @@ if ($news) {
 		}
 
 		if ($si !== false) {
-			echo "hello world!";
 			?>
 			<div class="postHolder">
 				<div class="well">
@@ -68,7 +67,7 @@ if ($news) {
 						echo
 							'<a href="?view=' . (int)$news[$si]['id'] . '">[#' . (int)$news[$si]['id'] . ']</a> '
 							. getClock($news[$si]['date'], true)
-							. ' by <a href="characterprofile.php?name='
+							. ' ' . h(t('news.by')) . ' <a href="characterprofile.php?name='
 							. urlencode($news[$si]['name'])
 							. '">'
 							. htmlspecialchars($news[$si]['name'], ENT_QUOTES, 'UTF-8')
@@ -88,11 +87,11 @@ if ($news) {
 			?>
 			<table id="news">
 				<tr class="yellow">
-					<td class="zheadline">News post not found.</td>
+					<td class="zheadline"><?= h(t('news.not_found')) ?></td>
 				</tr>
 				<tr>
 					<td>
-						<p>We failed to find the post you where looking for.</p>
+						<p><?= h(t('news.not_found_text')) ?></p>
 					</td>
 				</tr>
 			</table>
@@ -109,7 +108,7 @@ if ($news) {
 							<?php
 							echo '<a href="?view=' . urlencode($news[$i]['title']) . '">'
 								. getClock($news[$i]['date'], true)
-								. '</a> by <a href="characterprofile.php?name='
+								. '</a> ' . h(t('news.by')) . ' <a href="characterprofile.php?name='
 								. urlencode($news[$i]['name'])
 								. '">'
 								. htmlspecialchars($news[$i]['name'], ENT_QUOTES, 'UTF-8')
@@ -133,11 +132,11 @@ if ($news) {
 
 			if ($i == $page) {
 
-				echo '<option value="index.php?page='.$i.'" selected>Page '.$i.'</option>';
+				echo '<option value="index.php?page='.$i.'" selected>' . h(t('common.page_n', ['n' => $i])) . '</option>';
 
 			} else {
 
-				echo '<option value="index.php?page='.$i.'">Page '.$i.'</option>';
+				echo '<option value="index.php?page='.$i.'">' . h(t('common.page_n', ['n' => $i])) . '</option>';
 			}
 		}
 
@@ -146,6 +145,6 @@ if ($news) {
 	}
 
 } else {
-	echo '<p>No news exist.</p>';
+	echo '<p>' . h(t('news.none')) . '</p>';
 }
 ?>

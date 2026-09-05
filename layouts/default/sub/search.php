@@ -1,12 +1,12 @@
 <div class="postHolder">
 	<div class="well">
 		<div class="header">
-			Character search
+			<?= h(t('widget.search.title')) ?>
 		</div>
 		<div class="body">
 			<form type="submit" action="characterprofile.php" method="get">
 				<input type="text" name="name" class="search">
-				<input type="submit" name="submitName" value="Search">
+				<input type="submit" name="submitName" value="<?= h(t('common.search')) ?>">
 			</form>
 		</div>
 	</div>

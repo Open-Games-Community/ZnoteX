@@ -99,7 +99,7 @@ if ($spells) {
 				<td><?php echo $spell['name']; ?></td>
 				<td><?php echo $spell['lvl']; ?></td>
 				<td><?php echo $spell['maglv']; ?></td>
-				<td><img src="<?php echo $itemServer.$spell['id'].'.gif'; ?>" alt="Rune image"></td>
+				<td><img src="<?php echo $itemServer.$spell['id'].'.gif'; ?>" alt="<?= h(t('spells.rune_image')) ?>"></td>
 				<td><?php
 				if (!empty($spell['vocations'])) {
 					if ($getVoc !== 'all') {
@@ -142,7 +142,7 @@ if ($spells) {
 				<td><?php echo $spell['mana']; ?></td>
 				<td><?php echo $spell['soul']; ?></td>
 				<td><?php echo $spell['conjureCount']; ?></td>
-				<td><img src="<?php echo $itemServer.$spell['conjureId'].'.gif'; ?>" alt="Rune image"></td>
+				<td><img src="<?php echo $itemServer.$spell['conjureId'].'.gif'; ?>" alt="<?= h(t('spells.rune_image')) ?>"></td>
 				<td><?php
 				if (!empty($spell['vocations'])) {
 					if ($getVoc !== 'all') {
@@ -167,7 +167,7 @@ if ($spells) {
 } else {
 	?>
 	<h1><?= t('spells.title') ?></h1>
-	<p>Spells have currently not been loaded into the website by the server admin.</p>
+	<p><?= h(t('spells.not_loaded')) ?></p>
 	<?php
 }
 

@@ -195,5 +195,5 @@ if (
 		</tbody>
 	</table>
 <?php else: ?>
-	<p>The server administrator has yet to import server information to this page.</p>
+	<p><?= h(t('srv.not_imported')) ?></p>
 <?php endif;

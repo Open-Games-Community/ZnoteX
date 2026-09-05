@@ -162,17 +162,39 @@ function translate_load(string $code): array {
 		return $loaded[$code];
 	}
 
-	$strings = array();
+	$core = array();
 
 	$file = __DIR__ . '/../../locale/' . $code . '.php';
 	if (is_file($file)) {
-		$core = include $file;
-		if (is_array($core)) {
-			$strings = $core;
+		$included = include $file;
+		if (is_array($included)) {
+			$core = $included;
 		}
 	}
 
-	return $loaded[$code] = $strings + translate_plugin_strings($code);
+	return $loaded[$code] = translate_theme_strings($code) + $core + translate_plugin_strings($code);
+}
+
+function translate_theme_strings(string $code): array {
+	if (!function_exists('theme_chain') || !function_exists('theme_root')) {
+		return array();
+	}
+
+	$strings = array();
+
+	foreach (theme_chain() as $theme) {
+		$file = theme_root() . '/' . $theme . '/locale/' . $code . '.php';
+		if (!is_file($file)) {
+			continue;
+		}
+
+		$loaded = include $file;
+		if (is_array($loaded)) {
+			$strings += $loaded;
+		}
+	}
+
+	return $strings;
 }
 
 function translate_plugin_strings(string $code): array {

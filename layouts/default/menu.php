@@ -63,12 +63,12 @@ $menuFallback = !$menuItems;
 				</ul>
 			<?php else: ?>
 				<ul>
-					<li><a href="/"><i class="fa fa-home"></i> Home</a></li>
-					<li><a id="accountLink" href="myaccount.php"><i class="fa fa-user-circle"></i> Account</a></li>
-					<li><a href="onlinelist.php"><i class="fa fa-users"></i> Community</a></li>
-					<li><a href="serverinfo.php"><i class="fa fa-book"></i> Library</a></li>
-					<li><a href="support.php"><i class="fa fa-info-circle"></i> Support</a></li>
-					<li><a href="shop.php"><i class="fa fa-shopping-cart"></i> Shop</a></li>
+					<li><a href="/"><i class="fa fa-home"></i> <?= h(t('nav.home')) ?></a></li>
+					<li><a id="accountLink" href="myaccount.php"><i class="fa fa-user-circle"></i> <?= h(t('nav.account')) ?></a></li>
+					<li><a href="onlinelist.php"><i class="fa fa-users"></i> <?= h(t('nav.community')) ?></a></li>
+					<li><a href="serverinfo.php"><i class="fa fa-book"></i> <?= h(t('nav.library')) ?></a></li>
+					<li><a href="support.php"><i class="fa fa-info-circle"></i> <?= h(t('nav.support')) ?></a></li>
+					<li><a href="shop.php"><i class="fa fa-shopping-cart"></i> <?= h(t('nav.shop')) ?></a></li>
 				</ul>
 			<?php endif; ?>
 		</div>
@@ -78,10 +78,10 @@ $menuFallback = !$menuItems;
 			<ul>
 				<?php if (user_logged_in() === true): ?>
 					<li><a href="myaccount.php"><i class="fa fa-user"></i> <?= htmlspecialchars($user_data['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></a></li>
-					<li><a href="logout.php"><i class="fa fa-sign-out"></i> Logout</a></li>
+					<li><a href="logout.php"><i class="fa fa-sign-out"></i> <?= h(t('nav.logout')) ?></a></li>
 				<?php else: ?>
-					<li><a href="#loginContainer" class="modIcon loginBtn"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i> Login</a></li>
-					<li><a href="register.php"><i class="fa fa-key"></i> Register</a></li>
+					<li><a href="#loginContainer" class="modIcon loginBtn"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i> <?= h(t('nav.login')) ?></a></li>
+					<li><a href="register.php"><i class="fa fa-key"></i> <?= h(t('nav.register')) ?></a></li>
 				<?php endif; ?>
 			</ul>
 		</div>
