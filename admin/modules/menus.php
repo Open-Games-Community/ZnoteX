@@ -12,12 +12,14 @@ if (!defined('ACP_ROOT')) {
 	die('Direct access denied.');
 }
 
-const ACP_MENU_VISIBILITY = array(
-	'all'   => 'Everyone',
-	'guest' => 'Logged out only',
-	'user'  => 'Logged in only',
-	'admin' => 'Admins only',
-);
+function acp_menu_visibility(): array {
+	return array(
+		'all'   => t('acp.menu.vis_all'),
+		'guest' => t('acp.menu.vis_guest'),
+		'user'  => t('acp.menu.vis_user'),
+		'admin' => t('acp.menu.vis_admin'),
+	);
+}
 
 $locations = theme_menu_locations();
 $location  = (string)($_GET['loc'] ?? array_key_first($locations));
@@ -40,13 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	}
 
 	if ($do === 'delete' && $id > 0) {
-		$entry = mysql_select_single("SELECT `parent_id` FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
+		$entry = mysql_select_single("SELECT `parent_id`, `label` FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
 		if (is_array($entry) && (int)$entry['parent_id'] === 0) {
-			acp_flash_error('Menu categories cannot be deleted. Delete or move their entries instead.');
+			acp_flash_error(t('acp.menu.cat_no_delete'));
 			acp_redirect('menus', array('loc' => $loc));
 		}
 		mysql_delete("DELETE FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
-		acp_flash_success('Entry deleted.');
+		acp_log('menu.delete', is_array($entry) ? (string)$entry['label'] : ('#' . $id));
+		acp_flash_success(t('acp.menu.deleted'));
 		acp_redirect('menus', array('loc' => $loc));
 	}
 
@@ -77,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		") : false;
 		$editingCategory = is_array($existing) && (int)$existing['parent_id'] === 0;
 
-		if (!isset(ACP_MENU_VISIBILITY[$visibility])) {
+		if (!isset(acp_menu_visibility()[$visibility])) {
 			$visibility = 'all';
 		}
 		// A top-level entry is a category: a heading that opens its children,
@@ -85,16 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$isCategory = ($parent === 0);
 
 		if ($label === '') {
-			acp_flash_error('A label is required.');
+			acp_flash_error(t('acp.menu.label_required'));
 			acp_redirect('menus', array('loc' => $loc));
 		}
 		if (!$isCategory && $url === '') {
-			acp_flash_error('An entry inside a category needs a URL.');
+			acp_flash_error(t('acp.menu.url_required'));
 			acp_redirect('menus', array('loc' => $loc));
 		}
 
 		if ($id > 0 && !is_array($existing)) {
-			acp_flash_error('The menu entry no longer exists.');
+			acp_flash_error(t('acp.menu.entry_gone'));
 			acp_redirect('menus', array('loc' => $loc));
 		}
 
@@ -110,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				LIMIT 1;
 			") : false;
 			if (!is_array($category)) {
-				acp_flash_error('Choose an existing category before saving this menu entry.');
+				acp_flash_error(t('acp.menu.choose_category'));
 				acp_redirect('menus', array('loc' => $loc));
 			}
 		}
@@ -125,16 +128,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		if ($id > 0) {
 			mysql_update("UPDATE `znote_menu` SET {$fields} WHERE `id` = {$id} LIMIT 1;");
-			acp_flash_success('Entry updated.');
+			acp_log('menu.update', $label, ['url' => $url, 'location' => $loc]);
+			acp_flash_success(t('acp.menu.updated'));
 		} else {
 			mysql_insert("INSERT INTO `znote_menu` SET `location` = '" . esc($loc) . "', `active` = 1, {$fields};");
-			acp_flash_success('Entry added.');
+			acp_log('menu.create', $label, ['url' => $url, 'location' => $loc]);
+			acp_flash_success(t('acp.menu.added'));
 		}
 
 		acp_redirect('menus', array('loc' => $loc));
 	}
 
-	acp_flash_error('Unknown action.');
+	acp_flash_error(t('acp.menu.unknown_action'));
 	acp_redirect('menus', array('loc' => $location));
 }
 
@@ -174,9 +179,10 @@ foreach ($entries as $entry) {
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
 		<span>
-			The <code>znote_menu</code> table is missing. Run
-			<code>SQL/migrations/2.0.0_menus.sql</code> against your database. Until then, themes
-			keep using whatever links they hardcode.
+			<?= t('acp.menu.table_missing', [
+				'table' => '<code>znote_menu</code>',
+				'file'  => '<code>SQL/migrations/2.0.0_menus.sql</code>',
+			]) ?>
 		</span>
 	</div>
 <?php endif; ?>
@@ -190,21 +196,21 @@ foreach ($entries as $entry) {
 			</a>
 		<?php endforeach; ?>
 	</div>
-	<span class="is-muted"><?= count($entries) ?> entries in <code><?= h($location) ?></code></span>
+	<span class="is-muted"><?= t('acp.menu.entries_in', ['n' => count($entries), 'location' => '<code>' . h($location) . '</code>']) ?></span>
 </div>
 
 <div class="acp-grid acp-grid--2">
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2><?= $editing !== null ? 'Edit entry' : 'Add an entry' ?></h2>
-			<p>to <?= h($locations[$location]) ?></p>
+			<h2><?= $editing !== null ? t('acp.menu.edit_entry') : t('acp.menu.add_entry') ?></h2>
+			<p><?= t('acp.menu.to_location', ['location' => h($locations[$location])]) ?></p>
 		</header>
 		<div class="acp-card-body">
 			<?php if ($editing === null && !$parents): ?>
 				<div class="acp-flash acp-flash--error">
 					<i class="fa fa-exclamation-triangle"></i>
-					<span>No category exists in this menu location, so entries cannot be added.</span>
+					<span><?= t('acp.menu.no_category') ?></span>
 				</div>
 			<?php endif; ?>
 			<form method="post">
@@ -217,34 +223,34 @@ foreach ($entries as $entry) {
 
 				<div class="acp-row">
 					<div class="acp-field">
-						<label class="acp-label" for="label">Label</label>
+						<label class="acp-label" for="label"><?= t('acp.menu.label') ?></label>
 						<input class="acp-input" id="label" name="label" required
 							   value="<?= h((string)($editing['label'] ?? '')) ?>">
 					</div>
 					<div class="acp-field">
-						<label class="acp-label" for="url">URL</label>
+						<label class="acp-label" for="url"><?= t('acp.menu.url') ?></label>
 						<input class="acp-input" id="url" name="url"
 							   placeholder="highscores.php"
 							   value="<?= h((string)($editing['url'] ?? '')) ?>">
-						<p class="acp-hint">Leave empty on a category, so its heading opens the submenu instead of navigating.</p>
+						<p class="acp-hint"><?= t('acp.menu.url_hint') ?></p>
 					</div>
 				</div>
 
 				<div class="acp-row">
 					<div class="acp-field">
-						<label class="acp-label" for="icon">Icon</label>
+						<label class="acp-label" for="icon"><?= t('acp.menu.icon') ?></label>
 						<input class="acp-input" id="icon" name="icon" placeholder="fa-users"
 							   value="<?= h((string)($editing['icon'] ?? '')) ?>">
-						<p class="acp-hint">Font Awesome class. Themes may ignore it.</p>
+						<p class="acp-hint"><?= t('acp.menu.icon_hint') ?></p>
 					</div>
 					<div class="acp-field">
-						<label class="acp-label" for="parent_id">Category</label>
+						<label class="acp-label" for="parent_id"><?= t('acp.menu.category') ?></label>
 						<?php if ($editingCategory): ?>
 							<input type="hidden" name="parent_id" value="0">
-							<input class="acp-input" id="parent_id" value="Top-level category" disabled>
+							<input class="acp-input" id="parent_id" value="<?= h(t('acp.menu.top_level')) ?>" disabled>
 						<?php else: ?>
 							<select class="acp-select" id="parent_id" name="parent_id" required>
-								<option value="" disabled <?= (int)($editing['parent_id'] ?? 0) === 0 ? 'selected' : '' ?>>Choose a category</option>
+								<option value="" disabled <?= (int)($editing['parent_id'] ?? 0) === 0 ? 'selected' : '' ?>><?= t('acp.menu.choose_category_opt') ?></option>
 								<?php foreach ($parents as $pid => $plabel): ?>
 									<option value="<?= $pid ?>" <?= (int)($editing['parent_id'] ?? 0) === $pid ? 'selected' : '' ?>>
 										<?= h($plabel) ?>
@@ -257,9 +263,9 @@ foreach ($entries as $entry) {
 
 				<div class="acp-row">
 					<div class="acp-field">
-						<label class="acp-label" for="visibility">Shown to</label>
+						<label class="acp-label" for="visibility"><?= t('acp.menu.shown_to') ?></label>
 						<select class="acp-select" id="visibility" name="visibility">
-							<?php foreach (ACP_MENU_VISIBILITY as $value => $vlabel): ?>
+							<?php foreach (acp_menu_visibility() as $value => $vlabel): ?>
 								<option value="<?= h($value) ?>" <?= (string)($editing['visibility'] ?? 'all') === $value ? 'selected' : '' ?>>
 									<?= h($vlabel) ?>
 								</option>
@@ -267,14 +273,14 @@ foreach ($entries as $entry) {
 						</select>
 					</div>
 					<div class="acp-field">
-						<label class="acp-label" for="target">Opens in</label>
+						<label class="acp-label" for="target"><?= t('acp.menu.opens_in') ?></label>
 						<select class="acp-select" id="target" name="target">
-							<option value="">Same tab</option>
-							<option value="_blank" <?= (string)($editing['target'] ?? '') === '_blank' ? 'selected' : '' ?>>New tab</option>
+							<option value=""><?= t('acp.menu.same_tab') ?></option>
+							<option value="_blank" <?= (string)($editing['target'] ?? '') === '_blank' ? 'selected' : '' ?>><?= t('acp.menu.new_tab') ?></option>
 						</select>
 					</div>
 					<div class="acp-field">
-						<label class="acp-label" for="sort_order">Order</label>
+						<label class="acp-label" for="sort_order"><?= t('acp.menu.order') ?></label>
 						<input class="acp-input" id="sort_order" name="sort_order" type="number"
 							   value="<?= (int)($editing['sort_order'] ?? ((count($entries) + 1) * 10)) ?>">
 					</div>
@@ -282,10 +288,10 @@ foreach ($entries as $entry) {
 
 				<div class="acp-actions">
 					<button class="acp-btn acp-btn--green" type="submit" <?= $editing === null && !$parents ? 'disabled' : '' ?>>
-						<i class="fa fa-check"></i> <?= $editing !== null ? 'Save entry' : 'Add entry' ?>
+						<i class="fa fa-check"></i> <?= $editing !== null ? t('acp.menu.save_entry') : t('acp.menu.add_entry_btn') ?>
 					</button>
 					<?php if ($editing !== null): ?>
-						<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('menus', array('loc' => $location))) ?>">Cancel</a>
+						<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('menus', array('loc' => $location))) ?>"><?= t('acp.menu.cancel') ?></a>
 					<?php endif; ?>
 				</div>
 			</form>
@@ -293,11 +299,10 @@ foreach ($entries as $entry) {
 	</section>
 
 	<section class="acp-card">
-		<header class="acp-card-head"><h2>How themes use this</h2></header>
+		<header class="acp-card-head"><h2><?= t('acp.menu.how_title') ?></h2></header>
 		<div class="acp-card-body">
 			<p>
-				A theme declares the slots it renders in its <code>theme.json</code>, and asks for the
-				entries. It keeps full control of the markup:
+				<?= t('acp.menu.how_text1', ['json' => '<code>theme.json</code>']) ?>
 			</p>
 			<pre class="acp-dump">"menus": { "main": "Top navigation" }
 
@@ -305,12 +310,10 @@ foreach ($entries as $entry) {
   &lt;a href="&lt;?= $item['url'] ?&gt;"&gt;&lt;?= $item['label'] ?&gt;&lt;/a&gt;
 &lt;?php endforeach; ?&gt;</pre>
 			<p class="is-muted">
-				Entries are already filtered for the visitor, so a link marked
-				<em>Admins only</em> never reaches anyone else &mdash; it is not hidden with CSS,
-				it is simply absent.
+				<?= t('acp.menu.how_text2', ['admins_only' => '<em>' . t('acp.menu.admins_only') . '</em>']) ?>
 			</p>
 			<p class="is-muted">
-				A theme that hardcodes its menu keeps working and ignores this page.
+				<?= t('acp.menu.how_text3') ?>
 			</p>
 		</div>
 	</section>
@@ -319,7 +322,7 @@ foreach ($entries as $entry) {
 <section class="acp-card">
 	<header class="acp-card-head">
 		<h2><?= h($locations[$location]) ?></h2>
-		<p>Lower order numbers come first</p>
+		<p><?= t('acp.menu.lower_first') ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($entries): ?>
@@ -327,11 +330,11 @@ foreach ($entries as $entry) {
 				<table class="acp-table">
 					<thead>
 						<tr>
-							<th class="is-num">Order</th>
-							<th>Label</th>
-							<th>URL</th>
-							<th>Shown to</th>
-							<th class="is-num">Actions</th>
+							<th class="is-num"><?= t('acp.menu.col_order') ?></th>
+							<th><?= t('acp.menu.col_label') ?></th>
+							<th><?= t('acp.menu.col_url') ?></th>
+							<th><?= t('acp.menu.col_shown_to') ?></th>
+							<th class="is-num"><?= t('acp.menu.col_actions') ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -349,25 +352,25 @@ foreach ($entries as $entry) {
 									<?php endif; ?>
 									<?= h((string)$entry['label']) ?>
 									<?php if ($hidden): ?>
-										<span class="acp-pill acp-pill--grey">hidden</span>
+										<span class="acp-pill acp-pill--grey"><?= t('acp.menu.hidden_pill') ?></span>
 									<?php endif; ?>
 								</td>
 								<td class="is-muted"><code><?= h((string)$entry['url']) ?></code></td>
 								<td>
 									<span class="acp-pill acp-pill--<?= $entry['visibility'] === 'admin' ? 'red' : ($entry['visibility'] === 'all' ? 'grey' : 'blue') ?>">
-										<?= h(ACP_MENU_VISIBILITY[$entry['visibility']] ?? $entry['visibility']) ?>
+										<?= h(acp_menu_visibility()[$entry['visibility']] ?? $entry['visibility']) ?>
 									</span>
 								</td>
 								<td class="is-num is-nowrap">
-									<?php foreach (array('up' => 'fa-arrow-up', 'down' => 'fa-arrow-down') as $dir => $icon): ?>
+									<?php foreach (array('up' => ['fa-arrow-up', t('acp.menu.move_up')], 'down' => ['fa-arrow-down', t('acp.menu.move_down')]) as $dir => $meta): ?>
 										<form class="acp-inline-form" method="post">
 											<?= acp_csrf_field() ?>
 											<input type="hidden" name="do" value="move">
 											<input type="hidden" name="id" value="<?= $id ?>">
 											<input type="hidden" name="dir" value="<?= $dir ?>">
 											<input type="hidden" name="location" value="<?= h($location) ?>">
-											<button class="acp-btn acp-btn--ghost acp-btn--sm" type="submit" title="Move <?= $dir ?>">
-												<i class="fa <?= $icon ?>"></i>
+											<button class="acp-btn acp-btn--ghost acp-btn--sm" type="submit" title="<?= h($meta[1]) ?>">
+												<i class="fa <?= $meta[0] ?>"></i>
 											</button>
 										</form>
 									<?php endforeach; ?>
@@ -377,7 +380,7 @@ foreach ($entries as $entry) {
 										<input type="hidden" name="do" value="toggle">
 										<input type="hidden" name="id" value="<?= $id ?>">
 										<input type="hidden" name="location" value="<?= h($location) ?>">
-										<button class="acp-btn acp-btn--ghost acp-btn--sm" type="submit" title="<?= $hidden ? 'Show' : 'Hide' ?>">
+										<button class="acp-btn acp-btn--ghost acp-btn--sm" type="submit" title="<?= h($hidden ? t('acp.menu.show') : t('acp.menu.hide')) ?>">
 											<i class="fa <?= $hidden ? 'fa-eye' : 'fa-eye-slash' ?>"></i>
 										</button>
 									</form>
@@ -387,7 +390,7 @@ foreach ($entries as $entry) {
 									</a>
 
 									<?php if ($child): ?>
-										<form class="acp-inline-form" method="post" data-confirm="Delete this menu entry?">
+										<form class="acp-inline-form" method="post" data-confirm="<?= h(t('acp.menu.confirm_delete')) ?>">
 											<?= acp_csrf_field() ?>
 											<input type="hidden" name="do" value="delete">
 											<input type="hidden" name="id" value="<?= $id ?>">
@@ -402,7 +405,7 @@ foreach ($entries as $entry) {
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('No entries in this menu yet.', 'fa-bars'); ?>
+			<?php acp_empty(t('acp.menu.empty'), 'fa-bars'); ?>
 		<?php endif; ?>
 	</div>
 </section>

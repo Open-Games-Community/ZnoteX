@@ -3,16 +3,16 @@
 if (!empty($config['Ach'])):
 ?>
 
-<center><h3>Achievements on <?php echo htmlspecialchars($config['site_title'] ?? '', ENT_QUOTES); ?></h3></center>
+<center><h3><?= t('achievements.title') ?> <?php echo htmlspecialchars($config['site_title'] ?? '', ENT_QUOTES); ?></h3></center>
 
 <div class="panel-body">
 <table class="table table-striped table-bordered table-condensed">
 <tr>
-    <td width="10%">Grade</td>
-    <td width="17%">Name</td>
-    <td>Description</td>
-    <td width="7%">Secret</td>
-    <td width="2%">Points</td>
+    <td width="10%"><?= t('achievements.grade') ?></td>
+    <td width="17%"><?= t('common.name') ?></td>
+    <td><?= t('achievements.description') ?></td>
+    <td width="7%"><?= t('achievements.secret') ?></td>
+    <td width="2%"><?= t('common.points') ?></td>
 </tr>
 
 <style>
@@ -69,6 +69,6 @@ endif;
 
 <?php
 else:
-    echo 'This page has been disabled, this page can be enabled in config.';
+    echo t('achievements.disabled');
 endif;
 ?>

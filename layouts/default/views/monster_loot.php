@@ -40,12 +40,12 @@ $lootParam = isset($_GET['lootrate']) ? '&lootrate' : '';
 </script>
 
 <p>
-	<a href="monster_loot.php<?= $lootParam ? '?lootrate' : '' ?>">Hide None</a> |
-	<a href="?hidefail<?= $lootParam ?>">Hide Not Found</a> |
-	<a href="?hideempty<?= $lootParam ?>">Hide Monsters Without Loot</a> |
-	<a href="?hideempty&amp;hidefail<?= $lootParam ?>">Hide All</a> |
-	<a href="monster_loot.php">Use Normal Loot Rate</a> |
-	<a href="?lootrate">Use Server Loot Rate</a>
+	<a href="monster_loot.php<?= $lootParam ? '?lootrate' : '' ?>"><?= t('loot.hide_none') ?></a> |
+	<a href="?hidefail<?= $lootParam ?>"><?= t('loot.hide_notfound') ?></a> |
+	<a href="?hideempty<?= $lootParam ?>"><?= t('loot.hide_empty') ?></a> |
+	<a href="?hideempty&amp;hidefail<?= $lootParam ?>"><?= t('loot.hide_all') ?></a> |
+	<a href="monster_loot.php"><?= t('loot.normal_rate') ?></a> |
+	<a href="?lootrate"><?= t('loot.server_rate') ?></a>
 </p>
 
 <?php if ($monsterLootError !== ''): ?>
@@ -80,7 +80,7 @@ $lootParam = isset($_GET['lootrate']) ? '&lootrate' : '';
 
 		<?php elseif ($monster['state'] === 'failed' && !isset($_GET['hidefail'])): ?>
 
-			<span>Failed to load monster <b><?= htmlspecialchars($monster['name'], ENT_QUOTES, 'UTF-8') ?></b>
+			<span><?= t('loot.failed') ?> <b><?= htmlspecialchars($monster['name'], ENT_QUOTES, 'UTF-8') ?></b>
 			<i>(<?= htmlspecialchars($monster['file'], ENT_QUOTES, 'UTF-8') ?>)</i></span><br>
 
 		<?php endif; ?>

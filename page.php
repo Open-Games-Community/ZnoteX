@@ -49,13 +49,13 @@ if ($file === null) {
 	http_response_code(404);
 	$page_filename = 'page_not_found';
 	theme_open();
-	echo '<h1>Page not found</h1>';
+	echo '<h1>'. t('page.not_found') .'</h1>';
 	if ($pluginName !== '') {
 		echo '<p>The <strong>' . htmlspecialchars($pluginName, ENT_QUOTES, 'UTF-8')
 		   . '</strong> plugin has no page called <code>' . htmlspecialchars($requested, ENT_QUOTES, 'UTF-8')
 		   . '</code>, or the plugin is disabled.</p>';
 	} else {
-		echo '<p>There is no <code>pages/' . htmlspecialchars($requested, ENT_QUOTES, 'UTF-8')
+		echo '<p>'. t('page.no_such_page') .' <code>pages/' . htmlspecialchars($requested, ENT_QUOTES, 'UTF-8')
 		   . '.php</code> in the <strong>' . htmlspecialchars(theme_active(), ENT_QUOTES, 'UTF-8')
 		   . '</strong> theme.</p>';
 	}

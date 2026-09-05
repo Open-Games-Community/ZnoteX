@@ -27,36 +27,36 @@ if ($spells) {
 	// Render HTML
 	?>
 
-	<h1 id="spells">Spells<?php if ($getVoc !== 'all') echo ' ('.$configVoc[$getVoc]['name'].')';?></h1>
+	<h1 id="spells"><?= t('spells.title') ?><?php if ($getVoc !== 'all') echo ' ('.$configVoc[$getVoc]['name'].')';?></h1>
 
 	<form action="#spells" class="filter_spells">
-		<label for="vocation">Filter vocation:</label>
+		<label for="vocation"><?= t('spells.filter_voc') ?></label>
 		<select id="vocation" name="vocation">
-			<option value="all">All</option>
+			<option value="all"><?= t('spells.all') ?></option>
 			<?php foreach ($config['vocations'] as $id => $vocation): ?>
 				<option value="<?php echo $id; ?>" <?php if ($getVoc === $id) echo "selected"; ?>><?php echo $vocation['name']; ?></option>
 			<?php endforeach; ?>
 		</select>
-		<input type="submit" value="Search">
+		<input type="submit" value="<?= t('common.search') ?>">
 	</form>
 
-	<h2>Spell types:</h2>
+	<h2><?= t('spells.types') ?></h2>
 	<ul>
 		<?php foreach ($types as $type): ?>
 		<li><a href="#spell_<?php echo $type; ?>"><?php echo ucfirst($type); ?></a></li>
 		<?php endforeach; ?>
 	</ul>
 
-	<h2 id="spell_instant">Instant Spells</h2>
-	<a href="#spells">Jump to top</a>
+	<h2 id="spell_instant"><?= t('spells.instant') ?></h2>
+	<a href="#spells"><?= t('spells.jump_top') ?></a>
 	<table class="table tbl-hover">
 		<tbody>
 			<tr class="yellow">
-				<td>Name</td>
-				<td>Words</td>
-				<td>Level</td>
-				<td>Mana</td>
-				<td>Vocations</td>
+				<td><?= t('common.name') ?></td>
+				<td><?= t('spells.words') ?></td>
+				<td><?= t('common.level') ?></td>
+				<td><?= t('spells.mana') ?></td>
+				<td><?= t('spells.vocations') ?></td>
 			</tr>
 			<?php foreach ($spells['instant'] as $spell): ?>
 			<tr>
@@ -83,16 +83,16 @@ if ($spells) {
 		</tbody>
 	</table>
 
-	<h2 id="spell_rune">Magical Runes</h2>
-	<a href="#spells">Jump to top</a>
+	<h2 id="spell_rune"><?= t('spells.runes') ?></h2>
+	<a href="#spells"><?= t('spells.jump_top') ?></a>
 	<table class="table tbl-hover">
 		<tbody>
 			<tr class="yellow">
-				<td>Name</td>
-				<td>Level</td>
-				<td>Magic Level</td>
-				<td>Image</td>
-				<td>Vocations</td>
+				<td><?= t('common.name') ?></td>
+				<td><?= t('common.level') ?></td>
+				<td><?= t('spells.magic_level') ?></td>
+				<td><?= t('spells.image') ?></td>
+				<td><?= t('spells.vocations') ?></td>
 			</tr>
 			<?php foreach ($spells['rune'] as $spell): ?>
 			<tr>
@@ -120,19 +120,19 @@ if ($spells) {
 	</table>
 
 	<?php if (isset($spells['conjure'])): ?>
-	<h2 id="spell_conjure">Conjure Spells</h2>
-	<a href="#spells">Jump to top</a>
+	<h2 id="spell_conjure"><?= t('spells.conjure') ?></h2>
+	<a href="#spells"><?= t('spells.jump_top') ?></a>
 	<table class="table tbl-hover">
 		<tbody>
 			<tr class="yellow">
-				<td>Name</td>
-				<td>Words</td>
-				<td>Level</td>
-				<td>Mana</td>
-				<td>Soul</td>
-				<td>Charges</td>
-				<td>Image</td>
-				<td>Vocations</td>
+				<td><?= t('common.name') ?></td>
+				<td><?= t('spells.words') ?></td>
+				<td><?= t('common.level') ?></td>
+				<td><?= t('spells.mana') ?></td>
+				<td><?= t('spells.soul') ?></td>
+				<td><?= t('spells.charges') ?></td>
+				<td><?= t('spells.image') ?></td>
+				<td><?= t('spells.vocations') ?></td>
 			</tr>
 			<?php foreach ($spells['conjure'] as $spell): ?>
 			<tr>
@@ -161,12 +161,12 @@ if ($spells) {
 			<?php endforeach; ?>
 		</tbody>
 	</table>
-	<a href="#spells">Jump to top</a>
+	<a href="#spells"><?= t('spells.jump_top') ?></a>
 	<?php endif; ?>
 	<?php
 } else {
 	?>
-	<h1>Spells</h1>
+	<h1><?= t('spells.title') ?></h1>
 	<p>Spells have currently not been loaded into the website by the server admin.</p>
 	<?php
 }

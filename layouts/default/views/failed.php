@@ -1,3 +1,3 @@
 <?php ?>
-<h1>Failed!</h1>
-<p>Something went wrong. :(</p>
+<h1><?= t('failed.title') ?></h1>
+<p><?= t('failed.text') ?></p>

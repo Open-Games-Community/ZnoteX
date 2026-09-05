@@ -29,7 +29,7 @@ if (isset($_POST['pid']) && intv($_POST['pid']) > 0) {
 	$isOnline = $isTfs10 ? user_is_online_10($pid) : user_is_online($pid);
 
 	if ($isOnline) {
-		acp_flash_error('The character must be offline before its skills can be rewritten.');
+		acp_flash_error(t('acp.skl.must_offline'));
 	} else {
 		$level    = intv($_POST['level'] ?? 1);
 		$vocation = intv($_POST['vocation'] ?? 0);
@@ -101,7 +101,12 @@ if (isset($_POST['pid']) && intv($_POST['pid']) > 0) {
 			");
 		}
 
-		acp_flash_success('Skills updated.');
+		acp_log('player.update_skills', $backToName, [
+			'level' => $level, 'vocation' => $vocation, 'magic' => $magic,
+			'fist' => $fist, 'club' => $club, 'sword' => $sword, 'axe' => $axe,
+			'dist' => $dist, 'shield' => $shield, 'fish' => $fish,
+		]);
+		acp_flash_success(t('acp.skl.updated'));
 	}
 
 	acp_redirect('skills', $backToName !== '' ? ['name' => $backToName] : []);
@@ -116,7 +121,7 @@ $pid    = 0;
 
 if ($name !== '') {
 	if (!user_character_exist($name)) {
-		acp_flash_error('Character <strong>' . h($name) . '</strong> does not exist.');
+		acp_flash_error(t('acp.skl.not_found', ['name' => '<strong>' . h($name) . '</strong>']));
 		acp_redirect('skills');
 	}
 
@@ -187,18 +192,18 @@ $loaded = ($name !== '');
 
 	<section class="acp-card" style="max-width:520px;">
 		<header class="acp-card-head">
-			<h2>Look up a character</h2>
-			<p>Its current values load into the editor</p>
+			<h2><?= t('acp.skl.lookup_title') ?></h2>
+			<p><?= t('acp.skl.lookup_sub') ?></p>
 		</header>
 		<div class="acp-card-body">
 			<form method="get">
 				<input type="hidden" name="p" value="skills">
 				<div class="acp-field">
-					<label class="acp-label" for="name">Character name</label>
-					<input class="acp-input" id="name" name="name" placeholder="Character name" autofocus required>
+					<label class="acp-label" for="name"><?= t('acp.skl.char_name') ?></label>
+					<input class="acp-input" id="name" name="name" placeholder="<?= h(t('acp.skl.char_name')) ?>" autofocus required>
 				</div>
 				<div class="acp-actions">
-					<button class="acp-btn" type="submit"><i class="fa fa-search"></i> Fetch skills</button>
+					<button class="acp-btn" type="submit"><i class="fa fa-search"></i> <?= t('acp.skl.fetch') ?></button>
 				</div>
 			</form>
 		</div>
@@ -210,24 +215,24 @@ $loaded = ($name !== '');
 		<div>
 			<strong><?= h($name) ?></strong>
 			<span class="acp-pill acp-pill--grey">#<?= (int)$pid ?></span>
-			<a href="<?= h(acp_site('characterprofile.php?name=' . urlencode($name))) ?>" target="_blank" rel="noopener">View profile</a>
+			<a href="<?= h(acp_site('characterprofile.php?name=' . urlencode($name))) ?>" target="_blank" rel="noopener"><?= t('acp.skl.view_profile') ?></a>
 		</div>
 		<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('skills')) ?>">
-			<i class="fa fa-refresh"></i> Search another character
+			<i class="fa fa-refresh"></i> <?= t('acp.skl.search_another') ?>
 		</a>
 	</div>
 
-	<form method="post" data-confirm="Overwrite this character's level and skills?">
+	<form method="post" data-confirm="<?= h(t('acp.skl.confirm_overwrite')) ?>">
 		<?= acp_csrf_field() ?>
 		<input type="hidden" name="pid" value="<?= (int)$pid ?>">
 		<input type="hidden" name="name" value="<?= h($name) ?>">
 
 		<div class="acp-grid acp-grid--2">
 			<section class="acp-card">
-				<header class="acp-card-head"><h2>Character</h2></header>
+				<header class="acp-card-head"><h2><?= t('acp.skl.character_title') ?></h2></header>
 				<div class="acp-card-body">
 					<div class="acp-field">
-						<label class="acp-label" for="vocation">Vocation</label>
+						<label class="acp-label" for="vocation"><?= t('acp.skl.vocation') ?></label>
 						<select class="acp-select" id="vocation" name="vocation">
 							<?php foreach (($config['vocations'] ?? []) as $vid => $v): ?>
 								<option value="<?= (int)$vid ?>" <?= (int)$vid === acp_skill_value($skills, 9) ? 'selected' : '' ?>>
@@ -238,54 +243,56 @@ $loaded = ($name !== '');
 					</div>
 					<div class="acp-row">
 						<div class="acp-field">
-							<label class="acp-label" for="level">Level</label>
+							<label class="acp-label" for="level"><?= t('acp.skl.level') ?></label>
 							<input class="acp-input" id="level" name="level" type="number" min="1" value="<?= acp_skill_value($skills, 8) ?>">
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="magic">Magic level</label>
+							<label class="acp-label" for="magic"><?= t('acp.skl.magic_level') ?></label>
 							<input class="acp-input" id="magic" name="magic" type="number" min="0" value="<?= acp_skill_value($skills, 7) ?>">
 						</div>
 					</div>
 					<p class="acp-hint">
-						Health, mana and capacity are recalculated from the level and vocation
-						using <code>$config['player']['base']</code> and <code>$config['vocations_gain']</code>.
+						<?= t('acp.skl.recalc_hint', [
+							'base' => '<code>$config[\'player\'][\'base\']</code>',
+							'gain' => '<code>$config[\'vocations_gain\']</code>',
+						]) ?>
 					</p>
 				</div>
 			</section>
 
 			<section class="acp-card">
-				<header class="acp-card-head"><h2>Skills</h2></header>
+				<header class="acp-card-head"><h2><?= t('acp.skl.skills_title') ?></h2></header>
 				<div class="acp-card-body">
 					<div class="acp-row">
 						<div class="acp-field">
-							<label class="acp-label" for="fist">Fist fighting</label>
+							<label class="acp-label" for="fist"><?= t('acp.skl.fist') ?></label>
 							<input class="acp-input" id="fist" name="fist" type="number" min="0" value="<?= acp_skill_value($skills, 0) ?>">
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="club">Club fighting</label>
+							<label class="acp-label" for="club"><?= t('acp.skl.club') ?></label>
 							<input class="acp-input" id="club" name="club" type="number" min="0" value="<?= acp_skill_value($skills, 1) ?>">
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="sword">Sword fighting</label>
+							<label class="acp-label" for="sword"><?= t('acp.skl.sword') ?></label>
 							<input class="acp-input" id="sword" name="sword" type="number" min="0" value="<?= acp_skill_value($skills, 2) ?>">
 						</div>
 					</div>
 					<div class="acp-row">
 						<div class="acp-field">
-							<label class="acp-label" for="axe">Axe fighting</label>
+							<label class="acp-label" for="axe"><?= t('acp.skl.axe') ?></label>
 							<input class="acp-input" id="axe" name="axe" type="number" min="0" value="<?= acp_skill_value($skills, 3) ?>">
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="dist">Distance fighting</label>
+							<label class="acp-label" for="dist"><?= t('acp.skl.dist') ?></label>
 							<input class="acp-input" id="dist" name="dist" type="number" min="0" value="<?= acp_skill_value($skills, 4) ?>">
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="shield">Shielding</label>
+							<label class="acp-label" for="shield"><?= t('acp.skl.shield') ?></label>
 							<input class="acp-input" id="shield" name="shield" type="number" min="0" value="<?= acp_skill_value($skills, 5) ?>">
 						</div>
 					</div>
 					<div class="acp-field" style="max-width:200px;">
-						<label class="acp-label" for="fish">Fishing</label>
+						<label class="acp-label" for="fish"><?= t('acp.skl.fish') ?></label>
 						<input class="acp-input" id="fish" name="fish" type="number" min="0" value="<?= acp_skill_value($skills, 6) ?>">
 					</div>
 				</div>
@@ -293,8 +300,8 @@ $loaded = ($name !== '');
 		</div>
 
 		<div class="acp-actions">
-			<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-save"></i> Save character</button>
-			<span class="acp-hint">The character has to be offline, otherwise the server overwrites this on logout.</span>
+			<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-save"></i> <?= t('acp.skl.save') ?></button>
+			<span class="acp-hint"><?= t('acp.skl.offline_hint') ?></span>
 		</div>
 	</form>
 

@@ -9,12 +9,12 @@
  * The password write happens in changepassword.php, never here.
  */
 ?>
-<h1>Change Password:</h1>
+<h1><?= t('changepw.title') ?></h1>
 
 <?php if ($formState === 'success'): ?>
 
-	Your password has been changed.<br>
-	You will need to login again with the new password.
+	<?= t('changepw.success') ?><br>
+	<?= t('changepw.relogin') ?>
 
 <?php else: ?>
 
@@ -25,20 +25,20 @@
 	<form action="" method="post">
 		<ul>
 			<li>
-				Current password:<br>
+				<?= t('changepw.current') ?><br>
 				<input type="password" name="current_password">
 			</li>
 			<li>
-				New password:<br>
+				<?= t('changepw.new') ?><br>
 				<input type="password" name="new_password">
 			</li>
 			<li>
-				New password again:<br>
+				<?= t('changepw.new_again') ?><br>
 				<input type="password" name="new_password_again">
 			</li>
 			<?php Token::create(); ?>
 			<li>
-				<input type="submit" value="Change password">
+				<input type="submit" value="<?= t('changepw.title') ?>">
 			</li>
 		</ul>
 	</form>

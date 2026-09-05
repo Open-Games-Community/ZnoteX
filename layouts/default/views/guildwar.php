@@ -12,7 +12,7 @@ if (!empty($_GET['warid'])) {
 		if ($config['ServerEngine'] == 'TFS_02' || $config['ServerEngine'] == 'OTHIRE' || $config['ServerEngine'] == 'TFS_10') $kills = get_war_kills($warid);
 		else if ($config['ServerEngine'] == 'TFS_03') $kills = get_war_kills03($warid);
 		?>
-		<h1><?php echo $war['name1']; ?> - VERSUS - <?php echo $war['name2']; ?></h1>
+		<h1><?php echo $war['name1']; ?> - <?= t('guildwar.versus') ?> - <?php echo $war['name2']; ?></h1>
 
 		<?php
 		// Collecting <ul> data:
@@ -35,25 +35,25 @@ if (!empty($_GET['warid'])) {
 				$leading = $war['name1'];
 				$green = true;
 			} else if ($g2c > $g1c) $leading = $war['name2'];
-			else $leading = "Tie";
+			else $leading = t('guildwar.tie');
 		}
 		?>
 		<ul class="war_list">
 			<li>
-				War status: <?php echo $config['war_status'][$war['status']]; ?>.
+				<?= t('guildwar.status', ['status' => $config['war_status'][$war['status']]]) ?>
 			</li>
 			<?php if ($config['ServerEngine'] == 'TFS_02' || $config['ServerEngine'] == 'TFS_10' || $config['ServerEngine'] == 'OTHIRE') { ?>
 			<li>
-				Leading guild: <?php echo $leading; ?>.
+				<?= t('guildwar.leading', ['guild' => $leading]) ?>
 			</li>
 			<li>
 				<?php
 				if ($green)
-					echo 'Score: <font color="green">'. $g1c .'</font>-<font color="red">'. $g2c .'</font>';
+					echo t('guildwar.score') .' <font color="green">'. $g1c .'</font>-<font color="red">'. $g2c .'</font>';
 				else if ($g1c == $g2c)
-					echo 'Score: <font color="orange">'. $g1c .'</font>-<font color="orange">'. $g2c .'</font>';
+					echo t('guildwar.score') .' <font color="orange">'. $g1c .'</font>-<font color="orange">'. $g2c .'</font>';
 				else
-					echo 'Score: <font color="red">'. $g1c .'</font>-<font color="green">'. $g2c .'</font>';
+					echo t('guildwar.score') .' <font color="red">'. $g1c .'</font>-<font color="green">'. $g2c .'</font>';
 				?>
 			</li>
 			<?php } ?>
@@ -63,10 +63,10 @@ if (!empty($_GET['warid'])) {
 		?>
 			<table id="guildwarTable" class="table table-striped table-hover">
 				<tr class="yellow">
-					<th>Killer's guild:</th>
-					<th>Killer:</th>
-					<th>Victim:</th>
-					<th>Time:</th>
+					<th><?= t('guildwar.killerguild') ?></th>
+					<th><?= t('guildwar.killer') ?></th>
+					<th><?= t('guildwar.victim') ?></th>
+					<th><?= t('guildwar.time') ?></th>
 				</tr>
 					<?php
 					foreach (($kills ? $kills : array()) as $kill) {
@@ -103,9 +103,9 @@ if (!empty($_GET['warid'])) {
 						if($killer['is_war'] != 0)
 						{
 							if($i == 1)
-								$main_content .= "killed at level <b>".$death['level']."</b> by ";
+								$main_content .= t('guildwar.killed_by', ['level' => $death['level']]) ." ";
 							else if($i == $count && $others == false)
-								$main_content .= " and by ";
+								$main_content .= " ". t('guildwar.and_by') ." ";
 							else
 								$main_content .= ", ";
 							if($killer['player_exists'] == 0)
@@ -121,14 +121,14 @@ if (!empty($_GET['warid'])) {
 						if($i == $count)
 						{
 							if($others == true)
-									$main_content .= " and few others";
+									$main_content .= " ". t('guildwar.few_others');
 							$main_content .= ".<br />";
 						}
 					}
 				}
 			}
 			else
-				$main_content .= "<center>There were no frags on this war so far.</center>";
+				$main_content .= "<center>". t('guildwar.no_frags') ."</center>";
 			echo $main_content;
 			// END BORROWED FROM GESIOR
 		}
@@ -154,9 +154,9 @@ if (!empty($_GET['warid'])) {
 
 		<table id="guildwarViewTable" class="table table-striped table-hover">
 			<tr class="yellow">
-				<th>Attacking Guild:</th>
-				<th>Death Count:</th>
-				<th>Defending Guild:</th>
+				<th><?= t('guildwar.attacking') ?></th>
+				<th><?= t('guildwar.deathcount') ?></th>
+				<th><?= t('guildwar.defending') ?></th>
 			</tr>
 				<?php
 				foreach ($wardata as $wars) {
@@ -176,7 +176,7 @@ if (!empty($_GET['warid'])) {
 					echo '<td><a href="' . $guildname1 . '">'. $wars['name1'] .'</a></td>';
 					echo '<td>'. $guild_1_kills .' - ' . $guild_2_kills . '</td>';
 					echo '<td><a href="' . $guildname2 . '">'. $wars['name2'] .'</a></td>';
-					echo '<td><a href="' . $url . '">View</a></td>';
+					echo '<td><a href="' . $url . '">'. t('common.view') .'</a></td>';
 					echo '</tr>';
 				}
 				?>
@@ -184,7 +184,7 @@ if (!empty($_GET['warid'])) {
 
 		<?php
 	} else {
-		echo 'There have not been any pending wars on this server.';
+		echo t('guildwar.none');
 	}
 }
 // GET links sample:

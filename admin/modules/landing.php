@@ -18,17 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$file    = trim((string)($_POST['file'] ?? ''));
 
 	if ($file !== '' && !landing_is_valid_file($file)) {
-		acp_flash_error('That file name is not allowed. Use a single .html or .php file inside landing/.');
+		acp_flash_error(t('acp.land.bad_file'));
 		acp_redirect('landing');
 	}
 
 	if ($enabled === '1') {
 		if (!is_dir(landing_root())) {
-			acp_flash_error('There is no <code>landing/</code> folder yet. Create it and put your page inside.');
+			acp_flash_error(t('acp.land.no_folder', ['folder' => '<code>landing/</code>']));
 			acp_redirect('landing');
 		}
 		if ($file === '' || !is_file(landing_root() . '/' . $file)) {
-			acp_flash_error('Pick a page that exists in <code>landing/</code> before switching this on.');
+			acp_flash_error(t('acp.land.pick_page', ['folder' => '<code>landing/</code>']));
 			acp_redirect('landing');
 		}
 	}
@@ -36,9 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	setting_set('landing.enabled', $enabled);
 	setting_set('landing.file', $file);
 
+	acp_log('landing.toggle', $file, ['enabled' => $enabled === '1']);
+
 	acp_flash_success($enabled === '1'
-		? 'Landing page is live. Visitors now see <code>landing/' . h($file) . '</code>.'
-		: 'Landing page is off. The front page is back to normal.');
+		? t('acp.land.live', ['path' => '<code>landing/' . h($file) . '</code>'])
+		: t('acp.land.off'));
 
 	acp_redirect('landing');
 }
@@ -53,19 +55,19 @@ $live      = landing_ready();
 <div class="acp-toolbar">
 	<div>
 		<?php if ($live): ?>
-			<span class="acp-pill acp-pill--green">Landing page is live</span>
+			<span class="acp-pill acp-pill--green"><?= t('acp.land.live_pill') ?></span>
 		<?php elseif ($enabled): ?>
-			<span class="acp-pill acp-pill--red">Switched on, but the file is missing</span>
+			<span class="acp-pill acp-pill--red"><?= t('acp.land.missing_pill') ?></span>
 		<?php else: ?>
-			<span class="acp-pill acp-pill--grey">Off &mdash; the normal front page is shown</span>
+			<span class="acp-pill acp-pill--grey"><?= t('acp.land.off_pill') ?></span>
 		<?php endif; ?>
 	</div>
 	<div class="acp-actions is-tight">
 		<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_site()) ?>" target="_blank" rel="noopener">
-			<i class="fa fa-external-link"></i> Open the site
+			<i class="fa fa-external-link"></i> <?= t('acp.land.open_site') ?>
 		</a>
 		<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_site('index.php?site=1')) ?>" target="_blank" rel="noopener">
-			<i class="fa fa-sign-in"></i> Skip the landing page
+			<i class="fa fa-sign-in"></i> <?= t('acp.land.skip') ?>
 		</a>
 	</div>
 </div>
@@ -74,21 +76,28 @@ $live      = landing_ready();
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>Landing page</h2>
-			<p>A page of your own at the site root, before visitors reach the community site.</p>
+			<h2><?= t('acp.land.title') ?></h2>
+			<p><?= t('acp.land.sub') ?></p>
 		</header>
 		<div class="acp-card-body">
 
 			<?php if (!$hasFolder): ?>
 				<div class="acp-flash acp-flash--error">
 					<i class="fa fa-exclamation-triangle"></i>
-					<span>No <code>landing/</code> folder. Create it at the root of ZnoteX and put your
-					<code>index.html</code> (or <code>index.php</code>) and its css/, img/ and js/ inside.</span>
+					<span><?= t('acp.land.no_folder_flash', [
+						'folder'   => '<code>landing/</code>',
+						'index'    => '<code>index.html</code>',
+						'indexphp' => '<code>index.php</code>',
+					]) ?></span>
 				</div>
 			<?php elseif (!$files): ?>
 				<div class="acp-flash acp-flash--error">
 					<i class="fa fa-exclamation-triangle"></i>
-					<span><code>landing/</code> exists but holds no <code>.html</code> or <code>.php</code> page.</span>
+					<span><?= t('acp.land.no_pages_flash', [
+						'folder' => '<code>landing/</code>',
+						'html'   => '<code>.html</code>',
+						'php'    => '<code>.php</code>',
+					]) ?></span>
 				</div>
 			<?php endif; ?>
 
@@ -96,10 +105,10 @@ $live      = landing_ready();
 				<?= acp_csrf_field() ?>
 
 				<div class="acp-field">
-					<label class="acp-label" for="file">Page to show</label>
+					<label class="acp-label" for="file"><?= t('acp.land.page_to_show') ?></label>
 					<select class="acp-select" id="file" name="file" <?= $files ? '' : 'disabled' ?>>
 						<?php if (!$files): ?>
-							<option value="">Nothing in landing/ yet</option>
+							<option value=""><?= t('acp.land.nothing_yet') ?></option>
 						<?php endif; ?>
 						<?php foreach ($files as $name): ?>
 							<option value="<?= h($name) ?>" <?= $name === $current ? 'selected' : '' ?>>
@@ -112,13 +121,13 @@ $live      = landing_ready();
 				<div class="acp-field">
 					<label style="display:flex;align-items:center;gap:8px;font-weight:400;">
 						<input type="checkbox" name="enabled" value="1" <?= $enabled ? 'checked' : '' ?>>
-						<span>Show this page at the site root</span>
+						<span><?= t('acp.land.show_at_root') ?></span>
 					</label>
 				</div>
 
 				<div class="acp-actions">
 					<button class="acp-btn acp-btn--green" type="submit">
-						<i class="fa fa-check"></i> Save
+						<i class="fa fa-check"></i> <?= t('acp.land.save') ?>
 					</button>
 				</div>
 			</form>
@@ -127,37 +136,36 @@ $live      = landing_ready();
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>How it behaves</h2>
-			<p>What visitors get, and how they reach the real site.</p>
+			<h2><?= t('acp.land.behaves_title') ?></h2>
+			<p><?= t('acp.land.behaves_sub') ?></p>
 		</header>
 		<div class="acp-card-body">
 			<table class="acp-table">
 				<tbody>
 					<tr>
-						<td>Folder</td>
-						<td><code><?= h(ZNOTE_LANDING_DIR) ?>/</code> <?= $hasFolder ? '' : '<em>(missing)</em>' ?></td>
+						<td><?= t('acp.land.col_folder') ?></td>
+						<td><code><?= h(ZNOTE_LANDING_DIR) ?>/</code> <?= $hasFolder ? '' : '<em>' . t('acp.land.missing_suffix') . '</em>' ?></td>
 					</tr>
 					<tr>
-						<td>Pages found</td>
+						<td><?= t('acp.land.col_pages') ?></td>
 						<td><?= $files ? h(implode(', ', $files)) : '&mdash;' ?></td>
 					</tr>
 					<tr>
-						<td>Way in</td>
+						<td><?= t('acp.land.col_way_in') ?></td>
 						<td><code>index.php?site=1</code></td>
 					</tr>
 				</tbody>
 			</table>
 
 			<p class="acp-hint">
-				Only the front page is replaced. Every other page &mdash; login, highscores, the admin
-				panel &mdash; stays reachable as usual, so you cannot lock yourself out.
+				<?= t('acp.land.hint1') ?>
 			</p>
 			<p class="acp-hint">
-				Your css, images and scripts keep their normal relative paths: ZnoteX adds a
-				<code>&lt;base&gt;</code> pointing at <code><?= h(ZNOTE_LANDING_DIR) ?>/</code> so they resolve.
-				The link that enters the site must start with a slash, for example
-				<code>&lt;a href="/index.php?site=1"&gt;Enter&lt;/a&gt;</code>. Once a visitor follows it,
-				the landing page stays out of the way for the rest of their visit.
+				<?= t('acp.land.hint2', [
+					'base'   => '<code>&lt;base&gt;</code>',
+					'folder' => '<code>' . h(ZNOTE_LANDING_DIR) . '/</code>',
+					'link'   => '<code>&lt;a href="/index.php?site=1"&gt;Enter&lt;/a&gt;</code>',
+				]) ?>
 			</p>
 		</div>
 	</section>

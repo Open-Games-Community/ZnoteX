@@ -1,23 +1,23 @@
 <div class="well myaccount_widget widget" id="loginContainer">
 	<div class="header">
-		Welcome, <?php echo $user_data['name']; ?>.
+		<?= t('widget.account.welcome', ['name' => $user_data['name']]) ?>
 	</div>
 	<div class="body">
 		<ul class="linkbuttons">
 			<li>
-				<a href='myaccount.php'>My Account</a>
+				<a href='myaccount.php'><?= t('widget.account.my_account') ?></a>
 			</li>
 			<li>
-				<a href='createcharacter.php'>Create Character</a>
+				<a href='createcharacter.php'><?= t('widget.account.create_character') ?></a>
 			</li>
 			<li>
-				<a href='changepassword.php'>Change Password</a>
+				<a href='changepassword.php'><?= t('widget.account.change_password') ?></a>
 			</li>
 			<li>
-				<a href='settings.php'>Settings</a>
+				<a href='settings.php'><?= t('widget.account.settings') ?></a>
 			</li>
 			<li>
-				<a href='logout.php'>Logout</a>
+				<a href='logout.php'><?= t('widget.account.logout') ?></a>
 			</li>
 		</ul>
 	</div>

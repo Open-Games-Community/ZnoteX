@@ -121,14 +121,16 @@ function acp_modules(): array {
 
 		$meta = acp_parse_module_header($file);
 
+		$group = $meta['group'] ?? 'Other';
+
 		$modules[$key] = [
 			'key'         => $key,
 			'file'        => $file,
-			'title'       => $meta['title'] ?? ucwords(str_replace('_', ' ', $key)),
+			'title'       => t_default('acp.mod.' . $key . '.title', $meta['title'] ?? ucwords(str_replace('_', ' ', $key))),
 			'icon'        => $meta['icon'] ?? 'fa-square-o',
-			'group'       => $meta['group'] ?? 'Other',
+			'group'       => t_default('acp.group.' . $group, $group),
 			'order'       => isset($meta['order']) ? (int)$meta['order'] : 100,
-			'description' => $meta['description'] ?? '',
+			'description' => t_default('acp.mod.' . $key . '.desc', $meta['description'] ?? ''),
 			'url'         => $meta['url'] ?? null,
 			'target'      => $meta['target'] ?? null,
 			'hidden'      => !empty($meta['hidden']) && strtolower((string)$meta['hidden']) !== 'false',

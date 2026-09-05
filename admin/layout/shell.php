@@ -56,10 +56,10 @@ $acp_engine   = serverEngineReal();
 
 		<div class="acp-nav-filter">
 			<i class="fa fa-search"></i>
-			<input type="search" id="acpFilter" placeholder="Search panel..." autocomplete="off" aria-label="Search panel">
+			<input type="search" id="acpFilter" placeholder="<?= h(t('acp.shell.search_panel')) ?>" autocomplete="off" aria-label="<?= h(t('acp.shell.nav_label')) ?>">
 		</div>
 
-		<nav class="acp-nav" id="acpNav" aria-label="Admin navigation">
+		<nav class="acp-nav" id="acpNav" aria-label="<?= h(t('acp.shell.nav_label')) ?>">
 			<?php foreach ($acp_groups as $groupName => $groupModules): ?>
 				<div class="acp-nav-group">
 					<button type="button" class="acp-nav-group-label" aria-expanded="true">
@@ -91,7 +91,7 @@ $acp_engine   = serverEngineReal();
 					</ul>
 				</div>
 			<?php endforeach; ?>
-			<p class="acp-nav-nomatch" hidden>No menu entry matches.</p>
+			<p class="acp-nav-nomatch" hidden><?= t('acp.shell.no_match') ?></p>
 		</nav>
 	</aside>
 
@@ -99,19 +99,19 @@ $acp_engine   = serverEngineReal();
 
 	<section class="acp-panel">
 		<header class="acp-topbar">
-			<button type="button" class="acp-icon-btn acp-burger" id="acpBurger" aria-label="Toggle menu">
+			<button type="button" class="acp-icon-btn acp-burger" id="acpBurger" aria-label="<?= h(t('acp.shell.toggle_menu')) ?>">
 				<i class="fa fa-bars"></i>
 			</button>
 			<div class="acp-top-title">
 				<strong><?= h($acp_siteName) ?></strong>
-				<span><?= h($acp_engine) ?> control panel</span>
+				<span><?= h($acp_engine) ?> <?= t('acp.shell.control_panel') ?></span>
 			</div>
 			<form class="acp-top-search" method="get" action="index.php" role="search">
 				<input type="hidden" name="p" value="search">
 				<i class="fa fa-search"></i>
 				<input type="search" name="q" list="acpSearchList"
 					   value="<?= h($acp_page === 'search' ? ($_GET['q'] ?? '') : '') ?>"
-					   placeholder="Search the panel..." autocomplete="off" aria-label="Search the panel">
+					   placeholder="<?= h(t('acp.shell.search_the_panel')) ?>" autocomplete="off" aria-label="<?= h(t('acp.shell.search_the_panel')) ?>">
 				<datalist id="acpSearchList">
 					<?php foreach (array_slice(acp_search_index(), 0, 300) as $acp_hit): ?>
 						<option value="<?= h($acp_hit['title']) ?>"></option>
@@ -120,18 +120,18 @@ $acp_engine   = serverEngineReal();
 			</form>
 
 			<div class="acp-top-actions">
-				<a class="acp-icon-btn" href="../index.php" title="View site" aria-label="View site">
+				<a class="acp-icon-btn" href="../index.php" title="<?= h(t('acp.shell.view_site')) ?>" aria-label="<?= h(t('acp.shell.view_site')) ?>">
 					<i class="fa fa-globe"></i>
 				</a>
-				<button type="button" class="acp-theme-toggle" id="acpTheme" title="Toggle day/night mode" aria-label="Toggle day/night mode">
+				<button type="button" class="acp-theme-toggle" id="acpTheme" title="<?= h(t('acp.shell.toggle_theme')) ?>" aria-label="<?= h(t('acp.shell.toggle_theme')) ?>">
 					<i class="fa fa-moon-o"></i>
-					<span>Night</span>
+					<span><?= t('acp.shell.night') ?></span>
 				</button>
 				<span class="acp-user">
 					<i class="fa fa-user-circle-o"></i>
 					<span class="acp-user-name"><?= h($acp_admin) ?></span>
 				</span>
-				<a class="acp-icon-btn" href="../login.php?logout" title="Log out" aria-label="Log out">
+				<a class="acp-icon-btn" href="../login.php?logout" title="<?= h(t('acp.shell.log_out')) ?>" aria-label="<?= h(t('acp.shell.log_out')) ?>">
 					<i class="fa fa-sign-out"></i>
 				</a>
 			</div>
@@ -159,7 +159,7 @@ $acp_engine   = serverEngineReal();
 		<footer class="acp-footer">
 			<span>&copy; <?= h($acp_siteName) ?> &middot; ZnoteX <?= h($version ?? '') ?></span>
 			<span>
-				Rendered in <?= h(elapsedTime()) ?>s
+				<?= t('acp.shell.rendered_in', ['seconds' => elapsedTime()]) ?>
 				&middot; <?= h(getClock(false, true)) ?>
 			</span>
 		</footer>

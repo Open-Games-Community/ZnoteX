@@ -46,8 +46,12 @@ $aacQueries = $aacQueries ?? 0;
 				countDown("countDownTimer", <?= (int)$launch_seconds ?>, <?= json_encode($countDown_complete) ?>);
 			<?php endif; ?>
 
-			$('.loginBtn').click(function () {
-				$('.loginContainer input:first-of-type').focus();
+			$('.loginBtn').click(function (event) {
+				var $firstLoginInput = $('.loginContainer input:first-of-type');
+				if ($firstLoginInput.length) {
+					event.preventDefault();
+					$firstLoginInput.focus();
+				}
 			});
 			$('#accountLink').click(function () {
 				if (this.href.indexOf('#') >= 0) {

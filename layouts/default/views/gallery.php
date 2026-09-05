@@ -2,13 +2,13 @@
 if ($logged_in === true) {
 	if (!empty($_POST['new'])) {
 		?>
-		<h1>Create image article</h1>
-		<p>This gallery is powered by IMGUR image host.</p>
+		<h1><?= t('gallery.create') ?></h1>
+		<p><?= t('gallery.powered') ?></p>
 		<form action="" method="post" enctype="multipart/form-data">
-			Select image to upload:<br><input type="file" name="imagefile" id="imagefile"><br>
-			Image Title:<br /><input type="text" name="title" size="70"><br />
-			Image Description:<br /><textarea name="desc" cols="55" rows="15"></textarea><br />
-			<input type="submit" value="Upload Image" name="submit">
+			<?= t('gallery.select') ?><br><input type="file" name="imagefile" id="imagefile"><br>
+			<?= t('gallery.image_title') ?><br /><input type="text" name="title" size="70"><br />
+			<?= t('gallery.image_desc') ?><br /><textarea name="desc" cols="55" rows="15"></textarea><br />
+			<input type="submit" value="<?= t('gallery.upload') ?>" name="submit">
 		</form>
 		<?php
 	}
@@ -43,11 +43,10 @@ if ($logged_in === true) {
 			$inserted = insertImage((int)$session_user_id, $title, $desc, $image_url, $image_delete);
 			if ($inserted === true) {
 				?>
-				<h1>Image Posted</h1>
-				<p>However, your image will not be listed until a GM have verified it.<br />
-				Feel free to remind the GM in-game to login on website and approve the image post.</p>
+				<h1><?= t('gallery.posted') ?></h1>
+				<p><?= t('gallery.posted_text') ?></p>
 
-				<h2>Preview:</h2>
+				<h2><?= t('gallery.preview') ?></h2>
 				<table>
 					<tr class="yellow">
 						<td><h3><?php echo $title; ?></h3></td>
@@ -70,25 +69,25 @@ if ($logged_in === true) {
 				<?php
 			} else { // Image not inserted because it already exist
 				?>
-				<h1>Image already exist</h1>
-				<p>The image has already been posted. However, images will not be listed until a GM have verified it.</p>
+				<h1><?= t('gallery.exists') ?></h1>
+				<p><?= t('gallery.exists_text') ?></p>
 				<?php
 			}
 
 		} else { // Failed to locate imageSrc
 			?>
-			<h1>Failed to find the image</h1>
-			<p>We failed to find the image, did you give us the Image code from <a href="http://www.freeimagehosting.net/">www.freeimagehosting.net</a>?</p>
+			<h1><?= t('gallery.failed') ?></h1>
+			<p><?= t('gallery.failed_text') ?></p>
 			<?php
 		}
 	}
 }
 if (empty($_POST)) {
 	?>
-	<h1>Gallery</h1>
+	<h1><?= t('gallery.title') ?></h1>
 	<?php if ($logged_in === true) { ?>
 	<form action="" method="post">
-		Got some cool images to show the community? <input type="submit" name="new" value="Add Image">
+		<?= t('gallery.invite') ?> <input type="submit" name="new" value="<?= t('gallery.add') ?>">
 	</form>
 	<?php
 	}
@@ -116,7 +115,7 @@ if (empty($_POST)) {
 				</tr>
 			</table>
 		<?php }
-	} else echo '<h2>There are currently no public images.</h2>';
+	} else echo '<h2>'. t('gallery.empty') .'</h2>';
 
-	if ($logged_in === false) echo 'You need to be logged in to add images.';
+	if ($logged_in === false) echo t('gallery.need_login');
 }

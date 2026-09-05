@@ -7,7 +7,7 @@
 ?>
 <?php if (!$itemsEnabled): ?>
 
-	Items' page not enabled.
+	<?= t('items.disabled') ?>
 
 <?php else: ?>
 
@@ -22,63 +22,63 @@ if ($items) {
 		switch($_GET['slot']) {
 			case 'helmet':
 				$slottype = 'head';
-				$slottype_name = 'Helmets';
+				$slottype_name = t('items.helmets');
 				break;
 			case 'sword':
 				$slottype = 'sword';
-				$slottype_name = 'Swords';
+				$slottype_name = t('items.swords');
 				break;
 			case 'distance':
 				$slottype = 'distance';
-				$slottype_name = 'Distance Weapons';
+				$slottype_name = t('items.distance');
 				break;
 			case 'wand':
 				$slottype = 'wand';
-				$slottype_name = 'Wands & Rods';
+				$slottype_name = t('items.wands');
 				break;
 			case 'armor':
 				$slottype = 'body';
-				$slottype_name = 'Armors';
+				$slottype_name = t('items.armors');
 				break;
 			case 'club':
 				$slottype = 'club';
-				$slottype_name = 'Clubs';
+				$slottype_name = t('items.clubs');
 				break;
 			case 'ammunition':
 				$slottype = 'ammunition';
-				$slottype_name = 'Ammunition';
+				$slottype_name = t('items.ammunition');
 				break;
 			case 'book':
 				$slottype = 'shield';
-				$slottype_name = 'Spellbooks';
+				$slottype_name = t('items.spellbooks');
 				break;
 			case 'legs':
 				$slottype = 'legs';
-				$slottype_name = 'Legs';
+				$slottype_name = t('items.legs');
 				break;
 			case 'axe':
 				$slottype = 'axe';
-				$slottype_name = 'Axes';
+				$slottype_name = t('items.axes');
 				break;
 			case 'necklace':
 				$slottype = 'necklace';
-				$slottype_name = 'Amulets & Necklaces';
+				$slottype_name = t('items.necklaces');
 				break;
 			case 'feet':
 				$slottype = 'feet';
-				$slottype_name = 'Boots';
+				$slottype_name = t('items.boots');
 				break;
 			case 'shield':
 				$slottype = 'shield';
-				$slottype_name = 'Shields & Spellbooks';
+				$slottype_name = t('items.shields');
 				break;
 			case 'backpack':
 				$slottype = 'backpack';
-				$slottype_name = 'Backpacks';
+				$slottype_name = t('items.backpacks');
 				break;
 			case 'ring':
 				$slottype = 'ring';
-				$slottype_name = 'Rings';
+				$slottype_name = t('items.rings');
 				break;
 			default:
 				$slottype_name = 'null';
@@ -90,31 +90,31 @@ if ($items) {
 	if(isset($_GET['slot']) && ($slottype_name == 'null')) header("Location:items.php");
 	?>
 
-		<h1 id="items">Items<?php if (isset($_GET['slot'])) echo ' ('.$slottype_name.')';?></h1>
+		<h1 id="items"><?= t('items.title') ?><?php if (isset($_GET['slot'])) echo ' ('.$slottype_name.')';?></h1>
 	<?php if(empty($_GET['slot'])) { ?>
 	<table>
 		<tbody>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=helmet">Helmets<br><img src="<?php echo $itemServer.'2471.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=sword">Swords<br><img src="<?php echo $itemServer.'8931.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=shield">Shields & Spellbooks<br><img src="<?php echo $itemServer.'2523.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=necklace">Amulets<br><img src="<?php echo $itemServer.'2173.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=helmet"><?= t('items.helmets') ?><br><img src="<?php echo $itemServer.'2471.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=sword"><?= t('items.swords') ?><br><img src="<?php echo $itemServer.'8931.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=shield"><?= t('items.shields') ?><br><img src="<?php echo $itemServer.'2523.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=necklace"><?= t('items.amulets') ?><br><img src="<?php echo $itemServer.'2173.gif'; ?>" /></a></td>
 			</tr>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=armor">Armors<br><img src="<?php echo $itemServer.'2466.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=club">Clubs<br><img src="<?php echo $itemServer.'2444.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=wand">Wands & Rods<br><img src="<?php echo $itemServer.'2190.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=ammunition">Ammunition<br><img src="<?php echo $itemServer.'6529.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=armor"><?= t('items.armors') ?><br><img src="<?php echo $itemServer.'2466.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=club"><?= t('items.clubs') ?><br><img src="<?php echo $itemServer.'2444.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=wand"><?= t('items.wands') ?><br><img src="<?php echo $itemServer.'2190.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=ammunition"><?= t('items.ammunition') ?><br><img src="<?php echo $itemServer.'6529.gif'; ?>" /></a></td>
 			</tr>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=legs">Legs<br><img src="<?php echo $itemServer.'2470.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=axe">Axes<br><img src="<?php echo $itemServer.'8925.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=ring">Rings<br><img src="<?php echo $itemServer.'6093.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=legs"><?= t('items.legs') ?><br><img src="<?php echo $itemServer.'2470.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=axe"><?= t('items.axes') ?><br><img src="<?php echo $itemServer.'8925.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=ring"><?= t('items.rings') ?><br><img src="<?php echo $itemServer.'6093.gif'; ?>" /></a></td>
 			</tr>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=feet">Boots<br><img src="<?php echo $itemServer.'2646.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=distance">Distance<br><img src="<?php echo $itemServer.'5803.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=backpack">Backpacks<br><img src="<?php echo $itemServer.'9774.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=feet"><?= t('items.boots') ?><br><img src="<?php echo $itemServer.'2646.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=distance"><?= t('items.distance') ?><br><img src="<?php echo $itemServer.'5803.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=backpack"><?= t('items.backpacks') ?><br><img src="<?php echo $itemServer.'9774.gif'; ?>" /></a></td>
 			</tr>
 		</tbody>
 	</table>
@@ -123,8 +123,8 @@ if ($items) {
 		<tbody>
 			<tr>
 				<td></td>
-				<td>Name</td>
-				<td>Attributes</td>
+				<td><?= t('common.name') ?></td>
+				<td><?= t('items.attributes') ?></td>
 			</tr>
 
 <?php	foreach ($items['item'] as $select) {
@@ -156,7 +156,7 @@ if ($items) {
 							echo ucwords($array).': '.intval($value/100).'.'.substr($value, -2).' oz<br>';
 						break;
 						case 'containerSize':
-							echo 'Slots: '.$value.'<br>';
+							echo t('items.attr_slots') .': '.$value.'<br>';
 						break;
 						case 'armor':
 							echo ucwords($array).': '.$value.'<br>';
@@ -172,108 +172,108 @@ if ($items) {
 							echo '<br>';
 						break;
 						case 'skillFist':
-							echo 'Fist Fighting: '.$extra.$value.'<br>';
+							echo t('items.fight_fist') .': '.$extra.$value.'<br>';
 						break;
 						case 'skillAxe':
-							echo 'Axe Fighting: '.$extra.$value.'<br>';
+							echo t('items.fight_axe') .': '.$extra.$value.'<br>';
 						break;
 						case 'skillSword':
-							echo 'Sword Fighting: '.$extra.$value.'<br>';
+							echo t('items.fight_sword') .': '.$extra.$value.'<br>';
 						break;
 						case 'skillClub':
-							echo 'Club Fighting: '.$extra.$value.'<br>';
+							echo t('items.fight_club') .': '.$extra.$value.'<br>';
 						break;
 						case 'skillAxe':
-							echo 'Axe Fighting: '.$extra.$value.'<br>';
+							echo t('items.fight_axe') .': '.$extra.$value.'<br>';
 						break;
 						case 'skillDist':
-							echo 'Distance Fighting: '.$extra.$value.'<br>';
+							echo t('items.fight_dist') .': '.$extra.$value.'<br>';
 						break;
 						case 'skillShield':
-							echo 'Shielding: '.$extra.$value.'<br>';
+							echo t('items.fight_shield') .': '.$extra.$value.'<br>';
 						break;
 						case 'range':
 							echo ucwords($array).': '.$value.'<br>';
 						break;
 						case 'shootType':
-							echo 'Shoot Type: '.ucwords($value).'<br>';
+							echo t('items.attr_shoot') .': '.ucwords($value).'<br>';
 						break;
 						case 'hitChance':
-							echo 'Hit: '.$extra.$value.'%<br>';
+							echo t('items.attr_hit') .': '.$extra.$value.'%<br>';
 						break;
 						case 'magiclevelpoints':
-							echo 'Magic Level: '.$extra.$value.'<br>';
+							echo t('items.attr_magic') .': '.$extra.$value.'<br>';
 						break;
 						case 'absorbPercentEnergy':
-							echo 'Energy Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_energy') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentFire':
-							echo 'Fire Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_fire') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentEarth':
-							echo 'Earth Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_earth') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentPoison':
-							echo 'Poison Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_poison') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentIce':
-							echo 'Ice Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_ice') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentHoly':
-							echo 'Holy Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_holy') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentDeath':
-							echo 'Death Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_death') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentLifeDrain':
-							echo 'Life Drain Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_lifedrain') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentManaDrain':
-							echo 'Mana Drain Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_manadrain') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentDrown':
-							echo 'Drown Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_drown') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentPhysical':
-							echo 'Physical Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_physical') .': '.$extra.$value.'%<br>';
 						break;
 						case 'absorbPercentIce':
-							echo 'Ice Protection: '.$extra.$value.'%<br>';
+							echo t('items.prot_ice') .': '.$extra.$value.'%<br>';
 						break;
 						/**case 'suppressDrunk':
-							echo 'Suppress Drunk: Yes<br>';
+							echo t('items.sup_drunk') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressEnergy':
-							echo 'Suppress Energy: Yes<br>';
+							echo t('items.sup_energy') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressFire':
-							echo 'Suppress Fire: Yes<br>';
+							echo t('items.sup_fire') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressPoison':
-							echo 'Suppress Poison: Yes<br>';
+							echo t('items.sup_poison') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressDrown':
-							echo 'Suppress Drown: Yes<br>';
+							echo t('items.sup_drown') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressPhysical':
-							echo 'Suppress Bleeding: Yes<br>';
+							echo t('items.sup_bleeding') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressFreeze':
-							echo 'Suppress Freeze: Yes<br>';
+							echo t('items.sup_freeze') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressDazzle':
-							echo 'Suppress Dazzle: Yes<br>';
+							echo t('items.sup_dazzle') .': '. t('common.yes') .'<br>';
 						break;
 						case 'suppressCurse':
-							echo 'Suppress Curse: Yes<br>';
+							echo t('items.sup_curse') .': '. t('common.yes') .'<br>';
 						break;
 						Those are not necessary in my opinion, but if you want to show
 						**/
 						case 'speed':
-							echo 'Speed: '.$extra.($value/2).'<br>';
+							echo t('items.attr_speed') .': '.$extra.($value/2).'<br>';
 						break;
 						case 'charges':
-							echo 'Charges: '.$value.'<br>';
+							echo t('items.attr_charges') .': '.$value.'<br>';
 						break;
 					}
 				}

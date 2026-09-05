@@ -88,17 +88,17 @@ function acp_shop_unpack_outfit_pair(int $packed): string {
 
 function acp_shop_offer_type_label(int $type): string {
 	$types = [
-		1 => 'Item',
-		2 => 'Premium days',
-		3 => 'Gender change',
-		4 => 'Name change',
-		5 => 'Outfit',
-		6 => 'Mount',
-		7 => 'Custom',
-		8 => 'Custom',
+		1 => t('acp.shp.type_item'),
+		2 => t('acp.shp.type_premium'),
+		3 => t('acp.shp.type_gender'),
+		4 => t('acp.shp.type_name'),
+		5 => t('acp.shp.type_outfit'),
+		6 => t('acp.shp.type_mount'),
+		7 => t('acp.shp.type_custom'),
+		8 => t('acp.shp.type_custom'),
 	];
 
-	return $types[$type] ?? 'Custom';
+	return $types[$type] ?? t('acp.shp.type_custom');
 }
 
 function acp_shop_item_image_url(int $itemId): string {
@@ -197,14 +197,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($type === 5) {
 			$itemId = acp_shop_pack_outfit_pair($itemRaw);
 			if ($itemId === false) {
-				acp_flash_error('For outfit offers, use the item field as maleId,femaleId.');
+				acp_flash_error(t('acp.shp.outfit_field_error'));
 			}
 		} elseif (preg_match('/^\d+$/', $itemRaw)) {
 			$itemId = (int)$itemRaw;
 		}
 
 		if ($type <= 0 || $description === '' || $points <= 0 || $itemId === false) {
-			acp_flash_error('Missing or invalid shop offer fields.');
+			acp_flash_error(t('acp.shp.missing_fields'));
 		} else {
 			$created = mysql_insert("
 				INSERT INTO `znote_shop_offers`
@@ -213,9 +213,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					({$type}, {$itemId}, {$count}, '" . esc($description) . "', {$points}, 1, {$sortOrder}, " . (int)$user_data['id'] . ", {$now}, {$now});
 			");
 			if ($created) {
-				acp_flash_success('Shop offer added.');
+				acp_log('shop.offer_add', $description, ['type' => $type, 'points' => $points]);
+				acp_flash_success(t('acp.shp.offer_added'));
 			} else {
-				acp_flash_error('Shop offer could not be added. Check the znote_shop_offers table columns.');
+				acp_flash_error(t('acp.shp.offer_add_failed'));
 			}
 			acp_redirect('shop');
 		}
@@ -230,14 +231,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			WHERE `id` = {$id}
 			LIMIT 1;
 		");
-		$updated ? acp_flash_success('Shop offer status updated.') : acp_flash_error('Shop offer status could not be updated.');
+		if ($updated) { acp_log('shop.offer_toggle', '#' . $id); }
+		$updated ? acp_flash_success(t('acp.shp.status_updated')) : acp_flash_error(t('acp.shp.status_failed'));
 		acp_redirect('shop');
 	}
 
 	if ($shopAction === 'delete') {
 		$id = intv($_POST['id'] ?? 0);
 		$deleted = mysql_delete("DELETE FROM `znote_shop_offers` WHERE `id` = {$id} LIMIT 1;");
-		$deleted ? acp_flash_success('Shop offer removed.') : acp_flash_error('Shop offer could not be removed.');
+		if ($deleted) { acp_log('shop.offer_delete', '#' . $id); }
+		$deleted ? acp_flash_success(t('acp.shp.removed')) : acp_flash_error(t('acp.shp.remove_failed'));
 		acp_redirect('shop');
 	}
 }
@@ -258,18 +261,18 @@ if ($itemImageTemplate !== '') {
 
 <div class="acp-stats">
 	<?php
-	acp_stat('DB offers', count($offers), 'fa-tags', null, 'blue');
-	acp_stat('Active offers', $activeOffers, 'fa-check-circle', null, 'green');
-	acp_stat('Hidden offers', $hiddenOffers, 'fa-eye-slash', null, 'amber');
-	acp_stat('Shop orders', acp_count("SELECT COUNT(*) AS `c` FROM `znote_shop_orders`;"), 'fa-history', acp_url('shop_orders'), 'purple');
+	acp_stat(t('acp.shp.stat_db_offers'), count($offers), 'fa-tags', null, 'blue');
+	acp_stat(t('acp.shp.stat_active'), $activeOffers, 'fa-check-circle', null, 'green');
+	acp_stat(t('acp.shp.stat_hidden'), $hiddenOffers, 'fa-eye-slash', null, 'amber');
+	acp_stat(t('acp.shp.stat_orders'), acp_count("SELECT COUNT(*) AS `c` FROM `znote_shop_orders`;"), 'fa-history', acp_url('shop_orders'), 'purple');
 	?>
 </div>
 
 <!-- ------------------------------------------------------- Add offer -->
 <section class="acp-card acp-shop-form-card">
 	<header class="acp-card-head">
-		<h2>Add shop offer</h2>
-		<p>Saved in znote_shop_offers and shown on the public shop</p>
+		<h2><?= h(t('acp.shp.add_offer_title')) ?></h2>
+		<p><?= h(t('acp.shp.add_offer_sub')) ?></p>
 	</header>
 	<div class="acp-card-body">
 		<form method="post">
@@ -278,53 +281,53 @@ if ($itemImageTemplate !== '') {
 
 			<div class="acp-row acp-shop-form-row">
 				<div class="acp-field">
-					<label class="acp-label" for="type">Type</label>
+					<label class="acp-label" for="type"><?= h(t('acp.shp.type_label')) ?></label>
 					<select class="acp-select" id="type" name="type">
-						<option value="1">Item</option>
-						<option value="2">Premium days</option>
-						<option value="3">Gender change</option>
-						<option value="4">Name change</option>
-						<option value="5">Outfit (male,female)</option>
-						<option value="6">Mount</option>
-						<option value="8">Custom</option>
+						<option value="1"><?= h(t('acp.shp.type_item')) ?></option>
+						<option value="2"><?= h(t('acp.shp.type_premium')) ?></option>
+						<option value="3"><?= h(t('acp.shp.type_gender')) ?></option>
+						<option value="4"><?= h(t('acp.shp.type_name')) ?></option>
+						<option value="5"><?= h(t('acp.shp.outfit_option')) ?></option>
+						<option value="6"><?= h(t('acp.shp.type_mount')) ?></option>
+						<option value="8"><?= h(t('acp.shp.type_custom')) ?></option>
 					</select>
 				</div>
 				<div class="acp-field">
-					<label class="acp-label" for="itemid">Item ID</label>
+					<label class="acp-label" for="itemid"><?= h(t('acp.shp.item_id')) ?></label>
 					<div class="acp-shop-id-field">
 						<input class="acp-input" id="itemid" name="itemid" placeholder="2160 or 128,136" required>
 						<div class="acp-shop-live-preview"
 						     id="shopOfferPreview"
 						     data-item-template="<?= h($itemImageTemplate) ?>"
 						     data-outfit-server="<?= h(acp_shop_outfit_server_url()) ?>">
-							<span class="is-muted">Preview</span>
+							<span class="is-muted"><?= h(t('acp.shp.preview_label')) ?></span>
 						</div>
 					</div>
-					<p class="acp-hint">For outfits, use maleId,femaleId.</p>
+					<p class="acp-hint"><?= h(t('acp.shp.outfit_hint')) ?></p>
 				</div>
 				<div class="acp-field">
-					<label class="acp-label" for="description">Description</label>
+					<label class="acp-label" for="description"><?= h(t('acp.shp.description')) ?></label>
 					<input class="acp-input" id="description" name="description" maxlength="255" placeholder="5 x Crystal coin" required>
 				</div>
 			</div>
 
 			<div class="acp-row acp-shop-form-row">
 				<div class="acp-field">
-					<label class="acp-label" for="count">Count / days / addon</label>
+					<label class="acp-label" for="count"><?= h(t('acp.shp.count_label')) ?></label>
 					<input class="acp-input" id="count" name="count" type="number" min="0" value="1" required>
 				</div>
 				<div class="acp-field">
-					<label class="acp-label" for="points">Points</label>
+					<label class="acp-label" for="points"><?= h(t('acp.shp.points')) ?></label>
 					<input class="acp-input" id="points" name="points" type="number" min="1" value="10" required>
 				</div>
 				<div class="acp-field">
-					<label class="acp-label" for="sort_order">Sort order</label>
+					<label class="acp-label" for="sort_order"><?= h(t('acp.shp.sort_order')) ?></label>
 					<input class="acp-input" id="sort_order" name="sort_order" type="number" value="0">
 				</div>
 			</div>
 
 			<div class="acp-actions">
-				<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-plus"></i> Add offer</button>
+				<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-plus"></i> <?= h(t('acp.shp.add_offer_btn')) ?></button>
 			</div>
 		</form>
 	</div>
@@ -333,8 +336,8 @@ if ($itemImageTemplate !== '') {
 <!-- ------------------------------------------------------- Current offers -->
 <section class="acp-card acp-shop-offers-card">
 	<header class="acp-card-head">
-		<h2>Database offers</h2>
-		<p>Used directly by shop.php</p>
+		<h2><?= h(t('acp.shp.db_offers_title')) ?></h2>
+		<p><?= h(t('acp.shp.db_offers_sub')) ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($offers): ?>
@@ -343,11 +346,11 @@ if ($itemImageTemplate !== '') {
 					<thead>
 						<tr>
 							<th>#</th>
-							<th>Preview</th>
-							<th>Offer</th>
-							<th class="is-num">Points</th>
-							<th>Status</th>
-							<th class="is-num">Actions</th>
+							<th><?= h(t('acp.shp.col_preview')) ?></th>
+							<th><?= h(t('acp.shp.col_offer')) ?></th>
+							<th class="is-num"><?= h(t('acp.shp.col_points')) ?></th>
+							<th><?= h(t('acp.shp.col_status')) ?></th>
+							<th class="is-num"><?= h(t('acp.shp.col_actions')) ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -360,13 +363,13 @@ if ($itemImageTemplate !== '') {
 									<span class="is-muted">
 										<?= h(acp_shop_offer_type_label(intv($offer['type'] ?? 0))) ?> -
 										<?= intv($offer['type'] ?? 0) === 5 ? h(acp_shop_unpack_outfit_pair(intv($offer['itemid'] ?? 0))) : intv($offer['itemid'] ?? 0) ?>,
-										count <?= intv($offer['count'] ?? 0) ?>
+										<?= h(t('acp.shp.count_label2')) ?> <?= intv($offer['count'] ?? 0) ?>
 									</span>
 								</td>
 								<td class="is-num"><strong><?= intv($offer['points'] ?? 0) ?></strong></td>
 								<td>
 									<span class="acp-pill <?= !empty($offer['active']) ? 'acp-pill--green' : 'acp-pill--grey' ?>">
-										<?= !empty($offer['active']) ? 'Active' : 'Hidden' ?>
+										<?= !empty($offer['active']) ? h(t('acp.shp.active_pill')) : h(t('acp.shp.hidden_pill')) ?>
 									</span>
 								</td>
 								<td class="is-nowrap is-num acp-shop-offer-actions">
@@ -375,14 +378,14 @@ if ($itemImageTemplate !== '') {
 										<input type="hidden" name="shop_offer_action" value="toggle">
 										<input type="hidden" name="id" value="<?= intv($offer['id'] ?? 0) ?>">
 										<button class="acp-btn acp-btn--ghost acp-btn--sm" type="submit">
-											<?= !empty($offer['active']) ? 'Hide' : 'Show' ?>
+											<?= !empty($offer['active']) ? h(t('acp.shp.hide')) : h(t('acp.shp.show')) ?>
 										</button>
 									</form>
-									<form class="acp-inline-form" method="post" data-confirm="Remove this shop offer?">
+									<form class="acp-inline-form" method="post" data-confirm="<?= h(t('acp.shp.confirm_remove')) ?>">
 										<?= acp_csrf_field() ?>
 										<input type="hidden" name="shop_offer_action" value="delete">
 										<input type="hidden" name="id" value="<?= intv($offer['id'] ?? 0) ?>">
-										<button class="acp-btn acp-btn--red acp-btn--sm" type="submit" title="Remove offer" aria-label="Remove offer"><i class="fa fa-times"></i></button>
+										<button class="acp-btn acp-btn--red acp-btn--sm" type="submit" title="<?= h(t('acp.shp.remove_offer')) ?>" aria-label="<?= h(t('acp.shp.remove_offer')) ?>"><i class="fa fa-times"></i></button>
 									</form>
 								</td>
 							</tr>
@@ -391,7 +394,7 @@ if ($itemImageTemplate !== '') {
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('No database shop offers yet.', 'fa-tags'); ?>
+			<?php acp_empty(t('acp.shp.empty'), 'fa-tags'); ?>
 		<?php endif; ?>
 	</div>
 </section>

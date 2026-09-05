@@ -21,14 +21,14 @@ $pending = is_array($pending) ? $pending : [];
 $history = is_array($history) ? $history : [];
 
 $orderTypes = [
-	1 => 'Item',
-	2 => 'Premium days',
-	3 => 'Gender change',
-	4 => 'Name change',
-	5 => 'Outfit',
-	6 => 'Mount',
-	7 => 'Custom',
-	8 => 'Custom',
+	1 => t('acp.sord.type_item'),
+	2 => t('acp.sord.type_premium'),
+	3 => t('acp.sord.type_gender'),
+	4 => t('acp.sord.type_name'),
+	5 => t('acp.sord.type_outfit'),
+	6 => t('acp.sord.type_mount'),
+	7 => t('acp.sord.type_custom'),
+	8 => t('acp.sord.type_custom'),
 ];
 
 $accountIds = [];
@@ -62,7 +62,7 @@ if ($accountIds) {
 function acp_shop_orders_account(int $id, array $names): string {
 	return isset($names[$id])
 		? h($names[$id]) . ' <span class="is-muted">#' . $id . '</span>'
-		: '<span class="is-muted">deleted account #' . $id . '</span>';
+		: '<span class="is-muted">' . t('acp.sord.deleted_account', ['id' => $id]) . '</span>';
 }
 
 $historyPoints = 0;
@@ -73,17 +73,17 @@ foreach ($history as $order) {
 
 <div class="acp-stats">
 	<?php
-	acp_stat('Pending delivery', count($pending), 'fa-hourglass-half', null, 'amber');
-	acp_stat('Completed orders', count($history), 'fa-check-circle', null, 'green');
-	acp_stat('Points spent', $historyPoints, 'fa-diamond', null, 'purple');
-	acp_stat('Manage offers', 'Open', 'fa-tags', acp_url('shop'), 'blue');
+	acp_stat(t('acp.sord.stat_pending'), count($pending), 'fa-hourglass-half', null, 'amber');
+	acp_stat(t('acp.sord.stat_completed'), count($history), 'fa-check-circle', null, 'green');
+	acp_stat(t('acp.sord.stat_points'), $historyPoints, 'fa-diamond', null, 'purple');
+	acp_stat(t('acp.sord.stat_manage'), t('acp.sord.open'), 'fa-tags', acp_url('shop'), 'blue');
 	?>
 </div>
 
 <section class="acp-card">
 	<header class="acp-card-head">
-		<h2>Pending orders</h2>
-		<p>Bought but not yet received in game</p>
+		<h2><?= t('acp.sord.pending_title') ?></h2>
+		<p><?= t('acp.sord.pending_sub') ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($pending): ?>
@@ -92,11 +92,11 @@ foreach ($history as $order) {
 					<thead>
 						<tr>
 							<th>#</th>
-							<th>Account</th>
-							<th>Type</th>
-							<th>Item</th>
-							<th class="is-num">Count</th>
-							<th>Ordered</th>
+							<th><?= t('acp.sord.col_account') ?></th>
+							<th><?= t('acp.sord.col_type') ?></th>
+							<th><?= t('acp.sord.col_item') ?></th>
+							<th class="is-num"><?= t('acp.sord.col_count') ?></th>
+							<th><?= t('acp.sord.col_ordered') ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -106,10 +106,10 @@ foreach ($history as $order) {
 							<tr>
 								<td class="is-muted"><?= intv($order['id'] ?? 0) ?></td>
 								<td class="is-nowrap"><?= acp_shop_orders_account(intv($order['account_id'] ?? 0), $accountNames) ?></td>
-								<td><span class="acp-pill acp-pill--blue"><?= h($orderTypes[intv($order['type'] ?? 0)] ?? 'Unknown') ?></span></td>
+								<td><span class="acp-pill acp-pill--blue"><?= h($orderTypes[intv($order['type'] ?? 0)] ?? t('acp.sord.type_unknown')) ?></span></td>
 								<td>
 									<?php if ($itemId > 0): ?>
-										<?= h($items[$itemId] ?? 'Unknown item') ?>
+										<?= h($items[$itemId] ?? t('acp.sord.item_unknown')) ?>
 										<span class="is-muted">(<?= $itemId ?>)</span>
 									<?php else: ?>
 										<span class="is-muted">&mdash;</span>
@@ -123,15 +123,15 @@ foreach ($history as $order) {
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('Nothing is waiting to be delivered.', 'fa-check-circle'); ?>
+			<?php acp_empty(t('acp.sord.pending_empty'), 'fa-check-circle'); ?>
 		<?php endif; ?>
 	</div>
 </section>
 
 <section class="acp-card">
 	<header class="acp-card-head">
-		<h2>Order history</h2>
-		<p>Every transaction that went through the shop</p>
+		<h2><?= t('acp.sord.history_title') ?></h2>
+		<p><?= t('acp.sord.history_sub') ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($history): ?>
@@ -140,12 +140,12 @@ foreach ($history as $order) {
 					<thead>
 						<tr>
 							<th>#</th>
-							<th>Account</th>
-							<th>Type</th>
-							<th>Item</th>
-							<th class="is-num">Count</th>
-							<th class="is-num">Points</th>
-							<th>Date</th>
+							<th><?= t('acp.sord.col_account') ?></th>
+							<th><?= t('acp.sord.col_type') ?></th>
+							<th><?= t('acp.sord.col_item') ?></th>
+							<th class="is-num"><?= t('acp.sord.col_count') ?></th>
+							<th class="is-num"><?= t('acp.sord.col_points') ?></th>
+							<th><?= t('acp.sord.col_date') ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -155,10 +155,10 @@ foreach ($history as $order) {
 							<tr>
 								<td class="is-muted"><?= intv($order['id'] ?? 0) ?></td>
 								<td class="is-nowrap"><?= acp_shop_orders_account(intv($order['account_id'] ?? 0), $accountNames) ?></td>
-								<td><span class="acp-pill acp-pill--grey"><?= h($orderTypes[intv($order['type'] ?? 0)] ?? 'Unknown') ?></span></td>
+								<td><span class="acp-pill acp-pill--grey"><?= h($orderTypes[intv($order['type'] ?? 0)] ?? t('acp.sord.type_unknown')) ?></span></td>
 								<td>
 									<?php if ($itemId > 0): ?>
-										<?= h($items[$itemId] ?? 'Unknown item') ?>
+										<?= h($items[$itemId] ?? t('acp.sord.item_unknown')) ?>
 										<span class="is-muted">(<?= $itemId ?>)</span>
 									<?php else: ?>
 										<span class="is-muted">&mdash;</span>
@@ -173,7 +173,7 @@ foreach ($history as $order) {
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('No shop purchases have been made yet.', 'fa-shopping-cart'); ?>
+			<?php acp_empty(t('acp.sord.history_empty'), 'fa-shopping-cart'); ?>
 		<?php endif; ?>
 	</div>
 </section>

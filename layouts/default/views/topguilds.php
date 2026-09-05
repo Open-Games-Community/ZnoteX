@@ -2,12 +2,12 @@
 
 if (!empty($guilds) && $guilds !== false) {
 	?>
-	<h3><center>Top 10 guilds with most frags</center></h3>
+	<h3><center><?= t('topguilds.title') ?></center></h3>
 	<table id="onlinelistTable" class="table table-striped table-hover">
 	    <tr class="yellow">
 			<th>#</th>
-	        <th>Name:</th>
-	        <th>Frags:</th>
+	        <th><?= t('online.label_name') ?></th>
+	        <th><?= t('topguilds.frags') ?></th>
 	    </tr>
 	    <?php
 		foreach ($guilds as $guild):
@@ -26,5 +26,5 @@ if (!empty($guilds) && $guilds !== false) {
 	</table>
 	<?php
 } else {
-	echo '<h1>No frags yet.</h1>';
+	echo '<h1>'. t('topguilds.no_frags') .'</h1>';
 }

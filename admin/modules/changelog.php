@@ -44,14 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if ($do === 'delete' && $id > 0) {
 		mysql_delete("DELETE FROM `znote_changelog` WHERE `id` = {$id} LIMIT 1;");
 		acp_changelog_rebuild_cache();
-		acp_flash_success('Changelog entry deleted.');
+		acp_log('changelog.delete', '#' . $id);
+		acp_flash_success(t('acp.chg.deleted'));
 		acp_redirect('changelog');
 	}
 
 	$text = trim((string)($_POST['text'] ?? ''));
 
 	if ($text === '') {
-		acp_flash_error('The entry cannot be empty.');
+		acp_flash_error(t('acp.chg.empty'));
 		acp_redirect('changelog', $id > 0 ? ['action' => 'edit', 'id' => $id] : []);
 	}
 
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	// carry BBCode - substr() would happily slice [b]word[/b] into [b]word[/ and
 	// leave the tag dangling on the public page. Refuse instead and say why.
 	if (strlen($text) > 254) {
-		acp_flash_error('Too long: ' . strlen($text) . ' of 254 characters. BBCode tags count toward the limit.');
+		acp_flash_error(t('acp.chg.too_long', ['n' => strlen($text)]));
 		acp_redirect('changelog', $id > 0 ? ['action' => 'edit', 'id' => $id] : []);
 	}
 
@@ -71,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			LIMIT 1;
 		");
 		acp_changelog_rebuild_cache();
-		acp_flash_success('Changelog entry updated.');
+		acp_log('changelog.update', '#' . $id, ['text' => substr($text, 0, 60)]);
+		acp_flash_success(t('acp.chg.updated'));
 		acp_redirect('changelog');
 	}
 
@@ -86,11 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			VALUES ('" . esc($text) . "', {$when}, 0, " . ACP_CHANGELOG_MANUAL_STATUS . ");
 		");
 		acp_changelog_rebuild_cache();
-		acp_flash_success('Changelog entry published.');
+		acp_log('changelog.create', '', ['text' => substr($text, 0, 60)]);
+		acp_flash_success(t('acp.chg.published'));
 		acp_redirect('changelog');
 	}
 
-	acp_flash_error('Unknown action.');
+	acp_flash_error(t('acp.chg.unknown_action'));
 	acp_redirect('changelog');
 }
 
@@ -114,7 +117,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 		}
 	}
 	if ($editing === null) {
-		acp_flash_error('That entry no longer exists.');
+		acp_flash_error(t('acp.chg.not_found'));
 		acp_redirect('changelog');
 	}
 }
@@ -129,8 +132,8 @@ foreach ($entries as $entry) {
 
 <div class="acp-stats">
 	<?php
-	acp_stat('Entries', count($entries), 'fa-list-ul', null, 'blue');
-	acp_stat('From bug reports', $fromReports, 'fa-bug', acp_url('reports'), 'purple');
+	acp_stat(t('acp.chg.stat_entries'), count($entries), 'fa-list-ul', null, 'blue');
+	acp_stat(t('acp.chg.stat_from_reports'), $fromReports, 'fa-bug', acp_url('reports'), 'purple');
 	?>
 </div>
 
@@ -138,8 +141,8 @@ foreach ($entries as $entry) {
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2><?= $editing !== null ? 'Edit entry #' . (int)$editing['id'] : 'New entry' ?></h2>
-			<p>Appears at the top of the public changelog</p>
+			<h2><?= $editing !== null ? t('acp.chg.edit_entry', ['id' => (int)$editing['id']]) : t('acp.chg.new_entry') ?></h2>
+			<p><?= t('acp.chg.appears_top') ?></p>
 		</header>
 		<div class="acp-card-body">
 			<form method="post">
@@ -150,7 +153,7 @@ foreach ($entries as $entry) {
 				<?php endif; ?>
 
 				<div class="acp-field">
-					<label class="acp-label" for="text">Text</label>
+					<label class="acp-label" for="text"><?= t('acp.chg.text_label') ?></label>
 					<?php acp_editor('text', $editing !== null ? (string)$editing['text'] : '', [
 						'height'    => 150,
 						'maxlength' => 254,
@@ -162,10 +165,10 @@ foreach ($entries as $entry) {
 
 				<div class="acp-actions">
 					<button class="acp-btn acp-btn--green" type="submit">
-						<i class="fa fa-check"></i> <?= $editing !== null ? 'Save changes' : 'Publish entry' ?>
+						<i class="fa fa-check"></i> <?= $editing !== null ? t('acp.chg.save_changes') : t('acp.chg.publish_entry') ?>
 					</button>
 					<?php if ($editing !== null): ?>
-						<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('changelog')) ?>">Cancel</a>
+						<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('changelog')) ?>"><?= t('acp.chg.cancel') ?></a>
 					<?php endif; ?>
 				</div>
 			</form>
@@ -174,21 +177,20 @@ foreach ($entries as $entry) {
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>How this works</h2>
+			<h2><?= t('acp.chg.how_title') ?></h2>
 		</header>
 		<div class="acp-card-body">
 			<p>
-				Entries created here are stand-alone. Entries created from
-				<a href="<?= h(acp_url('reports')) ?>">Bug Reports</a> stay tied to their report and
-				are marked below, so you can tell at a glance what came from a player report.
+				<?= t('acp.chg.how_text1', [
+					'link' => '<a href="' . h(acp_url('reports')) . '">' . t('acp.chg.reports_link') . '</a>',
+				]) ?>
 			</p>
 			<p>
-				The public page reads a cache file. It is refreshed automatically on every change
-				made here, so what you save is live immediately.
+				<?= t('acp.chg.how_text2') ?>
 			</p>
 			<p>
 				<a href="<?= h(acp_site('changelog.php')) ?>" target="_blank" rel="noopener">
-					<i class="fa fa-external-link"></i> View the public changelog
+					<i class="fa fa-external-link"></i> <?= t('acp.chg.view_public') ?>
 				</a>
 			</p>
 		</div>
@@ -197,8 +199,8 @@ foreach ($entries as $entry) {
 
 <section class="acp-card">
 	<header class="acp-card-head">
-		<h2>Published entries</h2>
-		<p>Newest first</p>
+		<h2><?= t('acp.chg.published_entries') ?></h2>
+		<p><?= t('acp.chg.newest_first') ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($entries): ?>
@@ -207,10 +209,10 @@ foreach ($entries as $entry) {
 					<thead>
 						<tr>
 							<th>#</th>
-							<th>Date</th>
-							<th>Entry</th>
-							<th>Source</th>
-							<th class="is-num">Actions</th>
+							<th><?= t('acp.chg.col_date') ?></th>
+							<th><?= t('acp.chg.col_entry') ?></th>
+							<th><?= t('acp.chg.col_source') ?></th>
+							<th class="is-num"><?= t('acp.chg.col_actions') ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -225,21 +227,21 @@ foreach ($entries as $entry) {
 								<td class="is-nowrap">
 									<?php if ($reportId > 0): ?>
 										<a class="acp-pill acp-pill--purple" href="<?= h(acp_url('reports', ['action' => 'edit', 'id' => $reportId])) ?>">
-											report #<?= $reportId ?>
+											<?= t('acp.chg.report_hash', ['id' => $reportId]) ?>
 										</a>
 									<?php else: ?>
-										<span class="acp-pill acp-pill--grey">manual</span>
+										<span class="acp-pill acp-pill--grey"><?= t('acp.chg.manual') ?></span>
 									<?php endif; ?>
 								</td>
 								<td class="is-num is-nowrap">
 									<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('changelog', ['action' => 'edit', 'id' => $id])) ?>">
-										<i class="fa fa-pencil"></i> Edit
+										<i class="fa fa-pencil"></i> <?= t('acp.chg.edit') ?>
 									</a>
-									<form class="acp-inline-form" method="post" data-confirm="Delete this changelog entry?">
+									<form class="acp-inline-form" method="post" data-confirm="<?= h(t('acp.chg.confirm_delete')) ?>">
 										<?= acp_csrf_field() ?>
 										<input type="hidden" name="do" value="delete">
 										<input type="hidden" name="id" value="<?= $id ?>">
-										<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i> Delete</button>
+										<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i> <?= t('acp.chg.delete') ?></button>
 									</form>
 								</td>
 							</tr>
@@ -248,7 +250,7 @@ foreach ($entries as $entry) {
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('No changelog entries yet.', 'fa-list-ul'); ?>
+			<?php acp_empty(t('acp.chg.no_entries'), 'fa-list-ul'); ?>
 		<?php endif; ?>
 	</div>
 </section>

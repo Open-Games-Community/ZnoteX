@@ -10,7 +10,7 @@ if ($otservers_eu_voting['enabled']) {
 		if (!$isRewardRequest) {
 			$result = vote($user_data['id'], $otservers_eu_voting);
 			if ($result === false) {
-				echo '<p>Something went wrong! Could not make a vote request.</p>';
+				echo '<p>'. t('voting.request_failed'). '</p>';
 			} else {
 				header('Location: ' . $result['voteLink']);
 				die;
@@ -24,10 +24,10 @@ if ($otservers_eu_voting['enabled']) {
 					mysql_update("UPDATE `znote_accounts` SET `points` = `points` + '$points' WHERE `account_id`=" . $user_data['id']);
 					echo "<p>Thank you for voting! You have been rewarded with $points $pointsText!</p>";
 				} else {
-					echo '<p>It does not seem like you have voted.</p>';
+					echo '<p>'. t('voting.not_voted'). '</p>';
 				}
 			} else {
-				echo '<p>Could not verify that you have voted.</p>';
+				echo '<p>'. t('voting.cannot_verify'). '</p>';
 			}
 		}
 	} else {
@@ -35,7 +35,7 @@ if ($otservers_eu_voting['enabled']) {
 		die;
 	}
 } else {
-	echo '<p>Voting is not enabled.</p>';
+	echo '<p>'. t('voting.disabled'). '</p>';
 }
 
 theme_close();

@@ -27,11 +27,38 @@ function acp_settings_schema(): array {
 }
 
 /** Cast a submitted value for storage. */
-function acp_setting_cast(string $type, $raw): string {
-	switch ($type) {
+function acp_setting_cast(array $field, $raw): string {
+	switch ($field['type']) {
 		case 'bool': return empty($raw) ? '0' : '1';
-		case 'int':  return (string)intv($raw);
-		default:     return trim((string)$raw);
+		case 'int':
+			$value = intv($raw);
+			if (isset($field['min'])) $value = max((int)$field['min'], $value);
+			if (isset($field['max'])) $value = min((int)$field['max'], $value);
+			return (string)$value;
+
+		case 'select':
+			$options = $field['options'] ?? array();
+			$value   = trim((string)$raw);
+			return isset($options[$value]) ? $value : (string)array_key_first($options);
+
+		case 'checklist':
+			$options = $field['options'] ?? array();
+			$picked  = is_array($raw) ? $raw : array();
+			$kept    = array();
+
+			foreach (array_keys($options) as $option) {
+				if (in_array((string)$option, array_map('strval', $picked), true)) {
+					$kept[] = (string)$option;
+				}
+			}
+
+			if (!$kept && $options) {
+				$kept[] = (string)array_key_first($options);
+			}
+
+			return (string)json_encode($kept);
+
+		default: return trim((string)$raw);
 	}
 }
 
@@ -46,15 +73,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	foreach ($schema as $fields) {
 		foreach ($fields as $key => $field) {
-			$value = acp_setting_cast($field['type'], $_POST['set'][$key] ?? '');
+			$value = acp_setting_cast($field, $_POST['set'][$key] ?? '');
 			setting_set('config:' . $key, $value) ? $saved++ : $failed++;
 		}
 	}
 
 	if ($failed > 0) {
-		acp_flash_error($failed . ' setting(s) could not be saved. Is the <code>znote_config</code> table present?');
+		acp_flash_error(t('acp.settings.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_flash_success($saved . ' settings saved. They take effect immediately.');
+		acp_log('settings.save', '', ['fields_saved' => $saved]);
+		acp_flash_success(t('acp.settings.save_success', ['n' => $saved]));
 	}
 
 	acp_redirect('settings');
@@ -68,8 +96,10 @@ $hasTable = znote_table_exists('znote_config');
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
 		<span>
-			The <code>znote_config</code> table is missing, so nothing can be saved. Run
-			<code>SQL/migrations/2.0.0_znote_config.sql</code> against your database.
+			<?= t('acp.settings.table_missing', [
+				'table' => '<code>znote_config</code>',
+				'file'  => '<code>SQL/migrations/2.0.0_znote_config.sql</code>',
+			]) ?>
 		</span>
 	</div>
 <?php endif; ?>
@@ -77,9 +107,10 @@ $hasTable = znote_table_exists('znote_config');
 <div class="acp-flash acp-flash--info">
 	<i class="fa fa-info-circle"></i>
 	<span>
-		These are stored in the database and applied over <code>config.php</code>, which stays the
-		fallback. Your file is never rewritten, so an update to ZnoteX cannot lose your settings &mdash;
-		and a value you have never touched here keeps following <code>config.php</code>.
+		<?= t('acp.settings.stored_note', [
+			'configphp'  => '<code>config.php</code>',
+			'configphp2' => '<code>config.php</code>',
+		]) ?>
 	</span>
 </div>
 
@@ -89,7 +120,12 @@ $hasTable = znote_table_exists('znote_config');
 	<div class="acp-grid acp-grid--2">
 		<?php foreach ($schema as $section => $fields): ?>
 			<section class="acp-card">
-				<header class="acp-card-head"><h2><?= h($section) ?></h2></header>
+				<header class="acp-card-head">
+					<h2><?= h($section) ?></h2>
+					<button class="acp-btn acp-btn--green acp-btn--sm" type="submit" style="margin-left:auto;">
+						<i class="fa fa-check"></i> <?= t('acp.settings.save_btn') ?>
+					</button>
+				</header>
 				<div class="acp-card-body">
 					<?php foreach ($fields as $key => $field):
 						$stored  = setting('config:' . $key, null);
@@ -97,7 +133,7 @@ $hasTable = znote_table_exists('znote_config');
 						if (is_bool($fromFile)) {
 							$fromFile = $fromFile ? '1' : '0';
 						} elseif (is_array($fromFile)) {
-							$fromFile = '';
+							$fromFile = ($field['type'] === 'checklist') ? (string)json_encode(array_values($fromFile)) : '';
 						}
 						$current = ($stored !== null) ? $stored : (string)$fromFile;
 						$fromDb  = ($stored !== null);
@@ -106,7 +142,7 @@ $hasTable = znote_table_exists('znote_config');
 							<label class="acp-label" for="set_<?= h($key) ?>">
 								<?= h($field['label']) ?>
 								<?php if (!$fromDb): ?>
-									<span class="acp-pill acp-pill--grey" title="Currently following config.php">file</span>
+									<span class="acp-pill acp-pill--grey" title="<?= h(t('acp.settings.following_title')) ?>"><?= t('acp.settings.file_pill') ?></span>
 								<?php endif; ?>
 							</label>
 
@@ -114,13 +150,39 @@ $hasTable = znote_table_exists('znote_config');
 								<label style="display:flex;align-items:center;gap:8px;font-weight:400;">
 									<input type="checkbox" id="set_<?= h($key) ?>" name="set[<?= h($key) ?>]" value="1"
 										   <?= !empty($current) && $current !== '0' ? 'checked' : '' ?>>
-									<span class="is-muted">Enabled</span>
+									<span class="is-muted"><?= t('acp.settings.enabled') ?></span>
 								</label>
 							<?php elseif ($field['type'] === 'textarea'): ?>
 								<textarea class="acp-textarea" id="set_<?= h($key) ?>" name="set[<?= h($key) ?>]" rows="3"><?= h($current) ?></textarea>
+							<?php elseif ($field['type'] === 'checklist'):
+								$picked = json_decode($current, true);
+								if (!is_array($picked)) {
+									$picked = array_filter(array_map('trim', explode(',', $current)), 'strlen');
+								}
+								$picked = array_map('strval', $picked);
+							?>
+								<div class="acp-checklist">
+									<?php foreach (($field['options'] ?? array()) as $value => $caption): ?>
+										<label style="display:flex;align-items:center;gap:8px;font-weight:400;padding:3px 0;">
+											<input type="checkbox" name="set[<?= h($key) ?>][]" value="<?= h((string)$value) ?>"
+												   <?= in_array((string)$value, $picked, true) ? 'checked' : '' ?>>
+											<span><?= h($caption) ?></span>
+										</label>
+									<?php endforeach; ?>
+								</div>
+							<?php elseif ($field['type'] === 'select'): ?>
+								<select class="acp-input" id="set_<?= h($key) ?>" name="set[<?= h($key) ?>]">
+									<?php foreach (($field['options'] ?? array()) as $value => $caption): ?>
+										<option value="<?= h((string)$value) ?>" <?= ((string)$value === $current) ? 'selected' : '' ?>>
+											<?= h($caption) ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							<?php else: ?>
 								<input class="acp-input" id="set_<?= h($key) ?>" name="set[<?= h($key) ?>]"
 									   type="<?= $field['type'] === 'int' ? 'number' : 'text' ?>"
+									   <?php if ($field['type'] === 'int' && isset($field['min'])): ?>min="<?= (int)$field['min'] ?>"<?php endif; ?>
+									   <?php if ($field['type'] === 'int' && isset($field['max'])): ?>max="<?= (int)$field['max'] ?>"<?php endif; ?>
 									   value="<?= h($current) ?>">
 							<?php endif; ?>
 
@@ -135,7 +197,7 @@ $hasTable = znote_table_exists('znote_config');
 	</div>
 
 	<div class="acp-actions">
-		<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> Save settings</button>
-		<span class="acp-hint">Marked <span class="acp-pill acp-pill--grey">file</span> means the value still comes from config.php.</span>
+		<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> <?= t('acp.settings.save_btn') ?></button>
+		<span class="acp-hint"><?= t('acp.settings.legend_pill', ['pill' => '<span class="acp-pill acp-pill--grey">' . t('acp.settings.file_pill') . '</span>']) ?></span>
 	</div>
 </form>

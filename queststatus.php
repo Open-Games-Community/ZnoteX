@@ -20,7 +20,7 @@
 	);
 	?>
 	<tr class="yellow">
-		<td>Quest Name</td>
+		<td><?= t('quest.name') ?></td>
 		<td>Status</td>
 	</tr>
 	<?php

@@ -1,29 +1,29 @@
 <?php
 
-echo '<CENTER><H2>Most online on' .$config['site_title'] . '</H2></CENTER>
+echo '<CENTER><H2>'. t('toponline.title', ['site' => $config['site_title']]) .'</H2></CENTER>
 <BR>
 <table class="table table-striped">
 		<td><center><b>#</b></center></td>
-		<td width="10%"><b>Name</b></td>';
+		<td width="10%"><b>'. t('common.name') .'</b></td>';
 if($type == "sum")
-	echo '<td ><center><b><center><a href="?subtopic=onlinetime&type=sum">Total</a></center></B></TD>';
+	echo '<td ><center><b><center><a href="?subtopic=onlinetime&type=sum">'. t('common.total') .'</a></center></B></TD>';
 else
-	echo '<td ><center><b><center><a href="?subtopic=onlinetime&type=sum">Total</a></center></B></TD>';
+	echo '<td ><center><b><center><a href="?subtopic=onlinetime&type=sum">'. t('common.total') .'</a></center></B></TD>';
 for($i = 3; $i >= 2; $i--)
 {
 	if($type == $i)
-		echo '<TD ><b><center><a href="?subtopic=onlinetime&type='.$i.'">'.$i.' Days Ago</a></center></B></TD>';
+		echo '<TD ><b><center><a href="?subtopic=onlinetime&type='.$i.'">'. t('toponline.days_ago', ['days' => $i]) .'</a></center></B></TD>';
 	else
-		echo '<TD ><b><center><a href="?subtopic=onlinetime&type='.$i.'">'.$i.' Days Ago</a></center></B></TD>';
+		echo '<TD ><b><center><a href="?subtopic=onlinetime&type='.$i.'">'. t('toponline.days_ago', ['days' => $i]) .'</a></center></B></TD>';
 }
 if($type == 1)
-	echo '<TD ><b><center><a href="?subtopic=onlinetime&type=1">1 Day Ago</a></center></B></TD>';
+	echo '<TD ><b><center><a href="?subtopic=onlinetime&type=1">'. t('toponline.day_ago') .'</a></center></B></TD>';
 else
-	echo '<TD ><b><center><a href="?subtopic=onlinetime&type=1">1 Day Ago</a></center></B></TD>';
+	echo '<TD ><b><center><a href="?subtopic=onlinetime&type=1">'. t('toponline.day_ago') .'</a></center></B></TD>';
 if(empty($type))
-	echo '<TD><b><center><a href="?subtopic=onlinetime">Today</a></center></B></TD>';
+	echo '<TD><b><center><a href="?subtopic=onlinetime">'. t('common.today') .'</a></center></B></TD>';
 else
-	echo '<TD ><b><center><a href="?subtopic=onlinetime">Today</a></center></B></TD>';
+	echo '<TD ><b><center><a href="?subtopic=onlinetime">'. t('common.today') .'</a></center></B></TD>';
 echo '</TR>';
 $number_of_rows = 1;
 if($znotePlayers)

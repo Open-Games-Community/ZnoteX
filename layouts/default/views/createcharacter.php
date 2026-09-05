@@ -9,11 +9,11 @@
  * The character creation happens in createcharacter.php, never here.
  */
 ?>
-<h1>Create Character</h1>
+<h1><?= t('createchar.title') ?></h1>
 
 <?php if ($formState === 'success'): ?>
 
-	Congratulations! Your character has been created. See you in-game!
+	<?= t('createchar.success') ?>
 
 <?php else: ?>
 
@@ -24,12 +24,12 @@
 	<form action="" method="post">
 		<ul>
 			<li>
-				Name:<br>
+				<?= t('createchar.name') ?><br>
 				<input type="text" name="name">
 			</li>
 			<li>
 				<!-- Available vocations to select from when creating character -->
-				Vocation:<br>
+				<?= t('createchar.vocation') ?><br>
 				<select name="selected_vocation">
 				<?php foreach ($config['available_vocations'] as $id) { ?>
 				<option value="<?php echo $id; ?>"><?php echo vocation_id_to_name($id); ?></option>
@@ -38,10 +38,10 @@
 			</li>
 			<li>
 				<!-- Available genders to select from when creating character -->
-				Gender:<br>
+				<?= t('createchar.gender') ?><br>
 				<select name="selected_gender">
-				<option value="1">Male(boy)</option>
-				<option value="0">Female(girl)</option>
+				<option value="1"><?= t('createchar.male') ?></option>
+				<option value="0"><?= t('createchar.female') ?></option>
 				</select>
 			</li>
 			<?php
@@ -50,7 +50,7 @@
 				?>
 				<li>
 					<!-- Available towns to select from when creating character -->
-					Town:<br>
+					<?= t('createchar.town') ?><br>
 					<select name="selected_town">
 						<?php
 						foreach ($available_towns as $tid):
@@ -72,7 +72,7 @@
 			Token::create();
 			?>
 			<li>
-				<input type="submit" value="Create Character">
+				<input type="submit" value="<?= t('createchar.title') ?>">
 			</li>
 		</ul>
 	</form>

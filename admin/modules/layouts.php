@@ -22,11 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['install'])) {
 	$result    = theme_repository_install($key, $overwrite);
 
 	if ($result === '') {
-		acp_flash_success('<strong>' . h($key) . '</strong> installed into <code>layouts/' . h($key) . '/</code>.');
+		acp_log('layouts.install', $key);
+		acp_flash_success(t('acp.lay.installed', [
+			'theme' => '<strong>' . h($key) . '</strong>',
+			'path'  => '<code>layouts/' . h($key) . '/</code>',
+		]));
 	} elseif ($result === 'already-installed') {
-		acp_flash_error('<strong>' . h($key) . '</strong> is already installed. Use Reinstall to replace it.');
+		acp_flash_error(t('acp.lay.already_installed', ['theme' => '<strong>' . h($key) . '</strong>']));
 	} else {
-		acp_flash_error('Install failed: ' . h($result));
+		acp_flash_error(t('acp.lay.install_failed', ['error' => h($result)]));
 	}
 
 	acp_redirect('layouts', array('tab' => 'browse'));
@@ -38,9 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uninstall'])) {
 	$result = theme_uninstall($key);
 
 	if ($result === '') {
-		acp_flash_success('<strong>' . h($key) . '</strong> removed from <code>layouts/</code>.');
+		acp_log('layouts.uninstall', $key);
+		acp_flash_success(t('acp.lay.removed', [
+			'theme' => '<strong>' . h($key) . '</strong>',
+			'path'  => '<code>layouts/</code>',
+		]));
 	} else {
-		acp_flash_error('Could not remove it: ' . h($result));
+		acp_flash_error(t('acp.lay.remove_failed', ['error' => h($result)]));
 	}
 
 	acp_redirect('layouts');
@@ -53,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 	$options = isset($themes[$target]) ? theme_options($target) : array();
 
 	if ($options === array()) {
-		acp_flash_error('That theme has no options to set.');
+		acp_flash_error(t('acp.lay.no_options'));
 		acp_redirect('layouts');
 	}
 
@@ -88,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 					continue;
 				}
 			} elseif ($code === UPLOAD_ERR_INI_SIZE || $code === UPLOAD_ERR_FORM_SIZE) {
-				$errors[] = $option['label'] . ': the file is larger than upload_max_filesize in php.ini.';
+				$errors[] = $option['label'] . ': ' . t('acp.lay.file_too_large');
 				continue;
 			}
 		}
@@ -101,13 +109,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 	}
 
 	if ($uploads > 0) {
-		acp_flash_info($uploads . ' image(s) uploaded to <code>engine/img/theme/' . h($target) . '/</code>.');
+		acp_flash_info(t('acp.lay.images_uploaded', [
+			'n'    => $uploads,
+			'path' => '<code>engine/img/theme/' . h($target) . '/</code>',
+		]));
 	}
 
 	if ($failed > 0) {
-		acp_flash_error($failed . ' setting(s) could not be saved. Is the <code>znote_config</code> table present?');
+		acp_flash_error(t('acp.lay.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_flash_success('Options saved for <strong>' . h($themes[$target]['name']) . '</strong>.');
+		acp_log('layouts.options_save', $target, ['fields_saved' => $saved]);
+		acp_flash_success(t('acp.lay.options_saved', ['theme' => '<strong>' . h($themes[$target]['name']) . '</strong>']));
 	}
 
 	acp_redirect('layouts', array('options' => $target));
@@ -118,16 +130,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$themes    = theme_list();
 
 	if ($requested === '' || !isset($themes[$requested])) {
-		acp_flash_error('Unknown theme.');
+		acp_flash_error(t('acp.lay.unknown_theme'));
 	} elseif (theme_file_exists_in($requested, 'shells/default.php') === false) {
-		acp_flash_error(
-			'<strong>' . h($themes[$requested]['name']) . '</strong> has no '
-			. '<code>shells/default.php</code>, so it cannot render a page. Not activated.'
-		);
+		acp_flash_error(t('acp.lay.no_shell', [
+			'theme' => '<strong>' . h($themes[$requested]['name']) . '</strong>',
+			'file'  => '<code>shells/default.php</code>',
+		]));
 	} elseif (setting_set('layout', $requested)) {
-		acp_flash_success('Theme switched to <strong>' . h($themes[$requested]['name']) . '</strong>.');
+		acp_log('layouts.activate', $requested);
+		acp_flash_success(t('acp.lay.switched', ['theme' => '<strong>' . h($themes[$requested]['name']) . '</strong>']));
 	} else {
-		acp_flash_error('Could not save the setting. Is the <code>znote_config</code> table present? See SQL/migrations/.');
+		acp_flash_error(t('acp.lay.save_setting_failed', ['table' => '<code>znote_config</code>']));
 	}
 
 	acp_redirect('layouts');
@@ -243,9 +256,11 @@ $hasTable = znote_table_exists('znote_config');
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
 		<span>
-			The <code>znote_config</code> table is missing, so the theme cannot be saved and the
-			site stays on <strong>default</strong>. Run
-			<code>SQL/migrations/2.0.0_znote_config.sql</code> against your database.
+			<?= t('acp.lay.table_missing_banner', [
+				'table'   => '<code>znote_config</code>',
+				'default' => '<strong>default</strong>',
+				'file'    => '<code>SQL/migrations/2.0.0_znote_config.sql</code>',
+			]) ?>
 		</span>
 	</div>
 <?php endif; ?>
@@ -255,7 +270,7 @@ $hasTable = znote_table_exists('znote_config');
 	<div class="acp-actions is-tight">
 		<?php if (theme_repository_config()['enabled']): ?>
 			<a class="acp-btn" href="<?= h(acp_url('layouts', array('tab' => 'browse'))) ?>">
-				<i class="fa fa-cloud-download"></i> Browse themes
+				<i class="fa fa-cloud-download"></i> <?= t('acp.lay.browse_themes') ?>
 			</a>
 		<?php endif; ?>
 	</div>
@@ -263,8 +278,8 @@ $hasTable = znote_table_exists('znote_config');
 
 <div class="acp-stats">
 	<?php
-	acp_stat('Installed themes', count($themes), 'fa-paint-brush', null, 'purple');
-	acp_stat('Active', $themes[$active]['name'] ?? $active, 'fa-check-circle', null, 'green');
+	acp_stat(t('acp.lay.stat_installed'), count($themes), 'fa-paint-brush', null, 'purple');
+	acp_stat(t('acp.lay.stat_active'), $themes[$active]['name'] ?? $active, 'fa-check-circle', null, 'green');
 	?>
 </div>
 
@@ -273,20 +288,20 @@ $hasTable = znote_table_exists('znote_config');
 		<form method="get" style="display:flex;gap:8px;flex:1 1 320px;max-width:460px;">
 			<input type="hidden" name="p" value="layouts">
 			<input class="acp-input" type="search" name="q" value="<?= h($search) ?>"
-				   placeholder="Search themes by name, folder or author&hellip;">
+				   placeholder="<?= h(t('acp.lay.search_placeholder')) ?>">
 			<button class="acp-btn" type="submit"><i class="fa fa-search"></i></button>
 			<?php if ($search !== ''): ?>
-				<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('layouts')) ?>">Clear</a>
+				<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('layouts')) ?>"><?= t('acp.lay.clear') ?></a>
 			<?php endif; ?>
 		</form>
 		<span class="is-muted">
 			<?php if ($search !== ''): ?>
-				<?= (int)$matched ?> of <?= (int)$total ?> themes
+				<?= t('acp.lay.matched_of_total', ['matched' => (int)$matched, 'total' => (int)$total]) ?>
 			<?php else: ?>
-				<?= (int)$total ?> themes
+				<?= t('acp.lay.total_themes', ['total' => (int)$total]) ?>
 			<?php endif; ?>
 			<?php if ($pageCount > 1): ?>
-				&middot; page <?= (int)$page ?> / <?= (int)$pageCount ?>
+				&middot; <?= t('acp.lay.page_of', ['page' => (int)$page, 'pageCount' => (int)$pageCount]) ?>
 			<?php endif; ?>
 		</span>
 	</div>
@@ -314,10 +329,10 @@ $hasTable = znote_table_exists('znote_config');
 				<h3>
 					<?= h($theme['name']) ?>
 					<?php if ($isActive): ?>
-						<span class="acp-pill acp-pill--green">Active</span>
+						<span class="acp-pill acp-pill--green"><?= t('acp.lay.active_pill') ?></span>
 					<?php endif; ?>
 					<?php if (!empty($theme['is_example'])): ?>
-						<span class="acp-pill acp-pill--grey">Template</span>
+						<span class="acp-pill acp-pill--grey"><?= t('acp.lay.template_pill') ?></span>
 					<?php endif; ?>
 				</h3>
 
@@ -328,7 +343,7 @@ $hasTable = znote_table_exists('znote_config');
 				<p class="is-muted" style="font-size:12px;">
 					<code>layouts/<?= h($key) ?>/</code>
 					<?php if ($theme['author'] !== ''): ?>
-						&middot; by <?= h($theme['author']) ?>
+						&middot; <?= t('acp.lay.by_author', ['author' => h($theme['author'])]) ?>
 					<?php endif; ?>
 					<?php if ($theme['version'] !== ''): ?>
 						&middot; v<?= h($theme['version']) ?>
@@ -336,19 +351,18 @@ $hasTable = znote_table_exists('znote_config');
 				</p>
 
 				<p style="font-size:12px;">
-					<span class="acp-pill acp-pill--blue"><?= $shells ?> shell<?= $shells === 1 ? '' : 's' ?></span>
-					<span class="acp-pill acp-pill--grey"><?= $views ?> view<?= $views === 1 ? '' : 's' ?></span>
-					<span class="acp-pill acp-pill--grey"><?= $pages ?> extra page<?= $pages === 1 ? '' : 's' ?></span>
+					<span class="acp-pill acp-pill--blue"><?= t('acp.lay.shell_count', ['n' => $shells]) ?></span>
+					<span class="acp-pill acp-pill--grey"><?= t('acp.lay.view_count', ['n' => $views]) ?></span>
+					<span class="acp-pill acp-pill--grey"><?= t('acp.lay.page_count', ['n' => $pages]) ?></span>
 				</p>
 
 				<?php if (!$isUsable): ?>
 					<p class="is-muted" style="font-size:12px;color:var(--acp-red);">
-						No <code>shells/default.php</code> &mdash; this theme cannot be activated.
+						<?= t('acp.lay.not_usable', ['file' => '<code>shells/default.php</code>']) ?>
 					</p>
 				<?php elseif ($views === 0): ?>
 					<p class="is-muted" style="font-size:12px;">
-						No views of its own: every page uses the default theme's markup,
-						wrapped in this theme's shell and styled by its CSS.
+						<?= t('acp.lay.no_views') ?>
 					</p>
 				<?php endif; ?>
 			</div>
@@ -356,32 +370,32 @@ $hasTable = znote_table_exists('znote_config');
 			<div class="acp-media-foot">
 				<?php if ($isActive): ?>
 					<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_site('index.php')) ?>" target="_blank" rel="noopener">
-						<i class="fa fa-external-link"></i> View site
+						<i class="fa fa-external-link"></i> <?= t('acp.lay.view_site') ?>
 					</a>
 				<?php else: ?>
 					<form class="acp-inline-form" method="post"
-						  data-confirm="Switch the public site to this theme?">
+						  data-confirm="<?= h(t('acp.lay.confirm_switch')) ?>">
 						<?= acp_csrf_field() ?>
 						<input type="hidden" name="layout" value="<?= h($key) ?>">
 						<button class="acp-btn acp-btn--sm" type="submit" <?= $isUsable ? '' : 'disabled' ?>>
-							<i class="fa fa-check"></i> Activate
+							<i class="fa fa-check"></i> <?= t('acp.lay.activate') ?>
 						</button>
 					</form>
 				<?php endif; ?>
 
 				<?php if (theme_options($key)): ?>
 					<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('layouts', array('options' => $key))) ?>">
-						<i class="fa fa-sliders"></i> Options
+						<i class="fa fa-sliders"></i> <?= t('acp.lay.options') ?>
 					</a>
 				<?php endif; ?>
 
 				<?php if (!$isActive && $key !== 'default' && empty($theme['is_example'])): ?>
 					<form class="acp-inline-form" method="post"
-						  data-confirm="Delete layouts/<?= h($key) ?>/ and everything in it? This cannot be undone.">
+						  data-confirm="<?= h(t('acp.lay.confirm_delete', ['path' => 'layouts/' . $key . '/'])) ?>">
 						<?= acp_csrf_field() ?>
 						<input type="hidden" name="uninstall" value="<?= h($key) ?>">
 						<button class="acp-btn acp-btn--red acp-btn--sm" type="submit">
-							<i class="fa fa-trash"></i> Remove
+							<i class="fa fa-trash"></i> <?= t('acp.lay.remove') ?>
 						</button>
 					</form>
 				<?php endif; ?>
@@ -393,20 +407,20 @@ $hasTable = znote_table_exists('znote_config');
 <?php if ($matched === 0): ?>
 	<section class="acp-card">
 		<div class="acp-card-body">
-			<?php acp_empty('No theme matches "' . $search . '".', 'fa-search'); ?>
+			<?php acp_empty(t('acp.lay.no_match', ['search' => $search]), 'fa-search'); ?>
 			<div class="acp-actions" style="justify-content:center;">
-				<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('layouts')) ?>">Show all themes</a>
+				<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('layouts')) ?>"><?= t('acp.lay.show_all') ?></a>
 			</div>
 		</div>
 	</section>
 <?php endif; ?>
 
 <?php if ($pageCount > 1): ?>
-	<nav class="acp-actions" style="justify-content:center;margin:18px 0 24px;" aria-label="Theme pages">
+	<nav class="acp-actions" style="justify-content:center;margin:18px 0 24px;" aria-label="<?= h(t('acp.lay.pages_label')) ?>">
 		<a class="acp-btn acp-btn--ghost acp-btn--sm<?= $page <= 1 ? ' is-disabled' : '' ?>"
 		   href="<?= h(acp_theme_page_url(max(1, $page - 1), $search)) ?>"
 		   <?= $page <= 1 ? 'aria-disabled="true" tabindex="-1"' : '' ?>>
-			<i class="fa fa-angle-left"></i> Previous
+			<i class="fa fa-angle-left"></i> <?= t('acp.lay.previous') ?>
 		</a>
 
 		<?php for ($i = 1; $i <= $pageCount; $i++): ?>
@@ -420,7 +434,7 @@ $hasTable = znote_table_exists('znote_config');
 		<a class="acp-btn acp-btn--ghost acp-btn--sm<?= $page >= $pageCount ? ' is-disabled' : '' ?>"
 		   href="<?= h(acp_theme_page_url(min($pageCount, $page + 1), $search)) ?>"
 		   <?= $page >= $pageCount ? 'aria-disabled="true" tabindex="-1"' : '' ?>>
-			Next <i class="fa fa-angle-right"></i>
+			<?= t('acp.lay.next') ?> <i class="fa fa-angle-right"></i>
 		</a>
 	</nav>
 <?php endif; ?>

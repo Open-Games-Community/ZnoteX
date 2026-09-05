@@ -80,7 +80,7 @@ znote_hook_register('page.footer', static function (): string {
 	return '<div style="position:fixed;left:14px;bottom:14px;z-index:900;padding:8px 13px;'
 		. 'border-radius:6px;background:rgba(20,24,31,.92);color:#dfe4ec;'
 		. 'font:13px system-ui,Arial,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.35);">'
-		. 'Got a coupon code? <a href="' . $url . '" style="color:#d1a233;">Redeem it</a>'
+		. t('coupons.banner') . ' <a href="' . $url . '" style="color:#d1a233;">' . t('coupons.banner_link') . '</a>'
 		. '</div>';
 });
 
@@ -139,10 +139,10 @@ function shop_coupons_redeem(string $code, int $accountId): array {
 
 	$code = shop_coupons_normalise($code);
 	if ($code === '') {
-		return $fail('Enter a code.');
+		return $fail(t('coupons.err_empty'));
 	}
 	if ($accountId <= 0) {
-		return $fail('You need to be logged in.');
+		return $fail(t('coupons.err_login'));
 	}
 
 	$coupon = mysql_select_single("
@@ -153,7 +153,7 @@ function shop_coupons_redeem(string $code, int $accountId): array {
 	");
 
 	if (!is_array($coupon) || !$coupon) {
-		return $fail('That code does not exist.');
+		return $fail(t('coupons.err_unknown'));
 	}
 
 	$id      = (int)$coupon['id'];
@@ -163,10 +163,10 @@ function shop_coupons_redeem(string $code, int $accountId): array {
 	$max     = (int)$coupon['uses_max'];
 
 	if ($expires > 0 && $expires < time()) {
-		return $fail('That code has expired.');
+		return $fail(t('coupons.err_expired'));
 	}
 	if ($max > 0 && (int)$coupon['uses_done'] >= $max) {
-		return $fail('That code has been fully used.');
+		return $fail(t('coupons.err_used_up'));
 	}
 
 	// The real guard against a double redemption: the unique key on
@@ -178,7 +178,7 @@ function shop_coupons_redeem(string $code, int $accountId): array {
 	");
 
 	if ($claimed === false) {
-		return $fail('You have already used that code.');
+		return $fail(t('coupons.err_already'));
 	}
 
 	mysql_update("UPDATE `znote_coupons` SET `uses_done` = `uses_done` + 1 WHERE `id` = {$id} LIMIT 1;");
@@ -191,7 +191,7 @@ function shop_coupons_redeem(string $code, int $accountId): array {
 
 		shop_coupons_pending_discount($accountId, true);
 
-		$message = $value . '% off your next shop purchase. It is applied automatically at checkout.';
+		$message = t('coupons.ok_percent', ['percent' => $value]);
 	} else {
 		$balance = mysql_select_single("SELECT `points` FROM `znote_accounts` WHERE `account_id` = {$accountId} LIMIT 1;");
 
@@ -200,13 +200,13 @@ function shop_coupons_redeem(string $code, int $accountId): array {
 			mysql_delete("DELETE FROM `znote_coupon_uses` WHERE `coupon_id` = {$id} AND `account_id` = {$accountId};");
 			mysql_update("UPDATE `znote_coupons` SET `uses_done` = `uses_done` - 1 WHERE `id` = {$id} LIMIT 1;");
 
-			return $fail('Your account has no points balance yet. Contact an administrator.');
+			return $fail(t('coupons.err_nobalance'));
 		}
 
 		$new = (int)$balance['points'] + $value;
 		mysql_update("UPDATE `znote_accounts` SET `points` = {$new} WHERE `account_id` = {$accountId};");
 
-		$message = $value . ' points added. Your balance is now ' . $new . '.';
+		$message = t('coupons.ok_points', ['points' => $value, 'total' => $new]);
 	}
 
 	// Plugins can extend plugins: this one publishes a hook of its own.

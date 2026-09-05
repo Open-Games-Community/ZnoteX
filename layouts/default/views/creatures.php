@@ -6,7 +6,7 @@
  * $creatureRace, $creatureError. Nothing is read from disk here.
  */
 ?>
-<h1>Creatures</h1>
+<h1><?= t('creatures.title') ?></h1>
 
 <?php if ($creatureError !== ''): ?>
 
@@ -15,10 +15,10 @@
 <?php else: ?>
 
 	<form action="" method="get">
-		<input type="text" name="search" placeholder="Creature name"
+		<input type="text" name="search" placeholder="<?= t('creatures.placeholder') ?>"
 			   value="<?= htmlspecialchars($creatureSearch, ENT_QUOTES, 'UTF-8') ?>">
 		<select name="race">
-			<option value="">All races</option>
+			<option value=""><?= t('creatures.all_races') ?></option>
 			<?php foreach ($creatureRaces as $race): ?>
 				<option value="<?= htmlspecialchars($race, ENT_QUOTES, 'UTF-8') ?>"
 					<?= $race === $creatureRace ? 'selected' : '' ?>>
@@ -26,9 +26,9 @@
 				</option>
 			<?php endforeach; ?>
 		</select>
-		<input type="submit" value="Search" class="btn btn-info">
+		<input type="submit" value="<?= t('common.search') ?>" class="btn btn-info">
 		<?php if ($creatureSearch !== '' || $creatureRace !== ''): ?>
-			<a href="creatures.php" class="btn">Clear</a>
+			<a href="creatures.php" class="btn"><?= t('common.clear') ?></a>
 		<?php endif; ?>
 	</form>
 
@@ -40,7 +40,7 @@
 				<td>Name</td>
 				<td>Race</td>
 				<td>Health</td>
-				<td>Experience</td>
+				<td><?= t('creatures.experience') ?></td>
 				<td>Speed</td>
 			</tr>
 			<?php foreach ($creatures as $creature): ?>
@@ -54,7 +54,7 @@
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		<p>No creature matches.</p>
+		<p><?= t('creatures.no_match') ?></p>
 	<?php endif; ?>
 
 <?php endif; ?>

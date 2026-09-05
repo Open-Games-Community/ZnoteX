@@ -3,25 +3,25 @@
 if ($shop['enabled']) {
 ?>
 
-<h1>Shop Offers</h1>
+<h1><?= t('shop.offers') ?></h1>
 <?php
 if ($loggedin === true) {
 	if (!empty($_POST['buy']) && isset($_SESSION['shop_session']) && $_SESSION['shop_session'] == ($_POST['session'] ?? null)) {
 		if ($user_znote_data['points'] >= $buy['points']) {
-			?><td>You have <?php echo (int)($user_znote_data['points'] - $buy['points']); ?> points. (<a href="buypoints.php">Buy points</a>).</td><?php
+			?><td><?= t('shop.you_have') ?> <?php echo (int)($user_znote_data['points'] - $buy['points']); ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
 		} else {
-			?><td>You have <?php echo $user_znote_data['points']; ?> points. (<a href="buypoints.php">Buy points</a>).</td><?php
+			?><td><?= t('shop.you_have') ?> <?php echo $user_znote_data['points']; ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
 		}
 	} else {
-		?><td>You have <?php echo $user_znote_data['points']; ?> points. (<a href="buypoints.php">Buy points</a>).</td><?php
+		?><td><?= t('shop.you_have') ?> <?php echo $user_znote_data['points']; ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
 	}
 	if ($config['shop_auction']['characterAuction']) {
 		?>
-		<p>Interested in buying characters? View the <a href="auctionChar.php">character auction page!</a></p>
+		<p><?= t('shop.chars_hint') ?> <a href="auctionChar.php"><?= t('auction.title') ?></a></p>
 		<?php
 	}
 } else {
-	?><p>You need to be logged in to use the shop.</p><?php
+	?><p><?= t('shop.need_login') ?></p><?php
 }
 
 $outfitsIds = array(136,137,138,139,140,141,142,147,148,149,150,155,156,157,158,252,269,270,279,288,324,336,366,431,433,464,466,471,513,514,542,128,129,130,131,132,133,134,143,144,145,146,151,152,153,154,251,268,273,278,289,325,335,367,430,432,463,465,472,512,516,541);
@@ -60,12 +60,12 @@ foreach ($shop_list as $key => $offer) {
 // Render a bunch of tables (one for each category)
 ?>
 <div id="categoryNavigator">
-	<a class="nav_link" href="#all">ALL</a>
-	<?php if (!empty($category_items)): ?><a class="nav_link" href="#cat_itemids">ITEMS</a><?php endif; ?>
-	<?php if (!empty($category_premium)): ?><a class="nav_link" href="#cat_premium">PREMIUM</a><?php endif; ?>
-	<?php if (!empty($category_outfits)): ?><a class="nav_link" href="#cat_outfits">OUTFITS</a><?php endif; ?>
-	<?php if (!empty($category_mounts)): ?><a class="nav_link" href="#cat_mounts">MOUNTS</a><?php endif; ?>
-	<?php if (!empty($category_misc)): ?><a class="nav_link" href="#cat_misc">MISC</a><?php endif; ?>
+	<a class="nav_link" href="#all"><?= t('shop.cat_all') ?></a>
+	<?php if (!empty($category_items)): ?><a class="nav_link" href="#cat_itemids"><?= t('shop.cat_items') ?></a><?php endif; ?>
+	<?php if (!empty($category_premium)): ?><a class="nav_link" href="#cat_premium"><?= t('shop.cat_premium') ?></a><?php endif; ?>
+	<?php if (!empty($category_outfits)): ?><a class="nav_link" href="#cat_outfits"><?= t('shop.cat_outfits') ?></a><?php endif; ?>
+	<?php if (!empty($category_mounts)): ?><a class="nav_link" href="#cat_mounts"><?= t('shop.cat_mounts') ?></a><?php endif; ?>
+	<?php if (!empty($category_misc)): ?><a class="nav_link" href="#cat_misc"><?= t('shop.cat_misc') ?></a><?php endif; ?>
 </div>
 <script type="text/javascript">
 	function domReady () {
@@ -130,11 +130,11 @@ foreach ($shop_list as $key => $offer) {
 	<!-- ITEMIDS -->
 	<table class="show" id="cat_itemids">
 		<tr class="yellow">
-			<td>Item:</td>
-			<?php if ($config['shop']['showImage']) { ?><td>Image:</td><?php } ?>
-			<td>Count:</td>
-			<td>Points:</td>
-			<?php if ($loggedin === true): ?><td>Action:</td><?php endif; ?>
+			<td><?= t('shop.item') ?></td>
+			<?php if ($config['shop']['showImage']) { ?><td><?= t('shop.image') ?></td><?php } ?>
+			<td><?= t('shop.count') ?></td>
+			<td><?= t('shop.points_col') ?></td>
+			<?php if ($loggedin === true): ?><td><?= t('shop.action') ?></td><?php endif; ?>
 		</tr>
 		<?php foreach ($category_items as $key => $offers): ?>
 			<tr class="special">
@@ -161,11 +161,11 @@ foreach ($shop_list as $key => $offer) {
 <!-- PREMIUM DURATION -->
 <table class="show" id="cat_premium">
 	<tr class="yellow">
-		<td>Description:</td>
-		<?php if ($config['shop']['showImage']) { ?><td>Image:</td><?php } ?>
-		<td>Duration:</td>
-		<td>Points:</td>
-		<?php if ($loggedin === true): ?><td>Action:</td><?php endif; ?>
+		<td><?= t('shop.description') ?></td>
+		<?php if ($config['shop']['showImage']) { ?><td><?= t('shop.image') ?></td><?php } ?>
+		<td><?= t('shop.duration') ?></td>
+		<td><?= t('shop.points_col') ?></td>
+		<?php if ($loggedin === true): ?><td><?= t('shop.action') ?></td><?php endif; ?>
 	</tr>
 	<?php foreach ($category_premium as $key => $offers): ?>
 		<tr class="special">
@@ -192,17 +192,17 @@ foreach ($shop_list as $key => $offer) {
 <!-- OUTFITS -->
 <table class="show" id="cat_outfits">
 	<tr class="yellow">
-		<td>Description:</td>
-		<?php if ($config['shop']['showImage']) { ?><td>Image:</td><?php } ?>
-		<td>Points:</td>
-		<?php if ($loggedin === true): ?><td>Action:</td><?php endif; ?>
+		<td><?= t('shop.description') ?></td>
+		<?php if ($config['shop']['showImage']) { ?><td><?= t('shop.image') ?></td><?php } ?>
+		<td><?= t('shop.points_col') ?></td>
+		<?php if ($loggedin === true): ?><td><?= t('shop.action') ?></td><?php endif; ?>
 	</tr>
 	<?php foreach ($category_outfits as $key => $offers):
 		if (!is_array($offers['itemid'])) $offers['itemid'] = [$offers['itemid']];
 		if (COUNT($offers['itemid']) > 2): ?>
 			<tr class="special">
 				<td colspan="2">
-					<p><strong>Error:</strong> Outfit offer don't support more than 2 outfits. <?php echo COUNT($offers['itemid']); ?> configured.
+					<p><strong><?= t('shop.error') ?></strong> Outfit offer don't support more than 2 outfits. <?php echo COUNT($offers['itemid']); ?> configured.
 						<br>[<?php echo implode(',', $offers['itemid']); ?>]</p>
 				</td>
 			</tr>
@@ -232,10 +232,10 @@ foreach ($shop_list as $key => $offer) {
 <!-- MOUNTS -->
 <table class="show" id="cat_mounts">
 	<tr class="yellow">
-		<td>Description:</td>
-		<?php if ($config['show_outfits']['shop']) { ?><td>Image:</td><?php } ?>
-		<td>Points:</td>
-		<?php if ($loggedin === true): ?><td>Action:</td><?php endif; ?>
+		<td><?= t('shop.description') ?></td>
+		<?php if ($config['show_outfits']['shop']) { ?><td><?= t('shop.image') ?></td><?php } ?>
+		<td><?= t('shop.points_col') ?></td>
+		<?php if ($loggedin === true): ?><td><?= t('shop.action') ?></td><?php endif; ?>
 	</tr>
 	<?php foreach ($category_mounts as $key => $offers): ?>
 		<tr class="special">
@@ -261,11 +261,11 @@ foreach ($shop_list as $key => $offer) {
 <!-- MISCELLANEOUS -->
 <table class="show" id="cat_misc">
 	<tr class="yellow">
-		<td>Description:</td>
-		<?php if ($config['shop']['showImage']) { ?><td>Image:</td><?php } ?>
-		<td>Count/duration:</td>
-		<td>Points:</td>
-		<?php if ($loggedin === true): ?><td>Action:</td><?php endif; ?>
+		<td><?= t('shop.description') ?></td>
+		<?php if ($config['shop']['showImage']) { ?><td><?= t('shop.image') ?></td><?php } ?>
+		<td><?= t('shop.count_dur') ?></td>
+		<td><?= t('shop.points_col') ?></td>
+		<?php if ($loggedin === true): ?><td><?= t('shop.action') ?></td><?php endif; ?>
 	</tr>
 	<?php foreach ($category_misc as $key => $offers): ?>
 		<tr class="special">
@@ -274,7 +274,7 @@ foreach ($shop_list as $key => $offer) {
 				<td><img src="http://<?php echo $config['shop']['imageServer']; ?>/<?php echo $offers['itemid']; ?>.<?php echo $config['shop']['imageType']; ?>" alt="img"></td>
 			<?php endif;
 			if ($offers['count'] === 0): ?>
-				<td>Unlimited</td>
+				<td><?= t('common.unlimited') ?></td>
 			<?php else: ?>
 				<td><?php echo $offers['count']; ?>x</td>
 			<?php endif; ?>
@@ -314,4 +314,4 @@ foreach ($shop_list as $key => $offer) {
 	// Store current timestamp to prevent page-reload from processing old purchase
 	$_SESSION['shop_session'] = time();
 
-} else echo '<h1>Buy Points system disabled.</h1><p>Sorry, this functionality is disabled.</p>';
+} else echo '<h1>'. t('buypoints.disabled') .'</h1><p>'. t('buypoints.disabled_text') .'</p>';

@@ -65,7 +65,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				</tr>
 			</thead>
 			<tbody>
-				<!-- Player Position -->
+				<!-- Player <?= t('char.position') ?> -->
 				<?php if ($profile_data['group_id'] > 1): 
 					$position = mysql_select_single("
 					SELECT 
@@ -80,7 +80,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 					$position = (isset($config['ingame_positions'][$position['type']])) ? $config['ingame_positions'][$position['type']] : "Unknown";
 					?>
 					<tr>
-						<td>Position</td>
+						<td><?= t('char.position') ?></td>
 						<td><?php echo $position; ?></td>
 					</tr>
 				<?php endif;
@@ -88,7 +88,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				$deletion_time = mysql_select_single("SELECT `time` FROM `znote_deleted_characters` WHERE `character_name`='{$name}' AND `done` = '0' LIMIT 1;");
 				if ($deletion_time !== false): ?>
 					<tr>
-						<td colspan="2" style="color: red;">Flagged for deletion by owner after <?php echo $deletion_time['time']; ?>.</td>
+						<td colspan="2" style="color: red;"><?= t('char.flagged_delete2') ?> <?php echo $deletion_time['time']; ?>.</td>
 					</tr>
 				<?php endif; ?>
 				<!-- Player male / female -->
@@ -103,7 +103,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				</tr>
 				<!-- Player vocation -->
 				<tr>
-					<td>Vocation</td>
+					<td><?= t('common.vocation') ?></td>
 					<td><?php echo vocation_id_to_name($profile_data['vocation']); ?></td>
 				</tr>
 				<!-- Player guild -->
@@ -115,13 +115,13 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				<?php endif; ?>
 				<!-- Player last login -->
 				<tr>
-					<td>Last Login</td>
+					<td><?= t('char.last_login') ?></td>
 					<td><?php echo ($profile_data['lastlogin'] != 0) ? getClock($profile_data['lastlogin'], true, true) : 'Never.'; ?></td>
 				</tr>
 				<!-- Achievement start -->
 				<?php if ($config['Ach'] && (int)$achievementPoints['sum'] > 0): ?>
 					<tr>
-						<td>Achievement Points</td>
+						<td><?= t('char.ach_points') ?></td>
 						<td><?php echo (int)$achievementPoints['sum']; ?></td>
 					</tr>
 				<?php endif; ?>
@@ -595,7 +595,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 			<table class="comment">
 				<thead>
 					<tr class="yellow">
-						<td><font class="profile_font" name="profile_font_comment">Comment:</font></td>
+						<td><font class="profile_font" name="profile_font_comment"><?= t('char.comment') ?></font></td>
 					</tr>
 				</thead>
 				<tbody>
@@ -620,9 +620,9 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				'hide' => '<a href="#hide">Hide</a>'
 			);
 			if ($achievements !== false): ?>
-				<h3>Achievements: <label id="ac_label_hide" for="ac_toggle_hide"><?php echo $toggle['show']; ?></label></h3>
+				<h3><?= t('char.achievements') ?> <label id="ac_label_hide" for="ac_toggle_hide"><?php echo $toggle['show']; ?></label></h3>
 				<!-- <div id="accordion">
-					<h3>Show/hide player achievements</h3>
+					<h3><?= t('char.toggle_ach') ?></h3>
 					<div>
 
 					</div>
@@ -632,7 +632,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th>Description</th>
+							<th><?= t('common.description') ?></th>
 							<th>Points</th>
 						</tr>
 					</thead>
@@ -674,7 +674,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		<table class="deathlist">
 			<thead>
 				<tr class="yellow">
-					<th colspan="2">Death List</th>
+					<th colspan="2"><?= t('char.death_list') ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -707,7 +707,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 							<td><?php echo getClock($d['time'], true, true); ?></td>
 							<td>
 								<?php
-								echo "Killed at level ".$d['level']." by {$lasthit}";
+								echo t('char.killed_at', ['level' => $d['level'], 'killer' => $lasthit]);
 								if ($d['unjustified']) {
 									echo " <font color='red' style='font-style: italic;'>(unjustified)</font>";
 								}
@@ -733,7 +733,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				} else {
 					?>
 					<tr>
-						<td colspan="2">This player has never died.</td>
+						<td colspan="2"><?= t('char.never_died') ?></td>
 					</tr>
 					<?php
 				}
@@ -831,13 +831,13 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		if ($otherChars !== false) {
 			?>
 			<li>
-				<b>Other visible characters on this account:</b><br>
+				<b><?= t('char.other_chars') ?></b><br>
 				<table id="characterprofileTable" class="table table-striped table-hover">
 					<tr class="yellow">
 						<th>Name:</th>
 						<th>Level:</th>
-						<th>Vocation:</th>
-						<th>Last login:</th>
+						<th><?= t('common.vocation_label') ?></th>
+						<th><?= t('char.last_login_label') ?></th>
 						<th>Status:</th>
 					</tr>
 					<?php
@@ -861,7 +861,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		?>
 		<!-- END CHARACTER LIST -->
 
-		<p class="address">Address: <a href="<?php echo ($config['htwrite']) ? "//" . $_SERVER['HTTP_HOST']."/" . $profile_data['name'] : "//" . $_SERVER['HTTP_HOST'] . "/characterprofile.php?name=" . $profile_data['name']; ?>"><?php echo ($config['htwrite']) ? $_SERVER['HTTP_HOST']."/". $profile_data['name'] : $_SERVER['HTTP_HOST']."/characterprofile.php?name=". $profile_data['name']; ?></a></p>
+		<p class="address"><?= t('char.address') ?> <a href="<?php echo ($config['htwrite']) ? "//" . $_SERVER['HTTP_HOST']."/" . $profile_data['name'] : "//" . $_SERVER['HTTP_HOST'] . "/characterprofile.php?name=" . $profile_data['name']; ?>"><?php echo ($config['htwrite']) ? $_SERVER['HTTP_HOST']."/". $profile_data['name'] : $_SERVER['HTTP_HOST']."/characterprofile.php?name=". $profile_data['name']; ?></a></p>
 
 		<?php
 	} else {

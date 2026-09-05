@@ -66,45 +66,45 @@ function serverdata_sources(): array
 		// by the web server, so the file itself is never kept: it is read once
 		// from the upload and only the whitelisted values survive.
 		'config' => array(
-			'label'  => 'Server information',
+			'label'  => t_default('acp.src.config.label', 'Server information'),
 			'file'   => 'config.lua',
 			'cache'  => 'engine/cache/luaconfig',
 			'accept' => '.lua',
 			'page'   => 'serverinfo.php',
 			'store'  => false,
-			'help'   => 'Your server config.lua. Only the whitelisted settings are kept - the file itself is parsed and discarded, never stored where it could be downloaded.'
+			'help'   => t_default('acp.src.config.help', 'Your server config.lua. Only the whitelisted settings are kept - the file itself is parsed and discarded, never stored where it could be downloaded.')
 		),
 		'stages' => array(
-			'label'  => 'Experience stages',
+			'label'  => t_default('acp.src.stages.label', 'Experience stages'),
 			'file'   => 'stages.xml',
 			'cache'  => 'engine/cache/stages',
 			'accept' => '.xml',
 			'page'   => 'serverinfo.php',
-			'help'   => 'data/XML/stages.xml. Only used when stages are enabled in it or in config.lua.'
+			'help'   => t_default('acp.src.stages.help', 'data/XML/stages.xml. Only used when stages are enabled in it or in config.lua.')
 		),
 		'items' => array(
-			'label'  => 'Items',
+			'label'  => t_default('acp.src.items.label', 'Items'),
 			'file'   => 'items.xml',
 			'cache'  => 'engine/cache/items',
 			'accept' => '.xml',
 			'page'   => 'items.php',
-			'help'   => 'data/items/items.xml. Only equipable items (slotType or weaponType) are published.'
+			'help'   => t_default('acp.src.items.help', 'data/items/items.xml. Only equipable items (slotType or weaponType) are published.')
 		),
 		'spells' => array(
-			'label'  => 'Spells',
+			'label'  => t_default('acp.src.spells.label', 'Spells'),
 			'file'   => 'spells.xml',
 			'cache'  => 'engine/cache/spells',
 			'accept' => '.xml',
 			'page'   => 'spells.php',
-			'help'   => 'data/spells/spells.xml. Monster spells and house spells are filtered out.'
+			'help'   => t_default('acp.src.spells.help', 'data/spells/spells.xml. Monster spells and house spells are filtered out.')
 		),
 		'creatures' => array(
-			'label'  => 'Monsters',
+			'label'  => t_default('acp.src.creatures.label', 'Monsters'),
 			'file'   => 'monster/monsters.xml',
 			'cache'  => 'engine/cache/creatures',
 			'accept' => '.xml,.zip',
 			'page'   => 'creatures.php',
-			'help'   => 'monsters.xml only lists names and file paths. Upload a .zip of data/monster/ to get health, experience, speed and race.'
+			'help'   => t_default('acp.src.creatures.help', 'monsters.xml only lists names and file paths. Upload a .zip of data/monster/ to get health, experience, speed and race.')
 		)
 	);
 }

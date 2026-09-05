@@ -22,7 +22,7 @@ if ($view !== false) {
 	$ticketData = mysql_select_single("SELECT * FROM znote_tickets WHERE id='$view' LIMIT 1;");
 
 	if(!$ticketData || $ticketData['owner'] != $session_user_id) {
-		echo 'You can not view this ticket!';
+		echo t('helpdesk.no_access');
 		theme_close();
 		die;
 	}
@@ -85,7 +85,7 @@ if ($view !== false) {
 		<form action="" method="post">
 			<input type="hidden" name="username" value="<?php echo $ticketData['username']; ?>"><br>
 			<textarea class="forumReply" name="reply_text" style="width: 610px; height: 150px"></textarea><br>
-			<input name="" type="submit" value="Post Reply" class="btn btn-primary">
+			<input name="" type="submit" value="<?= t('helpdesk.reply') ?>" class="btn btn-primary">
 		</form>
 	<?php } ?>
 	<?php
@@ -98,7 +98,7 @@ if ($view !== false) {
 		$required_fields = array('username', 'email', 'subject', 'message');
 		foreach($_POST as $key=>$value) {
 			if (empty($value) && in_array($key, $required_fields) === true) {
-				$errors[] = 'You need to fill in all fields.';
+				$errors[] = t('reg.fill_all');
 				break 1;
 			}
 		}
@@ -107,21 +107,21 @@ if ($view !== false) {
 		if (empty($errors) === true) {
 			/* Token used for cross site scripting security */
 			if (!Token::isValid($_POST['token'])) {
-				$errors[] = 'Token is invalid.';
+				$errors[] = t('login.token_invalid');
 			}
 			if ($config['use_captcha']) {
 				if(!verifyGoogleReCaptcha($_POST['g-recaptcha-response'])) {
-					$errors[] = "Please confirm that you're not a robot.";
+					$errors[] = t('reg.captcha');
 				}
 			}
 			// Reversed this if, so: first check if you need to validate, then validate.
 			if ($config['validate_IP'] === true && validate_ip(getIP()) === false) {
-				$errors[] = 'Failed to recognize your IP address. (Not a valid IPv4 address).';
+				$errors[] = t('reg.bad_ip');
 			}
 		}
 	}
 	?>
-	<h1>Latest Tickets</h1>
+	<h1><?= t('helpdesk.latest') ?></h1>
 	<?php
 	$tickets = mysql_select_multi("SELECT id,subject,creation,status FROM znote_tickets WHERE owner=$session_user_id ORDER BY creation DESC");
 	if ($tickets !== false) {
@@ -129,8 +129,8 @@ if ($view !== false) {
 		<table>
 			<tr class="yellow">
 				<td>ID:</td>
-				<td>Subject:</td>
-				<td>Creation:</td>
+				<td><?= t('helpdesk.subject') ?></td>
+				<td><?= t('helpdesk.creation') ?></td>
 				<td>Status:</td>
 			</tr>
 				<?php
@@ -148,10 +148,10 @@ if ($view !== false) {
 	}
 	?>
 
-	<h1>Helpdesk</h1>
+	<h1><?= t('helpdesk.title') ?></h1>
 	<?php
 	if (isset($_GET['success']) && empty($_GET['success'])) {
-		echo 'Congratulations! Your ticket has been created. We will reply up to 24 hours.';
+		echo t('helpdesk.created');
 	} else {
 
 		if (empty($_POST) === false && empty($errors) === true) {
@@ -194,7 +194,7 @@ if ($view !== false) {
 					<input type="text" name="email" size="40" value="<?php echo $account['email']; ?>" disabled>
 				</li>
 				<li>
-					Subject:<br>
+					<?= t('helpdesk.subject') ?><br>
 					<input type="text" name="subject" size="40">
 				</li>
 				<li>
@@ -216,7 +216,7 @@ if ($view !== false) {
 				?>
 				<li>
 					<input type="hidden" name="username" value="<?php echo $account['name']; ?>">
-					<input type="submit" value="Submit ticket">
+					<input type="submit" value="<?= t('helpdesk.submit') ?>">
 				</li>
 			</ul>
 		</form>

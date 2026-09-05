@@ -33,7 +33,7 @@ $highlight = static function (string $text, string $q): string {
 	<input type="hidden" name="p" value="search">
 	<div class="acp-field">
 		<input class="acp-input acp-input--lg" type="search" name="q" value="<?= h($query) ?>"
-			   placeholder="Search settings, pages, payment fields&hellip;" autofocus>
+			   placeholder="<?= h(t('acp.search.placeholder')) ?>" autofocus>
 	</div>
 </form>
 
@@ -41,22 +41,28 @@ $highlight = static function (string $text, string $q): string {
 	<div class="acp-flash acp-flash--info">
 		<i class="fa fa-info-circle"></i>
 		<span>
-			Type anything a setting is called or does. <code>download</code> finds the client URLs,
-			<code>paypal</code> finds the gateway fields, <code>auction</code> finds the character auction.
+			<?= str_replace(
+				['{download}', '{paypal}', '{auction}'],
+				['<code>download</code>', '<code>paypal</code>', '<code>auction</code>'],
+				h(t('acp.search.hint'))
+			) ?>
 		</span>
 	</div>
 <?php elseif (!$results): ?>
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
-		<span>Nothing matches <strong><?= h($query) ?></strong>.</span>
+		<span><?= t('acp.search.nothing') ?> <strong><?= h($query) ?></strong>.</span>
 	</div>
 <?php else: ?>
 
 	<p class="acp-hint">
-		<?= count($results) ?> result<?= count($results) === 1 ? '' : 's' ?> for <strong><?= h($query) ?></strong>
+		<?= t('acp.search.results_line', [
+			'count' => count($results),
+			'noun'  => (count($results) === 1) ? t('acp.search.result_one') : t('acp.search.result_many'),
+		]) ?> <strong><?= h($query) ?></strong>
 	</p>
 
-	<?php foreach (array('Pages' => $pages, 'Settings and fields' => $settings) as $heading => $rows): ?>
+	<?php foreach (array(t('acp.search.section_pages') => $pages, t('acp.search.section_settings') => $settings) as $heading => $rows): ?>
 		<?php if (!$rows) continue; ?>
 		<section class="acp-card">
 			<header class="acp-card-head"><h2><?= h($heading) ?></h2></header>

@@ -12,51 +12,50 @@
 /** "3 days left", "permanent", or "expired". */
 function znote_ban_remaining(int $expires): string {
 	if ($expires <= 0) {
-		return 'Permanent';
+		return t('bans.permanent');
 	}
 
 	$left = $expires - time();
 	if ($left <= 0) {
-		return 'Expired';
+		return t('bans.expired');
 	}
 
 	$days  = intdiv($left, 86400);
 	$hours = intdiv($left % 86400, 3600);
 
 	if ($days > 0) {
-		return $days . ' day' . ($days === 1 ? '' : 's') . ' left';
+		return t('bans.days_left', ['n' => $days]);
 	}
 	if ($hours > 0) {
-		return $hours . ' hour' . ($hours === 1 ? '' : 's') . ' left';
+		return t('bans.hours_left', ['n' => $hours]);
 	}
 
-	return 'Less than an hour';
+	return t('bans.less_hour');
 }
 ?>
-<h1>Bans</h1>
+<h1><?= t('bans.title') ?></h1>
 
 <?php if (!$bansSupported): ?>
 
-	<p>This server engine does not expose a ban list.</p>
+	<p><?= t('bans.unsupported') ?></p>
 
 <?php else: ?>
 
 	<p class="txt">
-		Rule violations handled by the gamemasters.
+		<?= t('bans.intro') ?>
 		<?php if ($ipBanCount > 0): ?>
-			<?= (int)$ipBanCount ?> address ban<?= $ipBanCount === 1 ? ' is' : 's are' ?> also in force;
-			addresses are not listed.
+			<?= t('bans.ip_count', ['count' => (int)$ipBanCount]) ?>
 		<?php endif; ?>
 	</p>
 
-	<h2>Banned accounts</h2>
+	<h2><?= t('bans.accounts') ?></h2>
 	<?php if ($accountBans): ?>
 		<table class="table table-striped">
 			<tr class="yellow">
-				<td>Character</td>
-				<td>Reason</td>
-				<td>Banned</td>
-				<td>Status</td>
+				<td><?= t('common.character') ?></td>
+				<td><?= t('common.reason') ?></td>
+				<td><?= t('bans.banned') ?></td>
+				<td><?= t('common.status') ?></td>
 			</tr>
 			<?php foreach ($accountBans as $ban): ?>
 				<tr>
@@ -72,16 +71,16 @@ function znote_ban_remaining(int $expires): string {
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		<p>No accounts are currently banned.</p>
+		<p><?= t('bans.none') ?></p>
 	<?php endif; ?>
 
-	<h2>Name locks</h2>
+	<h2><?= t('bans.namelocks') ?></h2>
 	<?php if ($nameLocks): ?>
 		<table class="table table-striped">
 			<tr class="yellow">
-				<td>Character</td>
-				<td>Reason</td>
-				<td>Locked</td>
+				<td><?= t('common.character') ?></td>
+				<td><?= t('common.reason') ?></td>
+				<td><?= t('bans.locked') ?></td>
 			</tr>
 			<?php foreach ($nameLocks as $lock): ?>
 				<tr>
@@ -96,7 +95,7 @@ function znote_ban_remaining(int $expires): string {
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		<p>No name locks in force.</p>
+		<p><?= t('bans.no_namelocks') ?></p>
 	<?php endif; ?>
 
 <?php endif; ?>

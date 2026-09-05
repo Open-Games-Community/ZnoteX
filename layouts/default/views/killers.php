@@ -15,12 +15,12 @@
 
 <?php if ($killersMode === 'modern'): ?>
 
-	<h1>Biggest Murders</h1>
+	<h1><?= t('killers.biggest_murders') ?></h1>
 	<?php if ($killers): ?>
 		<table id="killersTable" class="table table-striped">
 			<tr class="yellow">
-				<th>Name</th>
-				<th>Kills</th>
+				<th><?= t('common.name') ?></th>
+				<th><?= t('killers.kills') ?></th>
 			</tr>
 			<?php foreach ($killers as $killer): ?>
 				<tr>
@@ -32,15 +32,15 @@
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		No player kills exist.
+		<?= t('killers.no_kills') ?>
 	<?php endif; ?>
 
-	<h1>Biggest Victims</h1>
+	<h1><?= t('killers.biggest_victims') ?></h1>
 	<?php if ($victims): ?>
 		<table id="victimsTable" class="table table-striped">
 			<tr class="yellow">
-				<th>Name</th>
-				<th>Deaths</th>
+				<th><?= t('common.name') ?></th>
+				<th><?= t('killers.deaths') ?></th>
 			</tr>
 			<?php foreach ($victims as $victim): ?>
 				<tr>
@@ -52,16 +52,16 @@
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		No player kills exist.
+		<?= t('killers.no_kills') ?>
 	<?php endif; ?>
 
-	<h1>Latest kills</h1>
+	<h1><?= t('killers.latest_kills') ?></h1>
 	<?php if ($latests): ?>
 		<table id="killersTable" class="table table-striped">
 			<tr class="yellow">
-				<th>Killer</th>
-				<th>Time</th>
-				<th>Victim</th>
+				<th><?= t('killers.killer') ?></th>
+				<th><?= t('common.time') ?></th>
+				<th><?= t('killers.victim') ?></th>
 			</tr>
 			<?php foreach ($latests as $last): ?>
 				<tr>
@@ -76,18 +76,18 @@
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		No player kills exist.
+		<?= t('killers.no_kills') ?>
 	<?php endif; ?>
 
 <?php elseif ($killersMode === 'legacy'): ?>
 
 	<?php if ($deaths): ?>
-		<h1>Latest Killers</h1>
+		<h1><?= t('killers.latest') ?></h1>
 		<table id="deathsTable" class="table table-striped">
 			<tr class="yellow">
-				<th>Killer</th>
-				<th>Time</th>
-				<th>Victim</th>
+				<th><?= t('killers.killer') ?></th>
+				<th><?= t('common.time') ?></th>
+				<th><?= t('killers.victim') ?></th>
 			</tr>
 			<?php foreach ($deaths as $death): ?>
 				<tr>
@@ -96,14 +96,14 @@
 					</td>
 					<td><?= htmlspecialchars(getClock($death['time'], true), ENT_QUOTES, 'UTF-8') ?></td>
 					<td>
-						At level <?= (int)$death['level'] ?>:
+						<?= t('deaths.at_level', ['level' => (int)$death['level']]) ?>
 						<a href="characterprofile.php?name=<?= urlencode($death['victim']) ?>"><?= htmlspecialchars($death['victim'], ENT_QUOTES, 'UTF-8') ?></a>
 					</td>
 				</tr>
 			<?php endforeach; ?>
 		</table>
 	<?php else: ?>
-		No player deaths exist.
+		<?= t('killers.no_deaths') ?>
 	<?php endif; ?>
 
 <?php endif; ?>
