@@ -231,6 +231,12 @@ function te(string $key, array $vars = array()): void {
 	echo t($key, $vars);
 }
 
+if (!function_exists('h')) {
+	function h($s): string {
+		return htmlspecialchars((string)($s ?? ''), ENT_QUOTES, 'UTF-8');
+	}
+}
+
 function t_default(string $key, string $fallback, array $vars = array()): string {
 	$text = t($key, $vars);
 	return ($text === $key) ? $fallback : $text;
