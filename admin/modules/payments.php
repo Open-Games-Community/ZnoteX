@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if ($failed > 0) {
 		acp_flash_error(t('acp.pay.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
+		acp_log('payments.save', '', ['fields_saved' => $saved]);
 		acp_flash_success(t('acp.pay.save_success', ['n' => $saved]));
 	}
 
