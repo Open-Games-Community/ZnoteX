@@ -280,6 +280,55 @@ function acp_convert_menu_parent_id(int $category): int {
 		LIMIT 1;");
 }
 
+function acp_convert_dump_skip_comment(string $sql, int $index, int $len) {
+	$ch = $sql[$index];
+	$next = ($index + 1 < $len) ? $sql[$index + 1] : '';
+
+	if (($ch === '-' && $next === '-') || $ch === '#') {
+		while ($index < $len && $sql[$index] !== "\n") $index++;
+		return $index;
+	}
+
+	if ($ch === '/' && $next === '*') {
+		$index += 2;
+		while ($index + 1 < $len && !($sql[$index] === '*' && $sql[$index + 1] === '/')) $index++;
+		return $index + 1;
+	}
+
+	return false;
+}
+
+function acp_convert_dump_consume_quoted_char(string $sql, int &$index, int $len, string $quote, string &$buf): string {
+	$ch = $sql[$index];
+	$next = ($index + 1 < $len) ? $sql[$index + 1] : '';
+
+	if ($ch === '\\') {
+		if ($index + 1 < $len) {
+			$buf .= $sql[++$index];
+		}
+		return $quote;
+	}
+
+	if ($ch !== $quote) {
+		return $quote;
+	}
+
+	if ($quote === "'" && $next === "'") {
+		$buf .= $sql[++$index];
+		return $quote;
+	}
+
+	return '';
+}
+
+function acp_convert_dump_push_statement(array &$statements, string &$buf): void {
+	$statement = trim(substr($buf, 0, -1));
+	if ($statement !== '') {
+		$statements[] = $statement;
+	}
+	$buf = '';
+}
+
 function acp_convert_dump_split(string $sql): array {
 	$statements = [];
 	$buf = '';
@@ -287,40 +336,19 @@ function acp_convert_dump_split(string $sql): array {
 	$len = strlen($sql);
 
 	for ($i = 0; $i < $len; $i++) {
+		if ($quote === '') {
+			$commentEnd = acp_convert_dump_skip_comment($sql, $i, $len);
+			if ($commentEnd !== false) {
+				$i = $commentEnd;
+				continue;
+			}
+		}
+
 		$ch = $sql[$i];
-		$next = ($i + 1 < $len) ? $sql[$i + 1] : '';
-
-		if ($quote === '' && $ch === '-' && $next === '-') {
-			while ($i < $len && $sql[$i] !== "\n") $i++;
-			continue;
-		}
-		if ($quote === '' && $ch === '#') {
-			while ($i < $len && $sql[$i] !== "\n") $i++;
-			continue;
-		}
-		if ($quote === '' && $ch === '/' && $next === '*') {
-			$i += 2;
-			while ($i + 1 < $len && !($sql[$i] === '*' && $sql[$i + 1] === '/')) $i++;
-			$i++;
-			continue;
-		}
-
 		$buf .= $ch;
 
 		if ($quote !== '') {
-			if ($ch === '\\') {
-				if ($i + 1 < $len) {
-					$buf .= $sql[++$i];
-				}
-				continue;
-			}
-			if ($ch === $quote) {
-				if ($quote === "'" && $next === "'") {
-					$buf .= $sql[++$i];
-					continue;
-				}
-				$quote = '';
-			}
+			$quote = acp_convert_dump_consume_quoted_char($sql, $i, $len, $quote, $buf);
 			continue;
 		}
 
@@ -330,11 +358,7 @@ function acp_convert_dump_split(string $sql): array {
 		}
 
 		if ($ch === ';') {
-			$statement = trim(substr($buf, 0, -1));
-			if ($statement !== '') {
-				$statements[] = $statement;
-			}
-			$buf = '';
+			acp_convert_dump_push_statement($statements, $buf);
 		}
 	}
 
@@ -752,41 +776,21 @@ function acp_convert_dump_reference_value(string $source, string $table, string 
 	return $value;
 }
 
-function acp_convert_dump_restore_sql(array $model, string $source): string {
-	$out = [];
-	$guard = 0;
+function acp_convert_dump_ordered_tables(array $model): array {
 	$orderedTables = array_keys($model['tables']);
 	usort($orderedTables, static function (string $left, string $right): int {
 		$priority = ['accounts' => 0, 'players' => 1];
 		return ($priority[$left] ?? 2) <=> ($priority[$right] ?? 2);
 	});
 
-	foreach ($orderedTables as $table) {
-		$rows = $model['tables'][$table];
-		if (!preg_match('/^[a-zA-Z0-9_]+$/', (string)$table)) {
-			continue;
-		}
+	return $orderedTables;
+}
 
-		$columns = $model['columns'][$table] ?? [];
-		$defs = $model['column_defs'][$table] ?? [];
-		$create = trim((string)($model['creates'][$table] ?? ''));
-		if ($create === '' || !$columns) {
-			continue;
-		}
+function acp_convert_dump_restore_add_column_sql(string $table, string $column, string $definition, int $guard): string {
+	$checkVar = '@znote_restore_col_' . $guard;
+	$stmtName = 'znote_restore_col_stmt_' . $guard;
 
-		$out[] = "-- Restore source table: {$table}";
-		$out[] = $create;
-
-		foreach ($columns as $column) {
-			if (!isset($defs[$column]) || !preg_match('/^[a-zA-Z0-9_]+$/', (string)$column)) {
-				continue;
-			}
-			$definition = acp_convert_dump_integer_definition($defs[$column], $column, $rows);
-			$effectiveDef = (string)$definition['definition'];
-			$guard++;
-			$checkVar = '@znote_restore_col_' . $guard;
-			$stmtName = 'znote_restore_col_stmt_' . $guard;
-			$out[] = "SET {$checkVar} := IF(
+	return "SET {$checkVar} := IF(
   (
     SELECT COUNT(*)
     FROM INFORMATION_SCHEMA.COLUMNS
@@ -794,61 +798,81 @@ function acp_convert_dump_restore_sql(array $model, string $source): string {
     AND TABLE_NAME = " . acp_convert_sql_literal($table) . "
     AND COLUMN_NAME = " . acp_convert_sql_literal($column) . "
   ) = 0,
-  " . acp_convert_sql_literal('ALTER TABLE `' . $table . '` ADD ' . $effectiveDef) . ",
+  " . acp_convert_sql_literal('ALTER TABLE `' . $table . '` ADD ' . $definition) . ",
   'SELECT 1'
 );
 PREPARE {$stmtName} FROM {$checkVar};
 EXECUTE {$stmtName};
 DEALLOCATE PREPARE {$stmtName};";
+}
 
-			if (!empty($definition['widened_from'])) {
-				$guard++;
-				$checkVar = '@znote_restore_widen_' . $guard;
-				$stmtName = 'znote_restore_widen_stmt_' . $guard;
-				$smallerTypes = implode(', ', array_map('acp_convert_sql_literal', $definition['widened_from']));
-				$out[] = "SET {$checkVar} := IF(
+function acp_convert_dump_restore_widen_column_sql(string $table, string $column, string $definition, array $smallerTypes, int $guard): string {
+	$checkVar = '@znote_restore_widen_' . $guard;
+	$stmtName = 'znote_restore_widen_stmt_' . $guard;
+	$smallerTypesSql = implode(', ', array_map('acp_convert_sql_literal', $smallerTypes));
+
+	return "SET {$checkVar} := IF(
   EXISTS(
     SELECT 1
     FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE()
     AND TABLE_NAME = " . acp_convert_sql_literal($table) . "
     AND COLUMN_NAME = " . acp_convert_sql_literal($column) . "
-    AND DATA_TYPE IN ({$smallerTypes})
+    AND DATA_TYPE IN ({$smallerTypesSql})
   ),
-  " . acp_convert_sql_literal('ALTER TABLE `' . $table . '` MODIFY ' . $effectiveDef) . ",
+  " . acp_convert_sql_literal('ALTER TABLE `' . $table . '` MODIFY ' . $definition) . ",
   'SELECT 1'
 );
 PREPARE {$stmtName} FROM {$checkVar};
 EXECUTE {$stmtName};
 DEALLOCATE PREPARE {$stmtName};";
-			}
-		}
+}
 
-		if (!$rows) {
+function acp_convert_dump_restore_schema_sql(string $table, array $columns, array $defs, array $rows, int &$guard): array {
+	$out = [];
+	foreach ($columns as $column) {
+		if (!isset($defs[$column]) || !preg_match('/^[a-zA-Z0-9_]+$/', (string)$column)) {
 			continue;
 		}
 
-		$quotedColumns = array_map(static fn($column) => '`' . $column . '`', $columns);
-		$updates = [];
-		foreach ($columns as $column) {
-			if (($table === 'accounts' || $table === 'players') && $column === 'id') {
-				continue;
-			}
-			$updates[] = '`' . $column . '` = VALUES(`' . $column . '`)';
-		}
+		$definition = acp_convert_dump_integer_definition($defs[$column], $column, $rows);
+		$effectiveDef = (string)$definition['definition'];
+		$out[] = acp_convert_dump_restore_add_column_sql($table, $column, $effectiveDef, ++$guard);
 
-		if ($table === 'accounts' || $table === 'players') {
-			$mapVariable = $table === 'accounts' ? '@znote_import_account_id' : '@znote_import_player_id';
-			foreach ($rows as $row) {
-				$sourceId = (int)acp_convert_row_value($row, ['id'], 0);
-				if ($sourceId <= 0) {
-					continue;
-				}
-				$sourceName = trim((string)acp_convert_row_value($row, ['name'], ''));
-				$sameNameSql = $sourceName !== ''
-					? "(SELECT `id` FROM `{$table}` WHERE `name` = " . acp_convert_sql_literal($sourceName) . " LIMIT 1),"
-					: '';
-				$out[] = "SET {$mapVariable} := COALESCE(
+		if (!empty($definition['widened_from'])) {
+			$out[] = acp_convert_dump_restore_widen_column_sql($table, $column, $effectiveDef, $definition['widened_from'], ++$guard);
+		}
+	}
+
+	return $out;
+}
+
+function acp_convert_dump_restore_updates(string $table, array $columns): array {
+	$updates = [];
+	foreach ($columns as $column) {
+		if (($table === 'accounts' || $table === 'players') && $column === 'id') {
+			continue;
+		}
+		$updates[] = '`' . $column . '` = VALUES(`' . $column . '`)';
+	}
+
+	return $updates;
+}
+
+function acp_convert_dump_restore_identity_row_sql(string $source, string $table, array $row, array $columns, array $quotedColumns, array $updates): array {
+	$sourceId = (int)acp_convert_row_value($row, ['id'], 0);
+	if ($sourceId <= 0) {
+		return [];
+	}
+
+	$mapVariable = $table === 'accounts' ? '@znote_import_account_id' : '@znote_import_player_id';
+	$sourceName = trim((string)acp_convert_row_value($row, ['name'], ''));
+	$sameNameSql = $sourceName !== ''
+		? "(SELECT `id` FROM `{$table}` WHERE `name` = " . acp_convert_sql_literal($sourceName) . " LIMIT 1),"
+		: '';
+
+	$out = [];
+	$out[] = "SET {$mapVariable} := COALESCE(
   (SELECT `target_id` FROM `znote_convert_map`
    WHERE `source` = " . acp_convert_sql_literal($source) . "
    AND `source_table` = " . acp_convert_sql_literal($table) . "
@@ -860,58 +884,120 @@ DEALLOCATE PREPARE {$stmtName};";
     {$sourceId}
   )
 );";
-				$out[] = "INSERT INTO `znote_convert_map`
+	$out[] = "INSERT INTO `znote_convert_map`
   (`source`, `source_table`, `source_id`, `target_table`, `target_id`, `created`)
 VALUES (" . acp_convert_sql_literal($source) . ", " . acp_convert_sql_literal($table) . ", "
-					. acp_convert_sql_literal((string)$sourceId) . ", " . acp_convert_sql_literal($table)
-					. ", {$mapVariable}, UNIX_TIMESTAMP())
+		. acp_convert_sql_literal((string)$sourceId) . ", " . acp_convert_sql_literal($table)
+		. ", {$mapVariable}, UNIX_TIMESTAMP())
 ON DUPLICATE KEY UPDATE `target_id` = VALUES(`target_id`);";
 
-				$mappedRow = $row;
-				$mappedRow['id'] = ['sql' => $mapVariable];
-				foreach ($columns as $column) {
-					$mappedRow[$column] = acp_convert_dump_reference_value($source, $table, $column, $mappedRow[$column] ?? null);
-				}
-				$out[] = "INSERT INTO `{$table}` (" . implode(', ', $quotedColumns) . ") VALUES\n"
-					. acp_convert_dump_sql_values([$mappedRow], $columns)
-					. "\nON DUPLICATE KEY UPDATE " . implode(', ', $updates) . ';';
-			}
-			continue;
-		}
+	$mappedRow = $row;
+	$mappedRow['id'] = ['sql' => $mapVariable];
+	foreach ($columns as $column) {
+		$mappedRow[$column] = acp_convert_dump_reference_value($source, $table, $column, $mappedRow[$column] ?? null);
+	}
+	$out[] = "INSERT INTO `{$table}` (" . implode(', ', $quotedColumns) . ") VALUES\n"
+		. acp_convert_dump_sql_values([$mappedRow], $columns)
+		. "\nON DUPLICATE KEY UPDATE " . implode(', ', $updates) . ';';
 
-		$mappedRows = [];
-		foreach ($rows as $row) {
-			foreach ($columns as $column) {
-				$row[$column] = acp_convert_dump_reference_value($source, $table, $column, $row[$column] ?? null);
-			}
-			$mappedRows[] = $row;
+	return $out;
+}
+
+function acp_convert_dump_restore_identity_table_sql(string $source, string $table, array $rows, array $columns, array $quotedColumns, array $updates): array {
+	$out = [];
+	foreach ($rows as $row) {
+		array_push($out, ...acp_convert_dump_restore_identity_row_sql($source, $table, $row, $columns, $quotedColumns, $updates));
+	}
+
+	return $out;
+}
+
+function acp_convert_dump_restore_regular_table_sql(string $source, string $table, array $rows, array $columns, array $quotedColumns, array $updates): array {
+	$mappedRows = [];
+	foreach ($rows as $row) {
+		foreach ($columns as $column) {
+			$row[$column] = acp_convert_dump_reference_value($source, $table, $column, $row[$column] ?? null);
 		}
-		$out[] = "INSERT INTO `{$table}` (" . implode(', ', $quotedColumns) . ") VALUES\n"
+		$mappedRows[] = $row;
+	}
+
+	if (!$mappedRows) {
+		return [];
+	}
+
+	return [
+		"INSERT INTO `{$table}` (" . implode(', ', $quotedColumns) . ") VALUES\n"
 			. acp_convert_dump_sql_values($mappedRows, $columns)
-			. "\nON DUPLICATE KEY UPDATE " . implode(', ', $updates) . ';';
+			. "\nON DUPLICATE KEY UPDATE " . implode(', ', $updates) . ';',
+	];
+}
+
+function acp_convert_dump_restore_table_sql(array $model, string $source, string $table, int &$guard): array {
+	if (!preg_match('/^[a-zA-Z0-9_]+$/', (string)$table)) {
+		return [];
+	}
+
+	$rows = $model['tables'][$table];
+	$columns = $model['columns'][$table] ?? [];
+	$defs = $model['column_defs'][$table] ?? [];
+	$create = trim((string)($model['creates'][$table] ?? ''));
+	if ($create === '' || !$columns) {
+		return [];
+	}
+
+	$out = ["-- Restore source table: {$table}", $create];
+	array_push($out, ...acp_convert_dump_restore_schema_sql($table, $columns, $defs, $rows, $guard));
+	if (!$rows) {
+		return $out;
+	}
+
+	$quotedColumns = array_map(static fn($column) => '`' . $column . '`', $columns);
+	$updates = acp_convert_dump_restore_updates($table, $columns);
+	if ($table === 'accounts' || $table === 'players') {
+		array_push($out, ...acp_convert_dump_restore_identity_table_sql($source, $table, $rows, $columns, $quotedColumns, $updates));
+		return $out;
+	}
+
+	array_push($out, ...acp_convert_dump_restore_regular_table_sql($source, $table, $rows, $columns, $quotedColumns, $updates));
+	return $out;
+}
+
+function acp_convert_dump_restore_sql(array $model, string $source): string {
+	$out = [];
+	$guard = 0;
+
+	foreach (acp_convert_dump_ordered_tables($model) as $table) {
+		$section = acp_convert_dump_restore_table_sql($model, $source, $table, $guard);
+		if ($section) {
+			array_push($out, ...$section);
+		}
 	}
 
 	return trim(implode("\n\n", $out));
 }
 
-function acp_convert_dump_script(array $model, string $requestedSource): string {
-	$source = acp_convert_dump_source($model, $requestedSource);
-	$captured = time();
-	$sql = [];
-	$sql[] = "-- ZnoteX uploaded SQL conversion";
-	$sql[] = "-- Source detected: {$source}";
-	$sql[] = "-- Generated " . date('Y-m-d H:i:s');
-	$sql[] = "START TRANSACTION;";
-	$sql[] = "";
-	$sql[] = file_get_contents('SQL/migrations/2.0.0_pages_and_convert_map.sql') ?: '';
-	$sql[] = file_get_contents('SQL/migrations/2.0.0_gallery_image_url.sql') ?: '';
+function acp_convert_dump_header_sql(array $model, string $source): array {
+	$out = [
+		"-- ZnoteX uploaded SQL conversion",
+		"-- Source detected: {$source}",
+		"-- Generated " . date('Y-m-d H:i:s'),
+		"START TRANSACTION;",
+		"",
+		file_get_contents('SQL/migrations/2.0.0_pages_and_convert_map.sql') ?: '',
+		file_get_contents('SQL/migrations/2.0.0_gallery_image_url.sql') ?: '',
+	];
+
 	$restoreSql = acp_convert_dump_restore_sql($model, $source);
 	if ($restoreSql !== '') {
-		$sql[] = "";
-		$sql[] = "-- Restore original source tables, rows and custom columns";
-		$sql[] = $restoreSql;
+		$out[] = "";
+		$out[] = "-- Restore original source tables, rows and custom columns";
+		$out[] = $restoreSql;
 	}
 
+	return $out;
+}
+
+function acp_convert_dump_account_compat_sql(array $model, string $source): array {
 	if (!empty($model['tables']['accounts'])) {
 		$rows = [];
 		foreach ($model['tables']['accounts'] as $row) {
@@ -926,18 +1012,24 @@ function acp_convert_dump_script(array $model, string $requestedSource): string 
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- Account compatibility rows";
-			$sql[] = "INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`)
+			return [
+				"-- Account compatibility rows",
+				"INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`)
 SELECT `v`.`account_id`, `v`.`ip`, `v`.`created`, `v`.`flag`
 FROM (
 " . acp_convert_dump_sql_union($rows, ['account_id', 'ip', 'created', 'flag']) . "
 ) AS `v`
 WHERE NOT EXISTS (
   SELECT 1 FROM `znote_accounts` AS `z` WHERE `z`.`account_id` = `v`.`account_id`
-);";
+);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_player_compat_sql(array $model, string $source): array {
 	if (!empty($model['tables']['players'])) {
 		$rows = [];
 		foreach ($model['tables']['players'] as $row) {
@@ -951,18 +1043,24 @@ WHERE NOT EXISTS (
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- Player compatibility rows";
-			$sql[] = "INSERT INTO `znote_players` (`player_id`, `created`, `hide_char`, `comment`)
+			return [
+				"-- Player compatibility rows",
+				"INSERT INTO `znote_players` (`player_id`, `created`, `hide_char`, `comment`)
 SELECT `v`.`player_id`, `v`.`created`, `v`.`hide_char`, `v`.`comment`
 FROM (
 " . acp_convert_dump_sql_union($rows, ['player_id', 'created', 'hide_char', 'comment']) . "
 ) AS `v`
 WHERE NOT EXISTS (
   SELECT 1 FROM `znote_players` AS `z` WHERE `z`.`player_id` = `v`.`player_id`
-);";
+);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_news_sql(array $model, string $source): array {
 	$newsTable = $source === 'gesior' ? 'z_news_big' : 'myaac_news';
 	if (!empty($model['tables'][$newsTable])) {
 		$rows = [];
@@ -981,18 +1079,24 @@ WHERE NOT EXISTS (
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- News";
-			$sql[] = "INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
+			return [
+				"-- News",
+				"INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
 SELECT `v`.`title`, `v`.`text`, `v`.`date`, `v`.`pid`
 FROM (
 " . acp_convert_dump_sql_union($rows, ['title', 'text', 'date', 'pid']) . "
 ) AS `v`
 WHERE NOT EXISTS (
   SELECT 1 FROM `znote_news` AS `z` WHERE `z`.`title` = `v`.`title` AND `z`.`date` = `v`.`date`
-);";
+);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_changelog_sql(array $model, string $source): array {
 	$changeTable = $source === 'gesior' ? 'z_news_tickers' : 'myaac_changelog';
 	if (!empty($model['tables'][$changeTable])) {
 		$rows = [];
@@ -1006,18 +1110,24 @@ WHERE NOT EXISTS (
 			$rows[] = ['text' => $text, 'time' => $date > 0 ? $date : time(), 'report_id' => 0, 'status' => (int)acp_convert_row_value($row, ['type'], 0)];
 		}
 		if ($rows) {
-			$sql[] = "-- Changelog / tickers";
-			$sql[] = "INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
+			return [
+				"-- Changelog / tickers",
+				"INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
 SELECT `v`.`text`, `v`.`time`, `v`.`report_id`, `v`.`status`
 FROM (
 " . acp_convert_dump_sql_union($rows, ['text', 'time', 'report_id', 'status']) . "
 ) AS `v`
 WHERE NOT EXISTS (
   SELECT 1 FROM `znote_changelog` AS `z` WHERE `z`.`text` = `v`.`text` AND `z`.`time` = `v`.`time`
-);";
+);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_pages_sql(array $model, string $source): array {
 	if (!empty($model['tables']['myaac_pages'])) {
 		$rows = [];
 		foreach ($model['tables']['myaac_pages'] as $row) {
@@ -1043,13 +1153,19 @@ WHERE NOT EXISTS (
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- Custom pages";
-			$sql[] = "INSERT INTO `znote_pages` (`slug`, `title`, `body`, `created`, `updated`, `player_id`, `access`, `active`) VALUES\n"
+			return [
+				"-- Custom pages",
+				"INSERT INTO `znote_pages` (`slug`, `title`, `body`, `created`, `updated`, `player_id`, `access`, `active`) VALUES\n"
 				. acp_convert_dump_sql_values($rows, ['slug', 'title', 'body', 'created', 'updated', 'player_id', 'access', 'active'])
-				. "\nON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `body` = VALUES(`body`), `updated` = VALUES(`updated`);";
+				. "\nON DUPLICATE KEY UPDATE `title` = VALUES(`title`), `body` = VALUES(`body`), `updated` = VALUES(`updated`);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_forum_boards_sql(array $model, string $source): array {
 	$boardTable = $source === 'gesior' ? 'z_forum_boards' : 'myaac_forum_boards';
 	$idOffset = $source === 'gesior' ? 2000000 : 1000000;
 	if (!empty($model['tables'][$boardTable])) {
@@ -1068,13 +1184,21 @@ WHERE NOT EXISTS (
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- Forum boards";
-			$sql[] = "INSERT INTO `znote_forum` (`id`, `name`, `access`, `closed`, `hidden`, `guild_id`) VALUES\n"
+			return [
+				"-- Forum boards",
+				"INSERT INTO `znote_forum` (`id`, `name`, `access`, `closed`, `hidden`, `guild_id`) VALUES\n"
 				. acp_convert_dump_sql_values($rows, ['id', 'name', 'access', 'closed', 'hidden', 'guild_id'])
-				. "\nON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `access` = VALUES(`access`), `closed` = VALUES(`closed`), `hidden` = VALUES(`hidden`), `guild_id` = VALUES(`guild_id`);";
+				. "\nON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `access` = VALUES(`access`), `closed` = VALUES(`closed`), `hidden` = VALUES(`hidden`), `guild_id` = VALUES(`guild_id`);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_forum_sql(array $model, string $source): array {
+	$sql = [];
+	$idOffset = $source === 'gesior' ? 2000000 : 1000000;
 	$forumTable = !empty($model['tables']['myaac_forum']) ? 'myaac_forum' : (!empty($model['tables']['z_forum']) ? 'z_forum' : '');
 	if ($forumTable !== '') {
 		$threads = [];
@@ -1140,6 +1264,10 @@ WHERE NOT EXISTS (
 		}
 	}
 
+	return $sql;
+}
+
+function acp_convert_dump_gallery_sql(array $model, string $source): array {
 	if (!empty($model['tables']['myaac_gallery'])) {
 		$rows = [];
 		foreach ($model['tables']['myaac_gallery'] as $row) {
@@ -1163,18 +1291,24 @@ WHERE NOT EXISTS (
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- Gallery";
-			$sql[] = "INSERT INTO `znote_images` (`title`, `desc`, `date`, `status`, `image`, `delhash`, `account_id`)
+			return [
+				"-- Gallery",
+				"INSERT INTO `znote_images` (`title`, `desc`, `date`, `status`, `image`, `delhash`, `account_id`)
 SELECT `v`.`title`, `v`.`desc`, `v`.`date`, `v`.`status`, `v`.`image`, `v`.`delhash`, `v`.`account_id`
 FROM (
 " . acp_convert_dump_sql_union($rows, ['title', 'desc', 'date', 'status', 'image', 'delhash', 'account_id']) . "
 ) AS `v`
 WHERE NOT EXISTS (
   SELECT 1 FROM `znote_images` AS `z` WHERE `z`.`image` = `v`.`image`
-);";
+);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_menu_sql(array $model): array {
 	if (!empty($model['tables']['myaac_menu'])) {
 		$rows = [];
 		foreach ($model['tables']['myaac_menu'] as $row) {
@@ -1195,8 +1329,9 @@ WHERE NOT EXISTS (
 			];
 		}
 		if ($rows) {
-			$sql[] = "-- Menu";
-			$sql[] = "INSERT INTO `znote_menu` (`location`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`, `sort_order`, `active`)
+			return [
+				"-- Menu",
+				"INSERT INTO `znote_menu` (`location`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`, `sort_order`, `active`)
 SELECT `v`.`location`, `v`.`parent_id`, `v`.`label`, `v`.`url`, `v`.`icon`, `v`.`target`, `v`.`visibility`, `v`.`sort_order`, `v`.`active`
 FROM (
 " . acp_convert_dump_sql_union($rows, ['location', 'parent_id', 'label', 'url', 'icon', 'target', 'visibility', 'sort_order', 'active']) . "
@@ -1207,10 +1342,16 @@ AND NOT EXISTS (
   WHERE `z`.`location` = `v`.`location`
   AND `z`.`label` = `v`.`label`
   AND `z`.`url` = `v`.`url`
-);";
+);",
+			];
 		}
 	}
 
+	return [];
+}
+
+function acp_convert_dump_legacy_config_sql(array $model): array {
+	$sql = [];
 	foreach (['myaac_config' => 'legacy:myaac:', 'myaac_settings' => 'legacy:myaac_setting:', 'z_config' => 'legacy:gesior:'] as $configTable => $prefix) {
 		if (empty($model['tables'][$configTable])) continue;
 		$rows = [];
@@ -1227,6 +1368,11 @@ AND NOT EXISTS (
 		}
 	}
 
+	return $sql;
+}
+
+function acp_convert_dump_archive_sql(array $model, string $source, int $captured): array {
+	$sql = [];
 	foreach ($model['tables'] as $table => $rows) {
 		$sql[] = "-- Legacy archive: {$table}";
 		$schemaSql = (string)($model['creates'][$table] ?? '');
@@ -1246,6 +1392,31 @@ ON DUPLICATE KEY UPDATE `schema_sql` = VALUES(`schema_sql`), `row_count` = VALUE
 				. acp_convert_sql_literal($json) . ', '
 				. $captured . ');';
 		}
+	}
+
+	return $sql;
+}
+
+function acp_convert_dump_script(array $model, string $requestedSource): string {
+	$source = acp_convert_dump_source($model, $requestedSource);
+	$captured = time();
+	$sql = [];
+
+	foreach ([
+		acp_convert_dump_header_sql($model, $source),
+		acp_convert_dump_account_compat_sql($model, $source),
+		acp_convert_dump_player_compat_sql($model, $source),
+		acp_convert_dump_news_sql($model, $source),
+		acp_convert_dump_changelog_sql($model, $source),
+		acp_convert_dump_pages_sql($model, $source),
+		acp_convert_dump_forum_boards_sql($model, $source),
+		acp_convert_dump_forum_sql($model, $source),
+		acp_convert_dump_gallery_sql($model, $source),
+		acp_convert_dump_menu_sql($model),
+		acp_convert_dump_legacy_config_sql($model),
+		acp_convert_dump_archive_sql($model, $source, $captured),
+	] as $section) {
+		array_push($sql, ...$section);
 	}
 
 	$sql[] = "COMMIT;";
@@ -1361,8 +1532,8 @@ function acp_convert_compatibility(): array {
 	return $report;
 }
 
-function acp_convert_myaac_run(bool $dryRun = true): array {
-	$report = [
+function acp_convert_empty_report(): array {
+	return [
 		'accounts' => 0,
 		'players' => 0,
 		'news' => 0,
@@ -1377,222 +1548,256 @@ function acp_convert_myaac_run(bool $dryRun = true): array {
 		'archived' => 0,
 		'warnings' => [],
 	];
+}
 
+function acp_convert_prepare_report(string $source, bool $dryRun, array $report): array {
 	if (!$dryRun) {
 		acp_convert_ensure_tables();
 		$report = array_merge($report, acp_convert_compatibility());
-		$report['archived'] = acp_convert_archive_legacy('myaac');
+		$report['archived'] = acp_convert_archive_legacy($source);
 	} else {
-		foreach (acp_convert_legacy_tables('myaac') as $table) {
+		foreach (acp_convert_legacy_tables($source) as $table) {
 			$report['archived'] += acp_convert_count($table);
 		}
 	}
 
+	return $report;
+}
+
+function acp_convert_report_empty(array $report, array $keys): bool {
+	foreach ($keys as $key) {
+		if (!empty($report[$key])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function acp_convert_myaac_news(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('myaac_news') && acp_convert_table_exists('znote_news')) {
 		if ($dryRun) {
 			$report['news'] = acp_convert_count('myaac_news', '`hide` = 0 AND `type` IN (1, 3)');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `myaac_news` WHERE `hide` = 0 AND `type` IN (1, 3) ORDER BY `id` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$title = trim((string)$row['title']);
-				$date = (int)$row['date'];
-				$pid = (int)$row['player_id'];
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_news`
-					WHERE `title` = '" . esc(substr($title, 0, 30)) . "'
-					AND `date` = {$date}
-					LIMIT 1;
-				");
-				if ($exists !== false) {
-					continue;
-				}
-				if (acp_convert_insert('znote_news', [
-					'title' => substr($title !== '' ? $title : 'Imported news', 0, 30),
-					'text' => acp_convert_news_text((string)$row['body']),
-					'date' => $date > 0 ? $date : time(),
-					'pid' => $pid,
-				])) {
-					$report['news']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `myaac_news` WHERE `hide` = 0 AND `type` IN (1, 3) ORDER BY `id` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$title = trim((string)$row['title']);
+			$date = (int)$row['date'];
+			$pid = (int)$row['player_id'];
+			$exists = mysql_select_single("
+				SELECT `id` FROM `znote_news`
+				WHERE `title` = '" . esc(substr($title, 0, 30)) . "'
+				AND `date` = {$date}
+				LIMIT 1;
+			");
+			if ($exists !== false) {
+				continue;
+			}
+			if (acp_convert_insert('znote_news', [
+				'title' => substr($title !== '' ? $title : 'Imported news', 0, 30),
+				'text' => acp_convert_news_text((string)$row['body']),
+				'date' => $date > 0 ? $date : time(),
+				'pid' => $pid,
+			])) {
+				$report['news']++;
 			}
 		}
 	}
+}
 
+function acp_convert_myaac_changelog(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('myaac_changelog') && acp_convert_table_exists('znote_changelog')) {
 		if ($dryRun) {
 			$report['changelog'] = acp_convert_count('myaac_changelog', '`hide` = 0');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `myaac_changelog` WHERE `hide` = 0 ORDER BY `id` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$text = substr(acp_convert_strip_html((string)$row['body']), 0, 254);
-				$date = (int)$row['date'];
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_changelog`
-					WHERE `text` = '" . esc($text) . "'
-					AND `time` = {$date}
-					LIMIT 1;
-				");
-				if ($text === '' || $exists !== false) {
-					continue;
-				}
-				if (acp_convert_insert('znote_changelog', [
-					'text' => $text,
-					'time' => $date > 0 ? $date : time(),
-					'report_id' => 0,
-					'status' => (int)$row['type'],
-				])) {
-					$report['changelog']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `myaac_changelog` WHERE `hide` = 0 ORDER BY `id` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$text = substr(acp_convert_strip_html((string)$row['body']), 0, 254);
+			$date = (int)$row['date'];
+			$exists = mysql_select_single("
+				SELECT `id` FROM `znote_changelog`
+				WHERE `text` = '" . esc($text) . "'
+				AND `time` = {$date}
+				LIMIT 1;
+			");
+			if ($text === '' || $exists !== false) {
+				continue;
+			}
+			if (acp_convert_insert('znote_changelog', [
+				'text' => $text,
+				'time' => $date > 0 ? $date : time(),
+				'report_id' => 0,
+				'status' => (int)$row['type'],
+			])) {
+				$report['changelog']++;
 			}
 		}
 	}
+}
 
+function acp_convert_myaac_pages(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('myaac_pages') && acp_convert_table_exists('znote_pages')) {
 		if ($dryRun) {
 			$report['pages'] = acp_convert_count('myaac_pages', '`hide` = 0');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `myaac_pages` WHERE `hide` = 0 ORDER BY `id` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$mapped = acp_convert_map_get('myaac', 'myaac_pages', $row['id'], 'znote_pages');
-				if ($mapped > 0) {
-					continue;
-				}
-				$slug = acp_convert_slug((string)$row['name'], 'myaac-page-' . (int)$row['id']);
-				$title = substr(trim((string)$row['title']), 0, 100);
-				$exists = mysql_select_single("SELECT `id` FROM `znote_pages` WHERE `slug` = '" . esc($slug) . "' LIMIT 1;");
-				if ($exists !== false) {
-					acp_convert_map_set('myaac', 'myaac_pages', $row['id'], 'znote_pages', (int)$exists['id']);
-					continue;
-				}
-				if (acp_convert_insert('znote_pages', [
-					'slug' => $slug,
-					'title' => $title !== '' ? $title : $slug,
-					'body' => acp_convert_news_text((string)$row['body']),
-					'created' => (int)$row['date'] > 0 ? (int)$row['date'] : time(),
-					'updated' => (int)$row['date'] > 0 ? (int)$row['date'] : time(),
-					'player_id' => (int)$row['player_id'],
-					'access' => (int)$row['access'],
-					'active' => 1,
-				])) {
-					$newId = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
-					acp_convert_map_set('myaac', 'myaac_pages', $row['id'], 'znote_pages', $newId);
-					$report['pages']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `myaac_pages` WHERE `hide` = 0 ORDER BY `id` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$mapped = acp_convert_map_get('myaac', 'myaac_pages', $row['id'], 'znote_pages');
+			if ($mapped > 0) {
+				continue;
+			}
+			$slug = acp_convert_slug((string)$row['name'], 'myaac-page-' . (int)$row['id']);
+			$title = substr(trim((string)$row['title']), 0, 100);
+			$exists = mysql_select_single("SELECT `id` FROM `znote_pages` WHERE `slug` = '" . esc($slug) . "' LIMIT 1;");
+			if ($exists !== false) {
+				acp_convert_map_set('myaac', 'myaac_pages', $row['id'], 'znote_pages', (int)$exists['id']);
+				continue;
+			}
+			if (acp_convert_insert('znote_pages', [
+				'slug' => $slug,
+				'title' => $title !== '' ? $title : $slug,
+				'body' => acp_convert_news_text((string)$row['body']),
+				'created' => (int)$row['date'] > 0 ? (int)$row['date'] : time(),
+				'updated' => (int)$row['date'] > 0 ? (int)$row['date'] : time(),
+				'player_id' => (int)$row['player_id'],
+				'access' => (int)$row['access'],
+				'active' => 1,
+			])) {
+				$newId = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
+				acp_convert_map_set('myaac', 'myaac_pages', $row['id'], 'znote_pages', $newId);
+				$report['pages']++;
 			}
 		}
 	}
+}
 
+function acp_convert_myaac_gallery(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('myaac_gallery') && acp_convert_table_exists('znote_images')) {
 		if ($dryRun) {
 			$report['gallery'] = acp_convert_count('myaac_gallery', '`hide` = 0');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `myaac_gallery` WHERE `hide` = 0 ORDER BY `id` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$mapped = acp_convert_map_get('myaac', 'myaac_gallery', $row['id'], 'znote_images');
-				if ($mapped > 0) {
-					continue;
-				}
-				$image = trim((string)$row['image']);
-				if ($image === '') {
-					continue;
-				}
-				$title = substr(trim((string)($row['comment'] ?: 'Imported image')), 0, 30);
-				$exists = mysql_select_single("SELECT `id` FROM `znote_images` WHERE `image` = '" . esc($image) . "' LIMIT 1;");
-				if ($exists !== false) {
-					acp_convert_map_set('myaac', 'myaac_gallery', $row['id'], 'znote_images', (int)$exists['id']);
-					continue;
-				}
-				if (acp_convert_insert('znote_images', [
-					'title' => $title,
-					'desc' => (string)$row['comment'],
-					'date' => time(),
-					'status' => 2,
-					'image' => substr($image, 0, 255),
-					'delhash' => '',
-					'account_id' => 0,
-				])) {
-					$newId = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
-					acp_convert_map_set('myaac', 'myaac_gallery', $row['id'], 'znote_images', $newId);
-					$report['gallery']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `myaac_gallery` WHERE `hide` = 0 ORDER BY `id` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$mapped = acp_convert_map_get('myaac', 'myaac_gallery', $row['id'], 'znote_images');
+			if ($mapped > 0) {
+				continue;
+			}
+			$image = trim((string)$row['image']);
+			if ($image === '') {
+				continue;
+			}
+			$title = substr(trim((string)($row['comment'] ?: 'Imported image')), 0, 30);
+			$exists = mysql_select_single("SELECT `id` FROM `znote_images` WHERE `image` = '" . esc($image) . "' LIMIT 1;");
+			if ($exists !== false) {
+				acp_convert_map_set('myaac', 'myaac_gallery', $row['id'], 'znote_images', (int)$exists['id']);
+				continue;
+			}
+			if (acp_convert_insert('znote_images', [
+				'title' => $title,
+				'desc' => (string)$row['comment'],
+				'date' => time(),
+				'status' => 2,
+				'image' => substr($image, 0, 255),
+				'delhash' => '',
+				'account_id' => 0,
+			])) {
+				$newId = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
+				acp_convert_map_set('myaac', 'myaac_gallery', $row['id'], 'znote_images', $newId);
+				$report['gallery']++;
 			}
 		}
 	}
+}
 
+function acp_convert_myaac_menu(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('myaac_menu') && acp_convert_table_exists('znote_menu')) {
 		if ($dryRun) {
 			$report['menu'] = acp_convert_count('myaac_menu', '`enabled` = 1');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `myaac_menu` WHERE `enabled` = 1 ORDER BY `ordering` ASC, `id` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$mapped = acp_convert_map_get('myaac', 'myaac_menu', $row['id'], 'znote_menu');
-				if ($mapped > 0) {
-					continue;
-				}
-				$label = substr(trim((string)$row['name']), 0, 64);
-				$url = substr(trim((string)$row['link']), 0, 255);
-				if ($label === '' || $url === '') {
-					continue;
-				}
-				$parentId = acp_convert_menu_parent_id((int)($row['category'] ?? 0));
-				if ($parentId <= 0) {
-					continue;
-				}
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_menu`
-					WHERE `location` = 'main'
-					AND `label` = '" . esc($label) . "'
-					AND `url` = '" . esc($url) . "'
-					LIMIT 1;
-				");
-				if ($exists !== false) {
-					acp_convert_map_set('myaac', 'myaac_menu', $row['id'], 'znote_menu', (int)$exists['id']);
-					continue;
-				}
-				if (acp_convert_insert('znote_menu', [
-					'location' => 'main',
-					'parent_id' => $parentId,
-					'label' => $label,
-					'url' => $url,
-					'icon' => '',
-					'target' => !empty($row['blank']) ? '_blank' : '',
-					'visibility' => 'all',
-					'sort_order' => (int)$row['ordering'],
-					'active' => 1,
-				])) {
-					$newId = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
-					acp_convert_map_set('myaac', 'myaac_menu', $row['id'], 'znote_menu', $newId);
-					$report['menu']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `myaac_menu` WHERE `enabled` = 1 ORDER BY `ordering` ASC, `id` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$mapped = acp_convert_map_get('myaac', 'myaac_menu', $row['id'], 'znote_menu');
+			if ($mapped > 0) {
+				continue;
+			}
+			$label = substr(trim((string)$row['name']), 0, 64);
+			$url = substr(trim((string)$row['link']), 0, 255);
+			if ($label === '' || $url === '') {
+				continue;
+			}
+			$parentId = acp_convert_menu_parent_id((int)($row['category'] ?? 0));
+			if ($parentId <= 0) {
+				continue;
+			}
+			$exists = mysql_select_single("
+				SELECT `id` FROM `znote_menu`
+				WHERE `location` = 'main'
+				AND `label` = '" . esc($label) . "'
+				AND `url` = '" . esc($url) . "'
+				LIMIT 1;
+			");
+			if ($exists !== false) {
+				acp_convert_map_set('myaac', 'myaac_menu', $row['id'], 'znote_menu', (int)$exists['id']);
+				continue;
+			}
+			if (acp_convert_insert('znote_menu', [
+				'location' => 'main',
+				'parent_id' => $parentId,
+				'label' => $label,
+				'url' => $url,
+				'icon' => '',
+				'target' => !empty($row['blank']) ? '_blank' : '',
+				'visibility' => 'all',
+				'sort_order' => (int)$row['ordering'],
+				'active' => 1,
+			])) {
+				$newId = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
+				acp_convert_map_set('myaac', 'myaac_menu', $row['id'], 'znote_menu', $newId);
+				$report['menu']++;
 			}
 		}
 	}
+}
 
+function acp_convert_myaac_config(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('znote_config')) {
 		if ($dryRun) {
 			$report['config'] =
 				acp_convert_count('myaac_config') +
 				acp_convert_count('myaac_settings');
-		} else {
-			if (acp_convert_table_exists('myaac_config')) {
-				$rows = mysql_select_multi("SELECT * FROM `myaac_config` ORDER BY `id` ASC;") ?: [];
-				foreach ($rows as $row) {
-					if (acp_convert_config_set('legacy:myaac:' . (string)$row['name'], (string)$row['value'])) {
-						$report['config']++;
-					}
+			return;
+		}
+
+		if (acp_convert_table_exists('myaac_config')) {
+			$rows = mysql_select_multi("SELECT * FROM `myaac_config` ORDER BY `id` ASC;") ?: [];
+			foreach ($rows as $row) {
+				if (acp_convert_config_set('legacy:myaac:' . (string)$row['name'], (string)$row['value'])) {
+					$report['config']++;
 				}
 			}
-			if (acp_convert_table_exists('myaac_settings')) {
-				$rows = mysql_select_multi("SELECT * FROM `myaac_settings` ORDER BY `id` ASC;") ?: [];
-				foreach ($rows as $row) {
-					if (acp_convert_config_set('legacy:myaac_setting:' . (string)$row['key'], (string)$row['value'])) {
-						$report['config']++;
-					}
+		}
+		if (acp_convert_table_exists('myaac_settings')) {
+			$rows = mysql_select_multi("SELECT * FROM `myaac_settings` ORDER BY `id` ASC;") ?: [];
+			foreach ($rows as $row) {
+				if (acp_convert_config_set('legacy:myaac_setting:' . (string)$row['key'], (string)$row['value'])) {
+					$report['config']++;
 				}
 			}
 		}
 	}
+}
 
+function acp_convert_myaac_forum_boards(bool $dryRun, array &$report): array {
 	$boardMap = [];
 	if (acp_convert_table_exists('myaac_forum_boards') && acp_convert_table_exists('znote_forum')) {
 		$rows = mysql_select_multi("SELECT * FROM `myaac_forum_boards` ORDER BY `id` ASC;") ?: [];
@@ -1624,270 +1829,301 @@ function acp_convert_myaac_run(bool $dryRun = true): array {
 		}
 	}
 
+	return $boardMap;
+}
+
+function acp_convert_myaac_forum_threads(array $boardMap, array &$report): array {
+	$threadMap = [];
+	$threads = mysql_select_multi("SELECT * FROM `myaac_forum` WHERE `id` = `first_post` ORDER BY `id` ASC;") ?: [];
+	foreach ($threads as $row) {
+		$oldBoard = (int)$row['section'];
+		$boardId = $boardMap[$oldBoard] ?? $oldBoard;
+		$title = substr(trim((string)$row['post_topic']), 0, 50);
+		$created = (int)$row['post_date'];
+		$playerId = (int)$row['author_guid'];
+		$existing = mysql_select_single("
+			SELECT `id` FROM `znote_forum_threads`
+			WHERE `forum_id` = {$boardId}
+			AND `player_id` = {$playerId}
+			AND `created` = {$created}
+			AND `title` = '" . esc($title) . "'
+			LIMIT 1;
+		");
+		if ($existing !== false) {
+			$threadMap[(int)$row['id']] = (int)$existing['id'];
+			continue;
+		}
+		if (acp_convert_insert('znote_forum_threads', [
+			'forum_id' => $boardId,
+			'player_id' => $playerId,
+			'player_name' => acp_convert_player_name($playerId),
+			'title' => $title !== '' ? $title : 'Imported thread',
+			'text' => sanitize((string)$row['post_text']),
+			'created' => $created > 0 ? $created : time(),
+			'updated' => (int)$row['edit_date'] > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
+			'sticky' => (int)$row['sticked'],
+			'hidden' => 0,
+			'closed' => (int)$row['closed'],
+		])) {
+			$threadMap[(int)$row['id']] = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
+			$report['threads']++;
+		}
+	}
+
+	return $threadMap;
+}
+
+function acp_convert_myaac_forum_posts(array $threadMap, array &$report): void {
+	$posts = mysql_select_multi("SELECT * FROM `myaac_forum` WHERE `id` <> `first_post` ORDER BY `id` ASC;") ?: [];
+	foreach ($posts as $row) {
+		$oldThread = (int)$row['first_post'];
+		$threadId = $threadMap[$oldThread] ?? 0;
+		if ($threadId <= 0) {
+			continue;
+		}
+		$created = (int)$row['post_date'];
+		$playerId = (int)$row['author_guid'];
+		$exists = mysql_select_single("
+			SELECT `id` FROM `znote_forum_posts`
+			WHERE `thread_id` = {$threadId}
+			AND `player_id` = {$playerId}
+			AND `created` = {$created}
+			LIMIT 1;
+		");
+		if ($exists !== false) {
+			continue;
+		}
+		if (acp_convert_insert('znote_forum_posts', [
+			'thread_id' => $threadId,
+			'player_id' => $playerId,
+			'player_name' => acp_convert_player_name($playerId),
+			'text' => sanitize((string)$row['post_text']),
+			'created' => $created > 0 ? $created : time(),
+			'updated' => (int)$row['edit_date'] > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
+		])) {
+			$report['posts']++;
+		}
+	}
+}
+
+function acp_convert_myaac_forum(bool $dryRun, array $boardMap, array &$report): void {
 	if (acp_convert_table_exists('myaac_forum') && acp_convert_table_exists('znote_forum_threads') && acp_convert_table_exists('znote_forum_posts')) {
 		if ($dryRun) {
 			$report['threads'] = acp_count("SELECT COUNT(*) AS `c` FROM `myaac_forum` WHERE `id` = `first_post`;");
 			$report['posts'] = acp_count("SELECT COUNT(*) AS `c` FROM `myaac_forum` WHERE `id` <> `first_post`;");
-		} else {
-			$threadMap = [];
-			$threads = mysql_select_multi("SELECT * FROM `myaac_forum` WHERE `id` = `first_post` ORDER BY `id` ASC;") ?: [];
-			foreach ($threads as $row) {
-				$oldBoard = (int)$row['section'];
-				$boardId = $boardMap[$oldBoard] ?? $oldBoard;
-				$title = substr(trim((string)$row['post_topic']), 0, 50);
-				$created = (int)$row['post_date'];
-				$playerId = (int)$row['author_guid'];
-				$existing = mysql_select_single("
-					SELECT `id` FROM `znote_forum_threads`
-					WHERE `forum_id` = {$boardId}
-					AND `player_id` = {$playerId}
-					AND `created` = {$created}
-					AND `title` = '" . esc($title) . "'
-					LIMIT 1;
-				");
-				if ($existing !== false) {
-					$threadMap[(int)$row['id']] = (int)$existing['id'];
-					continue;
-				}
-				if (acp_convert_insert('znote_forum_threads', [
-					'forum_id' => $boardId,
-					'player_id' => $playerId,
-					'player_name' => acp_convert_player_name($playerId),
-					'title' => $title !== '' ? $title : 'Imported thread',
-					'text' => sanitize((string)$row['post_text']),
-					'created' => $created > 0 ? $created : time(),
-					'updated' => (int)$row['edit_date'] > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
-					'sticky' => (int)$row['sticked'],
-					'hidden' => 0,
-					'closed' => (int)$row['closed'],
-				])) {
-					$threadMap[(int)$row['id']] = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
-					$report['threads']++;
-				}
-			}
-
-			$posts = mysql_select_multi("SELECT * FROM `myaac_forum` WHERE `id` <> `first_post` ORDER BY `id` ASC;") ?: [];
-			foreach ($posts as $row) {
-				$oldThread = (int)$row['first_post'];
-				$threadId = $threadMap[$oldThread] ?? 0;
-				if ($threadId <= 0) {
-					continue;
-				}
-				$created = (int)$row['post_date'];
-				$playerId = (int)$row['author_guid'];
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_forum_posts`
-					WHERE `thread_id` = {$threadId}
-					AND `player_id` = {$playerId}
-					AND `created` = {$created}
-					LIMIT 1;
-				");
-				if ($exists !== false) {
-					continue;
-				}
-				if (acp_convert_insert('znote_forum_posts', [
-					'thread_id' => $threadId,
-					'player_id' => $playerId,
-					'player_name' => acp_convert_player_name($playerId),
-					'text' => sanitize((string)$row['post_text']),
-					'created' => $created > 0 ? $created : time(),
-					'updated' => (int)$row['edit_date'] > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
-				])) {
-					$report['posts']++;
-				}
-			}
+			return;
 		}
-	}
 
-	if ($dryRun && !$report['news'] && !$report['changelog'] && !$report['boards'] && !$report['threads'] && !$report['posts'] && !$report['pages'] && !$report['gallery'] && !$report['menu'] && !$report['config']) {
+		$threadMap = acp_convert_myaac_forum_threads($boardMap, $report);
+		acp_convert_myaac_forum_posts($threadMap, $report);
+	}
+}
+
+function acp_convert_myaac_run(bool $dryRun = true): array {
+	$report = acp_convert_prepare_report('myaac', $dryRun, acp_convert_empty_report());
+
+	acp_convert_myaac_news($dryRun, $report);
+	acp_convert_myaac_changelog($dryRun, $report);
+	acp_convert_myaac_pages($dryRun, $report);
+	acp_convert_myaac_gallery($dryRun, $report);
+	acp_convert_myaac_menu($dryRun, $report);
+	acp_convert_myaac_config($dryRun, $report);
+	$boardMap = acp_convert_myaac_forum_boards($dryRun, $report);
+	acp_convert_myaac_forum($dryRun, $boardMap, $report);
+
+	if ($dryRun && acp_convert_report_empty($report, ['news', 'changelog', 'boards', 'threads', 'posts', 'pages', 'gallery', 'menu', 'config'])) {
 		$report['warnings'][] = 'No MyAAC content tables were found in this database.';
 	}
 
 	return $report;
 }
 
-function acp_convert_gesior_run(bool $dryRun = true): array {
-	$report = [
-		'accounts' => 0,
-		'players' => 0,
-		'news' => 0,
-		'changelog' => 0,
-		'boards' => 0,
-		'threads' => 0,
-		'posts' => 0,
-		'pages' => 0,
-		'gallery' => 0,
-		'menu' => 0,
-		'config' => 0,
-		'archived' => 0,
-		'warnings' => [],
-	];
-
-	if (!$dryRun) {
-		acp_convert_ensure_tables();
-		$report = array_merge($report, acp_convert_compatibility());
-		$report['archived'] = acp_convert_archive_legacy('gesior');
-	} else {
-		foreach (acp_convert_legacy_tables('gesior') as $table) {
-			$report['archived'] += acp_convert_count($table);
-		}
-	}
-
+function acp_convert_gesior_news(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('z_news_big') && acp_convert_table_exists('znote_news')) {
 		$hideCol = acp_convert_column_exists('z_news_big', 'hide_news') ? 'hide_news' : 'hide';
 		if ($dryRun) {
 			$report['news'] += acp_convert_count('z_news_big', '`' . $hideCol . '` = 0');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `z_news_big` WHERE `" . esc($hideCol) . "` = 0 ORDER BY `date` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$title = substr(trim((string)($row['topic'] ?? 'Imported news')), 0, 30);
-				$date = (int)($row['date'] ?? 0);
-				$pid = (int)($row['author_id'] ?? 0);
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_news`
-					WHERE `title` = '" . esc($title) . "'
-					AND `date` = {$date}
-					LIMIT 1;
-				");
-				if ($exists !== false) {
-					continue;
-				}
-				if (acp_convert_insert('znote_news', [
-					'title' => $title,
-					'text' => acp_convert_news_text((string)($row['text'] ?? '')),
-					'date' => $date > 0 ? $date : time(),
-					'pid' => $pid,
-				])) {
-					$report['news']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `z_news_big` WHERE `" . esc($hideCol) . "` = 0 ORDER BY `date` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$title = substr(trim((string)($row['topic'] ?? 'Imported news')), 0, 30);
+			$date = (int)($row['date'] ?? 0);
+			$pid = (int)($row['author_id'] ?? 0);
+			$exists = mysql_select_single("
+				SELECT `id` FROM `znote_news`
+				WHERE `title` = '" . esc($title) . "'
+				AND `date` = {$date}
+				LIMIT 1;
+			");
+			if ($exists !== false) {
+				continue;
+			}
+			if (acp_convert_insert('znote_news', [
+				'title' => $title,
+				'text' => acp_convert_news_text((string)($row['text'] ?? '')),
+				'date' => $date > 0 ? $date : time(),
+				'pid' => $pid,
+			])) {
+				$report['news']++;
 			}
 		}
 	}
+}
 
+function acp_convert_gesior_changelog(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('z_news_tickers') && acp_convert_table_exists('znote_changelog')) {
 		$hideWhere = acp_convert_column_exists('z_news_tickers', 'hide_ticker') ? '`hide_ticker` = 0' : '1=1';
 		$textCol = acp_convert_column_exists('z_news_tickers', 'text') ? 'text' : 'body';
 		if ($dryRun) {
 			$report['changelog'] += acp_convert_count('z_news_tickers', $hideWhere);
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `z_news_tickers` WHERE {$hideWhere} ORDER BY `date` ASC;") ?: [];
-			foreach ($rows as $row) {
-				$text = substr(acp_convert_strip_html((string)($row[$textCol] ?? '')), 0, 254);
-				$date = (int)($row['date'] ?? 0);
-				if ($text === '') {
-					continue;
-				}
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_changelog`
-					WHERE `text` = '" . esc($text) . "'
-					AND `time` = {$date}
-					LIMIT 1;
-				");
-				if ($exists !== false) {
-					continue;
-				}
-				if (acp_convert_insert('znote_changelog', [
-					'text' => $text,
-					'time' => $date > 0 ? $date : time(),
-					'report_id' => 0,
-					'status' => 0,
-				])) {
-					$report['changelog']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `z_news_tickers` WHERE {$hideWhere} ORDER BY `date` ASC;") ?: [];
+		foreach ($rows as $row) {
+			$text = substr(acp_convert_strip_html((string)($row[$textCol] ?? '')), 0, 254);
+			$date = (int)($row['date'] ?? 0);
+			if ($text === '') {
+				continue;
+			}
+			$exists = mysql_select_single("
+				SELECT `id` FROM `znote_changelog`
+				WHERE `text` = '" . esc($text) . "'
+				AND `time` = {$date}
+				LIMIT 1;
+			");
+			if ($exists !== false) {
+				continue;
+			}
+			if (acp_convert_insert('znote_changelog', [
+				'text' => $text,
+				'time' => $date > 0 ? $date : time(),
+				'report_id' => 0,
+				'status' => 0,
+			])) {
+				$report['changelog']++;
 			}
 		}
 	}
+}
 
+function acp_convert_gesior_config(bool $dryRun, array &$report): void {
 	if (acp_convert_table_exists('z_config') && acp_convert_table_exists('znote_config')) {
 		if ($dryRun) {
 			$report['config'] = acp_convert_count('z_config');
-		} else {
-			$rows = mysql_select_multi("SELECT * FROM `z_config`;") ?: [];
-			foreach ($rows as $row) {
-				$name = (string)($row['key'] ?? ($row['name'] ?? ($row['config'] ?? '')));
-				$value = (string)($row['value'] ?? '');
-				if ($name !== '' && acp_convert_config_set('legacy:gesior:' . $name, $value)) {
-					$report['config']++;
-				}
+			return;
+		}
+
+		$rows = mysql_select_multi("SELECT * FROM `z_config`;") ?: [];
+		foreach ($rows as $row) {
+			$name = (string)($row['key'] ?? ($row['name'] ?? ($row['config'] ?? '')));
+			$value = (string)($row['value'] ?? '');
+			if ($name !== '' && acp_convert_config_set('legacy:gesior:' . $name, $value)) {
+				$report['config']++;
 			}
 		}
 	}
+}
 
+function acp_convert_gesior_forum_threads(string $sourceForum, array &$report): array {
+	$threadMap = [];
+	$threads = mysql_select_multi("SELECT * FROM `{$sourceForum}` WHERE `id` = `first_post` ORDER BY `id` ASC;") ?: [];
+	foreach ($threads as $row) {
+		$boardId = max(1, (int)($row['section'] ?? 0));
+		$title = substr(trim((string)($row['post_topic'] ?? 'Imported thread')), 0, 50);
+		$created = (int)($row['post_date'] ?? 0);
+		$playerId = (int)($row['author_guid'] ?? 0);
+		$existing = mysql_select_single("
+			SELECT `id` FROM `znote_forum_threads`
+			WHERE `forum_id` = {$boardId}
+			AND `player_id` = {$playerId}
+			AND `created` = {$created}
+			AND `title` = '" . esc($title) . "'
+			LIMIT 1;
+		");
+		if ($existing !== false) {
+			$threadMap[(int)$row['id']] = (int)$existing['id'];
+			continue;
+		}
+		if (acp_convert_insert('znote_forum_threads', [
+			'forum_id' => $boardId,
+			'player_id' => $playerId,
+			'player_name' => acp_convert_player_name($playerId),
+			'title' => $title,
+			'text' => sanitize((string)($row['post_text'] ?? '')),
+			'created' => $created > 0 ? $created : time(),
+			'updated' => (int)($row['edit_date'] ?? 0) > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
+			'sticky' => (int)($row['sticked'] ?? 0),
+			'hidden' => 0,
+			'closed' => (int)($row['closed'] ?? 0),
+		])) {
+			$threadMap[(int)$row['id']] = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
+			$report['threads']++;
+		}
+	}
+
+	return $threadMap;
+}
+
+function acp_convert_gesior_forum_posts(string $sourceForum, array $threadMap, array &$report): void {
+	$posts = mysql_select_multi("SELECT * FROM `{$sourceForum}` WHERE `id` <> `first_post` ORDER BY `id` ASC;") ?: [];
+	foreach ($posts as $row) {
+		$threadId = $threadMap[(int)$row['first_post']] ?? 0;
+		if ($threadId <= 0) {
+			continue;
+		}
+		$created = (int)($row['post_date'] ?? 0);
+		$playerId = (int)($row['author_guid'] ?? 0);
+		$exists = mysql_select_single("
+			SELECT `id` FROM `znote_forum_posts`
+			WHERE `thread_id` = {$threadId}
+			AND `player_id` = {$playerId}
+			AND `created` = {$created}
+			LIMIT 1;
+		");
+		if ($exists !== false) {
+			continue;
+		}
+		if (acp_convert_insert('znote_forum_posts', [
+			'thread_id' => $threadId,
+			'player_id' => $playerId,
+			'player_name' => acp_convert_player_name($playerId),
+			'text' => sanitize((string)($row['post_text'] ?? '')),
+			'created' => $created > 0 ? $created : time(),
+			'updated' => (int)($row['edit_date'] ?? 0) > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
+		])) {
+			$report['posts']++;
+		}
+	}
+}
+
+function acp_convert_gesior_forum(bool $dryRun, array &$report): void {
 	$sourceForum = acp_convert_table_exists('z_forum') ? 'z_forum' : '';
-	if ($sourceForum !== '' && acp_convert_table_exists('znote_forum_threads') && acp_convert_table_exists('znote_forum_posts')) {
-		if ($dryRun) {
-			$report['threads'] = acp_count("SELECT COUNT(*) AS `c` FROM `{$sourceForum}` WHERE `id` = `first_post`;");
-			$report['posts'] = acp_count("SELECT COUNT(*) AS `c` FROM `{$sourceForum}` WHERE `id` <> `first_post`;");
-		} else {
-			$threadMap = [];
-			$threads = mysql_select_multi("SELECT * FROM `{$sourceForum}` WHERE `id` = `first_post` ORDER BY `id` ASC;") ?: [];
-			foreach ($threads as $row) {
-				$boardId = max(1, (int)($row['section'] ?? 0));
-				$title = substr(trim((string)($row['post_topic'] ?? 'Imported thread')), 0, 50);
-				$created = (int)($row['post_date'] ?? 0);
-				$playerId = (int)($row['author_guid'] ?? 0);
-				$existing = mysql_select_single("
-					SELECT `id` FROM `znote_forum_threads`
-					WHERE `forum_id` = {$boardId}
-					AND `player_id` = {$playerId}
-					AND `created` = {$created}
-					AND `title` = '" . esc($title) . "'
-					LIMIT 1;
-				");
-				if ($existing !== false) {
-					$threadMap[(int)$row['id']] = (int)$existing['id'];
-					continue;
-				}
-				if (acp_convert_insert('znote_forum_threads', [
-					'forum_id' => $boardId,
-					'player_id' => $playerId,
-					'player_name' => acp_convert_player_name($playerId),
-					'title' => $title,
-					'text' => sanitize((string)($row['post_text'] ?? '')),
-					'created' => $created > 0 ? $created : time(),
-					'updated' => (int)($row['edit_date'] ?? 0) > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
-					'sticky' => (int)($row['sticked'] ?? 0),
-					'hidden' => 0,
-					'closed' => (int)($row['closed'] ?? 0),
-				])) {
-					$threadMap[(int)$row['id']] = (int)acp_convert_scalar('SELECT LAST_INSERT_ID() AS `v`;');
-					$report['threads']++;
-				}
-			}
-
-			$posts = mysql_select_multi("SELECT * FROM `{$sourceForum}` WHERE `id` <> `first_post` ORDER BY `id` ASC;") ?: [];
-			foreach ($posts as $row) {
-				$threadId = $threadMap[(int)$row['first_post']] ?? 0;
-				if ($threadId <= 0) {
-					continue;
-				}
-				$created = (int)($row['post_date'] ?? 0);
-				$playerId = (int)($row['author_guid'] ?? 0);
-				$exists = mysql_select_single("
-					SELECT `id` FROM `znote_forum_posts`
-					WHERE `thread_id` = {$threadId}
-					AND `player_id` = {$playerId}
-					AND `created` = {$created}
-					LIMIT 1;
-				");
-				if ($exists !== false) {
-					continue;
-				}
-				if (acp_convert_insert('znote_forum_posts', [
-					'thread_id' => $threadId,
-					'player_id' => $playerId,
-					'player_name' => acp_convert_player_name($playerId),
-					'text' => sanitize((string)($row['post_text'] ?? '')),
-					'created' => $created > 0 ? $created : time(),
-					'updated' => (int)($row['edit_date'] ?? 0) > 0 ? (int)$row['edit_date'] : ($created > 0 ? $created : time()),
-				])) {
-					$report['posts']++;
-				}
-			}
-		}
+	if ($sourceForum === '' || !acp_convert_table_exists('znote_forum_threads') || !acp_convert_table_exists('znote_forum_posts')) {
+		return;
 	}
 
-	if ($dryRun && !$report['news'] && !$report['changelog'] && !$report['threads'] && !$report['posts'] && !$report['config']) {
+	if ($dryRun) {
+		$report['threads'] = acp_count("SELECT COUNT(*) AS `c` FROM `{$sourceForum}` WHERE `id` = `first_post`;");
+		$report['posts'] = acp_count("SELECT COUNT(*) AS `c` FROM `{$sourceForum}` WHERE `id` <> `first_post`;");
+		return;
+	}
+
+	$threadMap = acp_convert_gesior_forum_threads($sourceForum, $report);
+	acp_convert_gesior_forum_posts($sourceForum, $threadMap, $report);
+}
+
+function acp_convert_gesior_run(bool $dryRun = true): array {
+	$report = acp_convert_prepare_report('gesior', $dryRun, acp_convert_empty_report());
+
+	acp_convert_gesior_news($dryRun, $report);
+	acp_convert_gesior_changelog($dryRun, $report);
+	acp_convert_gesior_config($dryRun, $report);
+	acp_convert_gesior_forum($dryRun, $report);
+
+	if ($dryRun && acp_convert_report_empty($report, ['news', 'changelog', 'threads', 'posts', 'config'])) {
 		$report['warnings'][] = 'No Gesior2012 content tables were found in this database.';
 	}
 
@@ -2063,51 +2299,76 @@ function acp_convert_restore_account_snapshot(array $snapshot): bool {
 	");
 }
 
-function acp_convert_sql_script(string $source): string {
+function acp_convert_sql_script_header(string $source): array {
 	$now = date('Y-m-d H:i:s');
-	$sql = [];
-	$sql[] = "-- ZnoteX {$source} conversion SQL";
-	$sql[] = "-- Generated {$now}";
-	$sql[] = "-- Import this into a database that already contains the legacy {$source} tables and the ZnoteX schema.";
-	$sql[] = "START TRANSACTION;";
-	$sql[] = "";
-	$sql[] = file_get_contents('SQL/migrations/2.0.0_pages_and_convert_map.sql') ?: '';
-	$sql[] = "";
-	$sql[] = "-- Accounts and players compatibility rows";
-	$sql[] = "INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`)
+	return [
+		"-- ZnoteX {$source} conversion SQL",
+		"-- Generated {$now}",
+		"-- Import this into a database that already contains the legacy {$source} tables and the ZnoteX schema.",
+		"START TRANSACTION;",
+		"",
+		file_get_contents('SQL/migrations/2.0.0_pages_and_convert_map.sql') ?: '',
+	];
+}
+
+function acp_convert_sql_script_compatibility(): array {
+	return [
+		"",
+		"-- Accounts and players compatibility rows",
+		"INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`)
 SELECT `a`.`id`, 0, UNIX_TIMESTAMP(CURDATE()), ''
 FROM `accounts` AS `a`
 LEFT JOIN `znote_accounts` AS `z` ON `z`.`account_id` = `a`.`id`
-WHERE `z`.`id` IS NULL;";
-	$sql[] = "INSERT INTO `znote_players` (`player_id`, `created`, `hide_char`, `comment`)
+WHERE `z`.`id` IS NULL;",
+		"INSERT INTO `znote_players` (`player_id`, `created`, `hide_char`, `comment`)
 SELECT `p`.`id`, UNIX_TIMESTAMP(CURDATE()), 0, ''
 FROM `players` AS `p`
 LEFT JOIN `znote_players` AS `z` ON `z`.`player_id` = `p`.`id`
-WHERE `z`.`id` IS NULL;";
+WHERE `z`.`id` IS NULL;",
+	];
+}
 
-	if ($source === 'myaac') {
-		if (acp_convert_table_exists('myaac_news')) {
-			$sql[] = "";
-			$sql[] = "-- MyAAC news";
-			$sql[] = "INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
+function acp_convert_sql_script_myaac_news(): array {
+	if (!acp_convert_table_exists('myaac_news')) {
+		return [];
+	}
+
+	return [
+		"",
+		"-- MyAAC news",
+		"INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
 SELECT LEFT(`m`.`title`, 30), `m`.`body`, IF(`m`.`date` > 0, `m`.`date`, UNIX_TIMESTAMP()), `m`.`player_id`
 FROM `myaac_news` AS `m`
 LEFT JOIN `znote_news` AS `z` ON `z`.`title` = LEFT(`m`.`title`, 30) AND `z`.`date` = `m`.`date`
-WHERE `m`.`hide` = 0 AND `m`.`type` IN (1, 3) AND `z`.`id` IS NULL;";
-		}
-		if (acp_convert_table_exists('myaac_changelog')) {
-			$sql[] = "";
-			$sql[] = "-- MyAAC changelog";
-			$sql[] = "INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
+WHERE `m`.`hide` = 0 AND `m`.`type` IN (1, 3) AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_myaac_changelog(): array {
+	if (!acp_convert_table_exists('myaac_changelog')) {
+		return [];
+	}
+
+	return [
+		"",
+		"-- MyAAC changelog",
+		"INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
 SELECT LEFT(`m`.`body`, 254), IF(`m`.`date` > 0, `m`.`date`, UNIX_TIMESTAMP()), 0, `m`.`type`
 FROM `myaac_changelog` AS `m`
 LEFT JOIN `znote_changelog` AS `z` ON `z`.`text` = LEFT(`m`.`body`, 254) AND `z`.`time` = `m`.`date`
-WHERE `m`.`hide` = 0 AND `m`.`body` <> '' AND `z`.`id` IS NULL;";
-		}
-		if (acp_convert_table_exists('myaac_pages')) {
-			$sql[] = "";
-			$sql[] = "-- MyAAC custom pages";
-			$sql[] = "INSERT INTO `znote_pages` (`slug`, `title`, `body`, `created`, `updated`, `player_id`, `access`, `active`)
+WHERE `m`.`hide` = 0 AND `m`.`body` <> '' AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_myaac_pages(): array {
+	if (!acp_convert_table_exists('myaac_pages')) {
+		return [];
+	}
+
+	return [
+		"",
+		"-- MyAAC custom pages",
+		"INSERT INTO `znote_pages` (`slug`, `title`, `body`, `created`, `updated`, `player_id`, `access`, `active`)
 SELECT
   LEFT(LOWER(REPLACE(REPLACE(`m`.`name`, ' ', '-'), '/', '-')), 64),
   LEFT(`m`.`title`, 100),
@@ -2119,21 +2380,35 @@ SELECT
   1
 FROM `myaac_pages` AS `m`
 LEFT JOIN `znote_pages` AS `z` ON `z`.`slug` = LEFT(LOWER(REPLACE(REPLACE(`m`.`name`, ' ', '-'), '/', '-')), 64)
-WHERE `m`.`hide` = 0 AND `z`.`id` IS NULL;";
-		}
-		if (acp_convert_table_exists('myaac_gallery')) {
-			$sql[] = "";
-			$sql[] = "-- MyAAC gallery";
-			$sql[] = "INSERT INTO `znote_images` (`title`, `desc`, `date`, `status`, `image`, `delhash`, `account_id`)
+WHERE `m`.`hide` = 0 AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_myaac_gallery(): array {
+	if (!acp_convert_table_exists('myaac_gallery')) {
+		return [];
+	}
+
+	return [
+		"",
+		"-- MyAAC gallery",
+		"INSERT INTO `znote_images` (`title`, `desc`, `date`, `status`, `image`, `delhash`, `account_id`)
 SELECT LEFT(IF(`m`.`comment` <> '', `m`.`comment`, 'Imported image'), 30), `m`.`comment`, UNIX_TIMESTAMP(), 2, LEFT(`m`.`image`, 255), '', 0
 FROM `myaac_gallery` AS `m`
 LEFT JOIN `znote_images` AS `z` ON `z`.`image` = LEFT(`m`.`image`, 255)
-WHERE `m`.`hide` = 0 AND `m`.`image` <> '' AND `z`.`id` IS NULL;";
-		}
-		if (acp_convert_table_exists('myaac_menu')) {
-			$sql[] = "";
-			$sql[] = "-- MyAAC menu";
-			$sql[] = "INSERT INTO `znote_menu` (`location`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`, `sort_order`, `active`)
+WHERE `m`.`hide` = 0 AND `m`.`image` <> '' AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_myaac_menu(): array {
+	if (!acp_convert_table_exists('myaac_menu')) {
+		return [];
+	}
+
+	return [
+		"",
+		"-- MyAAC menu",
+		"INSERT INTO `znote_menu` (`location`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`, `sort_order`, `active`)
 SELECT 'main', `p`.`id`, LEFT(`m`.`name`, 64), LEFT(`m`.`link`, 255), '', IF(`m`.`blank` = 1, '_blank', ''), 'all', `m`.`ordering`, 1
 FROM `myaac_menu` AS `m`
 INNER JOIN `znote_menu` AS `p`
@@ -2149,58 +2424,127 @@ INNER JOIN `znote_menu` AS `p`
     ELSE ''
   END
 LEFT JOIN `znote_menu` AS `z` ON `z`.`location` = 'main' AND `z`.`label` = LEFT(`m`.`name`, 64) AND `z`.`url` = LEFT(`m`.`link`, 255)
-WHERE `m`.`enabled` = 1 AND `m`.`name` <> '' AND `m`.`link` <> '' AND `z`.`id` IS NULL;";
-		}
-		if (acp_convert_table_exists('myaac_config')) {
-			$sql[] = "";
-			$sql[] = "-- MyAAC config preserved as legacy keys";
-			$sql[] = "INSERT INTO `znote_config` (`key`, `value`)
-SELECT LEFT(CONCAT('legacy:myaac:', `name`), 64), `value`
-FROM `myaac_config`
-ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);";
-		}
-		if (acp_convert_table_exists('myaac_settings')) {
-			$sql[] = "INSERT INTO `znote_config` (`key`, `value`)
-SELECT LEFT(CONCAT('legacy:myaac_setting:', `key`), 64), `value`
-FROM `myaac_settings`
-ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);";
-		}
+WHERE `m`.`enabled` = 1 AND `m`.`name` <> '' AND `m`.`link` <> '' AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_myaac_config(): array {
+	if (!acp_convert_table_exists('myaac_config')) {
+		return [];
 	}
 
-	if ($source === 'gesior') {
-		if (acp_convert_table_exists('z_news_big')) {
-			$hideCol = acp_convert_column_exists('z_news_big', 'hide_news') ? 'hide_news' : 'hide';
-			$sql[] = "";
-			$sql[] = "-- Gesior big news";
-			$sql[] = "INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
+	return [
+		"",
+		"-- MyAAC config preserved as legacy keys",
+		"INSERT INTO `znote_config` (`key`, `value`)
+SELECT LEFT(CONCAT('legacy:myaac:', `name`), 64), `value`
+FROM `myaac_config`
+ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);",
+	];
+}
+
+function acp_convert_sql_script_myaac_settings(): array {
+	if (!acp_convert_table_exists('myaac_settings')) {
+		return [];
+	}
+
+	return [
+		"INSERT INTO `znote_config` (`key`, `value`)
+SELECT LEFT(CONCAT('legacy:myaac_setting:', `key`), 64), `value`
+FROM `myaac_settings`
+ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);",
+	];
+}
+
+function acp_convert_sql_script_myaac_sections(): array {
+	$sql = [];
+	foreach ([
+		acp_convert_sql_script_myaac_news(),
+		acp_convert_sql_script_myaac_changelog(),
+		acp_convert_sql_script_myaac_pages(),
+		acp_convert_sql_script_myaac_gallery(),
+		acp_convert_sql_script_myaac_menu(),
+		acp_convert_sql_script_myaac_config(),
+		acp_convert_sql_script_myaac_settings(),
+	] as $section) {
+		array_push($sql, ...$section);
+	}
+
+	return $sql;
+}
+
+function acp_convert_sql_script_gesior_news(): array {
+	if (!acp_convert_table_exists('z_news_big')) {
+		return [];
+	}
+
+	$hideCol = acp_convert_column_exists('z_news_big', 'hide_news') ? 'hide_news' : 'hide';
+	return [
+		"",
+		"-- Gesior big news",
+		"INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
 SELECT LEFT(`g`.`topic`, 30), `g`.`text`, IF(`g`.`date` > 0, `g`.`date`, UNIX_TIMESTAMP()), IFNULL(`g`.`author_id`, 0)
 FROM `z_news_big` AS `g`
 LEFT JOIN `znote_news` AS `z` ON `z`.`title` = LEFT(`g`.`topic`, 30) AND `z`.`date` = `g`.`date`
-WHERE `g`.`{$hideCol}` = 0 AND `z`.`id` IS NULL;";
-		}
-		if (acp_convert_table_exists('z_news_tickers')) {
-			$hideWhere = acp_convert_column_exists('z_news_tickers', 'hide_ticker') ? "`g`.`hide_ticker` = 0" : '1=1';
-			$textCol = acp_convert_column_exists('z_news_tickers', 'text') ? 'text' : 'body';
-			$sql[] = "";
-			$sql[] = "-- Gesior tickers as Znote changelog entries";
-			$sql[] = "INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
+WHERE `g`.`{$hideCol}` = 0 AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_gesior_tickers(): array {
+	if (!acp_convert_table_exists('z_news_tickers')) {
+		return [];
+	}
+
+	$hideWhere = acp_convert_column_exists('z_news_tickers', 'hide_ticker') ? "`g`.`hide_ticker` = 0" : '1=1';
+	$textCol = acp_convert_column_exists('z_news_tickers', 'text') ? 'text' : 'body';
+	return [
+		"",
+		"-- Gesior tickers as Znote changelog entries",
+		"INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
 SELECT LEFT(`g`.`{$textCol}`, 254), IF(`g`.`date` > 0, `g`.`date`, UNIX_TIMESTAMP()), 0, 0
 FROM `z_news_tickers` AS `g`
 LEFT JOIN `znote_changelog` AS `z` ON `z`.`text` = LEFT(`g`.`{$textCol}`, 254) AND `z`.`time` = `g`.`date`
-WHERE {$hideWhere} AND `g`.`{$textCol}` <> '' AND `z`.`id` IS NULL;";
-		}
+WHERE {$hideWhere} AND `g`.`{$textCol}` <> '' AND `z`.`id` IS NULL;",
+	];
+}
+
+function acp_convert_sql_script_gesior_sections(): array {
+	$sql = [];
+	foreach ([
+		acp_convert_sql_script_gesior_news(),
+		acp_convert_sql_script_gesior_tickers(),
+	] as $section) {
+		array_push($sql, ...$section);
 	}
 
+	return $sql;
+}
+
+function acp_convert_sql_script_archive_section(string $source): array {
 	$archive = acp_convert_legacy_archive_sql($source);
 	if ($archive !== '') {
-		$sql[] = "";
-		$sql[] = "-- Lossless legacy archive for custom tables and columns";
-		$sql[] = $archive;
+		return [
+			"",
+			"-- Lossless legacy archive for custom tables and columns",
+			$archive,
+		];
 	}
 
-	$sql[] = "";
-	$sql[] = "COMMIT;";
-	$sql[] = "-- Rebuild the ZnoteX news/changelog cache from the admin panel after importing.";
+	return [];
+}
+
+function acp_convert_sql_script(string $source): string {
+	$sql = [];
+	foreach ([
+		acp_convert_sql_script_header($source),
+		acp_convert_sql_script_compatibility(),
+		$source === 'myaac' ? acp_convert_sql_script_myaac_sections() : [],
+		$source === 'gesior' ? acp_convert_sql_script_gesior_sections() : [],
+		acp_convert_sql_script_archive_section($source),
+		["", "COMMIT;", "-- Rebuild the ZnoteX news/changelog cache from the admin panel after importing."],
+	] as $section) {
+		array_push($sql, ...$section);
+	}
 
 	return trim(implode("\n\n", $sql)) . "\n";
 }
