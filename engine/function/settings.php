@@ -29,6 +29,25 @@ function znote_table_exists(string $table): bool {
 	return $known[$table] = (mysql_select_multi("SHOW TABLES LIKE '{$safe}';") !== false);
 }
 
+function znote_column_exists(string $table, string $column): bool {
+	static $known = array();
+
+	$cacheKey = $table . '.' . $column;
+
+	if (isset($known[$cacheKey])) {
+		return $known[$cacheKey];
+	}
+
+	if (!znote_table_exists($table)) {
+		return $known[$cacheKey] = false;
+	}
+
+	$safeTable  = mysql_znote_escape_string($table);
+	$safeColumn = mysql_znote_escape_string($column);
+
+	return $known[$cacheKey] = (mysql_select_single("SHOW COLUMNS FROM `{$safeTable}` LIKE '{$safeColumn}';") !== false);
+}
+
 function znote_settings_all(bool $refresh = false): array {
 	static $settings = null;
 

@@ -22,14 +22,16 @@ if (!defined('ACP_ROOT')) {
  */
 
 // The type column, as written by znote_visitor_insert_detailed_data().
-const ACP_VISIT_TYPES = array(
-	0 => 'Page view',
-	1 => 'Account registered',
-	2 => 'Character created',
-	3 => 'Highscores / listing',
-	4 => 'Character searched',
-	5 => 'Other form',
-);
+function acp_visit_types(): array {
+	return array(
+		0 => t('acp.vis.type_pageview'),
+		1 => t('acp.vis.type_register'),
+		2 => t('acp.vis.type_char_created'),
+		3 => t('acp.vis.type_highscores'),
+		4 => t('acp.vis.type_char_search'),
+		5 => t('acp.vis.type_other'),
+	);
+}
 
 $days = intv($_GET['days'] ?? 7);
 if (!in_array($days, array(1, 7, 30, 90), true)) {
@@ -87,29 +89,30 @@ foreach ($perDay as $row) {
 	<div class="acp-flash acp-flash--info">
 		<i class="fa fa-info-circle"></i>
 		<span>
-			Visitor logging is currently <strong>off</strong>, so nothing new is being recorded.
-			Anything below is history. Turn it back on in
-			<a href="<?= h(acp_url('settings')) ?>">Settings &rarr; Privacy</a>.
+			<?= t('acp.vis.off_notice', [
+				'off'  => '<strong>' . t('acp.vis.off') . '</strong>',
+				'link' => '<a href="' . h(acp_url('settings')) . '">' . t('acp.vis.settings_privacy') . '</a>',
+			]) ?>
 		</span>
 	</div>
 <?php endif; ?>
 
 <div class="acp-toolbar">
 	<div class="acp-actions is-tight">
-		<?php foreach (array(1 => 'Today', 7 => '7 days', 30 => '30 days', 90 => '90 days') as $d => $label): ?>
+		<?php foreach (array(1 => t('acp.vis.today'), 7 => t('acp.vis.7days'), 30 => t('acp.vis.30days'), 90 => t('acp.vis.90days')) as $d => $label): ?>
 			<a class="acp-btn <?= $d === $days ? '' : 'acp-btn--ghost' ?> acp-btn--sm"
 			   href="<?= h(acp_url('visitors', array('days' => $d))) ?>"><?= h($label) ?></a>
 		<?php endforeach; ?>
 	</div>
-	<span class="is-muted"><?= number_format($totalRows) ?> events on record</span>
+	<span class="is-muted"><?= t('acp.vis.events_recorded', ['n' => number_format($totalRows)]) ?></span>
 </div>
 
 <div class="acp-stats">
 	<?php
-	acp_stat('Visits, period', $rowsPeriod, 'fa-eye', null, 'blue');
-	acp_stat('Unique IPs, period', $uniquePeriod, 'fa-users', null, 'teal');
-	acp_stat('Unique IPs, all time', $uniqueAll, 'fa-globe', null, 'purple');
-	acp_stat('Events, all time', $totalRows, 'fa-database', null, 'green');
+	acp_stat(t('acp.vis.stat_visits'), $rowsPeriod, 'fa-eye', null, 'blue');
+	acp_stat(t('acp.vis.stat_unique_period'), $uniquePeriod, 'fa-users', null, 'teal');
+	acp_stat(t('acp.vis.stat_unique_all'), $uniqueAll, 'fa-globe', null, 'purple');
+	acp_stat(t('acp.vis.stat_events_all'), $totalRows, 'fa-database', null, 'green');
 	?>
 </div>
 
@@ -117,15 +120,15 @@ foreach ($perDay as $row) {
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>Per day</h2>
-			<p>Last <?= (int)$days ?> day<?= $days === 1 ? '' : 's' ?></p>
+			<h2><?= t('acp.vis.per_day') ?></h2>
+			<p><?= t('acp.vis.last_n_days', ['n' => (int)$days]) ?></p>
 		</header>
 		<div class="acp-card-body is-flush">
 			<?php if ($perDay): ?>
 				<div class="acp-table-wrap">
 					<table class="acp-table">
 						<thead>
-							<tr><th>Day</th><th class="is-num">Visits</th><th class="is-num">Unique</th><th>&nbsp;</th></tr>
+							<tr><th><?= t('acp.vis.col_day') ?></th><th class="is-num"><?= t('acp.vis.col_visits') ?></th><th class="is-num"><?= t('acp.vis.col_unique') ?></th><th>&nbsp;</th></tr>
 						</thead>
 						<tbody>
 							<?php foreach ($perDay as $row):
@@ -147,25 +150,25 @@ foreach ($perDay as $row) {
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('Nothing recorded in this period.', 'fa-line-chart'); ?>
+				<?php acp_empty(t('acp.vis.empty'), 'fa-line-chart'); ?>
 			<?php endif; ?>
 		</div>
 	</section>
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>What they did</h2>
-			<p>Last <?= (int)$days ?> day<?= $days === 1 ? '' : 's' ?></p>
+			<h2><?= t('acp.vis.what_they_did') ?></h2>
+			<p><?= t('acp.vis.last_n_days', ['n' => (int)$days]) ?></p>
 		</header>
 		<div class="acp-card-body is-flush">
 			<?php if ($byType): ?>
 				<div class="acp-table-wrap">
 					<table class="acp-table">
-						<thead><tr><th>Action</th><th class="is-num">Count</th></tr></thead>
+						<thead><tr><th><?= t('acp.vis.col_action') ?></th><th class="is-num"><?= t('acp.vis.col_count') ?></th></tr></thead>
 						<tbody>
 							<?php foreach ($byType as $row): ?>
 								<tr>
-									<td><?= h(ACP_VISIT_TYPES[(int)$row['type']] ?? ('Type ' . (int)$row['type'])) ?></td>
+									<td><?= h(acp_visit_types()[(int)$row['type']] ?? t('acp.vis.type_n', ['n' => (int)$row['type']])) ?></td>
 									<td class="is-num"><?= number_format((int)$row['hits']) ?></td>
 								</tr>
 							<?php endforeach; ?>
@@ -173,7 +176,7 @@ foreach ($perDay as $row) {
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('Nothing recorded in this period.', 'fa-list'); ?>
+				<?php acp_empty(t('acp.vis.empty'), 'fa-list'); ?>
 			<?php endif; ?>
 		</div>
 	</section>
@@ -181,15 +184,15 @@ foreach ($perDay as $row) {
 
 <section class="acp-card">
 	<header class="acp-card-head">
-		<h2>Busiest addresses</h2>
-		<p>Useful for spotting a scraper or a stuck client</p>
+		<h2><?= t('acp.vis.busiest') ?></h2>
+		<p><?= t('acp.vis.busiest_sub') ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($topIps): ?>
 			<div class="acp-table-wrap">
 				<table class="acp-table">
 					<thead>
-						<tr><th>IP</th><th class="is-num">Visits</th><th>Last seen</th><th>Account</th></tr>
+						<tr><th><?= t('acp.vis.col_ip') ?></th><th class="is-num"><?= t('acp.vis.col_visits') ?></th><th><?= t('acp.vis.col_last_seen') ?></th><th><?= t('acp.vis.col_account') ?></th></tr>
 					</thead>
 					<tbody>
 						<?php foreach ($topIps as $row):
@@ -212,7 +215,7 @@ foreach ($perDay as $row) {
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('Nothing recorded in this period.', 'fa-globe'); ?>
+			<?php acp_empty(t('acp.vis.empty'), 'fa-globe'); ?>
 		<?php endif; ?>
 	</div>
 </section>

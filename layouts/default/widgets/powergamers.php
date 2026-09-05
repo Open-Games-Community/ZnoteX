@@ -1,6 +1,6 @@
 <div class="well widget">
 	<div class="header">
-		Top 5 Powergamers
+		<?= t('widget.powergamers.title') ?>
 	</div>
 	<div class="body">
 		<table>

@@ -1,4 +1,4 @@
 <?php ?>
 
-<h1>Contact</h1>
-<p>TODO: Edit the contact details here.</p>
+<h1><?= t('contact.title') ?></h1>
+<p><?= t('contact.text') ?></p>

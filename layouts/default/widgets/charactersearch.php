@@ -1,13 +1,13 @@
 <div class="well search_widget" id="searchContainer">
 	<div class="header">
-		Character search
+		<?= t('widget.search.title') ?>
 	</div>
 	<div class="body">
 		<div class="relative">
 			<div id="name_suggestion"></div>
 		</div>
 		<form class="searchForm" action="characterprofile.php" method="get">
-			<label for="src_name">Search: </label><input autocomplete="off" type="text" name="name" id="src_name" class="search" placeholder="Name . . .">
+			<label for="src_name"><?= t('widget.search.label') ?> </label><input autocomplete="off" type="text" name="name" id="src_name" class="search" placeholder="<?= t('widget.search.placeholder') ?>">
 		</form>
 		<?php
 		$cache = new Cache('engine/cache/characterNames');

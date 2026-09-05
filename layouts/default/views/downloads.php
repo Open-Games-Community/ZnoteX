@@ -1,28 +1,28 @@
 <?php ?>
 
-<h1>Downloads</h1>
-<p>In order to play, you need an compatible IP changer and a Tibia client.</p>
+<h1><?= t('downloads.title') ?></h1>
+<p><?= t('downloads.intro') ?></p>
 
-<p>Download IP changer <a href="https://github.com/jo3bingham/tibia-ip-changer/releases/latest">HERE</a>.</p>
-<p>Download Tibia client <?php echo ($config['client'] / 100); ?> for windows <a href="<?php echo $config['client_download']; ?>">HERE</a>.</p>
-<p>Download Tibia client <?php echo ($config['client'] / 100); ?> for linux <a href="<?php echo $config['client_download_linux']; ?>">HERE</a>.</p>
+<p><?= t('downloads.ipchanger') ?> <a href="https://github.com/jo3bingham/tibia-ip-changer/releases/latest"><?= t('downloads.here') ?></a>.</p>
+<p><?= t('downloads.win', ['version' => ($config['client'] / 100)]) ?> <a href="<?php echo $config['client_download']; ?>"><?= t('downloads.here') ?></a>.</p>
+<p><?= t('downloads.linux', ['version' => ($config['client'] / 100)]) ?> <a href="<?php echo $config['client_download_linux']; ?>"><?= t('downloads.here') ?></a>.</p>
 
-<h2>How to connect and play:</h2>
+<h2><?= t('downloads.howto') ?></h2>
 <ol>
 	<li>
-		<a href="<?php echo $config['client_download']; ?>">Download</a> and install the tibia client if you havent already.
+		<a href="<?php echo $config['client_download']; ?>"><?= t('downloads.download') ?></a> <?= t('downloads.step1') ?>
 	</li>
 	<li>
-		<a href="https://github.com/jo3bingham/tibia-ip-changer/releases/latest">Download</a> and run the IP changer.
+		<a href="https://github.com/jo3bingham/tibia-ip-changer/releases/latest"><?= t('downloads.download') ?></a> <?= t('downloads.step2') ?>
 	</li>
 	<li>
-		In the IP changer, change Client Path to the tibia.exe file where you installed the client.</strong>
+		<?= t('downloads.step3') ?>
 	</li>
 	<li>
-		In the IP changer, write this in the IP field: <?php echo $_SERVER['SERVER_NAME']; ?>
+		<?= t('downloads.step4') ?> <?php echo $_SERVER['SERVER_NAME']; ?>
 	</li>
 	<li>
-		Now you can successfully login on the tibia client and play clicking on <strong>Apply</strong>.<br>
-		If you do not have an account to login with, you need to register an account <a href="register.php">HERE</a>.
+		<?= t('downloads.step5') ?> <strong>Apply</strong>.<br>
+		<?= t('downloads.step5b') ?> <a href="register.php"><?= t('downloads.here') ?></a>.
 	</li>
 </ol>

@@ -76,12 +76,12 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 
 <div class="acp-stats">
 	<?php
-	acp_stat('Accounts', $statAccounts, 'fa-user-plus', null, 'blue');
-	acp_stat('Characters', $statPlayers, 'fa-users', null, 'red');
-	acp_stat('Online now', $statOnline, 'fa-signal', null, 'teal');
-	acp_stat('Guilds', $statGuilds, 'fa-shield', null, 'green');
-	acp_stat('Houses', $statHouses, 'fa-home', null, 'amber');
-	acp_stat('Shop points', $statPoints, 'fa-diamond', acp_url('shop'), 'purple');
+	acp_stat(t('acp.dash.stat_accounts'), $statAccounts, 'fa-user-plus', null, 'blue');
+	acp_stat(t('acp.dash.stat_characters'), $statPlayers, 'fa-users', null, 'red');
+	acp_stat(t('acp.dash.stat_online'), $statOnline, 'fa-signal', null, 'teal');
+	acp_stat(t('acp.dash.stat_guilds'), $statGuilds, 'fa-shield', null, 'green');
+	acp_stat(t('acp.dash.stat_houses'), $statHouses, 'fa-home', null, 'amber');
+	acp_stat(t('acp.dash.stat_points'), $statPoints, 'fa-diamond', acp_url('shop'), 'purple');
 	?>
 </div>
 
@@ -90,47 +90,47 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 	<!-- ------------------------------------------------ Moderation queue -->
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>Needs attention</h2>
-			<p>Open items across the panel</p>
+			<h2><?= t('acp.dash.attention_title') ?></h2>
+			<p><?= t('acp.dash.attention_sub') ?></p>
 		</header>
 		<div class="acp-card-body is-flush">
 			<div class="acp-table-wrap">
 				<table class="acp-table">
 					<tbody>
 						<tr>
-							<td><i class="fa fa-bug is-muted"></i> &nbsp;Bug reports open</td>
+							<td><i class="fa fa-bug is-muted"></i> &nbsp;<?= t('acp.dash.bug_reports') ?></td>
 							<td class="is-num">
 								<span class="acp-pill <?= $queueReports > 0 ? 'acp-pill--red' : 'acp-pill--green' ?>"><?= (int)$queueReports ?></span>
 							</td>
-							<td class="is-nowrap is-num"><a href="<?= h(acp_url('reports')) ?>">Review</a></td>
+							<td class="is-nowrap is-num"><a href="<?= h(acp_url('reports')) ?>"><?= t('acp.dash.review') ?></a></td>
 						</tr>
 						<tr>
-							<td><i class="fa fa-life-ring is-muted"></i> &nbsp;Helpdesk tickets open</td>
+							<td><i class="fa fa-life-ring is-muted"></i> &nbsp;<?= t('acp.dash.helpdesk_open') ?></td>
 							<td class="is-num">
 								<span class="acp-pill <?= $queueTickets > 0 ? 'acp-pill--amber' : 'acp-pill--green' ?>"><?= (int)$queueTickets ?></span>
 							</td>
-							<td class="is-nowrap is-num"><a href="<?= h(acp_url('helpdesk')) ?>">Review</a></td>
+							<td class="is-nowrap is-num"><a href="<?= h(acp_url('helpdesk')) ?>"><?= t('acp.dash.review') ?></a></td>
 						</tr>
 						<tr>
-							<td><i class="fa fa-picture-o is-muted"></i> &nbsp;Images awaiting moderation</td>
+							<td><i class="fa fa-picture-o is-muted"></i> &nbsp;<?= t('acp.dash.images_pending') ?></td>
 							<td class="is-num">
 								<span class="acp-pill <?= $queueImages > 0 ? 'acp-pill--amber' : 'acp-pill--green' ?>"><?= (int)$queueImages ?></span>
 							</td>
-							<td class="is-nowrap is-num"><a href="<?= h(acp_url('gallery')) ?>">Review</a></td>
+							<td class="is-nowrap is-num"><a href="<?= h(acp_url('gallery')) ?>"><?= t('acp.dash.review') ?></a></td>
 						</tr>
 						<tr>
-							<td><i class="fa fa-comments-o is-muted"></i> &nbsp;Feedback threads without a staff reply</td>
+							<td><i class="fa fa-comments-o is-muted"></i> &nbsp;<?= t('acp.dash.feedback_open') ?></td>
 							<td class="is-num">
 								<span class="acp-pill <?= $queueFeedback > 0 ? 'acp-pill--amber' : 'acp-pill--green' ?>"><?= (int)$queueFeedback ?></span>
 							</td>
-							<td class="is-nowrap is-num"><a href="<?= h(acp_site('forum.php?cat=4')) ?>">Open</a></td>
+							<td class="is-nowrap is-num"><a href="<?= h(acp_site('forum.php?cat=4')) ?>"><?= t('acp.dash.open') ?></a></td>
 						</tr>
 						<tr>
-							<td><i class="fa fa-shopping-cart is-muted"></i> &nbsp;Shop orders pending delivery</td>
+							<td><i class="fa fa-shopping-cart is-muted"></i> &nbsp;<?= t('acp.dash.orders_pending') ?></td>
 							<td class="is-num">
 								<span class="acp-pill <?= $statOrders > 0 ? 'acp-pill--blue' : 'acp-pill--green' ?>"><?= (int)$statOrders ?></span>
 							</td>
-							<td class="is-nowrap is-num"><a href="<?= h(acp_url('shop_orders')) ?>">Open</a></td>
+							<td class="is-nowrap is-num"><a href="<?= h(acp_url('shop_orders')) ?>"><?= t('acp.dash.open') ?></a></td>
 						</tr>
 					</tbody>
 				</table>
@@ -141,36 +141,36 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 	<!-- ------------------------------------------------------ Environment -->
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>Environment</h2>
-			<p>What this install is running</p>
+			<h2><?= t('acp.dash.env_title') ?></h2>
+			<p><?= t('acp.dash.env_sub') ?></p>
 		</header>
 		<div class="acp-card-body">
 			<dl class="acp-dl">
 				<dt>ZnoteX</dt>
-				<dd><?= h($version) ?><?= is_array($znote) && isset($znote['version']) ? '' : ' <span class="acp-pill acp-pill--red">znote table missing</span>' ?></dd>
+				<dd><?= h($version) ?><?= is_array($znote) && isset($znote['version']) ? '' : ' <span class="acp-pill acp-pill--red">'. t('acp.dash.znote_table_missing') .'</span>' ?></dd>
 
 				<dt>PHP</dt>
 				<dd><?= h(PHP_VERSION) ?></dd>
 
-				<dt>Server engine</dt>
+				<dt><?= t('acp.dash.server_engine') ?></dt>
 				<dd><span class="acp-pill acp-pill--blue"><?= h(serverEngineReal()) ?></span></dd>
 
-				<dt>Database</dt>
+				<dt><?= t('acp.dash.database') ?></dt>
 				<dd><?= h($config['sqlDatabase'] ?? '') ?> @ <?= h($config['sqlHost'] ?? '') ?></dd>
 
-				<dt>Site URL</dt>
+				<dt><?= t('acp.dash.site_url') ?></dt>
 				<dd><a href="<?= h($config['site_url'] ?? '#') ?>" target="_blank" rel="noopener"><?= h($config['site_url'] ?? '') ?></a></dd>
 
-				<dt>Installed</dt>
+				<dt><?= t('acp.dash.installed') ?></dt>
 				<dd><?= is_array($znote) && !empty($znote['installed']) ? h(getClock((int)$znote['installed'], true)) : '&mdash;' ?></dd>
 
-				<dt>Last cache</dt>
+				<dt><?= t('acp.dash.last_cache') ?></dt>
 				<dd><?= is_array($znote) && !empty($znote['cached']) ? h(getClock((int)$znote['cached'], true)) : '&mdash;' ?></dd>
 
-				<dt>Two-factor</dt>
+				<dt><?= t('acp.dash.two_factor') ?></dt>
 				<dd><?= !empty($config['twoFactorAuthenticator'])
-					? '<span class="acp-pill acp-pill--green">Enabled</span>'
-					: '<span class="acp-pill acp-pill--grey">Disabled</span>' ?></dd>
+					? '<span class="acp-pill acp-pill--green">'. t('acp.dash.enabled') .'</span>'
+					: '<span class="acp-pill acp-pill--grey">'. t('acp.dash.disabled') .'</span>' ?></dd>
 			</dl>
 		</div>
 	</section>
@@ -180,13 +180,13 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 
 	<!-- ------------------------------------------------- Latest accounts -->
 	<section class="acp-card">
-		<header class="acp-card-head"><h2>Newest accounts</h2></header>
+		<header class="acp-card-head"><h2><?= t('acp.dash.newest_accounts') ?></h2></header>
 		<div class="acp-card-body is-flush">
 			<?php if (is_array($latestAccounts) && $latestAccounts): ?>
 				<div class="acp-table-wrap">
 					<table class="acp-table">
 						<thead>
-							<tr><th>Account</th><th>Created</th><th class="is-num">Points</th></tr>
+							<tr><th><?= t('acp.dash.col_account') ?></th><th><?= t('acp.dash.col_created') ?></th><th class="is-num"><?= t('acp.dash.col_points') ?></th></tr>
 						</thead>
 						<tbody>
 							<?php foreach ($latestAccounts as $row): ?>
@@ -200,20 +200,20 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('No accounts registered yet.', 'fa-user-o'); ?>
+				<?php acp_empty(t('acp.dash.no_accounts'), 'fa-user-o'); ?>
 			<?php endif; ?>
 		</div>
 	</section>
 
 	<!-- -------------------------------------------------- Latest players -->
 	<section class="acp-card">
-		<header class="acp-card-head"><h2>Newest characters</h2></header>
+		<header class="acp-card-head"><h2><?= t('acp.dash.newest_characters') ?></h2></header>
 		<div class="acp-card-body is-flush">
 			<?php if (is_array($latestPlayers) && $latestPlayers): ?>
 				<div class="acp-table-wrap">
 					<table class="acp-table">
 						<thead>
-							<tr><th>Name</th><th>Vocation</th><th class="is-num">Level</th></tr>
+							<tr><th><?= t('acp.dash.col_name') ?></th><th><?= t('acp.dash.col_vocation') ?></th><th class="is-num"><?= t('acp.dash.col_level') ?></th></tr>
 						</thead>
 						<tbody>
 							<?php foreach ($latestPlayers as $row): ?>
@@ -231,20 +231,20 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('No characters created yet.', 'fa-user-o'); ?>
+				<?php acp_empty(t('acp.dash.no_characters'), 'fa-user-o'); ?>
 			<?php endif; ?>
 		</div>
 	</section>
 
 	<!-- ---------------------------------------------------- Top balances -->
 	<section class="acp-card">
-		<header class="acp-card-head"><h2>Largest point balances</h2></header>
+		<header class="acp-card-head"><h2><?= t('acp.dash.top_balances') ?></h2></header>
 		<div class="acp-card-body is-flush">
 			<?php if (is_array($topPoints) && $topPoints): ?>
 				<div class="acp-table-wrap">
 					<table class="acp-table">
 						<thead>
-							<tr><th>#</th><th>Account</th><th class="is-num">Points</th></tr>
+							<tr><th>#</th><th><?= t('acp.dash.col_account') ?></th><th class="is-num"><?= t('acp.dash.col_points') ?></th></tr>
 						</thead>
 						<tbody>
 							<?php $rank = 0; foreach ($topPoints as $row): $rank++; ?>
@@ -258,7 +258,7 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('Nobody holds shop points yet.', 'fa-diamond'); ?>
+				<?php acp_empty(t('acp.dash.no_points'), 'fa-diamond'); ?>
 			<?php endif; ?>
 		</div>
 	</section>

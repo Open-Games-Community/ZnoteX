@@ -9,11 +9,11 @@
  * The account write happens in settings.php, never here.
  */
 ?>
-<h1>Settings</h1>
+<h1><?= t('settings.title') ?></h1>
 
 <?php if ($formState === 'success'): ?>
 
-	Your settings have been updated.
+	<?= t('settings.success') ?>
 
 <?php else: ?>
 
@@ -24,13 +24,13 @@
 	<form action="" method="post">
 		<ul>
 			<li>
-				email:<br>
+				<?= t('settings.email') ?><br>
 				<input type="text" name="new_email" value="<?php echo $user_data['email']; ?>">
 			</li>
 			<li>
-				Country:<br>
+				<?= t('settings.country') ?><br>
 				<select name="new_flag" id="flag_select">
-					<option value="">(Please choose)</option>
+					<option value=""><?= t('settings.choose') ?></option>
 					<?php
 					foreach(array('pl', 'se', 'br', 'us', 'gb', ) as $c)
 						echo '<option value="' . $c . '">' . $config['countries'][$c] . '</option>';
@@ -43,7 +43,7 @@
 			</li>
 			<?php Token::create(); ?>
 			<li>
-				<input type="submit" value="Update settings">
+				<input type="submit" value="<?= t('settings.submit') ?>">
 			</li>
 		</ul>
 	</form>

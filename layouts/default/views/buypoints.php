@@ -3,29 +3,29 @@
 if ($paypal['enabled']) {
 ?>
 
-<h1>Buy Points</h1>
-<h2>Buy points using Paypal:</h2>
+<h1><?= t('buypoints.title') ?></h1>
+<h2><?= t('buypoints.paypal') ?></h2>
 <table id="buypointsTable" class="table table-striped table-hover">
 	<tr class="yellow">
-		<th>Price:</th>
-		<th>Points:</th>
+		<th><?= t('buypoints.price') ?></th>
+		<th><?= t('buypoints.points') ?></th>
 		<?php if ($paypal['showBonus']) { ?>
-			<th>Bonus:</th>
+			<th><?= t('buypoints.bonus_col') ?></th>
 		<?php } ?>
-		<th>Action:</th>
+		<th><?= t('buypoints.action') ?></th>
 	</tr>
 		<?php
 		foreach ($prices as $price => $points) {
 		echo '<tr class="special">';
 		echo '<td>'. $price .'('. $paypal['currency'] .')</td>';
 		echo '<td>'. $points .'</td>';
-		if ($paypal['showBonus']) echo '<td>'. calculate_discount(($paypal['points_per_currency'] * $price), $points) .' bonus</td>';
+		if ($paypal['showBonus']) echo '<td>'. calculate_discount(($paypal['points_per_currency'] * $price), $points) .' '. t('buypoints.bonus') .'</td>';
 		?>
 		<td>
 			<form action="https://www.paypal.com/cgi-bin/webscr" method="POST">
 				<input type="hidden" name="cmd" value="_xclick">
 				<input type="hidden" name="business" value="<?php echo hhb_tohtml($paypal['email']); ?>">
-				<input type="hidden" name="item_name" value="<?php echo $points .' shop points on '. hhb_tohtml($config['site_title']); ?>">
+				<input type="hidden" name="item_name" value="<?= t('buypoints.shop_points_on', ['points' => $points, 'site' => hhb_tohtml($config['site_title'])]) ?>">
 				<input type="hidden" name="item_number" value="1">
 				<input type="hidden" name="amount" value="<?php echo $price; ?>">
 				<input type="hidden" name="no_shipping" value="1">
@@ -38,7 +38,7 @@ if ($paypal['enabled']) {
 				<input type="hidden" name="rm" value="2">
 				<input type="hidden" name="notify_url" value="<?php echo hhb_tohtml($paypal['ipn']); ?>" />
 				<input type="hidden" name="custom" value="<?php echo (int)$session_user_id; ?>">
-				<input type="submit" value="  PURCHASE  ">
+				<input type="submit" value="  <?= t('buypoints.purchase') ?>  ">
 			</form>
 		</td>
 		<?php
@@ -48,10 +48,66 @@ if ($paypal['enabled']) {
 </table>
 <?php } ?>
 
+<?php if (!empty($stripe['enabled'])) { ?>
+<h1><?= t('buypoints.title') ?></h1>
+<h2>Stripe</h2>
+<table class="table table-striped table-hover">
+	<tr class="yellow">
+		<th><?= t('buypoints.price') ?></th>
+		<th><?= t('buypoints.points') ?></th>
+		<?php if (!empty($stripe['showBonus'])) { ?><th><?= t('buypoints.bonus_col') ?></th><?php } ?>
+		<th><?= t('buypoints.action') ?></th>
+	</tr>
+	<?php foreach ($prices as $price => $points) { ?>
+		<tr class="special">
+			<td><?= hhb_tohtml($price) ?>(<?= hhb_tohtml($stripe['currency']) ?>)</td>
+			<td><?= (int)$points ?></td>
+			<?php if (!empty($stripe['showBonus'])) { ?><td><?= calculate_discount(((int)$stripe['points_per_currency'] * $price), $points) ?> <?= t('buypoints.bonus') ?></td><?php } ?>
+			<td>
+				<form action="payment.php" method="post">
+					<?php Token::create(); ?>
+					<input type="hidden" name="provider" value="stripe">
+					<input type="hidden" name="price" value="<?= hhb_tohtml($price) ?>">
+					<input type="submit" value="  <?= t('buypoints.purchase') ?>  ">
+				</form>
+			</td>
+		</tr>
+	<?php } ?>
+</table>
+<?php } ?>
+
+<?php if (!empty($mercadopago['enabled'])) { ?>
+<h1><?= t('buypoints.title') ?></h1>
+<h2>Mercado Pago</h2>
+<table class="table table-striped table-hover">
+	<tr class="yellow">
+		<th><?= t('buypoints.price') ?></th>
+		<th><?= t('buypoints.points') ?></th>
+		<?php if (!empty($mercadopago['showBonus'])) { ?><th><?= t('buypoints.bonus_col') ?></th><?php } ?>
+		<th><?= t('buypoints.action') ?></th>
+	</tr>
+	<?php foreach ($prices as $price => $points) { ?>
+		<tr class="special">
+			<td><?= hhb_tohtml($price) ?>(<?= hhb_tohtml($mercadopago['currency']) ?>)</td>
+			<td><?= (int)$points ?></td>
+			<?php if (!empty($mercadopago['showBonus'])) { ?><td><?= calculate_discount(((int)$mercadopago['points_per_currency'] * $price), $points) ?> <?= t('buypoints.bonus') ?></td><?php } ?>
+			<td>
+				<form action="payment.php" method="post">
+					<?php Token::create(); ?>
+					<input type="hidden" name="provider" value="mercadopago">
+					<input type="hidden" name="price" value="<?= hhb_tohtml($price) ?>">
+					<input type="submit" value="  <?= t('buypoints.purchase') ?>  ">
+				</form>
+			</td>
+		</tr>
+	<?php } ?>
+</table>
+<?php } ?>
+
 <?php
 if ($config['pagseguro']['enabled'] == true) {
 ?>
-	<h2>Buy points using Pagseguro:</h2>
+	<h2><?= t('buypoints.pagseguro') ?></h2>
 	<form target="pagseguro" action="https://<?=hhb_tohtml($pagseguro['urls']['www'])?>/checkout/checkout.jhtml" method="post">
 		<input type="hidden" name="email_cobranca" value="<?=hhb_tohtml($pagseguro['email'])?>">
 		<input type="hidden" name="tipo" value="CP">
@@ -62,7 +118,7 @@ if ($config['pagseguro']['enabled'] == true) {
 		<input type="number" name="item_quant_1" min="1" step="4" value="1">
 		<input type="hidden" name="item_peso_1" value="0">
 		<input type="hidden" name="item_valor_1" value="<?=$pagseguro['price']?>">
-		<input type="submit" value="  PURCHASE  ">
+		<input type="submit" value="  <?= t('buypoints.purchase') ?>  ">
 	</form>
 	<br>
 <?php } ?>
@@ -71,9 +127,9 @@ if ($config['pagseguro']['enabled'] == true) {
 if ($config['paygol']['enabled'] == true) {
 ?>
 <!-- PayGol Form using Post method -->
-<h2>Buy points using Paygol:</h2>
+<h2><?= t('buypoints.paygol') ?></h2>
 <?php $paygol = $config['paygol']; ?>
-<p><?php echo $paygol['price'] ." ". hhb_tohtml($paygol['currency']) ."~ for ". $paygol['points'] ." points:"; ?></p>
+<p><?= t('buypoints.paygol_line', ['price' => $paygol['price'], 'currency' => hhb_tohtml($paygol['currency']), 'points' => $paygol['points']]) ?></p>
 <form name="pg_frm" method="post" action="http://www.paygol.com/micropayment/paynow" >
 	<input type="hidden" name="pg_serviceid" value="<?php echo hhb_tohtml($paygol['serviceID']); ?>">
 	<input type="hidden" name="pg_currency" value="<?php echo hhb_tohtml($paygol['currency']); ?>">
@@ -86,4 +142,4 @@ if ($config['paygol']['enabled'] == true) {
 </form>
 <?php }
 
-if (!$config['paypal']['enabled'] && !$config['paygol']['enabled'] && !$config['pagseguro']['enabled']) echo '<h1>Buy Points system disabled.</h1><p>Sorry, this functionality is disabled.</p>';
+if (!$config['paypal']['enabled'] && !$config['paygol']['enabled'] && !$config['pagseguro']['enabled'] && empty($stripe['enabled']) && empty($mercadopago['enabled'])) echo '<h1>'. t('buypoints.disabled') .'</h1><p>'. t('buypoints.disabled_text') .'</p>';

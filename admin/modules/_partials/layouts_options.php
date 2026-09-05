@@ -13,7 +13,7 @@ $backUrl  = acp_url('layouts');
 <div class="acp-toolbar">
 	<div>
 		<a class="acp-btn acp-btn--ghost" href="<?= h($backUrl) ?>">
-			<i class="fa fa-angle-left"></i> Back to themes
+			<i class="fa fa-angle-left"></i> <?= t('acp.layopt.back') ?>
 		</a>
 	</div>
 	<div class="acp-actions is-tight">
@@ -21,11 +21,11 @@ $backUrl  = acp_url('layouts');
 			<form class="acp-inline-form" method="post">
 				<?= acp_csrf_field() ?>
 				<input type="hidden" name="activate" value="<?= h($optionTheme) ?>">
-				<button class="acp-btn" type="submit"><i class="fa fa-check"></i> Activate</button>
+				<button class="acp-btn" type="submit"><i class="fa fa-check"></i> <?= t('acp.layopt.activate') ?></button>
 			</form>
 		<?php else: ?>
 			<a class="acp-btn acp-btn--ghost" href="<?= h(acp_site()) ?>" target="_blank" rel="noopener">
-				<i class="fa fa-external-link"></i> View site
+				<i class="fa fa-external-link"></i> <?= t('acp.layopt.view_site') ?>
 			</a>
 		<?php endif; ?>
 	</div>
@@ -34,20 +34,19 @@ $backUrl  = acp_url('layouts');
 <section class="acp-card">
 	<header class="acp-card-head">
 		<h2>
-			<?= h($theme['name']) ?> &mdash; options
-			<?php if ($isActive): ?><span class="acp-pill acp-pill--green">Active</span><?php endif; ?>
+			<?= h($theme['name']) ?> &mdash; <?= t('acp.layopt.options_suffix') ?>
+			<?php if ($isActive): ?><span class="acp-pill acp-pill--green"><?= t('acp.layopt.active') ?></span><?php endif; ?>
 		</h2>
 		<p>
 			<code><?= h('layouts/' . $optionTheme . '/') ?></code>
-			<?php if ($theme['author'] !== ''): ?>&middot; by <?= h($theme['author']) ?><?php endif; ?>
+			<?php if ($theme['author'] !== ''): ?>&middot; <?= t('acp.layopt.by_author', ['author' => h($theme['author'])]) ?><?php endif; ?>
 			<?php if ($theme['version'] !== ''): ?>&middot; v<?= h($theme['version']) ?><?php endif; ?>
 		</p>
 	</header>
 
 	<div class="acp-card-body">
 		<p class="acp-hint">
-			Saved per theme, in the database. The theme's files are never modified, so an update to
-			the theme cannot lose these. Leave a field empty to fall back to the theme's own default.
+			<?= t('acp.layopt.saved_hint') ?>
 		</p>
 
 		<form method="post" enctype="multipart/form-data">
@@ -65,7 +64,7 @@ $backUrl  = acp_url('layouts');
 					<?php elseif ($opt['type'] === 'checkbox'): ?>
 						<label style="display:flex;align-items:center;gap:8px;font-weight:400;">
 							<input type="checkbox" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]" value="1" <?= $value !== '' ? 'checked' : '' ?>>
-							<span class="is-muted">Enabled</span>
+							<span class="is-muted"><?= t('acp.layopt.enabled') ?></span>
 						</label>
 					<?php elseif ($opt['type'] === 'image'): ?>
 						<?php $shown = ($value !== '') ? $value : $opt['default']; ?>
@@ -77,8 +76,8 @@ $backUrl  = acp_url('layouts');
 						<?php endif; ?>
 						<input class="acp-input" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]"
 							   type="text" value="<?= h($value) ?>"
-							   placeholder="<?= h($opt['default'] !== '' ? $opt['default'] : 'engine/img/theme/... or https://...') ?>">
-						<p class="acp-hint" style="margin:6px 0 4px;">Current path above. Or upload a new image, which replaces it:</p>
+							   placeholder="<?= h($opt['default'] !== '' ? $opt['default'] : t('acp.layopt.image_placeholder')) ?>">
+						<p class="acp-hint" style="margin:6px 0 4px;"><?= t('acp.layopt.upload_hint') ?></p>
 						<input class="acp-input" type="file" name="optfile[<?= h($optKey) ?>]" accept="image/png,image/jpeg,image/gif,image/webp">
 					<?php else: ?>
 						<input class="acp-input" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]"
@@ -94,8 +93,8 @@ $backUrl  = acp_url('layouts');
 			<?php endforeach; ?>
 
 			<div class="acp-actions">
-				<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> Save options</button>
-				<a class="acp-btn acp-btn--ghost" href="<?= h($backUrl) ?>">Back to themes</a>
+				<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> <?= t('acp.layopt.save_btn') ?></button>
+				<a class="acp-btn acp-btn--ghost" href="<?= h($backUrl) ?>"><?= t('acp.layopt.back') ?></a>
 			</div>
 		</form>
 	</div>

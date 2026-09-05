@@ -19,3 +19,8 @@ PULL_REQUEST.md
 
 # Theme background/logo images uploaded from the admin panel.
 engine/img/theme/
+
+layouts/old_school
+layouts/tibiacom_v1
+layouts/tibiacomv3
+layouts/zephyr

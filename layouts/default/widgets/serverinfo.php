@@ -15,13 +15,13 @@ if ($cache->hasExpired()) {
 ?>
 <div class="well widget">
 	<div class="header">
-		Server Information
+		<?= t('widget.serverinfo.title') ?>
 	</div>
 	<div class="body">
 		<ul>
-			<li><a href="onlinelist.php">Players online: <?php echo $asideServerInfo['online']; ?></a></li>
-			<li>Registered accounts: <?php echo $asideServerInfo['accounts'];?></li>
-			<li>Registered players: <?php echo $asideServerInfo['players'];?></li>
+			<li><a href="onlinelist.php"><?= t('widget.serverinfo.online', ['count' => $asideServerInfo['online']]) ?></a></li>
+			<li><?= t('widget.serverinfo.accounts', ['count' => $asideServerInfo['accounts']]) ?></li>
+			<li><?= t('widget.serverinfo.players', ['count' => $asideServerInfo['players']]) ?></li>
 		</ul>
 	</div>
 </div>

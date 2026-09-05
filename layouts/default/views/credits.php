@@ -1,15 +1,27 @@
 <?php ?>
 
-<h1>Znote AAC</h1>
-<p>This website is powered by the <a href="https://github.com/Znote/ZnoteAAC">Znote AAC</a> engine.</p>
-<p>An OT website (<strong>A</strong>utomatic <strong>A</strong>ccount <strong>C</strong>reator) created by <a href="https://otland.net/members/znote.5993/">Znote</a> from the OT forum community <a href="https://otland.net">otland.net</a>.</p>
-<p>Znote AAC is an open source project where everyone can help with development.</p>
+<h1>ZnoteX</h1>
+<p><?= t('credits.znotex_text') ?></p>
 
-<h2>Developers:</h2>
+<h2><?= t('credits.maintained') ?></h2>
+<div class="developers">
+	<div class="developer">
+		<div class="avatar"><img src="<?php echo $creditsMaintainer['avatar']; ?>" alt="Avatar of: <?php echo $creditsMaintainer['login']; ?>"></div>
+		<p class="username"><a href="<?php echo $creditsMaintainer['url']; ?>" target="_blank" rel="noopener"><?php echo $creditsMaintainer['login']; ?></a>
+			<br><?php echo $creditsMaintainer['role']; ?></p>
+	</div>
+</div>
+
+<h1>Znote AAC</h1>
+<p><?= t('credits.znote_text') ?></p>
+<p><?= t('credits.ot_website') ?> <a href="https://otland.net/members/znote.5993/">Znote</a> <?= t('credits.from_community') ?> <a href="https://otland.net">otland.net</a>.</p>
+<p><?= t('credits.opensource') ?></p>
+
+<h2><?= t('credits.developers') ?></h2>
 <?php // If CURL isn't enabled show default version.
 if(!function_exists('curl_version')):
 	?>
-	<p>See the full list of developers <a href="https://github.com/Znote/ZnoteAAC/graphs/contributors">HERE</a>.</p>
+	<p><a href="https://github.com/Znote/ZnoteAAC/graphs/contributors"><?= t('credits.full_list') ?></a>.</p>
 <?php else:
 	// CURL enabled. Lets create an API web request to github.
 	$request = curl_init();
@@ -28,7 +40,7 @@ if(!function_exists('curl_version')):
 			<div class="developer">
 				<div class="avatar"><img src="<?php echo $developer['avatar_url']; ?>" alt="Avatar of: <?php echo $developer['login']; ?>"></div>
 				<p class="username"><a href="<?php echo $developer['html_url']; ?>"><?php echo $developer['login']; ?></a>
-					<br>Updates: <?php echo $developer['contributions']; ?></p>
+					<br><?= t('credits.updates') ?> <?php echo $developer['contributions']; ?></p>
 			</div>
 		<?php endforeach; ?>
 	</div>
@@ -60,7 +72,7 @@ if(!function_exists('curl_version')):
 endif;
 ?>
 
-<h2>Thanks to: (in no particular order)</h2>
+<h2><?= t('credits.thanks') ?></h2>
 <p>
 	<a href="https://otland.net/members/chris.13882/">Chris</a> - PHP OOP file samples, testing, bugfixing.
 	<br><a href="https://otland.net/members/kiwi-dan.152/">Kiwi Dan</a> - Researching TFS 0.2 for me, participation in developement.

@@ -16,7 +16,7 @@
 				?>
 				<table id="changelogTable">
 					<tr class="yellow">
-						<td colspan="2">Latest Changelog Updates (<a href="changelog.php">Click here to see full changelog</a>)</td>
+						<td colspan="2"><?= t('news.changelog_ticker') ?> (<a href="changelog.php"><?= t('news.changelog_full') ?></a>)</td>
 					</tr>
 					<?php
 					for ($i = 0; $i < count($changelogs) && $i < 5; $i++) {
@@ -30,7 +30,7 @@
 					?>
 				</table>
 				<?php
-			} else echo "No changelogs submitted.";
+			} else echo t('news.no_changelogs');
 		}
 
 		// Design and present the list
@@ -54,7 +54,7 @@
 					?>
 					<table id="news">
 						<tr class="yellow">
-							<td class="zheadline"><?php echo '<a href="?view='.$news[$si]['id'].'">[#'.$news[$si]['id'].']</a> '. getClock($news[$si]['date'], true) .' by <a href="characterprofile.php?name='. $news[$si]['name'] .'">'. $news[$si]['name'] .'</a> - <b>'. znote_bbcode_raw($news[$si]['title']) .'</b>'; ?></td>
+							<td class="zheadline"><?php echo '<a href="?view='.$news[$si]['id'].'">[#'.$news[$si]['id'].']</a> '. getClock($news[$si]['date'], true) .' '. t('news.by') .' <a href="characterprofile.php?name='. $news[$si]['name'] .'">'. $news[$si]['name'] .'</a> - <b>'. znote_bbcode_raw($news[$si]['title']) .'</b>'; ?></td>
 						</tr>
 						<tr>
 							<td>
@@ -67,11 +67,11 @@
 					?>
 					<table id="news">
 						<tr class="yellow">
-							<td class="zheadline">News post not found.</td>
+							<td class="zheadline"><?= t('news.not_found') ?></td>
 						</tr>
 						<tr>
 							<td>
-								<p>We failed to find the post you where looking for.</p>
+								<p><?= t('news.not_found_text') ?></p>
 							</td>
 						</tr>
 					</table>
@@ -85,7 +85,7 @@
 						?>
 						<table id="news">
 							<tr class="yellow">
-								<td class="zheadline"><?php echo '<a href="?view='.urlencode($news[$i]['title']).'">'.getClock($news[$i]['date'], true).'</a> by <a href="characterprofile.php?name='. $news[$i]['name'] .'">'. $news[$i]['name'] .'</a> - <b>'. znote_bbcode_raw($news[$i]['title']) .'</b>'; ?></td>
+								<td class="zheadline"><?php echo '<a href="?view='.urlencode($news[$i]['title']).'">'.getClock($news[$i]['date'], true).'</a> '. t('news.by') .' <a href="characterprofile.php?name='. $news[$i]['name'] .'">'. $news[$i]['name'] .'</a> - <b>'. znote_bbcode_raw($news[$i]['title']) .'</b>'; ?></td>
 							</tr>
 							<tr>
 								<td>
@@ -103,11 +103,11 @@
 
 					if ($i == $page) {
 
-						echo '<option value="index.php?page='.$i.'" selected>Page '.$i.'</option>';
+						echo '<option value="index.php?page='.$i.'" selected>'. t('common.page_n', ['n' => $i]) .'</option>';
 
 					} else {
 
-						echo '<option value="index.php?page='.$i.'">Page '.$i.'</option>';
+						echo '<option value="index.php?page='.$i.'">'. t('common.page_n', ['n' => $i]) .'</option>';
 					}
 				}
 
@@ -116,6 +116,6 @@
 			}
 
 		} else {
-			echo '<p>No news exist.</p>';
+			echo '<p>'. t('news.none') .'</p>';
 		}
 	}

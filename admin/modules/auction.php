@@ -18,22 +18,22 @@ $now              = time();
 
 function acp_duration(int $seconds): string {
 	if ($seconds <= 0) {
-		return '0 seconds';
+		return t('acp.auc.zero_seconds');
 	}
 
 	$units = [
-		'day'    => 86400,
-		'hour'   => 3600,
-		'minute' => 60,
-		'second' => 1,
+		'day'    => [86400, 'acp.auc.day',    'acp.auc.days'],
+		'hour'   => [3600,  'acp.auc.hour',   'acp.auc.hours'],
+		'minute' => [60,    'acp.auc.minute', 'acp.auc.minutes'],
+		'second' => [1,     'acp.auc.second', 'acp.auc.seconds'],
 	];
 
 	$parts = [];
-	foreach ($units as $name => $value) {
+	foreach ($units as [$value, $oneKey, $manyKey]) {
 		$qty = intdiv($seconds, $value);
 		if ($qty > 0) {
 			$seconds -= $qty * $value;
-			$parts[] = $qty . ' ' . ($qty === 1 ? $name : $name . 's');
+			$parts[] = $qty . ' ' . t($qty === 1 ? $oneKey : $manyKey);
 		}
 	}
 
@@ -109,9 +109,9 @@ $completed = is_array($completed) ? $completed : [];
 
 <div class="acp-stats">
 	<?php
-	acp_stat('Ongoing', count($ongoing), 'fa-gavel', null, 'blue');
-	acp_stat('Sold, unclaimed', count($pending), 'fa-hourglass-half', null, 'amber');
-	acp_stat('Completed', count($completed), 'fa-check-circle', null, 'green');
+	acp_stat(t('acp.auc.stat_ongoing'), count($ongoing), 'fa-gavel', null, 'blue');
+	acp_stat(t('acp.auc.stat_pending'), count($pending), 'fa-hourglass-half', null, 'amber');
+	acp_stat(t('acp.auc.stat_completed'), count($completed), 'fa-check-circle', null, 'green');
 	?>
 </div>
 
@@ -119,8 +119,7 @@ $completed = is_array($completed) ? $completed : [];
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
 		<span>
-			<code>$config['shop_auction']['storage_account_id']</code> is not set, so listed
-			characters cannot be parked anywhere. The auction system will not work until it is.
+			<?= t('acp.auc.no_storage', ['code' => '<code>$config[\'shop_auction\'][\'storage_account_id\']</code>']) ?>
 		</span>
 	</div>
 <?php endif; ?>
@@ -128,8 +127,8 @@ $completed = is_array($completed) ? $completed : [];
 <!-- ------------------------------------------------------------- Ongoing -->
 <section class="acp-card">
 	<header class="acp-card-head">
-		<h2>Ongoing auctions</h2>
-		<p>Listed and still open for bids</p>
+		<h2><?= t('acp.auc.ongoing_title') ?></h2>
+		<p><?= t('acp.auc.ongoing_sub') ?></p>
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($ongoing): ?>
@@ -137,12 +136,12 @@ $completed = is_array($completed) ? $completed : [];
 				<table class="acp-table">
 					<thead>
 						<tr>
-							<th class="is-num">Level</th>
-							<th>Vocation</th>
-							<th class="is-num">Price</th>
-							<th class="is-num">Bid</th>
-							<th>Listed</th>
-							<th>Type</th>
+							<th class="is-num"><?= t('acp.auc.col_level') ?></th>
+							<th><?= t('acp.auc.col_vocation') ?></th>
+							<th class="is-num"><?= t('acp.auc.col_price') ?></th>
+							<th class="is-num"><?= t('acp.auc.col_bid') ?></th>
+							<th><?= t('acp.auc.col_listed') ?></th>
+							<th><?= t('acp.auc.col_type') ?></th>
 							<th class="is-num">&nbsp;</th>
 						</tr>
 					</thead>
@@ -158,17 +157,17 @@ $completed = is_array($completed) ? $completed : [];
 								<td class="is-nowrap is-muted"><?= h(getClock((int)$c['time_begin'], true)) ?></td>
 								<td>
 									<?php if ($ended): ?>
-										<span class="acp-pill acp-pill--blue">Instant buy</span>
+										<span class="acp-pill acp-pill--blue"><?= t('acp.auc.instant_buy') ?></span>
 									<?php else: ?>
-										<span class="acp-pill acp-pill--amber">Bidding</span>
-										<span class="is-muted"><?= h(acp_duration((int)$c['time_end'] - $now)) ?> left</span>
+										<span class="acp-pill acp-pill--amber"><?= t('acp.auc.bidding') ?></span>
+										<span class="is-muted"><?= t('acp.auc.left', ['time' => acp_duration((int)$c['time_end'] - $now)]) ?></span>
 									<?php endif; ?>
 								</td>
 								<td class="is-num is-nowrap">
 									<a class="acp-btn acp-btn--ghost acp-btn--sm"
 									   href="<?= h(acp_site('auctionChar.php?action=view&zaid=' . (int)$c['zaid'])) ?>"
 									   target="_blank" rel="noopener">
-										<i class="fa fa-eye"></i> View
+										<i class="fa fa-eye"></i> <?= t('acp.auc.view') ?>
 									</a>
 								</td>
 							</tr>
@@ -177,7 +176,7 @@ $completed = is_array($completed) ? $completed : [];
 				</table>
 			</div>
 		<?php else: ?>
-			<?php acp_empty('No characters are currently up for auction.', 'fa-gavel'); ?>
+			<?php acp_empty(t('acp.auc.none_ongoing'), 'fa-gavel'); ?>
 		<?php endif; ?>
 	</div>
 </section>
@@ -203,13 +202,13 @@ function acp_auction_table(array $rows, string $title, string $subtitle, string 
 					<table class="acp-table">
 						<thead>
 							<tr>
-								<th>Character</th>
-								<th class="is-num">Level</th>
-								<th>Vocation</th>
-								<th class="is-num">Price</th>
-								<th class="is-num">Bid</th>
-								<th>Listed</th>
-								<th>Ended</th>
+								<th><?= t('acp.auc.col_character') ?></th>
+								<th class="is-num"><?= t('acp.auc.col_level') ?></th>
+								<th><?= t('acp.auc.col_vocation') ?></th>
+								<th class="is-num"><?= t('acp.auc.col_price') ?></th>
+								<th class="is-num"><?= t('acp.auc.col_bid') ?></th>
+								<th><?= t('acp.auc.col_listed') ?></th>
+								<th><?= t('acp.auc.col_ended') ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -239,32 +238,28 @@ function acp_auction_table(array $rows, string $title, string $subtitle, string 
 
 acp_auction_table(
 	$pending,
-	'Sold, waiting to be claimed',
-	'The buyer has paid but has not pulled the character onto their account yet',
-	'Nothing is waiting to be claimed.'
+	t('acp.auc.pending_title'),
+	t('acp.auc.pending_sub'),
+	t('acp.auc.pending_empty')
 );
 
 acp_auction_table(
 	$completed,
-	'Completed auctions',
-	'Claimed and closed',
-	'No auction has completed yet.'
+	t('acp.auc.completed_title'),
+	t('acp.auc.completed_sub'),
+	t('acp.auc.completed_empty')
 );
 ?>
 
 <section class="acp-card">
 	<details>
 		<summary class="acp-card-head" style="cursor:pointer;">
-			<h2>How this works &amp; current configuration</h2>
-			<p>From <code>$config['shop_auction']</code></p>
+			<h2><?= t('acp.auc.how_title') ?></h2>
+			<p><?= t('acp.auc.how_sub', ['code' => '<code>$config[\'shop_auction\']</code>']) ?></p>
 		</summary>
 		<div class="acp-card-body">
 			<p>
-				Players sell, buy and bid on characters for shop points. It deepens the shop
-				economy and gives players who cannot afford points a way to earn them by levelling
-				characters to sell &mdash; which also pulls trade away from risky third-party
-				account sellers, since buying officially supports the server. Prices settle on
-				their own against each community's own inflation, with no admin intervention.
+				<?= t('acp.auc.how_text') ?>
 			</p>
 			<?php data_dump($auction, false, "config.php: shop_auction"); ?>
 		</div>

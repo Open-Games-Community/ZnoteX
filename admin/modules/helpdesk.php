@@ -36,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 			LIMIT 1;
 		");
 
-		acp_flash_success('Reply posted.');
+		acp_log('helpdesk.reply', '#' . $view);
+		acp_flash_success(t('acp.hd.reply_posted'));
 		acp_redirect('helpdesk', ['view' => $view]);
 	}
 
@@ -45,14 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 	// ---------------------------------------------------------- Close ticket
 	if (!empty($_POST['admin_ticket_close']) && $ticketId > 0) {
 		mysql_update("UPDATE `znote_tickets` SET `status` = 'CLOSED' WHERE `id` = {$ticketId} LIMIT 1;");
-		acp_flash_success('Ticket closed.');
+		acp_log('helpdesk.close', '#' . $ticketId);
+		acp_flash_success(t('acp.hd.closed'));
 		acp_redirect('helpdesk', ['view' => $view]);
 	}
 
 	// ----------------------------------------------------------- Open ticket
 	if (!empty($_POST['admin_ticket_open']) && $ticketId > 0) {
 		mysql_update("UPDATE `znote_tickets` SET `status` = 'Open' WHERE `id` = {$ticketId} LIMIT 1;");
-		acp_flash_success('Ticket reopened.');
+		acp_log('helpdesk.reopen', '#' . $ticketId);
+		acp_flash_success(t('acp.hd.reopened'));
 		acp_redirect('helpdesk', ['view' => $view]);
 	}
 
@@ -60,7 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 	if (!empty($_POST['admin_ticket_delete']) && $ticketId > 0) {
 		mysql_delete("DELETE FROM `znote_tickets` WHERE `id` = {$ticketId} LIMIT 1;");
 		mysql_delete("DELETE FROM `znote_tickets_replies` WHERE `tid` = {$ticketId};");
-		acp_flash_success('Ticket #' . $ticketId . ' deleted.');
+		acp_log('helpdesk.delete', '#' . $ticketId);
+		acp_flash_success(t('acp.hd.deleted', ['id' => $ticketId]));
 		acp_redirect('helpdesk');
 	}
 }
@@ -84,9 +88,9 @@ function acp_ticket_tone(string $status): string {
 		?>
 		<section class="acp-card">
 			<div class="acp-card-body">
-				<?php acp_empty('That ticket does not exist.', 'fa-question-circle-o'); ?>
+				<?php acp_empty(t('acp.hd.not_found'), 'fa-question-circle-o'); ?>
 				<div class="acp-actions" style="justify-content:center;">
-					<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('helpdesk')) ?>">Back to all tickets</a>
+					<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('helpdesk')) ?>"><?= t('acp.hd.back_all') ?></a>
 				</div>
 			</div>
 		</section>
@@ -105,32 +109,32 @@ function acp_ticket_tone(string $status): string {
 
 		<div class="acp-toolbar">
 			<div>
-				<strong>Ticket #<?= $ticketId ?></strong>
+				<strong><?= t('acp.hd.ticket_hash', ['id' => $ticketId]) ?></strong>
 				&mdash; <?= h((string)($ticket['subject'] ?? '')) ?>
 				<span class="acp-pill acp-pill--<?= h(acp_ticket_tone($status)) ?>"><?= h($status) ?></span>
 			</div>
 			<div class="acp-actions is-tight">
 				<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('helpdesk')) ?>">
-					<i class="fa fa-arrow-left"></i> All tickets
+					<i class="fa fa-arrow-left"></i> <?= t('acp.hd.all_tickets') ?>
 				</a>
 				<form class="acp-inline-form" method="post">
 					<?= acp_csrf_field() ?>
 					<input type="hidden" name="admin_ticket_id" value="<?= $ticketId ?>">
 					<?php if (!$isClosed): ?>
 						<button class="acp-btn acp-btn--amber acp-btn--sm" type="submit" name="admin_ticket_close" value="1">
-							<i class="fa fa-lock"></i> Close
+							<i class="fa fa-lock"></i> <?= t('acp.hd.close') ?>
 						</button>
 					<?php else: ?>
 						<button class="acp-btn acp-btn--green acp-btn--sm" type="submit" name="admin_ticket_open" value="1">
-							<i class="fa fa-unlock"></i> Reopen
+							<i class="fa fa-unlock"></i> <?= t('acp.hd.reopen') ?>
 						</button>
 					<?php endif; ?>
 				</form>
-				<form class="acp-inline-form" method="post" data-confirm="Delete this ticket and every reply on it?">
+				<form class="acp-inline-form" method="post" data-confirm="<?= h(t('acp.hd.confirm_delete')) ?>">
 					<?= acp_csrf_field() ?>
 					<input type="hidden" name="admin_ticket_id" value="<?= $ticketId ?>">
 					<button class="acp-btn acp-btn--red acp-btn--sm" type="submit" name="admin_ticket_delete" value="1">
-						<i class="fa fa-trash"></i> Delete
+						<i class="fa fa-trash"></i> <?= t('acp.hd.delete') ?>
 					</button>
 				</form>
 			</div>
@@ -138,7 +142,7 @@ function acp_ticket_tone(string $status): string {
 
 		<article class="acp-post">
 			<header class="acp-post-head">
-				<span>Opened by <strong><?= h((string)($ticket['username'] ?? '')) ?></strong></span>
+				<span><?= t('acp.hd.opened_by') ?> <strong><?= h((string)($ticket['username'] ?? '')) ?></strong></span>
 				<span><?= h(getClock((int)($ticket['creation'] ?? 0), true)) ?></span>
 			</header>
 			<div class="acp-post-body"><?= nl2br(h((string)($ticket['message'] ?? ''))) ?></div>
@@ -151,7 +155,7 @@ function acp_ticket_tone(string $status): string {
 			?>
 				<article class="acp-post<?= $isStaff ? ' acp-post--staff' : '' ?>">
 					<header class="acp-post-head">
-						<span><?= $isStaff ? '<i class="fa fa-shield"></i> ' : '' ?>Reply by <strong><?= h($replyUser) ?></strong></span>
+						<span><?= $isStaff ? '<i class="fa fa-shield"></i> ' : '' ?><?= t('acp.hd.reply_by') ?> <strong><?= h($replyUser) ?></strong></span>
 						<span><?= h(getClock((int)($reply['created'] ?? 0), true)) ?></span>
 					</header>
 					<div class="acp-post-body"><?= nl2br(h((string)($reply['message'] ?? ''))) ?></div>
@@ -161,16 +165,16 @@ function acp_ticket_tone(string $status): string {
 
 		<?php if (!$isClosed): ?>
 			<section class="acp-card">
-				<header class="acp-card-head"><h2>Reply</h2></header>
+				<header class="acp-card-head"><h2><?= t('acp.hd.reply_heading') ?></h2></header>
 				<div class="acp-card-body">
 					<form method="post">
 						<?= acp_csrf_field() ?>
 						<input type="hidden" name="username" value="ADMIN">
 						<div class="acp-field">
-							<textarea class="acp-textarea" name="reply_text" rows="7" placeholder="Write your reply&hellip;" required></textarea>
+							<textarea class="acp-textarea" name="reply_text" rows="7" placeholder="<?= h(t('acp.hd.reply_placeholder')) ?>" required></textarea>
 						</div>
 						<div class="acp-actions">
-							<button class="acp-btn" type="submit"><i class="fa fa-reply"></i> Post reply</button>
+							<button class="acp-btn" type="submit"><i class="fa fa-reply"></i> <?= t('acp.hd.post_reply') ?></button>
 						</div>
 					</form>
 				</div>
@@ -178,7 +182,7 @@ function acp_ticket_tone(string $status): string {
 		<?php else: ?>
 			<section class="acp-card">
 				<div class="acp-card-body">
-					<?php acp_empty('This ticket is closed. Reopen it to reply.', 'fa-lock'); ?>
+					<?php acp_empty(t('acp.hd.closed_hint'), 'fa-lock'); ?>
 				</div>
 			</section>
 		<?php endif; ?>
@@ -196,8 +200,8 @@ function acp_ticket_tone(string $status): string {
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>All tickets</h2>
-			<p>Newest first</p>
+			<h2><?= t('acp.hd.all_tickets') ?></h2>
+			<p><?= t('acp.hd.newest_first') ?></p>
 		</header>
 		<div class="acp-card-body is-flush">
 			<?php if (is_array($tickets) && $tickets): ?>
@@ -206,10 +210,10 @@ function acp_ticket_tone(string $status): string {
 						<thead>
 							<tr>
 								<th>#</th>
-								<th>Subject</th>
-								<th>Opened by</th>
-								<th>Created</th>
-								<th>Status</th>
+								<th><?= t('acp.hd.col_subject') ?></th>
+								<th><?= t('acp.hd.col_opened_by') ?></th>
+								<th><?= t('acp.hd.col_created') ?></th>
+								<th><?= t('acp.hd.col_status') ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -229,7 +233,7 @@ function acp_ticket_tone(string $status): string {
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('No helpdesk tickets have been submitted.', 'fa-life-ring'); ?>
+				<?php acp_empty(t('acp.hd.empty'), 'fa-life-ring'); ?>
 			<?php endif; ?>
 		</div>
 	</section>

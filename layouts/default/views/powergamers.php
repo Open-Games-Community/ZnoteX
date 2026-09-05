@@ -3,11 +3,11 @@
 <table id="tbl_powergamers">
 	<thead>
 		<tr>
-			<th colspan="9"><h1>Powergamers</h1></th>
+			<th colspan="9"><h1><?= t('powergamers.title') ?></h1></th>
 		</tr>
 		<tr>
-			<th>Name</th>
-			<th>k Diff</th>
+			<th><?= t('common.name') ?></th>
+			<th><?= t('powergamers.diff') ?></th>
 			<th><?php echo $dates['d0ago']; ?></th>
 			<th><?php echo $dates['d1ago']; ?></th>
 			<th><?php echo $dates['d2ago']; ?></th>

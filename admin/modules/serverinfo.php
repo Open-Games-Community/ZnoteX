@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$key = (string)($_POST['src'] ?? '');
 
 	if (!isset($sources[$key])) {
-		acp_flash_error('Unknown data source.');
+		acp_flash_error(t('acp.srv.unknown_source'));
 		acp_redirect('serverinfo');
 	}
 
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	if ($do === 'clear') {
 		serverdata_clear($key);
-		acp_flash_success($label . ' removed. ' . $sources[$key]['page'] . ' no longer has data to show.');
+		acp_flash_success(t('acp.srv.removed', ['label' => $label, 'page' => $sources[$key]['page']]));
 		acp_redirect('serverinfo');
 	}
 
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$error = null;
 		if (serverdata_rebuild($key, $error)) {
 			$count = serverdata_count($key, serverdata_load($key));
-			acp_flash_success($label . ' rebuilt: ' . number_format($count) . ' entries cached.');
+			acp_flash_success(t('acp.srv.rebuilt', ['label' => $label, 'count' => number_format($count)]));
 			if ($error !== null) {
 				acp_flash_info($error);
 			}
@@ -50,32 +50,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$file = $_FILES['payload'] ?? null;
 
 		if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-			acp_flash_error('Select a file first.');
+			acp_flash_error(t('acp.srv.select_file'));
 			acp_redirect('serverinfo');
 		}
 
 		if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
 			$reasons = [
-				UPLOAD_ERR_INI_SIZE   => 'The file is larger than upload_max_filesize in php.ini.',
-				UPLOAD_ERR_FORM_SIZE  => 'The file is larger than the form allows.',
-				UPLOAD_ERR_PARTIAL    => 'The upload was interrupted.',
-				UPLOAD_ERR_NO_TMP_DIR => 'PHP has no temporary folder to write to.',
-				UPLOAD_ERR_CANT_WRITE => 'PHP could not write the upload to disk.',
-				UPLOAD_ERR_EXTENSION  => 'A PHP extension blocked the upload.',
+				UPLOAD_ERR_INI_SIZE   => t('acp.srv.err_ini_size'),
+				UPLOAD_ERR_FORM_SIZE  => t('acp.srv.err_form_size'),
+				UPLOAD_ERR_PARTIAL    => t('acp.srv.err_partial'),
+				UPLOAD_ERR_NO_TMP_DIR => t('acp.srv.err_no_tmp_dir'),
+				UPLOAD_ERR_CANT_WRITE => t('acp.srv.err_cant_write'),
+				UPLOAD_ERR_EXTENSION  => t('acp.srv.err_extension'),
 			];
-			acp_flash_error($reasons[(int)$file['error']] ?? 'The upload failed.');
+			acp_flash_error($reasons[(int)$file['error']] ?? t('acp.srv.upload_failed'));
 			acp_redirect('serverinfo');
 		}
 
 		if (!is_uploaded_file((string)$file['tmp_name'])) {
-			acp_flash_error('The upload could not be verified.');
+			acp_flash_error(t('acp.srv.upload_unverified'));
 			acp_redirect('serverinfo');
 		}
 
 		$error = null;
 		if (serverdata_publish_upload($key, (string)$file['tmp_name'], (string)$file['name'], $error)) {
 			$count = serverdata_count($key, serverdata_load($key));
-			acp_flash_success($label . ' uploaded: ' . number_format($count) . ' entries now live on ' . $sources[$key]['page'] . '.');
+			acp_flash_success(t('acp.srv.uploaded', [
+				'label' => $label,
+				'count' => number_format($count),
+				'page'  => $sources[$key]['page'],
+			]));
 			if ($error !== null) {
 				acp_flash_info($error);
 			}
@@ -106,12 +110,12 @@ $maxUpload = min(
 		}
 		?>
 		<span class="acp-pill acp-pill--<?= $ready === count($status) ? 'green' : 'grey' ?>">
-			<?= (int)$ready ?> of <?= count($status) ?> sources published
+			<?= t('acp.srv.sources_published', ['ready' => (int)$ready, 'total' => count($status)]) ?>
 		</span>
 	</div>
 	<div class="acp-actions is-tight">
 		<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_site('serverinfo.php')) ?>" target="_blank">
-			<i class="fa fa-external-link"></i> Server Information
+			<i class="fa fa-external-link"></i> <?= t('acp.srv.public_page') ?>
 		</a>
 	</div>
 </div>
@@ -120,8 +124,10 @@ $maxUpload = min(
 	<div class="acp-flash acp-flash--info">
 		<i class="fa fa-info-circle"></i>
 		<span>
-			The public items page is turned off. Enable <code>items</code> under
-			<a href="<?= h(acp_url('settings')) ?>">Settings</a> for your items.xml upload to be visible.
+			<?= t('acp.srv.items_off', [
+				'items'    => '<code>items</code>',
+				'settings' => '<a href="' . h(acp_url('settings')) . '">' . t('acp.srv.settings_link') . '</a>',
+			]) ?>
 		</span>
 	</div>
 <?php endif; ?>
@@ -137,36 +143,36 @@ $maxUpload = min(
 
 				<p>
 					<?php if ($row['cached']): ?>
-						<span class="acp-pill acp-pill--green"><?= number_format((int)$row['count']) ?> published</span>
+						<span class="acp-pill acp-pill--green"><?= t('acp.srv.published', ['count' => number_format((int)$row['count'])]) ?></span>
 					<?php else: ?>
-						<span class="acp-pill acp-pill--grey">Nothing published</span>
+						<span class="acp-pill acp-pill--grey"><?= t('acp.srv.nothing_published') ?></span>
 					<?php endif; ?>
 					<?php if ($row['upload_size']): ?>
 						<span class="acp-pill acp-pill--blue"><?= h(serverdata_human_size((int)$row['upload_size'])) ?></span>
 					<?php endif; ?>
 					<?php if ($key === 'creatures' && (int)$row['files'] > 1): ?>
-						<span class="acp-pill acp-pill--blue"><?= number_format((int)$row['files']) ?> XML files</span>
+						<span class="acp-pill acp-pill--blue"><?= t('acp.srv.xml_files', ['count' => number_format((int)$row['files'])]) ?></span>
 					<?php endif; ?>
 				</p>
 
 				<table class="acp-table">
 					<tbody>
 						<tr>
-							<td>Source</td>
+							<td><?= t('acp.srv.col_source') ?></td>
 							<td><code><?= h($row['path_label']) ?></code></td>
 						</tr>
 						<?php if ($row['keeps_file']): ?>
 							<tr>
-								<td>Uploaded</td>
+								<td><?= t('acp.srv.col_uploaded') ?></td>
 								<td><?= $row['upload_date'] ? h(date('Y-m-d H:i', (int)$row['upload_date'])) : '&mdash;' ?></td>
 							</tr>
 						<?php endif; ?>
 						<tr>
-							<td>Published</td>
+							<td><?= t('acp.srv.col_published') ?></td>
 							<td><?= $row['cache_date'] ? h(date('Y-m-d H:i', (int)$row['cache_date'])) : '&mdash;' ?></td>
 						</tr>
 						<tr>
-							<td>Public page</td>
+							<td><?= t('acp.srv.col_public_page') ?></td>
 							<td><a href="<?= h(acp_site($row['page'])) ?>" target="_blank"><?= h($row['page']) ?></a></td>
 						</tr>
 					</tbody>
@@ -178,22 +184,22 @@ $maxUpload = min(
 					<input type="hidden" name="src" value="<?= h($key) ?>">
 
 					<div class="acp-field">
-						<label class="acp-label" for="src_<?= h($key) ?>">Upload <?= h($row['accept']) ?></label>
+						<label class="acp-label" for="src_<?= h($key) ?>"><?= t('acp.srv.upload_label', ['accept' => h($row['accept'])]) ?></label>
 						<input class="acp-input" type="file" id="src_<?= h($key) ?>" name="payload" accept="<?= h($row['accept']) ?>" required>
 					</div>
 
 					<div class="acp-actions">
 						<button class="acp-btn acp-btn--green" type="submit">
-							<i class="fa fa-upload"></i> Upload and publish
+							<i class="fa fa-upload"></i> <?= t('acp.srv.upload_publish') ?>
 						</button>
 						<?php if ($row['uploaded'] && $row['keeps_file']): ?>
 							<button class="acp-btn acp-btn--ghost" type="submit" form="rebuild_<?= h($key) ?>">
-								<i class="fa fa-refresh"></i> Re-read
+								<i class="fa fa-refresh"></i> <?= t('acp.srv.reread') ?>
 							</button>
 						<?php endif; ?>
 						<?php if ($row['uploaded'] || $row['cached']): ?>
 							<button class="acp-btn acp-btn--red" type="submit" form="clear_<?= h($key) ?>">
-								<i class="fa fa-trash"></i> Remove
+								<i class="fa fa-trash"></i> <?= t('acp.srv.remove') ?>
 							</button>
 						<?php endif; ?>
 					</div>
@@ -207,7 +213,7 @@ $maxUpload = min(
 					</form>
 				<?php endif; ?>
 				<?php if ($row['uploaded'] || $row['cached']): ?>
-					<form method="post" id="clear_<?= h($key) ?>" onsubmit="return confirm('Remove <?= h($row['label']) ?>? <?= h($row['page']) ?> will stop showing it.');">
+					<form method="post" id="clear_<?= h($key) ?>" onsubmit="return confirm('<?= h(t('acp.srv.confirm_remove', ['label' => $row['label'], 'page' => $row['page']])) ?>');">
 						<?= acp_csrf_field() ?>
 						<input type="hidden" name="do" value="clear">
 						<input type="hidden" name="src" value="<?= h($key) ?>">
@@ -220,6 +226,8 @@ $maxUpload = min(
 </div>
 
 <p class="acp-hint">
-	Uploads are stored under <code><?= h(ZNOTE_SERVERDATA_DIR) ?>/</code> and parsed straight away, so the
-	public pages only ever read the cache. PHP currently accepts <?= h(serverdata_human_size($maxUpload)) ?> per upload.
+	<?= t('acp.srv.storage_hint', [
+		'path' => '<code>' . h(ZNOTE_SERVERDATA_DIR) . '</code>',
+		'size' => h(serverdata_human_size($maxUpload)),
+	]) ?>
 </p>

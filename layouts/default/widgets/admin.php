@@ -1,11 +1,11 @@
 <div class="well myaccount_widget widget">
 	<div class="header">
-		Administration
+		<?= t('widget.admin.title') ?>
 	</div>
 	<div class="body">
 		<ul class="linkbuttons">
 			<li>
-				<a href="admin/index.php"><i class="fa fa-sliders"></i> Admin Panel</a>
+				<a href="admin/index.php"><i class="fa fa-sliders"></i> <?= t('widget.admin.panel') ?></a>
 			</li>
 			<?php
 			// Everything that used to be a separate admin_*.php link now lives
@@ -39,7 +39,7 @@
 			}
 			?>
 			<li>
-				<a href='forum.php?cat=4'>Feedback: [<?php echo $new; ?>] new</a>
+				<a href='forum.php?cat=4'><?= t('widget.admin.feedback', ['count' => $new]) ?></a>
 			</li>
 		</ul>
 	</div>

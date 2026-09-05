@@ -46,7 +46,7 @@ if (!empty($config['ServerEngine']) && $config['ServerEngine'] !== 'TFS_02') {
 /* FOLLOW BLOCK */
 if (!empty($follow['enabled'])): ?>
 	<div class="well">
-		<div class="header">Follow Us</div>
+		<div class="header"><?= t('widget.follow.title') ?></div>
 		<div class="body">
 			<table class="smedia centralizeContent">
 				<tr>

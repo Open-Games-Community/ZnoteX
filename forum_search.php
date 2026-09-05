@@ -4,18 +4,18 @@
 $searchResults = 30; // How many max search results
 
 /* Below HTML CODE = Plugin you can put anywhere in Znote AAC where you want search.
-<h1>Search forum</h1>
+<h1>'. t('fsearch.title'). '</h1>
 <form action="forum_search.php" method="get">
 	<select name="type">
 		<option value="1">Title</option>
 		<option value="2">Post</option>
-		<option value="3">Author (threads)</option>
-		<option value="4">Author (posts)</option>
-		<option value="5">Latest Posts</option>
-		<option value="6">Latest Threads</option>
+		<option value="3">'. t('fsearch.author_threads'). '</option>
+		<option value="4">'. t('fsearch.author_posts'). '</option>
+		<option value="5">'. t('fsearch.latest_posts2'). '</option>
+		<option value="6">'. t('fsearch.latest_threads2'). '</option>
 	</select>
 	<input type="text" name="text" placeholder="Search string">
-	<input type="submit" value="Search">
+	<input type="submit" value="<?= t('common.search') ?>">
 </form>
 */
 function stripBBCode($text_to_search) {
@@ -51,18 +51,18 @@ if ($text !== false) {
 }
 
 ?>
-<h1>Search forum</h1>
+<h1><?= t('fsearch.title') ?></h1>
 <form method="" type="get">
 	<select name="type">
 		<option value="1" <?php if ($type == 1) echo "selected"; ?>>Title</option>
 		<option value="2" <?php if ($type == 2) echo "selected"; ?>>Post</option>
-		<option value="3" <?php if ($type == 3) echo "selected"; ?>>Author (threads)</option>
-		<option value="4" <?php if ($type == 4) echo "selected"; ?>>Author (posts)</option>
-		<option value="5" <?php if ($type == 5) echo "selected"; ?>>Latest Posts</option>
-		<option value="6" <?php if ($type == 6) echo "selected"; ?>>Latest Threads</option>
+		<option value="3" <?php if ($type == 3) echo "selected"; ?>><?= t('fsearch.author_threads') ?></option>
+		<option value="4" <?php if ($type == 4) echo "selected"; ?>><?= t('fsearch.author_posts') ?></option>
+		<option value="5" <?php if ($type == 5) echo "selected"; ?>><?= t('fsearch.latest_posts2') ?></option>
+		<option value="6" <?php if ($type == 6) echo "selected"; ?>><?= t('fsearch.latest_threads2') ?></option>
 	</select>
 	<input type="text" name="text" value="<?php if ($text !== false) echo implode(' ', $text); ?>">
-	<input type="submit" value="Search">
+	<input type="submit" value="<?= t('common.search') ?>">
 </form>
 <?php
 
@@ -90,7 +90,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 				}
 
 			//if ($results !== false) data_dump($results, false, "Search results");
-			//else echo "<br><b>No results.</b>";
+			//else echo "<br><b>'. t('fsearch.no_results'). '</b>";
 			break;
 
 		case 2: // Search posts
@@ -127,7 +127,7 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 				}
 
 			//if ($results !== false) data_dump($results, false, "Search results");
-			//else echo "<br><b>No results.</b>";
+			//else echo "<br><b>'. t('fsearch.no_results'). '</b>";
 			break;
 
 		case 4: // Search authors last posts
@@ -223,9 +223,9 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 				?>
 			</table>
 			<?php
-		} else echo "No results.";
-	} else echo "No results.";
-} else echo "<br><b>You must fill in all fields!</b>";
+		} else echo t('fsearch.no_results');
+	} else echo t('fsearch.no_results');
+} else echo "<br><b>". t('fsearch.fill_all2'). "</b>";
 
 theme_close();
 ?>

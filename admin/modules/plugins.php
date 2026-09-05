@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$known  = znote_plugins(true);
 
 	if ($name === '' || !isset($known[$name])) {
-		acp_flash_error('No such plugin. It may have been removed from plugins/.');
+		acp_flash_error(t('acp.plg.no_such'));
 		acp_redirect('plugins');
 	}
 
@@ -45,14 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$error = znote_plugin_install($name);
 
 			if ($error !== '') {
-				acp_flash_error($label . ' could not be installed: ' . $error);
+				acp_flash_error(t('acp.plg.install_failed', ['plugin' => $label, 'error' => $error]));
 				break;
 			}
 
 			// Installing implies wanting it on. Nobody installs a plugin in
 			// order to leave it switched off.
 			znote_plugin_set_enabled($name, true);
-			acp_flash_success($label . ' ' . $plugin['version'] . ' is installed and enabled.');
+			acp_log('plugin.install', $name, ['version' => $plugin['version']]);
+			acp_flash_success(t('acp.plg.installed', ['plugin' => $label, 'version' => $plugin['version']]));
 			break;
 
 		case 'update':
@@ -60,32 +61,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$error = znote_plugin_install($name);
 
 			if ($error !== '') {
-				acp_flash_error($label . ' could not be updated: ' . $error);
+				acp_flash_error(t('acp.plg.update_failed', ['plugin' => $label, 'error' => $error]));
 			} else {
-				acp_flash_success($label . ' updated from ' . $from . ' to ' . $plugin['version'] . '.');
+				acp_log('plugin.update', $name, ['from' => $from, 'to' => $plugin['version']]);
+				acp_flash_success(t('acp.plg.updated', ['plugin' => $label, 'from' => $from, 'to' => $plugin['version']]));
 			}
 			break;
 
 		case 'enable':
 			znote_plugin_set_enabled($name, true);
-			acp_flash_success($label . ' is enabled.');
+			acp_log('plugin.enable', $name);
+			acp_flash_success(t('acp.plg.enabled', ['plugin' => $label]));
 			break;
 
 		case 'disable':
 			znote_plugin_set_enabled($name, false);
-			acp_flash_info($label . ' is disabled. Its database tables were left untouched.');
+			acp_log('plugin.disable', $name);
+			acp_flash_info(t('acp.plg.disabled', ['plugin' => $label]));
 			break;
 
 		case 'uninstall':
 			// Forgets the install, keeps the data. Dropping a player's coupons
 			// because someone clicked a button would be the wrong default.
 			znote_plugin_uninstall($name);
-			acp_flash_info($label . ' is no longer installed. Its tables and their data are still there, '
-				. 'and deleting the folder from plugins/ removes it for good.');
+			acp_log('plugin.uninstall', $name);
+			acp_flash_info(t('acp.plg.uninstalled', ['plugin' => $label]));
 			break;
 
 		default:
-			acp_flash_error('Unknown action.');
+			acp_flash_error(t('acp.plg.unknown_action'));
 	}
 
 	acp_redirect('plugins');
@@ -107,29 +111,29 @@ foreach ($plugins as $plugin) {
 
 <div class="acp-grid">
 	<?php
-	acp_stat('In plugins/', count($plugins), 'fa-folder-o', null, 'blue');
-	acp_stat('Running', $active, 'fa-check', null, 'green');
+	acp_stat(t('acp.plg.stat_in_folder'), count($plugins), 'fa-folder-o', null, 'blue');
+	acp_stat(t('acp.plg.stat_running'), $active, 'fa-check', null, 'green');
 	if ($updatable > 0) {
-		acp_stat('Updates', $updatable, 'fa-arrow-up', null, 'amber');
+		acp_stat(t('acp.plg.stat_updates'), $updatable, 'fa-arrow-up', null, 'amber');
 	}
 	?>
 </div>
 
-<?php acp_card_open('Plugins', 'Drop a plugin folder into plugins/ and it shows up here'); ?>
+<?php acp_card_open(t('acp.plg.title'), t('acp.plg.sub')); ?>
 
 	<?php if (!$plugins): ?>
 
-		<?php acp_empty('Nothing in plugins/ yet. Download one, unzip it into that folder, and reload this page.', 'fa-plug'); ?>
+		<?php acp_empty(t('acp.plg.empty'), 'fa-plug'); ?>
 
 	<?php else: ?>
 
 		<table class="acp-table">
 			<thead>
 				<tr>
-					<th>Plugin</th>
-					<th>Adds</th>
-					<th>Version</th>
-					<th>Status</th>
+					<th><?= t('acp.plg.col_plugin') ?></th>
+					<th><?= t('acp.plg.col_adds') ?></th>
+					<th><?= t('acp.plg.col_version') ?></th>
+					<th><?= t('acp.plg.col_status') ?></th>
 					<th></th>
 				</tr>
 			</thead>
@@ -137,9 +141,9 @@ foreach ($plugins as $plugin) {
 			<?php foreach ($plugins as $name => $plugin):
 
 				$adds = array();
-				if ($plugin['pages']) { $adds[] = $plugin['pages'] . ' page' . ($plugin['pages'] > 1 ? 's' : ''); }
-				if ($plugin['admin']) { $adds[] = $plugin['admin'] . ' admin page' . ($plugin['admin'] > 1 ? 's' : ''); }
-				if ($plugin['sql'])   { $adds[] = 'tables'; }
+				if ($plugin['pages']) { $adds[] = t('acp.plg.page_count', ['n' => $plugin['pages']]); }
+				if ($plugin['admin']) { $adds[] = t('acp.plg.admin_page_count', ['n' => $plugin['admin']]); }
+				if ($plugin['sql'])   { $adds[] = t('acp.plg.tables'); }
 
 				$running = $plugin['installed'] && $plugin['enabled'];
 			?>
@@ -153,29 +157,29 @@ foreach ($plugins as $plugin) {
 							<code><?= h($name) ?></code>
 							<?php if ($plugin['author'] !== ''): ?>&middot; <?= h($plugin['author']) ?><?php endif; ?>
 							<?php if ($plugin['url'] !== ''): ?>
-								&middot; <a href="<?= h($plugin['url']) ?>" target="_blank" rel="noopener noreferrer">website</a>
+								&middot; <a href="<?= h($plugin['url']) ?>" target="_blank" rel="noopener noreferrer"><?= t('acp.plg.website') ?></a>
 							<?php endif; ?>
 						</span>
 					</td>
 
-					<td><?= $adds ? h(implode(', ', $adds)) : '<span class="acp-hint">hooks only</span>' ?></td>
+					<td><?= $adds ? h(implode(', ', $adds)) : '<span class="acp-hint">' . t('acp.plg.hooks_only') . '</span>' ?></td>
 
 					<td>
 						<?= $plugin['version'] !== '' ? h($plugin['version']) : '&mdash;' ?>
 						<?php if ($plugin['update']): ?>
-							<span class="acp-hint" style="display:block;">installed: <?= h($plugin['installed_version']) ?></span>
+							<span class="acp-hint" style="display:block;"><?= t('acp.plg.installed_label', ['version' => h($plugin['installed_version'])]) ?></span>
 						<?php endif; ?>
 					</td>
 
 					<td>
 						<?php if ($plugin['update']): ?>
-							<span class="acp-pill acp-pill--amber">Update available</span>
+							<span class="acp-pill acp-pill--amber"><?= t('acp.plg.update_available') ?></span>
 						<?php elseif (!$plugin['installed']): ?>
-							<span class="acp-pill">Not installed</span>
+							<span class="acp-pill"><?= t('acp.plg.not_installed') ?></span>
 						<?php elseif ($running): ?>
-							<span class="acp-pill acp-pill--green">Running</span>
+							<span class="acp-pill acp-pill--green"><?= t('acp.plg.running_pill') ?></span>
 						<?php else: ?>
-							<span class="acp-pill">Disabled</span>
+							<span class="acp-pill"><?= t('acp.plg.disabled_pill') ?></span>
 						<?php endif; ?>
 					</td>
 
@@ -184,7 +188,7 @@ foreach ($plugins as $plugin) {
 						<?php if ($running && $plugin['pages']): ?>
 							<a class="acp-btn acp-btn--ghost acp-btn--sm"
 							   href="<?= h(acp_site(znote_plugin_url($name, $plugin['page_list'][0]))) ?>"
-							   target="_blank" rel="noopener">View</a>
+							   target="_blank" rel="noopener"><?= t('acp.plg.view') ?></a>
 						<?php endif; ?>
 
 						<?php if (!$plugin['installed']): ?>
@@ -194,7 +198,7 @@ foreach ($plugins as $plugin) {
 								<input type="hidden" name="plugin" value="<?= h($name) ?>">
 								<input type="hidden" name="action" value="install">
 								<button class="acp-btn acp-btn--green acp-btn--sm" type="submit">
-									<i class="fa fa-download"></i> Install
+									<i class="fa fa-download"></i> <?= t('acp.plg.install') ?>
 								</button>
 							</form>
 
@@ -206,7 +210,7 @@ foreach ($plugins as $plugin) {
 									<input type="hidden" name="plugin" value="<?= h($name) ?>">
 									<input type="hidden" name="action" value="update">
 									<button class="acp-btn acp-btn--amber acp-btn--sm" type="submit">
-										<i class="fa fa-arrow-up"></i> Update to <?= h($plugin['version']) ?>
+										<i class="fa fa-arrow-up"></i> <?= t('acp.plg.update_to', ['version' => h($plugin['version'])]) ?>
 									</button>
 								</form>
 							<?php endif; ?>
@@ -216,16 +220,16 @@ foreach ($plugins as $plugin) {
 								<input type="hidden" name="plugin" value="<?= h($name) ?>">
 								<input type="hidden" name="action" value="<?= $plugin['enabled'] ? 'disable' : 'enable' ?>">
 								<button class="acp-btn acp-btn--sm <?= $plugin['enabled'] ? '' : 'acp-btn--green' ?>" type="submit">
-									<?= $plugin['enabled'] ? 'Disable' : 'Enable' ?>
+									<?= $plugin['enabled'] ? t('acp.plg.disable') : t('acp.plg.enable') ?>
 								</button>
 							</form>
 
 							<form method="post" style="display:inline;"
-							      onsubmit="return confirm('Forget that <?= h($plugin['name']) ?> is installed? Its tables and their data stay in the database.');">
+							      onsubmit="return confirm('<?= h(t('acp.plg.confirm_uninstall', ['plugin' => $plugin['name']])) ?>');">
 								<?= acp_csrf_field() ?>
 								<input type="hidden" name="plugin" value="<?= h($name) ?>">
 								<input type="hidden" name="action" value="uninstall">
-								<button class="acp-btn acp-btn--red acp-btn--sm" type="submit" title="Uninstall">
+								<button class="acp-btn acp-btn--red acp-btn--sm" type="submit" title="<?= h(t('acp.plg.uninstall')) ?>">
 									<i class="fa fa-times"></i>
 								</button>
 							</form>
@@ -242,26 +246,33 @@ foreach ($plugins as $plugin) {
 
 <?php acp_card_close(); ?>
 
-<?php acp_card_open('How this works', ''); ?>
+<?php acp_card_open(t('acp.plg.how_title'), ''); ?>
 	<p>
-		<strong>Installing.</strong> Download the plugin, unzip it into <code>plugins/</code>,
-		reload this page and press <em>Install</em>. That creates its database tables and
-		switches it on. ZnoteX never downloads a plugin by itself: a plugin is PHP that runs
-		on every page of your site, so putting the files there stays your decision.
+		<strong><?= t('acp.plg.how_install') ?></strong>
+		<?= t('acp.plg.how_install_text', [
+			'folder'  => '<code>plugins/</code>',
+			'install' => '<em>' . t('acp.plg.install') . '</em>',
+		]) ?>
 	</p>
 	<p>
-		<strong>Updating.</strong> Replace the folder with the newer version. If its
-		<code>plugin.json</code> carries a higher version than the one you installed, an
-		<em>Update</em> button appears here and applies whatever the new version needs.
+		<strong><?= t('acp.plg.how_update') ?></strong>
+		<?= t('acp.plg.how_update_text', [
+			'json'   => '<code>plugin.json</code>',
+			'update' => '<em>Update</em>',
+		]) ?>
 	</p>
 	<p>
-		<strong>Removing.</strong> <em>Disable</em> stops a plugin. <em>Uninstall</em> also
-		forgets its version, so it offers to install again. Neither one deletes data &mdash;
-		to remove a plugin for good, delete its folder and drop its tables yourself.
+		<strong><?= t('acp.plg.how_remove') ?></strong>
+		<?= t('acp.plg.how_remove_text', [
+			'disable'   => '<em>' . t('acp.plg.disable') . '</em>',
+			'uninstall' => '<em>' . t('acp.plg.uninstall') . '</em>',
+		]) ?>
 	</p>
 	<p>
-		Writing one is a folder, a <code>plugin.json</code>, and nothing else required:
-		see <code>plugins/README.md</code>, with <code>plugins/shop_coupons/</code> as a
-		working example.
+		<?= t('acp.plg.how_write', [
+			'json'    => '<code>plugin.json</code>',
+			'readme'  => '<code>plugins/README.md</code>',
+			'example' => '<code>plugins/shop_coupons/</code>',
+		]) ?>
 	</p>
 <?php acp_card_close(); ?>

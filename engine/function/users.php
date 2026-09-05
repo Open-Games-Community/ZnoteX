@@ -912,21 +912,39 @@ function user_account_add_premdays($accid, $days) {
 	$accid = (int)$accid;
 	$days = (int)$days;
 
-	if (engineIsCanary()) {
-		mysql_update("
-			UPDATE `accounts`
-			SET `lastday` = GREATEST(`lastday`, UNIX_TIMESTAMP()),
-				`premdays` = `premdays` + {$days}
-			WHERE `id`='{$accid}';
-		");
-		return;
+	if ($accid <= 0 || $days <= 0) {
+		return false;
 	}
 
-	mysql_update("
-		UPDATE `accounts`
-		SET `premium_ends_at` = GREATEST(`premium_ends_at`, UNIX_TIMESTAMP()) + ({$days} * 86400)
-		WHERE `id`='{$accid}';
-	");
+	if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'premium_ends_at')) {
+		mysql_update("
+			UPDATE `accounts`
+			SET `premium_ends_at` = GREATEST(`premium_ends_at`, UNIX_TIMESTAMP()) + ({$days} * 86400)
+			WHERE `id`='{$accid}';
+		");
+		return true;
+	}
+
+	if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'lastday') && znote_column_exists('accounts', 'premdays')) {
+		mysql_update("
+			UPDATE `accounts`
+			SET `premdays` = GREATEST(0, CEIL((GREATEST(`lastday` + (`premdays` * 86400), UNIX_TIMESTAMP()) - UNIX_TIMESTAMP()) / 86400)) + {$days},
+				`lastday` = UNIX_TIMESTAMP()
+			WHERE `id`='{$accid}';
+		");
+		return true;
+	}
+
+	if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'premdays')) {
+		mysql_update("
+			UPDATE `accounts`
+			SET `premdays` = `premdays` + {$days}
+			WHERE `id`='{$accid}';
+		");
+		return true;
+	}
+
+	return false;
 }
 
 // Name = char name. Changes from male to female & vice versa.
@@ -1059,6 +1077,8 @@ function user_create_account($register_data, $maildata) {
 
 		$mailer->sendMail($register_data['email'], $title, $body, $register_data['name']);
 	}
+
+	return (int)$account_id;
 }
 
 // CREATE CHARACTER

@@ -2,7 +2,7 @@
 // End cache
 
 ?>
-<h1>Who is online?</h1>
+<h1><?= t('online.heading') ?></h1>
 
 <?php
 /**
@@ -12,11 +12,10 @@
 if (!empty($onlineRecord['players'])): ?>
 	<p class="txt">
 		<?php if (!empty($onlineBroken)): ?>
-			<strong>New record!</strong>
-			<?= (int)$onlineNow ?> players online right now &mdash; the most this server has ever had.
+			<strong><?= t('online.new_record') ?></strong>
+			<?= t('online.new_record_line', ['count' => (int)$onlineNow]) ?>
 		<?php else: ?>
-			Record: <strong><?= (int)$onlineRecord['players'] ?></strong> players online
-			on <?= htmlspecialchars(getClock((int)$onlineRecord['time'], true), ENT_QUOTES, 'UTF-8') ?>.
+			<?= t('online.record_line', ['count' => (int)$onlineRecord['players'], 'date' => htmlspecialchars(getClock((int)$onlineRecord['time'], true), ENT_QUOTES, 'UTF-8')]) ?>
 		<?php endif; ?>
 	</p>
 <?php endif; ?>
@@ -24,14 +23,14 @@ if (!empty($onlineRecord['players'])): ?>
 
 // Players currently logged in
 if (!empty($array) && $array !== false): ?>
-	<h2>Currently online:</h2>
+	<h2><?= t('online.currently') ?></h2>
 	<table id="onlinelistTable" class="table table-striped table-hover">
 		<tr class="yellow">
-			<?php if ($loadOutfits) echo "<th>Outfit</th>"; ?>
-			<th>Name:</th>
-			<th>Guild:</th>
-			<th>Level:</th>
-			<th>Vocation:</th>
+			<?php if ($loadOutfits) echo "<th>". t('common.outfit') ."</th>"; ?>
+			<th><?= t('online.label_name') ?></th>
+			<th><?= t('online.label_guild') ?></th>
+			<th><?= t('online.label_level') ?></th>
+			<th><?= t('online.label_vocation') ?></th>
 		</tr>
 		<?php
 		foreach ($array as $value):
@@ -54,7 +53,7 @@ if (!empty($array) && $array !== false): ?>
 	<?php
 else:
 	?>
-	<p>Nobody is online.</p>
+	<p><?= t('online.nobody') ?></p>
 	<?php
 endif;
 
@@ -62,14 +61,14 @@ endif;
 if ($history["enabled"]) {
 	$time = time();
 	if (!empty($recents) && $recents !== false): ?>
-		<h2>Online past <?php echo $history['days']; ?> days:</h2>
+		<h2><?= t('online.past_days', ['days' => $history['days']]) ?></h2>
 		<table id="recentlistTable" class="table table-striped table-hover">
 			<tr class="yellow">
-				<?php if ($loadOutfits) echo "<th>Outfit</th>"; ?>
-				<th>Name:</th>
-				<th>Guild:</th>
-				<th>Level:</th>
-				<th>Logout [days] - date</th>
+				<?php if ($loadOutfits) echo "<th>". t('common.outfit') ."</th>"; ?>
+				<th><?= t('online.label_name') ?></th>
+				<th><?= t('online.label_guild') ?></th>
+				<th><?= t('online.label_level') ?></th>
+				<th><?= t('online.logout_days') ?></th>
 			</tr>
 			<?php
 			foreach ($recents as $value):
@@ -93,7 +92,7 @@ if ($history["enabled"]) {
 		<?php
 	else:
 		?>
-		<p>Nobody has logged in past <?php echo $history['days']; ?> days.</p>
+		<p><?= t('online.nobody_past_days', ['days' => $history['days']]) ?></p>
 		<?php
 	endif;
 }

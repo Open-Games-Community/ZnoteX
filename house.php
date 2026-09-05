@@ -20,8 +20,8 @@ if ($house !== false) {
 	$house = mysql_select_single($house_SQL);
 	if (!is_array($house)) {
 		?>
-		<h1>House not found.</h1>
-		<p>Go back to the <a href="houses.php">house list</a> and select a house for further details.</p>
+		<h1><?= t('house.not_found') ?></h1>
+		<p><?= t('house.go_back') ?> <a href="houses.php">house list</a> and select a house for further details.</p>
 		<?php
 		theme_close();
 		exit;
@@ -132,7 +132,7 @@ if ($house !== false) {
 										");
 
 									}
-									echo "<b><font color='green'>You have the highest bid on this house!</font></b>";
+									echo "<b><font color='green'>". t('house.highest_bid') ."</font></b>";
 								} else echo "<b><font color='red'>You need to place a bid that is higher or equal to {$minbid}gp.</font></b>";
 							
 							} else {
@@ -159,16 +159,16 @@ if ($house !== false) {
 										
 										echo "<b><font color='orange'>Unfortunately your bid was not higher than previous bidder.</font></b>";
 									} else {
-										echo "<b><font color='orange'>You already have a higher pledge on this house.</font></b>";
+										echo "<b><font color='orange'>". t('house.already_higher') ."</font></b>";
 									}
 								} else {
 									echo "<b><font color='red'>Too low bid amount, someone else has a higher bid active.</font></b>";
 								}
 							}
-						} else echo "<b><font color='red'>You don't have enough money to bid this high.</font></b>";
+						} else echo "<b><font color='red'>'. t('house.not_enough2'). '</font></b>";
 					} else echo "<b><font color='red'>Your character is to low level, must be higher level than ", $config['houseConfig']['levelToBuyHouse']-1 ," to buy a house.</font></b>";
-				} else echo "<b><font color='red'>You cannot have more houses.</font></b>";
-			} else echo "<b><font color='red'>You need premium account to purchase houses.</font></b>";
+				} else echo "<b><font color='red'>". t('house.too_many') ."</font></b>";
+			} else echo "<b><font color='red'>'. t('house.need_premium2'). '</font></b>";
 		} else echo "<b><font color='red'>You may only bid on houses for characters on your account.</font></b>";
 	}
 
@@ -246,9 +246,9 @@ if ($house !== false) {
 
 				// Congratulate user and tell them they still has to pay rent (if rent > 0)
 				?>
-				<p><strong>Congratulations!</strong>
+				<p><strong><?= t('house.congrats') ?></strong>
 					<br>You now own this house!
-					<br>Remember to say <strong>!shop</strong> in-game to process your ownership!
+					<br><?= t('house.remember_say') ?> <strong>!shop</strong> in-game to process your ownership!
 					<?php if ($house['rent'] > 0): ?>
 						<br>Keep in mind you still need to pay rent on this house, make sure you have enough bank balance to cover it!
 					<?php endif; ?>
@@ -258,8 +258,8 @@ if ($house !== false) {
 				?>
 				<p><strong>Error:</strong>
 					<br>Either your level is too low, or your player already have or is bidding on another house.
-					<br>Your level: <?php echo $player['level']; ?>. Minimum level to buy house: <?php echo $config['houseConfig']['levelToBuyHouse']; ?>
-					<br>Your house/bid count: <?php echo $pHouseCount['value']; ?>. Maximum house per player: <?php echo $config['houseConfig']['housesPerPlayer']; ?>.
+					<br><?= t('house.your_level') ?> <?php echo $player['level']; ?>. Minimum level to buy house: <?php echo $config['houseConfig']['levelToBuyHouse']; ?>
+					<br><?= t('house.your_bids') ?> <?php echo $pHouseCount['value']; ?>. Maximum house per player: <?php echo $config['houseConfig']['housesPerPlayer']; ?>.
 				</p>
 				<?php
 			}
@@ -268,7 +268,7 @@ if ($house !== false) {
 
 	// HTML structure and logic
 	?>
-	<h1>House: <?php echo $house['name']; ?></h1>
+	<h1><?= t('house.label') ?> <?php echo $house['name']; ?></h1>
 	<ul>
 		<li><b>Town</b>:
 		<?php
@@ -283,22 +283,22 @@ if ($house !== false) {
 		?></li>
 		<li><b>Rent</b>: <?php echo $house['rent']; ?></li>
 		<?php if ($house['owner'] == 0 && isset($house['points'])): ?>
-			<li><b>Shop points</b>: <?php echo $house['points']; ?></li>
+			<li><b><?= t('house.shop_points2') ?></b>: <?php echo $house['points']; ?></li>
 		<?php endif; ?>
 	</ul>
 	<?php
 	// AUCTION MARKUP INIT
 	if ($house['owner'] == 0) {
 		?>
-		<h2>This house is up on auction!</h2>
+		<h2><?= t('house.on_auction2') ?></h2>
 		<?php
-		if ($house['highest_bidder'] == 0) echo "<b>This house don't have any bidders yet.</b>";
+		if ($house['highest_bidder'] == 0) echo "<b>'. t('house.no_bidders2'). '</b>";
 		else {
 			$bidder = mysql_select_single("SELECT `name` FROM `players` WHERE `id`='{$house['highest_bidder']}' LIMIT 1;");
 			echo "<b>This house have bidders! If you want this house, now is your chance!</b>";
-			echo "<br><b>Active bid:</b> {$house['last_bid']}gp";
-			echo "<br><b>Active bid by:</b> <a href='characterprofile.php?name={$bidder['name']}' target='_BLANK'>{$bidder['name']}</a>";
-			echo "<br><b>Bid will end on:</b> ". getClock($house['bid_end'], true);
+			echo "<br><b>'. t('house.active_bid'). '</b> {$house['last_bid']}gp";
+			echo "<br><b>'. t('house.active_bid_by'). '</b> <a href='characterprofile.php?name={$bidder['name']}' target='_BLANK'>{$bidder['name']}</a>";
+			echo "<br><b>'. t('house.bid_ends'). '</b> ". getClock($house['bid_end'], true);
 		}
 
 		if ($house['bid_end'] == 0 || $house['bid_end'] > time()) {
@@ -320,13 +320,13 @@ if ($house !== false) {
 							?>
 						</select>
 						<input type="text" name="amount" placeholder="Min bid: <?php echo $minbid + 1; ?>">
-						<input type="submit" value="Bid on this house">
+						<input type="submit" value="<?= t('house.bid_submit') ?>">
 					</form>
 					<?php if ($house['owner'] == 0 && isset($house['points'])): ?>
 						<br>
 						<?php if ((int)$user_znote_data['points'] >= $house['points']): ?>
 							<form class="house_form_buy" action="" method="post">
-								<p>Your account has <strong><?php echo $user_znote_data['points']; ?></strong> available shop points.</p>
+								<p><?= t('house.your_account') ?> <strong><?php echo $user_znote_data['points']; ?></strong> available shop points.</p>
 								<select name="char">
 									<?php
 									foreach ($charData as $id => $char) {
@@ -337,7 +337,7 @@ if ($house !== false) {
 								<input type="submit" name="instantbuy" value="Buy now for <?php echo $house['points']; ?> shop points!">
 							</form>
 						<?php else: ?>
-							<p>Your account has <strong><?php echo $user_znote_data['points']; ?></strong> available shop points.
+							<p><?= t('house.your_account') ?> <strong><?php echo $user_znote_data['points']; ?></strong> available shop points.
 								<br>You don't have enough shop points to instantly buy this house.</p>
 						<?php endif; ?>
 					<?php endif; ?>
@@ -348,8 +348,8 @@ if ($house !== false) {
 	}
 } else {
 	?>
-	<h1>No house selected.</h1>
-	<p>Go back to the <a href="houses.php">house list</a> and select a house for further details.</p>
+	<h1><?= t('house.none_selected') ?></h1>
+	<p><?= t('house.go_back') ?> <a href="houses.php">house list</a> and select a house for further details.</p>
 	<?php
 }
 theme_close(); ?>

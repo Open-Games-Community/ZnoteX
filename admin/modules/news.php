@@ -29,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if ($do === 'delete' && $id > 0) {
 		mysql_delete("DELETE FROM `znote_news` WHERE `id` = {$id} LIMIT 1;");
 		acp_news_rebuild_cache();
-		acp_flash_success('News article deleted.');
+		acp_log('news.delete', '#' . $id);
+		acp_flash_success(t('acp.news.deleted'));
 		acp_redirect('news');
 	}
 
@@ -44,11 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				VALUES ('" . esc($title) . "', '" . esc($text) . "', " . time() . ", {$charId});
 			");
 			acp_news_rebuild_cache();
-			acp_flash_success('News article published.');
+			acp_log('news.create', $title);
+			acp_flash_success(t('acp.news.published'));
 			acp_redirect('news');
 		}
 
-		acp_flash_error('Pick an author character and fill in both the title and the body.');
+		acp_flash_error(t('acp.news.fill_fields'));
 		acp_redirect('news', ['action' => 'add']);
 	}
 
@@ -63,7 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			LIMIT 1;
 		");
 		acp_news_rebuild_cache();
-		acp_flash_success('News article updated.');
+		acp_log('news.update', $title !== '' ? $title : ('#' . $id));
+		acp_flash_success(t('acp.news.updated'));
 		acp_redirect('news');
 	}
 }
@@ -86,7 +89,7 @@ if ($action === 'edit' && $editId > 0) {
 		}
 	}
 	if ($editing === null) {
-		acp_flash_error('That news article no longer exists.');
+		acp_flash_error(t('acp.news.not_found'));
 		acp_redirect('news');
 	}
 }
@@ -111,16 +114,16 @@ if ($action === 'add') {
 }
 
 $bbcodeHelp = [
-	'[b]Bold[/b]  [i]Italic[/i]  [u]Underline[/u]  [s]Struck[/s]',
-	'[size=5]Larger text[/size]   (1 to 7)',
-	'[color=#4da3ff]Coloured text[/color]',
-	'[center]Centered[/center]  [left]..[/left]  [right]..[/right]',
-	'[ul][li]Bullet item[/li][/ul]',
-	'[ol][li]Numbered item[/li][/ol]',
-	'[quote]Quoted text[/quote]',
-	'[quote=Someone]Attributed quote[/quote]',
-	'[code]Preformatted code[/code]',
-	'[url=https://example.com]Link text[/url]',
+	'[b]' . t('acp.news.bb.bold') . '[/b]  [i]' . t('acp.news.bb.italic') . '[/i]  [u]' . t('acp.news.bb.underline') . '[/u]  [s]' . t('acp.news.bb.struck') . '[/s]',
+	'[size=5]' . t('acp.news.bb.larger') . '[/size]   (1 to 7)',
+	'[color=#4da3ff]' . t('acp.news.bb.colored') . '[/color]',
+	'[center]' . t('acp.news.bb.centered') . '[/center]  [left]..[/left]  [right]..[/right]',
+	'[ul][li]' . t('acp.news.bb.bullet') . '[/li][/ul]',
+	'[ol][li]' . t('acp.news.bb.numbered') . '[/li][/ol]',
+	'[quote]' . t('acp.news.bb.quoted') . '[/quote]',
+	'[quote=Someone]' . t('acp.news.bb.attributed') . '[/quote]',
+	'[code]' . t('acp.news.bb.code') . '[/code]',
+	'[url=https://example.com]' . t('acp.news.bb.link') . '[/url]',
 	'[img]https://example.com/image.png[/img]',
 	'[youtube]wK0w0x62PjA[/youtube]',
 ];
@@ -129,18 +132,18 @@ $bbcodeHelp = [
 <div class="acp-toolbar">
 	<div>
 		<?php if ($action === 'add'): ?>
-			<strong>New article</strong>
+			<strong><?= t('acp.news.new_article') ?></strong>
 		<?php elseif ($editing !== null): ?>
-			<strong>Editing:</strong> <?= h((string)$editing['title']) ?>
+			<strong><?= t('acp.news.editing') ?></strong> <?= h((string)$editing['title']) ?>
 		<?php else: ?>
-			<span class="acp-pill acp-pill--grey"><?= count($news) ?> published</span>
+			<span class="acp-pill acp-pill--grey"><?= t('acp.news.published_count', ['count' => count($news)]) ?></span>
 		<?php endif; ?>
 	</div>
 	<div class="acp-actions is-tight">
 		<?php if ($action !== ''): ?>
-			<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('news')) ?>"><i class="fa fa-arrow-left"></i> Back to list</a>
+			<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('news')) ?>"><i class="fa fa-arrow-left"></i> <?= t('acp.news.back_to_list') ?></a>
 		<?php else: ?>
-			<a class="acp-btn" href="<?= h(acp_url('news', ['action' => 'add'])) ?>"><i class="fa fa-plus"></i> Create article</a>
+			<a class="acp-btn" href="<?= h(acp_url('news', ['action' => 'add'])) ?>"><i class="fa fa-plus"></i> <?= t('acp.news.create_article') ?></a>
 		<?php endif; ?>
 	</div>
 </div>
@@ -149,7 +152,7 @@ $bbcodeHelp = [
 	<div class="acp-grid acp-grid--2">
 		<section class="acp-card">
 			<header class="acp-card-head">
-				<h2><?= $editing !== null ? 'Edit article' : 'New article' ?></h2>
+				<h2><?= $editing !== null ? t('acp.news.edit_article') : t('acp.news.new_article') ?></h2>
 			</header>
 			<div class="acp-card-body">
 
@@ -157,8 +160,7 @@ $bbcodeHelp = [
 					<div class="acp-flash acp-flash--error">
 						<i class="fa fa-exclamation-triangle"></i>
 						<span>
-							No character with <code>group_id &gt; 1</code> on your account, so there is nobody
-							to publish as. Give one of your characters a staff position first.
+							<?= t('acp.news.no_author', ['code' => '<code>group_id &gt; 1</code>']) ?>
 						</span>
 					</div>
 				<?php endif; ?>
@@ -172,7 +174,7 @@ $bbcodeHelp = [
 
 					<?php if ($action === 'add'): ?>
 						<div class="acp-field">
-							<label class="acp-label" for="selected_char">Publish as</label>
+							<label class="acp-label" for="selected_char"><?= t('acp.news.publish_as') ?></label>
 							<select class="acp-select" id="selected_char" name="selected_char" <?= $authors ? '' : 'disabled' ?>>
 								<?php foreach ($authors as $charId => $charName): ?>
 									<option value="<?= (int)$charId ?>"><?= h($charName) ?></option>
@@ -182,20 +184,20 @@ $bbcodeHelp = [
 					<?php endif; ?>
 
 					<div class="acp-field">
-						<label class="acp-label" for="title">Title</label>
+						<label class="acp-label" for="title"><?= t('acp.news.title') ?></label>
 						<input class="acp-input" id="title" name="title" value="<?= $editing !== null ? h((string)$editing['title']) : '' ?>" required>
 					</div>
 
 					<div class="acp-field">
-						<label class="acp-label" for="text">Body</label>
+						<label class="acp-label" for="text"><?= t('acp.news.body') ?></label>
 						<?php acp_editor('text', $editing !== null ? (string)$editing['text'] : '', ['height' => 340]); ?>
 					</div>
 
 					<div class="acp-actions">
 						<button class="acp-btn acp-btn--green" type="submit" <?= ($action === 'add' && !$authors) ? 'disabled' : '' ?>>
-							<i class="fa fa-check"></i> <?= $editing !== null ? 'Save changes' : 'Publish article' ?>
+							<i class="fa fa-check"></i> <?= $editing !== null ? t('acp.news.save_changes') : t('acp.news.publish_article') ?>
 						</button>
-						<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('news')) ?>">Cancel</a>
+						<a class="acp-btn acp-btn--ghost" href="<?= h(acp_url('news')) ?>"><?= t('acp.news.cancel') ?></a>
 					</div>
 				</form>
 			</div>
@@ -203,8 +205,8 @@ $bbcodeHelp = [
 
 		<section class="acp-card">
 			<header class="acp-card-head">
-				<h2>Formatting</h2>
-				<p>The toolbar writes these for you &mdash; this is what the news renderer understands</p>
+				<h2><?= t('acp.news.formatting') ?></h2>
+				<p><?= t('acp.news.formatting_sub') ?></p>
 			</header>
 			<div class="acp-card-body">
 				<pre class="acp-dump"><?= h(implode("\n", $bbcodeHelp)) ?></pre>
@@ -215,17 +217,17 @@ $bbcodeHelp = [
 <?php else: ?>
 
 	<section class="acp-card">
-		<header class="acp-card-head"><h2>Published articles</h2></header>
+		<header class="acp-card-head"><h2><?= t('acp.news.published_articles') ?></h2></header>
 		<div class="acp-card-body is-flush">
 			<?php if ($news): ?>
 				<div class="acp-table-wrap">
 					<table class="acp-table">
 						<thead>
 							<tr>
-								<th>Date</th>
-								<th>Author</th>
-								<th>Title</th>
-								<th class="is-num">Actions</th>
+								<th><?= t('acp.news.col_date') ?></th>
+								<th><?= t('acp.news.col_author') ?></th>
+								<th><?= t('acp.news.col_title') ?></th>
+								<th class="is-num"><?= t('acp.news.col_actions') ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -241,13 +243,13 @@ $bbcodeHelp = [
 									<td><?= h((string)($n['title'] ?? '')) ?></td>
 									<td class="is-num is-nowrap">
 										<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('news', ['action' => 'edit', 'id' => $id])) ?>">
-											<i class="fa fa-pencil"></i> Edit
+											<i class="fa fa-pencil"></i> <?= t('acp.news.edit') ?>
 										</a>
-										<form class="acp-inline-form" method="post" data-confirm="Delete this news article?">
+										<form class="acp-inline-form" method="post" data-confirm="<?= h(t('acp.news.confirm_delete')) ?>">
 											<?= acp_csrf_field() ?>
 											<input type="hidden" name="do" value="delete">
 											<input type="hidden" name="id" value="<?= $id ?>">
-											<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i> Delete</button>
+											<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i> <?= t('acp.news.delete') ?></button>
 										</form>
 									</td>
 								</tr>
@@ -256,7 +258,7 @@ $bbcodeHelp = [
 					</table>
 				</div>
 			<?php else: ?>
-				<?php acp_empty('No news articles have been published yet.', 'fa-newspaper-o'); ?>
+				<?php acp_empty(t('acp.news.empty'), 'fa-newspaper-o'); ?>
 			<?php endif; ?>
 		</div>
 	</section>

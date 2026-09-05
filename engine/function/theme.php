@@ -891,14 +891,16 @@ function theme_close(): void {
 	// see none of the page's variables - unlike views and widgets, which do.
 	extract($GLOBALS, EXTR_SKIP);
 
-	if ($injectHead === '' && $injectFoot === '') {
-		include $shell;
-		return;
-	}
-
 	ob_start();
 	include $shell;
 	$page = (string)ob_get_clean();
+
+	$injectFoot = (function_exists('translate_inject') ? translate_inject() : '') . $injectFoot;
+
+	if ($injectHead === '' && $injectFoot === '') {
+		echo $page;
+		return;
+	}
 
 	if ($injectHead !== '') {
 		$page = preg_replace('#</head>#i', $injectHead . '</head>', $page, 1) ?? $page;

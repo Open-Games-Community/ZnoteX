@@ -52,7 +52,7 @@ $type = &$_GET['type'];
 		</tr>
 		<tr>
 			<td colspan="3">
-				<input type="submit" value="Fetch houses"/>
+				<input type="submit" value="<?= t('houses.fetch') ?>"/>
 			</td>
 		</tr>
 	</table>
@@ -148,7 +148,7 @@ if ($houses !== false || !empty($houses)) {
 
 	<?php
 } else {
-	echo "<h1>Failed to fetch data from sql->houses table.</h1><p>Is the table empty?</p>";
+	echo "<h1>". t('houses.fetch_failed') ."</h1><p>". t('houses.empty') ."</p>";
 }
 
 theme_close(); ?>

@@ -80,7 +80,7 @@ $menuFallback = !$menuItems;
 					<li><a href="myaccount.php"><i class="fa fa-user"></i> <?= htmlspecialchars($user_data['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></a></li>
 					<li><a href="logout.php"><i class="fa fa-sign-out"></i> Logout</a></li>
 				<?php else: ?>
-					<li><a href="sub.php?page=loginhelp" class="modIcon loginBtn"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i> Login</a></li>
+					<li><a href="#loginContainer" class="modIcon loginBtn"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i> Login</a></li>
 					<li><a href="register.php"><i class="fa fa-key"></i> Register</a></li>
 				<?php endif; ?>
 			</ul>

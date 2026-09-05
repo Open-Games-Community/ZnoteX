@@ -59,7 +59,7 @@ function znote_forum_editor($name, $value = '', $height = 260) {
 }
 
 /**
- * "Post as <character>" picker plus the submit button.
+ * The "Post as <character>" picker plus the submit button.
  *
  * This used to be a <select multiple>, which browsers draw as a scrolling list
  * box with nothing selected by default - so submitting without first clicking a
@@ -79,7 +79,7 @@ function znote_forum_character_picker(array $chars, string $field, string $submi
 	$only = (count($chars) === 1) ? reset($chars) : null;
 	?>
 	<div class="znote-postas">
-		<span class="znote-postas-label">Post as</span>
+		<span class="znote-postas-label"><?= t('forum.post_as') ?></span>
 
 		<?php if ($only !== null): ?>
 			<input type="hidden" name="<?php echo htmlspecialchars($field, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo (int)$only['id']; ?>">
@@ -167,8 +167,8 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 			mysql_delete("DELETE FROM `znote_forum_posts` WHERE `thread_id`='$admin_thread_id';");
 			// Delete thread itself
 			mysql_delete("DELETE FROM `znote_forum_threads` WHERE `id`='$admin_thread_id' LIMIT 1;");
-			echo '<h1>Thread and all associated posts deleted.</h1>';
-		} else echo '<p><b><font color="red">Permission denied.</font></b></p>';
+			echo '<h1>'. t('forum.thread_deleted'). '</h1>';
+		} else echo '<p><b><font color="red">'. t('forum.perm_denied'). '</font></b></p>';
 	}
 
 	// Close thread
@@ -183,8 +183,8 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_threads` SET `closed`='1' WHERE `id`='$admin_thread_id' LIMIT 1;");
 			//die("UPDATE `znote_forum_threads` SET `closed`='1' WHERE `id`='$admin_thread_id' LIMIT 1;");
-			echo '<h1>Thread has been closed.</h1>';
-		} else echo '<p><b><font color="red">Permission denied.</font></b></p>';
+			echo '<h1>'. t('forum.thread_closed'). '</h1>';
+		} else echo '<p><b><font color="red">'. t('forum.perm_denied'). '</font></b></p>';
 	}
 
 	// open thread
@@ -198,8 +198,8 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_threads` SET `closed`='0' WHERE `id`='$admin_thread_id' LIMIT 1;");
-			echo '<h1>Thread has been opened.</h1>';
-		} else echo '<p><b><font color="red">Permission denied.</font></b></p>';
+			echo '<h1>'. t('forum.thread_opened'). '</h1>';
+		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
 
 	// stick thread
@@ -213,8 +213,8 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_threads` SET `sticky`='1' WHERE `id`='$admin_thread_id' LIMIT 1;");
-			echo '<h1>Thread has been sticked.</h1>';
-		} else echo '<p><b><font color="red">Permission denied.</font></b></p>';
+			echo '<h1>'. t('forum.thread_stuck2'). '</h1>';
+		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
 
 	// unstick thread
@@ -228,8 +228,8 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_threads` SET `sticky`='0' WHERE `id`='$admin_thread_id' LIMIT 1;");
-			echo '<h1>Thread has been unsticked.</h1>';
-		} else echo '<p><b><font color="red">Permission denied.</font></b></p>';
+			echo '<h1>'. t('forum.thread_unstuck2'). '</h1>';
+		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
 }
 
@@ -277,7 +277,7 @@ if ($admin && !empty($_POST)) {
 				'$admin_board_create_closed',
 				'$admin_board_create_hidden',
 				'$admin_board_create_guild_id');");
-		echo '<h1>Board has been created.</h1>';
+		echo '<h1>'. t('forum.board_created'). '</h1>';
 	}
 
 	//////////////////
@@ -293,7 +293,7 @@ if ($admin && !empty($_POST)) {
 			`hidden`='$admin_category_hidden',
 			`guild_id`='$admin_category_guild_id'
 			WHERE `id`='$admin_category_id' LIMIT 1;");
-		echo '<h1>Board has been updated successfully.</h1>';
+		echo '<h1>'. t('forum.board_updated'). '</h1>';
 	}
 
 	//////////////////
@@ -308,12 +308,12 @@ if ($admin && !empty($_POST)) {
 				<input type="hidden" name="admin_category_id" value="<?php echo $category['id']; ?>">
 				<table class="updateTable table table-striped">
 					<tr>
-						<td><label for="admin_category_name">Board name:</label></td>
+						<td><label for="admin_category_name"><?= t('forum.board_name') ?></label></td>
 						<td><input name="admin_category_name" value="<?php echo $category['name']; ?>" class="span12"></td>
 
 					</tr>
 					<tr>
-						<td><label for="admin_category_access">Required Access:</label></td>
+						<td><label for="admin_category_access"><?= t('forum.required_access') ?></label></td>
 						<td>
 							<select name="admin_category_access" class="span12">
 								<?php
@@ -326,7 +326,7 @@ if ($admin && !empty($_POST)) {
 						</td>
 					</tr>
 					<tr>
-						<td><label for="admin_category_closed">Closed:</label></td>
+						<td><label for="admin_category_closed"><?= t('forum.closed') ?></label></td>
 						<td>
 							<select name="admin_category_closed" class="span12">
 								<?php
@@ -339,7 +339,7 @@ if ($admin && !empty($_POST)) {
 						</td>
 					</tr>
 					<tr>
-						<td><label for="admin_category_hidden">Hidden:</label></td>
+						<td><label for="admin_category_hidden"><?= t('forum.hidden') ?></label></td>
 						<td>
 							<select name="admin_category_hidden" class="span12">
 								<?php
@@ -352,7 +352,7 @@ if ($admin && !empty($_POST)) {
 						</td>
 					</tr>
 					<tr>
-						<td><label for="admin_category_guild_id">Guild id:</label></td>
+						<td><label for="admin_category_guild_id"><?= t('forum.guild_id') ?></label></td>
 						<td>
 							<select name="admin_category_guild_id" class="span12">
 								<?php foreach($guilds as $guild) {
@@ -363,12 +363,12 @@ if ($admin && !empty($_POST)) {
 						</td>
 					</tr>
 					<tr>
-						<td colspan="2"><input type="submit" name="admin_update_category" value="Update Board" style="width: 100%; height: 30px;" class="btn btn-success"></td>
+						<td colspan="2"><input type="submit" name="admin_update_category" value="<?= t('forum.update_board') ?>" style="width: 100%; height: 30px;" class="btn btn-success"></td>
 					</tr>
 				</table>
 			</form>
 			<?php
-		} else echo '<h2>Category not found.</h2>';
+		} else echo '<h2>'. t('forum.cat_not_found'). '</h2>';
 
 	}
 
@@ -396,7 +396,7 @@ if ($admin && !empty($_POST)) {
 
 		// Delete the post
 		mysql_delete("DELETE FROM `znote_forum_posts` WHERE `id`='$admin_post_id' LIMIT 1;");
-		echo '<h1>Post has been deleted.</h1>';
+		echo '<h1>'. t('forum.post_deleted'). '</h1>';
 	}
 }
 // End admin function
@@ -472,7 +472,7 @@ if (!empty($_GET)) {
 			} else echo '<p><b><font color="red">You don\'t have permission to post on this thread. [Thread: Closed]</font></b></p>';
 		} else {
 			?>
-				<font class="forumCooldown" color="red">Antispam: You need to wait <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</font>
+				<font class="forumCooldown" color="red"><?= t('forum.antispam') ?> <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</font>
 			<?php
 		}
 	}
@@ -511,11 +511,11 @@ if (!empty($_GET)) {
 							'". time() ."',
 							'0', '0', '0');");
 					SendGet(array('cat'=>$create_thread_category), 'forum.php');
-				} else echo '<p><b><font color="red">Permission to create thread denied.</font></b></p>';
-			} else echo 'Category does not exist.';
+				} else echo '<p><b><font color="red">'. t('forum.perm_thread'). '</font></b></p>';
+			} else echo t('forum.cat_missing');
 		} else {
 			?>
-				<font class="forumCooldown" color="red">Antispam: You need to wait <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</font>
+				<font class="forumCooldown" color="red"><?= t('forum.antispam') ?> <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</font>
 			<?php
 		}
 	}
@@ -537,7 +537,7 @@ if (!empty($_GET)) {
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_posts` SET `text`='$update_post_text', `updated`='". time() ."' WHERE `id`='$update_post_id';");
 			echo '<h1>post has been updated.</h1>';
-		} else echo "<p><font color='red'>Your permission to edit this post has been denied.</font></p>";
+		} else echo "<p><font color='red'>'. t('forum.edit_post_denied'). '</font></p>";
 	}
 
 	/////////////////////
@@ -554,8 +554,8 @@ if (!empty($_GET)) {
 
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_threads` SET `title`='$update_thread_title', `text`='$update_thread_text' WHERE `id`='$update_thread_id';");
-			echo '<h1>Thread has been updated.</h1>';
-		} else echo "<p><font color='red'>Your permission to edit this thread has been denied.</font></p>";
+			echo '<h1>'. t('forum.thread_updated'). '</h1>';
+		} else echo "<p><font color='red'>'. t('forum.edit_thread_denied'). '</font></p>";
 	}
 
 	/////////////////////
@@ -573,14 +573,14 @@ if (!empty($_GET)) {
 
 		if ($access) {
 			?>
-			<h1>Edit Post</h1>
+			<h1><?= t('forum.edit_post') ?></h1>
 			<form type="" method="post">
 				<input name="update_post_id" type="hidden" value="<?php echo $post['id']; ?>">
 				<?php znote_forum_editor('update_post_text', $post['text'], 300); ?>
-				<input type="submit" value="Update Post" class="btn btn-success">
+				<input type="submit" value="<?= t('forum.update_post') ?>" class="btn btn-success">
 			</form>
 			<?php
-		} else echo '<p><b><font color="red">You don\'t have permission to edit this post.</font></b></p>';
+		} else echo '<p><b><font color="red">'. t('forum.no_edit_post') .'</font></b></p>';
 	} else
 
 	/////////////////////
@@ -595,15 +595,15 @@ if (!empty($_GET)) {
 
 		if ($access) {
 			?>
-			<h1>Edit Thread</h1>
+			<h1><?= t('forum.edit_thread') ?></h1>
 			<form type="" method="post">
 				<input name="update_thread_id" type="hidden" value="<?php echo $thread['id']; ?>">
 				<input name="update_thread_title" type="text" value="<?php echo $thread['title']; ?>" style="width: 500px;"><br><br>
 				<?php znote_forum_editor('update_thread_text', $thread['text'], 300); ?>
-				<input type="submit" value="Update Thread" class="btn btn-success">
+				<input type="submit" value="<?= t('forum.update_thread') ?>" class="btn btn-success">
 			</form>
 			<?php
-		} else echo '<p><b><font color="red">Edit access denied.</font></b></p>';
+		} else echo '<p><b><font color="red">'. t('forum.edit_denied'). '</font></b></p>';
 	} else
 
 	/////////////////////
@@ -634,8 +634,8 @@ if (!empty($_GET)) {
 			if ($access) {
 				$threadPlayer = ($config['forum']['outfit_avatars'] || $config['forum']['player_position']) ? mysql_select_single("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id`='".$threadData['player_id']."';") : false;
 				?>
-				<font>LinkMap: <a href="forum.php">Forum</a> - <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></font><br>
-				<font size="5" id="ThreadTitle">Viewing thread: <?php echo "<a href='?forum=". $getForum ."&cat=". $getCat ."&thread=". $threadData['id'] ."'>". $threadData['title'] ."</a>"; ?></font>
+				<font><?= t('forum.linkmap') ?> <a href="forum.php">Forum</a> - <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></font><br>
+				<font size="5" id="ThreadTitle"><?= t('forum.viewing') ?> <?php echo "<a href='?forum=". $getForum ."&cat=". $getCat ."&thread=". $threadData['id'] ."'>". $threadData['title'] ."</a>"; ?></font>
 				<table class="znoteTable ThreadTable table table-striped">
 					<tr class="yellow">
 						<th<?php if ($threadPlayer !== false) echo ' colspan="2"'; ?>>
@@ -677,19 +677,19 @@ if (!empty($_GET)) {
 							<td>
 								<form action="" method="post">
 									<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-									<input type="submit" name="admin_thread_delete" value="Delete Thread" class="btn btn-danger">
+									<input type="submit" name="admin_thread_delete" value="<?= t('forum.delete_thread') ?>" class="btn btn-danger">
 								</form>
 							</td>
 							<td>
 								<?php if ($threadData['closed'] == 0) { ?>
 									<form action="" method="post">
 										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_close" value="Close Thread" class="btn btn-warning">
+										<input type="submit" name="admin_thread_close" value="<?= t('forum.close_thread') ?>" class="btn btn-warning">
 									</form>
 								<?php } else { ?>
 									<form action="" method="post">
 										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_open" value="Open Thread" class="btn btn-success">
+										<input type="submit" name="admin_thread_open" value="<?= t('forum.open_thread') ?>" class="btn btn-success">
 									</form>
 								<?php } ?>
 							</td>
@@ -697,19 +697,19 @@ if (!empty($_GET)) {
 								<?php if ($threadData['sticky'] == 0) { ?>
 									<form action="" method="post">
 										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_sticky" value="Stick thread" class="btn btn-info">
+										<input type="submit" name="admin_thread_sticky" value="<?= t('forum.stick') ?>" class="btn btn-info">
 									</form>
 								<?php } else { ?>
 									<form action="" method="post">
 										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_unstick" value="Unstick thread" class="btn btn-primary">
+										<input type="submit" name="admin_thread_unstick" value="<?= t('forum.unstick') ?>" class="btn btn-primary">
 									</form>
 								<?php } ?>
 							</td>
 							<td>
 								<form action="" method="post">
 									<input type="hidden" name="edit_thread_id" value="<?php echo $threadData['id']; ?>">
-									<input type="submit" name="edit_thread" value="Edit Thread" class="btn btn-warning">
+									<input type="submit" name="edit_thread" value="<?= t('forum.edit_thread') ?>" class="btn btn-warning">
 								</form>
 							</td>
 						</tr>
@@ -723,7 +723,7 @@ if (!empty($_GET)) {
 								<td>
 									<form action="" method="post">
 										<input type="hidden" name="edit_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="edit_thread" value="Edit Thread" class="btn btn-info">
+										<input type="submit" name="edit_thread" value="<?= t('forum.edit_thread') ?>" class="btn btn-info">
 									</form>
 								</td>
 							</tr>
@@ -789,7 +789,7 @@ if (!empty($_GET)) {
 								?>
 								<form action="" method="post" class="postButton">
 									<input type="hidden" name="admin_post_id" value="<?php echo $post['id']; ?>">
-									<input type="submit" name="admin_post_delete" value="Delete Post" class="btn btn-danger">
+									<input type="submit" name="admin_post_delete" value="<?= t('forum.delete_post') ?>" class="btn btn-danger">
 								</form>
 								<?php
 							}
@@ -797,7 +797,7 @@ if (!empty($_GET)) {
 								?>
 								<form action="" method="post" class="postButton">
 									<input type="hidden" name="edit_post_id" value="<?php echo $post['id']; ?>">
-									<input type="submit" name="edit_post" value="Edit Post" class="btn btn-info">
+									<input type="submit" name="edit_post" value="<?= t('forum.edit_post') ?>" class="btn btn-info">
 								</form>
 								<?php
 							}
@@ -823,18 +823,18 @@ if (!empty($_GET)) {
 			} else echo "<p><font color='red'>Your permission to access this thread has been denied.</font></p>";
 		} else {
 			?>
-			<h1>Thread unavailable</h1>
+			<h1><?= t('forum.thread_unavailable') ?></h1>
 			<p>Thread is unavailable for you, or do not exist any more.
 				<?php
 				if ($_GET['cat'] > 0 && !empty($_GET['forum'])) {
 					$tmpCat = getValue($_GET['cat'] ?? null);
 					$tmpCatName = getValue($_GET['forum'] ?? null);
 					?>
-					<br><a href="forum.php?forum=<?php echo $tmpCatName; ?>&cat=<?php echo $tmpCat; ?>">Go back to: <?php echo $tmpCatName; ?></a></p>
+					<br><a href="forum.php?forum=<?php echo $tmpCatName; ?>&cat=<?php echo $tmpCat; ?>"><?= t('forum.go_back_to') ?> <?php echo $tmpCatName; ?></a></p>
 					<?php
 				} else {
 					?>
-					<br><a href="forum.php">Go back to Forum</a></p>
+					<br><a href="forum.php"><?= t('forum.go_back') ?></a></p>
 					<?php
 				}
 				?>
@@ -864,13 +864,13 @@ if (!empty($_GET)) {
 
 			if ($access) {
 				?>
-				<h1>Create new thread</h1>
+				<h1><?= t('forum.create_thread_new') ?></h1>
 				<form type="" method="post" class="znote-newthread">
 					<input name="create_thread_cid" type="hidden" value="<?php echo $new_thread_cid; ?>">
 					<input name="create_thread_category" type="hidden" value="<?php echo $new_thread_category; ?>">
 
 					<div class="znote-newthread-head">
-						<span class="znote-postas-label">Post as</span>
+						<span class="znote-postas-label"><?= t('forum.post_as') ?></span>
 						<span class="znote-postas-single"><?php echo htmlspecialchars($charData[$new_thread_cid]['name'], ENT_QUOTES, 'UTF-8'); ?></span>
 					</div>
 
@@ -879,12 +879,12 @@ if (!empty($_GET)) {
 					<?php znote_forum_editor('create_thread_text', '', 300); ?>
 
 					<div class="znote-newthread-actions">
-						<button type="submit" class="btn btn-success">Create Thread</button>
+						<button type="submit" class="btn btn-success"><?= t('forum.create_thread') ?></button>
 						<a class="btn btn-default" href="forum.php?cat=<?php echo (int)$new_thread_category; ?>">Cancel</a>
 					</div>
 				</form>
 				<?php
-			} else echo '<p><b><font color="red">Permission to create thread denied.</font></b></p>';
+			} else echo '<p><b><font color="red">'. t('forum.perm_thread'). '</font></b></p>';
 		}
 	} else
 
@@ -958,7 +958,7 @@ if (!empty($_GET)) {
 					?>
 				</table>
 				<?php
-			} else echo 'Board is empty, no threads exist yet.';
+			} else echo t('forum.board_empty');
 
 			///////////
 			// Create thread button
@@ -967,10 +967,10 @@ if (!empty($_GET)) {
 					?>
 					<form action="" method="post">
 						<input type="hidden" value="<?php echo $getCat; ?>" name="new_thread_category">
-						<?php znote_forum_character_picker($yourChars, 'new_thread_cid', 'Create new thread', 'btn btn-primary'); ?>
+						<?php znote_forum_character_picker($yourChars, 'new_thread_cid', t('forum.create_thread_new'), 'btn btn-primary'); ?>
 					</form>
 					<?php
-				} else echo '<p>This board is closed.</p>';
+				} else echo '<p>'. t('forum.board_closed'). '</p>';
 			} else echo "<p>You must have a character on your account that is level ". $config['forum']['level'] ."+ to create new threads.</p>";
 		} else echo "<p><font color='red'>Your permission to access this board has been denied.<br>If you are trying to access a Guild Board, you need level: ". $config['forum']['level'] ."+</font></p>";
 
@@ -987,7 +987,7 @@ if (!empty($_GET)) {
 	?>
 	<table class="znoteTable table table-striped table-hover" id="forumCategoryTable">
 		<tr class="yellow">
-			<th>Forum Boards</th>
+			<th><?= t('forum.boards') ?></th>
 			<?php
 			$guild = false;
 			foreach($charData as $char) {
@@ -1051,7 +1051,7 @@ if (!empty($_GET)) {
 						<td style="margin: 0px; padding: 0px; width: 100px;">
 							<form action="" method="post">
 								<input type="hidden" name="admin_category_id" value="<?php echo $category['id']; ?>">
-								<input type="submit" name="admin_category_delete" value="Delete" style="margin: 0px; padding: 0px; width: 75px; height: 22px;" class="btn btn-danger">
+								<input type="submit" name="admin_category_delete" value="<?= t('forum.delete_btn') ?>" style="margin: 0px; padding: 0px; width: 75px; height: 22px;" class="btn btn-danger">
 							</form>
 						</td>
 						<?php
@@ -1069,7 +1069,7 @@ if (!empty($_GET)) {
 		?>
 		<table class="table table-striped table-hover znoteTable" id="forumCategoryTable">
 			<tr class="yellow">
-				<th>Guild Boards</th>
+				<th><?= t('forum.guild_boards') ?></th>
 				<?php
 				foreach($charData as $char) {
 					if ($char['guild'] > 0) $guild = true;
@@ -1126,7 +1126,7 @@ if (!empty($_GET)) {
 						<td style="margin: 0px; padding: 0px; width: 100px;">
 							<form action="" method="post">
 								<input type="hidden" name="admin_category_id" value="<?php echo $board['id']; ?>">
-								<input type="submit" name="admin_category_delete" value="Delete" style="margin: 0px; padding: 0px; width: 75px; height: 22px;" class="btn btn-danger">
+								<input type="submit" name="admin_category_delete" value="<?= t('forum.delete_btn') ?>" style="margin: 0px; padding: 0px; width: 75px; height: 22px;" class="btn btn-danger">
 							</form>
 						</td>
 						<?php
@@ -1134,14 +1134,14 @@ if (!empty($_GET)) {
 					echo '</tr>';
 				}
 			}
-			if ($count == 0 && !$admin) echo '<tr><td>You don\'t have access to any guildboards.</td></tr>';
+			if ($count == 0 && !$admin) echo '<tr><td>'. t('forum.no_guildboards2') .'</td></tr>';
 			?>
 		</table>
 		<?php
 	}
 	if ($admin) {
 		?>
-		<h2>Create board:</h2>
+		<h2><?= t('forum.create_board') ?></h2>
 		<form action="" method="post">
 			<input type="text" name="admin_board_create_name" placeholder="Board name"><br><br>
 
@@ -1172,7 +1172,7 @@ if (!empty($_GET)) {
 				?>
 			</select><br><br>
 
-			<input type="submit" value="Create Board" class="btn btn-primary">
+			<input type="submit" value="<?= t('forum.create_board_btn') ?>" class="btn btn-primary">
 		</form>
 		<?php
 	}

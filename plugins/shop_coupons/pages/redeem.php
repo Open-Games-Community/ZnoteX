@@ -22,7 +22,7 @@ $result    = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['coupon_code'])) {
 	// Token::isValid is ZnoteX's CSRF check, the same one the other forms use.
 	if (!Token::isValid($_POST['token'] ?? '')) {
-		$result = array('ok' => false, 'message' => 'Your session expired. Try again.');
+		$result = array('ok' => false, 'message' => t('coupons.err_session'));
 	} else {
 		$result = shop_coupons_redeem((string)$_POST['coupon_code'], $accountId);
 	}
@@ -31,11 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['coupon_code'])) {
 $discount = shop_coupons_pending_discount($accountId, true);
 ?>
 
-<h1>Redeem a coupon</h1>
+<h1><?= t('coupons.redeem_title') ?></h1>
 
 <?php if ($accountId === 0): ?>
 
-	<p>You need to <a href="login.php">log in</a> before you can redeem a code.</p>
+	<p><?= t('coupons.need_login') ?></p>
 
 <?php else: ?>
 
@@ -46,27 +46,20 @@ $discount = shop_coupons_pending_discount($accountId, true);
 	<?php endif; ?>
 
 	<?php if ($discount !== null): ?>
-		<p>
-			You have <strong><?= (int)$discount['percent'] ?>% off</strong> waiting.
-			It comes off automatically the next time you buy something in the
-			<a href="shop.php">shop</a>.
-		</p>
+		<p><?= t('coupons.pending', ['percent' => (int)$discount['percent']]) ?></p>
 	<?php endif; ?>
 
 	<form method="post" action="">
 		<?php Token::create(); ?>
 		<p>
-			<label for="coupon_code">Coupon code</label><br>
+			<label for="coupon_code"><?= t('coupons.code_label') ?></label><br>
 			<input type="text" id="coupon_code" name="coupon_code" maxlength="32"
 			       autocomplete="off" spellcheck="false" placeholder="SUMMER2026"
 			       style="text-transform:uppercase;">
 		</p>
-		<p><input type="submit" value="Redeem"></p>
+		<p><input type="submit" value="<?= t('coupons.redeem') ?>"></p>
 	</form>
 
-	<p>
-		Codes are single use per account. A points code credits your balance
-		straight away; a discount code is taken off your next purchase.
-	</p>
+	<p><?= t('coupons.rules') ?></p>
 
 <?php endif; ?>

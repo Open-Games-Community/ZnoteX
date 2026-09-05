@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($do === 'delete') {
 			updateImage($id, 3);
 			acp_gallery_rebuild_cache();
-			acp_flash_success('Image #' . $id . ' hidden from the gallery.');
+			acp_log('gallery.hide', '#' . $id);
+			acp_flash_success(t('acp.gal.hidden', ['id' => $id]));
 			acp_redirect('gallery');
 		}
 
@@ -53,7 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($do === 'accept') {
 			updateImage($id, 2);
 			acp_gallery_rebuild_cache();
-			acp_flash_success('Image #' . $id . ' is now public.');
+			acp_log('gallery.accept', '#' . $id);
+			acp_flash_success(t('acp.gal.public', ['id' => $id]));
 			acp_redirect('gallery');
 		}
 
@@ -80,12 +82,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 			mysql_delete("DELETE FROM `znote_images` WHERE `id` = {$id} LIMIT 1;");
 			acp_gallery_rebuild_cache();
-			acp_flash_success('Image #' . $id . ' removed for good.');
+			acp_log('gallery.remove', '#' . $id);
+			acp_flash_success(t('acp.gal.removed', ['id' => $id]));
 			acp_redirect('gallery');
 		}
 	}
 
-	acp_flash_error('Unknown gallery action.');
+	acp_flash_error(t('acp.gal.unknown_action'));
 	acp_redirect('gallery');
 }
 
@@ -150,38 +153,38 @@ function acp_gallery_section($images, string $title, string $subtitle, array $ac
 
 acp_gallery_section(
 	fetchImages(1),
-	'Awaiting moderation',
-	'Submitted by players, not visible yet',
+	t('acp.gal.pending_title'),
+	t('acp.gal.pending_sub'),
 	[
-		['do' => 'accept', 'label' => 'Approve', 'icon' => 'fa-check', 'class' => 'acp-btn--green'],
-		['do' => 'delete', 'label' => 'Reject',  'icon' => 'fa-times', 'class' => 'acp-btn--red'],
+		['do' => 'accept', 'label' => t('acp.gal.approve'), 'icon' => 'fa-check', 'class' => 'acp-btn--green'],
+		['do' => 'delete', 'label' => t('acp.gal.reject'),  'icon' => 'fa-times', 'class' => 'acp-btn--red'],
 	],
-	'Nothing to moderate right now.'
+	t('acp.gal.pending_empty')
 );
 
 acp_gallery_section(
 	fetchImages(2),
-	'Public gallery',
-	'Live on the site',
+	t('acp.gal.public_title'),
+	t('acp.gal.public_sub'),
 	[
-		['do' => 'delete', 'label' => 'Hide', 'icon' => 'fa-eye-slash', 'class' => 'acp-btn--amber'],
+		['do' => 'delete', 'label' => t('acp.gal.hide'), 'icon' => 'fa-eye-slash', 'class' => 'acp-btn--amber'],
 	],
-	'The public gallery is empty.'
+	t('acp.gal.public_empty')
 );
 
 acp_gallery_section(
 	fetchImages(3),
-	'Hidden images',
-	'Rejected or taken down - recoverable until removed for good',
+	t('acp.gal.hidden_title'),
+	t('acp.gal.hidden_sub'),
 	[
-		['do' => 'accept', 'label' => 'Recover', 'icon' => 'fa-undo',  'class' => 'acp-btn--green'],
+		['do' => 'accept', 'label' => t('acp.gal.recover'), 'icon' => 'fa-undo',  'class' => 'acp-btn--green'],
 		[
 			'do'      => 'remove',
-			'label'   => 'Delete forever',
+			'label'   => t('acp.gal.delete_forever'),
 			'icon'    => 'fa-trash',
 			'class'   => 'acp-btn--red',
-			'confirm' => 'Delete this image permanently, including on imgur? This cannot be undone.',
+			'confirm' => t('acp.gal.delete_confirm'),
 		],
 	],
-	'No hidden images.'
+	t('acp.gal.hidden_empty')
 );

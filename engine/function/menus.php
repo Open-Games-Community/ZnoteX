@@ -109,7 +109,7 @@ function theme_menu_locations(?string $theme = null): array {
 	$declared = $manifest['menus'] ?? null;
 
 	if (!is_array($declared) || !$declared) {
-		return array('main' => 'Main navigation');
+		return array('main' => t_default('acp.menu.default_location', 'Main navigation'));
 	}
 
 	$out = array();

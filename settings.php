@@ -8,21 +8,21 @@ if (empty($_POST) === false) {
 	// $_POST['']
 	/* Token used for cross site scripting security */
 	if (!Token::isValid($_POST['token'])) {
-		$errors[] = 'Token is invalid.';
+		$errors[] = t('login.token_invalid');
 	}
 	$required_fields = array('new_email', 'new_flag');
 	foreach($_POST as $key=>$value) {
 		if (empty($value) && in_array($key, $required_fields) === true) {
-			$errors[] = 'You need to fill in all fields.';
+			$errors[] = t('reg.fill_all');
 			break 1;
 		}
 	}
 
 	if (empty($errors) === true) {
 		if (filter_var($_POST['new_email'], FILTER_VALIDATE_EMAIL) === false) {
-			$errors[] = 'A valid email address is required.';
+			$errors[] = t('reg.email_invalid');
 		} else if (user_email_exist($_POST['new_email']) === true && $user_data['email'] !== $_POST['new_email']) {
-			$errors[] = 'That email address is already in use.';
+			$errors[] = t('reg.email_taken');
 		}
 	}
 }

@@ -2,417 +2,482 @@
 
 return array(
 
-		'Site' => array(
+		t_default('acp.sec.Site', 'Site') => array(
 			'site_title' => array(
-				'label' => 'Site title',
+				'label' => t_default('acp.set.site_title.label', 'Site title'),
 				'type'  => 'text',
-				'help'  => 'Shown in the browser tab, the footer and the social banners.',
+				'help'  => t_default('acp.set.site_title.help', 'Shown in the browser tab, the footer and the social banners.'),
 			),
 			'site_title_context' => array(
-				'label' => 'Tagline',
+				'label' => t_default('acp.set.site_title_context.label', 'Tagline'),
 				'type'  => 'text',
 			),
 			'site_url' => array(
-				'label' => 'Site URL',
+				'label' => t_default('acp.set.site_url.label', 'Site URL'),
 				'type'  => 'text',
-				'help'  => 'Used in e-mails and absolute links. No trailing slash.',
+				'help'  => t_default('acp.set.site_url.help', 'Used in e-mails and absolute links. No trailing slash.'),
 			),
 		),
 
-		'Maintenance' => array(
+		t_default('acp.sec.Maintenance', 'Maintenance') => array(
 			'maintenance' => array(
-				'label' => 'Maintenance mode',
+				'label' => t_default('acp.set.maintenance.label', 'Maintenance mode'),
 				'type'  => 'bool',
-				'help'  => 'Visitors see the message below. Admins keep full access.',
+				'help'  => t_default('acp.set.maintenance.help', 'Visitors see the message below. Admins keep full access.'),
 			),
 			'maintenance_message' => array(
-				'label' => 'Maintenance message',
+				'label' => t_default('acp.set.maintenance_message.label', 'Maintenance message'),
 				'type'  => 'textarea',
 			),
 		),
 
-		'Game server' => array(
+		t_default('acp.sec.Language', 'Language') => array(
+			'language' => array(
+				'label'   => t_default('acp.set.language.label', 'Default language'),
+				'type'    => 'select',
+				'options' => array(
+					'en'    => 'English',
+					'pt_br' => 'Português (Brasil)',
+					'es'    => 'Español',
+					'pl'    => 'Polski',
+					'de'    => 'Deutsch',
+				),
+				'help'  => t_default('acp.set.language.help', 'Used when the visitor has no saved choice and their browser asks for nothing you offer.'),
+			),
+			'languages_enabled' => array(
+				'label'   => t_default('acp.set.languages_enabled.label', 'Offered languages'),
+				'type'    => 'checklist',
+				'options' => array(
+					'en'    => 'English',
+					'pt_br' => 'Português (Brasil)',
+					'es'    => 'Español',
+					'pl'    => 'Polski',
+					'de'    => 'Deutsch',
+				),
+				'help'  => t_default('acp.set.languages_enabled.help', 'Which flags the switcher shows. The default language is always kept.'),
+			),
+			'language_selector' => array(
+				'label' => t_default('acp.set.language_selector.label', 'Show the language switcher'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.language_selector.help', 'Adds it to every theme, top right. Turn off if your theme places it itself.'),
+			),
+		),
+
+		t_default('acp.sec.Game server', 'Game server') => array(
 			'client' => array(
-				'label' => 'Client version',
+				'label' => t_default('acp.set.client.label', 'Client version'),
 				'type'  => 'int',
-				'help'  => 'For example 1098 for client 10.98.',
+				'help'  => t_default('acp.set.client.help', 'For example 1098 for client 10.98.'),
 			),
 			'port' => array(
-				'label' => 'Game server port',
+				'label' => t_default('acp.set.port.label', 'Game server port'),
 				'type'  => 'int',
 			),
 			'freePremium' => array(
-				'label' => 'Free premium',
+				'label' => t_default('acp.set.freePremium.label', 'Free premium'),
 				'type'  => 'bool',
+			),
+			'account_create_premdays' => array(
+				'label' => t_default('acp.set.account_create_premdays.label', 'Premium days on account creation'),
+				'type'  => 'int',
+				'min'   => 0,
+				'max'   => 999,
+				'help'  => t_default('acp.set.account_create_premdays.help', '0 disables it. New accounts only; existing accounts are not changed.'),
 			),
 		),
 
-		'Characters' => array(
+		t_default('acp.sec.Characters', 'Characters') => array(
 			'max_characters' => array(
-				'label' => 'Characters per account',
+				'label' => t_default('acp.set.max_characters.label', 'Characters per account'),
 				'type'  => 'int',
 			),
 			'minL' => array(
-				'label' => 'Minimum name length',
+				'label' => t_default('acp.set.minL.label', 'Minimum name length'),
 				'type'  => 'int',
 			),
 			'maxL' => array(
-				'label' => 'Maximum name length',
+				'label' => t_default('acp.set.maxL.label', 'Maximum name length'),
 				'type'  => 'int',
 			),
 			'maxW' => array(
-				'label' => 'Maximum words in a name',
+				'label' => t_default('acp.set.maxW.label', 'Maximum words in a name'),
 				'type'  => 'int',
 			),
 			'create_guild_level' => array(
-				'label' => 'Level required to create a guild',
+				'label' => t_default('acp.set.create_guild_level.label', 'Level required to create a guild'),
 				'type'  => 'int',
 			),
 		),
 
-		'Content' => array(
+		t_default('acp.sec.Content', 'Content') => array(
 			'news_per_page' => array(
-				'label' => 'News articles per page',
+				'label' => t_default('acp.set.news_per_page.label', 'News articles per page'),
 				'type'  => 'int',
 			),
 			'UseChangelogTicker' => array(
-				'label' => 'Changelog ticker on the front page',
+				'label' => t_default('acp.set.UseChangelogTicker.label', 'Changelog ticker on the front page'),
 				'type'  => 'bool',
 			),
 			'allowSubPages' => array(
-				'label' => 'Allow theme sub pages',
+				'label' => t_default('acp.set.allowSubPages.label', 'Allow theme sub pages'),
 				'type'  => 'bool',
 			),
 		),
 
-		'Privacy' => array(
+		t_default('acp.sec.Privacy', 'Privacy') => array(
 			'log_ip' => array(
-				'label' => 'Log visitor IPs',
+				'label' => t_default('acp.set.log_ip.label', 'Log visitor IPs'),
 				'type'  => 'bool',
-				'help'  => 'Feeds the Visitors page. Turning it off stops the collection entirely.',
+				'help'  => t_default('acp.set.log_ip.help', 'Feeds the Visitors page. Turning it off stops the collection entirely.'),
 			),
 		),
 
-		'Shop' => array(
+		t_default('acp.sec.Shop', 'Shop') => array(
 			'shop.enabled' => array(
-				'label' => 'Shop enabled',
+				'label' => t_default('acp.set.shop.enabled.label', 'Shop enabled'),
 				'type'  => 'bool',
-				'help'  => 'Turns off the shop page and its menu entry.',
+				'help'  => t_default('acp.set.shop.enabled.help', 'Turns off the shop page and its menu entry.'),
 			),
 			'shop.loginToView' => array(
-				'label' => 'Require login to view the shop',
+				'label' => t_default('acp.set.shop.loginToView.label', 'Require login to view the shop'),
 				'type'  => 'bool',
 			),
 			'shop.enableShopConfirmation' => array(
-				'label' => 'Ask for confirmation before buying',
+				'label' => t_default('acp.set.shop.enableShopConfirmation.label', 'Ask for confirmation before buying'),
 				'type'  => 'bool',
 			),
 			'shop.showImage' => array(
-				'label' => 'Show item images',
+				'label' => t_default('acp.set.shop.showImage.label', 'Show item images'),
 				'type'  => 'bool',
 			),
 			'shop.imageServer' => array(
-				'label' => 'Item image server',
+				'label' => t_default('acp.set.shop.imageServer.label', 'Item image server'),
 				'type'  => 'text',
 			),
 			'shop.imageType' => array(
-				'label' => 'Item image extension',
+				'label' => t_default('acp.set.shop.imageType.label', 'Item image extension'),
 				'type'  => 'text',
-				'help'  => 'gif or png, depending on the image server.',
+				'help'  => t_default('acp.set.shop.imageType.help', 'gif or png, depending on the image server.'),
 			),
 			'buypoints_enabled' => array(
-				'label' => 'Buy points page',
+				'label' => t_default('acp.set.buypoints_enabled.label', 'Buy points page'),
 				'type'  => 'bool',
-				'help'  => 'Off hides buypoints.php whichever gateways are configured. Gateways themselves are on the Payments page.',
+				'help'  => t_default('acp.set.buypoints_enabled.help', 'Off hides buypoints.php whichever gateways are configured. Gateways themselves are on the Payments page.'),
 			),
 		),
 
-		'Outfit images' => array(
+		t_default('acp.sec.Outfit images', 'Outfit images') => array(
 			'show_outfits.imageServer' => array(
-				'label' => 'Outfit image server',
+				'label' => t_default('acp.set.show_outfits.imageServer.label', 'Outfit image server'),
 				'type'  => 'text',
-				'help'  => 'The script that renders outfits, e.g. https://outfit-images.ots.me/1285/animoutfit.php',
+				'help'  => t_default('acp.set.show_outfits.imageServer.help', 'The script that renders outfits, e.g. https://outfit-images.ots.me/1285/animoutfit.php'),
 			),
 			'show_outfits.shop' => array(
-				'label' => 'Outfits in the shop',
+				'label' => t_default('acp.set.show_outfits.shop.label', 'Outfits in the shop'),
 				'type'  => 'bool',
 			),
 			'show_outfits.highscores' => array(
-				'label' => 'Outfits in the highscores',
+				'label' => t_default('acp.set.show_outfits.highscores.label', 'Outfits in the highscores'),
 				'type'  => 'bool',
 			),
 			'show_outfits.characterprofile' => array(
-				'label' => 'Outfits on character profiles',
+				'label' => t_default('acp.set.show_outfits.characterprofile.label', 'Outfits on character profiles'),
 				'type'  => 'bool',
 			),
 			'show_outfits.onlinelist' => array(
-				'label' => 'Outfits in the online list',
+				'label' => t_default('acp.set.show_outfits.onlinelist.label', 'Outfits in the online list'),
 				'type'  => 'bool',
 			),
 		),
 
-		'Character auction' => array(
+		t_default('acp.sec.Character auction', 'Character auction') => array(
 			'shop_auction.characterAuction' => array(
-				'label' => 'Character auction enabled',
+				'label' => t_default('acp.set.shop_auction.characterAuction.label', 'Character auction enabled'),
 				'type'  => 'bool',
-				'help'  => 'Lets players sell and bid on characters for shop points.',
+				'help'  => t_default('acp.set.shop_auction.characterAuction.help', 'Lets players sell and bid on characters for shop points.'),
 			),
 			'shop_auction.storage_account_id' => array(
-				'label' => 'Storage account ID',
+				'label' => t_default('acp.set.shop_auction.storage_account_id.label', 'Storage account ID'),
 				'type'  => 'int',
-				'help'  => 'Holds characters while they are listed. Use a separate, secure account - not your god account.',
+				'help'  => t_default('acp.set.shop_auction.storage_account_id.help', 'Holds characters while they are listed. Use a separate, secure account - not your god account.'),
 			),
 			'shop_auction.lowestLevel' => array(
-				'label' => 'Minimum level to sell',
+				'label' => t_default('acp.set.shop_auction.lowestLevel.label', 'Minimum level to sell'),
 				'type'  => 'int',
 			),
 			'shop_auction.lowestPrice' => array(
-				'label' => 'Minimum price in points',
+				'label' => t_default('acp.set.shop_auction.lowestPrice.label', 'Minimum price in points'),
 				'type'  => 'int',
 			),
 			'shop_auction.step' => array(
-				'label' => 'Minimum bid increase',
+				'label' => t_default('acp.set.shop_auction.step.label', 'Minimum bid increase'),
 				'type'  => 'int',
 			),
 			'shop_auction.deposit' => array(
-				'label' => 'Seller deposit (%)',
+				'label' => t_default('acp.set.shop_auction.deposit.label', 'Seller deposit (%)'),
 				'type'  => 'int',
 			),
 		),
 
-		'Forum' => array(
+		t_default('acp.sec.Forum', 'Forum') => array(
 			'forum.enabled' => array(
-				'label' => 'Forum enabled',
+				'label' => t_default('acp.set.forum.enabled.label', 'Forum enabled'),
 				'type'  => 'bool',
 			),
 			'forum.level' => array(
-				'label' => 'Level required to post',
+				'label' => t_default('acp.set.forum.level.label', 'Level required to post'),
 				'type'  => 'int',
 			),
 			'forum.maxImagesPerPost' => array(
-				'label' => 'Images allowed per post',
+				'label' => t_default('acp.set.forum.maxImagesPerPost.label', 'Images allowed per post'),
 				'type'  => 'int',
-				'help'  => '0 blocks images entirely.',
+				'help'  => t_default('acp.set.forum.maxImagesPerPost.help', '0 blocks images entirely.'),
 			),
 			'forum.guildboard' => array(
-				'label' => 'Guild boards',
+				'label' => t_default('acp.set.forum.guildboard.label', 'Guild boards'),
 				'type'  => 'bool',
 			),
 			'forum.outfit_avatars' => array(
-				'label' => 'Show outfits as avatars',
+				'label' => t_default('acp.set.forum.outfit_avatars.label', 'Show outfits as avatars'),
 				'type'  => 'bool',
 			),
 			'forum.newPostsBumpThreads' => array(
-				'label' => 'New posts bump threads',
+				'label' => t_default('acp.set.forum.newPostsBumpThreads.label', 'New posts bump threads'),
 				'type'  => 'bool',
 			),
 		),
 
-		'Guilds' => array(
+		t_default('acp.sec.Guilds', 'Guilds') => array(
 			'use_guild_logos' => array(
-				'label' => 'Guild logo uploads',
+				'label' => t_default('acp.set.use_guild_logos.label', 'Guild logo uploads'),
 				'type'  => 'bool',
 			),
 			'guild_require_premium' => array(
-				'label' => 'Premium required to create a guild',
+				'label' => t_default('acp.set.guild_require_premium.label', 'Premium required to create a guild'),
 				'type'  => 'bool',
 			),
 			'guild_allow_nicknames' => array(
-				'label' => 'Allow guild nicknames',
+				'label' => t_default('acp.set.guild_allow_nicknames.label', 'Allow guild nicknames'),
 				'type'  => 'bool',
 			),
 			'guildwar_enabled' => array(
-				'label' => 'Guild wars',
+				'label' => t_default('acp.set.guildwar_enabled.label', 'Guild wars'),
 				'type'  => 'bool',
 			),
 		),
 
-		'Highscores & lists' => array(
+		t_default('acp.sec.Highscores & lists', 'Highscores & lists') => array(
 			'highscore.rows' => array(
-				'label' => 'Highscore entries',
+				'label' => t_default('acp.set.highscore.rows.label', 'Highscore entries'),
 				'type'  => 'int',
 			),
 			'highscore.rowsPerPage' => array(
-				'label' => 'Highscore rows per page',
+				'label' => t_default('acp.set.highscore.rowsPerPage.label', 'Highscore rows per page'),
 				'type'  => 'int',
 			),
 			'highscore.ignoreGroupId' => array(
-				'label' => 'Hide group ID and above',
+				'label' => t_default('acp.set.highscore.ignoreGroupId.label', 'Hide group ID and above'),
 				'type'  => 'int',
-				'help'  => 'Keeps staff out of the highscores. 2 hides gamemasters upward.',
+				'help'  => t_default('acp.set.highscore.ignoreGroupId.help', 'Keeps staff out of the highscores. 2 hides gamemasters upward.'),
 			),
 			'powergamers.enabled' => array(
-				'label' => 'Powergamers page',
+				'label' => t_default('acp.set.powergamers.enabled.label', 'Powergamers page'),
 				'type'  => 'bool',
-				'help'  => 'Needs the Lua script and the extra SQL columns.',
+				'help'  => t_default('acp.set.powergamers.enabled.help', 'Needs the Lua script and the extra SQL columns.'),
 			),
 			'powergamers.limit' => array(
-				'label' => 'Powergamers shown',
+				'label' => t_default('acp.set.powergamers.limit.label', 'Powergamers shown'),
 				'type'  => 'int',
 			),
 			'toponline.enabled' => array(
-				'label' => 'Top online page',
+				'label' => t_default('acp.set.toponline.enabled.label', 'Top online page'),
 				'type'  => 'bool',
 			),
 			'toponline.limit' => array(
-				'label' => 'Top online shown',
+				'label' => t_default('acp.set.toponline.limit.label', 'Top online shown'),
 				'type'  => 'int',
 			),
 		),
 
-		'Houses' => array(
+		t_default('acp.sec.Houses', 'Houses') => array(
 			'houseConfig.HouseListDefaultTown' => array(
-				'label' => 'Default town on the house list',
+				'label' => t_default('acp.set.houseConfig.HouseListDefaultTown.label', 'Default town on the house list'),
 				'type'  => 'int',
 			),
 			'houseConfig.minimumBidSQM' => array(
-				'label' => 'Minimum bid per SQM',
+				'label' => t_default('acp.set.houseConfig.minimumBidSQM.label', 'Minimum bid per SQM'),
 				'type'  => 'int',
 			),
 			'houseConfig.housesPerPlayer' => array(
-				'label' => 'Houses per player',
+				'label' => t_default('acp.set.houseConfig.housesPerPlayer.label', 'Houses per player'),
 				'type'  => 'int',
 			),
 			'houseConfig.levelToBuyHouse' => array(
-				'label' => 'Level required to buy a house',
+				'label' => t_default('acp.set.houseConfig.levelToBuyHouse.label', 'Level required to buy a house'),
 				'type'  => 'int',
 			),
 			'houseConfig.requirePremium' => array(
-				'label' => 'Premium required',
+				'label' => t_default('acp.set.houseConfig.requirePremium.label', 'Premium required'),
 				'type'  => 'bool',
 			),
 			'houseConfig.shopPoints.enabled' => array(
-				'label' => 'Instant buy with shop points',
+				'label' => t_default('acp.set.houseConfig.shopPoints.enabled.label', 'Instant buy with shop points'),
 				'type'  => 'bool',
 			),
 		),
 
-		'Server status' => array(
+		t_default('acp.sec.Server status', 'Server status') => array(
 			'status.status_check' => array(
-				'label' => 'Query the game server for status',
+				'label' => t_default('acp.set.status.status_check.label', 'Query the game server for status'),
 				'type'  => 'bool',
 			),
 			'status.status_ip' => array(
-				'label' => 'Status IP',
+				'label' => t_default('acp.set.status.status_ip.label', 'Status IP'),
 				'type'  => 'text',
 			),
 			'status.status_port' => array(
-				'label' => 'Status port',
+				'label' => t_default('acp.set.status.status_port.label', 'Status port'),
 				'type'  => 'text',
 			),
 			'login_web_service' => array(
-				'label' => 'Client login web service',
+				'label' => t_default('acp.set.login_web_service.label', 'Client login web service'),
 				'type'  => 'bool',
-				'help'  => 'Required by client 11 and newer.',
+				'help'  => t_default('acp.set.login_web_service.help', 'Required by client 11 and newer.'),
+			),
+			'login_protocol' => array(
+				'label'   => t_default('acp.set.login_protocol.label', 'Login protocol'),
+				'type'    => 'select',
+				'options' => array(
+					'auto' => 'Auto (follow client version)',
+					'11'   => 'Client 11',
+					'12'   => 'Client 12 / Canary 12.x',
+					'13'   => 'Client 13 / Canary 13.x',
+					'15'   => 'Client 15 / Canary 15.x',
+				),
+				'help'  => t_default('acp.set.login_protocol.help', 'Shape of the character list the client is sent. Auto follows the client version above.'),
+			),
+			'login_auth_type' => array(
+				'label'   => t_default('acp.set.login_auth_type.label', 'Canary auth type'),
+				'type'    => 'select',
+				'options' => array(
+					'password' => 'Password (Canary default)',
+					'session'  => 'Session (writes account_sessions)',
+				),
+				'help'  => t_default('acp.set.login_auth_type.help', 'Must match authType in your Canary config.lua, or nobody can enter the world.'),
+			),
+			'login_session_ttl' => array(
+				'label' => t_default('acp.set.login_session_ttl.label', 'Session lifetime'),
+				'type'  => 'int',
+				'help'  => t_default('acp.set.login_session_ttl.help', 'Seconds a session auth row stays valid. Ignored on password auth.'),
 			),
 			'gameserver.ip' => array(
-				'label' => 'Game server IP',
+				'label' => t_default('acp.set.gameserver.ip.label', 'Game server IP'),
 				'type'  => 'text',
 			),
 			'gameserver.port' => array(
-				'label' => 'Login web service port',
+				'label' => t_default('acp.set.gameserver.port.label', 'Login web service port'),
 				'type'  => 'int',
 			),
 			'gameserver.name' => array(
-				'label' => 'World name',
+				'label' => t_default('acp.set.gameserver.name.label', 'World name'),
 				'type'  => 'text',
 			),
 		),
 
-		'Downloads' => array(
+		t_default('acp.sec.Downloads', 'Downloads') => array(
 			'client_download' => array(
-				'label' => 'Windows client URL',
+				'label' => t_default('acp.set.client_download.label', 'Windows client URL'),
 				'type'  => 'text',
 			),
 			'client_download_linux' => array(
-				'label' => 'Linux client URL',
+				'label' => t_default('acp.set.client_download_linux.label', 'Linux client URL'),
 				'type'  => 'text',
 			),
 		),
 
-		'Security' => array(
+		t_default('acp.sec.Security', 'Security') => array(
 			'use_token' => array(
-				'label' => 'CSRF tokens on forms',
+				'label' => t_default('acp.set.use_token.label', 'CSRF tokens on forms'),
 				'type'  => 'bool',
 			),
 			'use_captcha' => array(
-				'label' => 'reCaptcha',
+				'label' => t_default('acp.set.use_captcha.label', 'reCaptcha'),
 				'type'  => 'bool',
-				'help'  => 'Needs the site and secret keys below, and the cURL extension.',
+				'help'  => t_default('acp.set.use_captcha.help', 'Needs the site and secret keys below, and the cURL extension.'),
 			),
 			'captcha_site_key' => array(
-				'label' => 'reCaptcha site key',
+				'label' => t_default('acp.set.captcha_site_key.label', 'reCaptcha site key'),
 				'type'  => 'text',
 			),
 			'captcha_secret_key' => array(
-				'label' => 'reCaptcha secret key',
+				'label' => t_default('acp.set.captcha_secret_key.label', 'reCaptcha secret key'),
 				'type'  => 'text',
 			),
 			'twoFactorAuthenticator' => array(
-				'label' => 'Two-factor authentication',
+				'label' => t_default('acp.set.twoFactorAuthenticator.label', 'Two-factor authentication'),
 				'type'  => 'bool',
-				'help'  => 'TFS 1.2+ only. Unavailable on Canary.',
+				'help'  => t_default('acp.set.twoFactorAuthenticator.help', 'TFS 1.2+ only. Unavailable on Canary.'),
 			),
 			'validate_IP' => array(
-				'label' => 'Tie sessions to the visitor IP',
+				'label' => t_default('acp.set.validate_IP.label', 'Tie sessions to the visitor IP'),
 				'type'  => 'bool',
 			),
 		),
 
-		'Cache' => array(
+		t_default('acp.sec.Cache', 'Cache') => array(
 			'cache.lifespan' => array(
-				'label' => 'Cache lifetime (seconds)',
+				'label' => t_default('acp.set.cache.lifespan.label', 'Cache lifetime (seconds)'),
 				'type'  => 'int',
 			),
 			'cache.memory' => array(
-				'label' => 'Keep cache in memory (APCu)',
+				'label' => t_default('acp.set.cache.memory.label', 'Keep cache in memory (APCu)'),
 				'type'  => 'bool',
-				'help'  => 'Needs the APCu extension. With it off, the cache uses files in engine/cache/.',
+				'help'  => t_default('acp.set.cache.memory.help', 'Needs the APCu extension. With it off, the cache uses files in engine/cache/.'),
 			),
 		),
 
-		'E-mail' => array(
+		t_default('acp.sec.E-mail', 'E-mail') => array(
 			'mailserver.register' => array(
-				'label' => 'Send activation mail on register',
+				'label' => t_default('acp.set.mailserver.register.label', 'Send activation mail on register'),
 				'type'  => 'bool',
 			),
 			'mailserver.accountRecovery' => array(
-				'label' => 'Allow account recovery by mail',
+				'label' => t_default('acp.set.mailserver.accountRecovery.label', 'Allow account recovery by mail'),
 				'type'  => 'bool',
 			),
 			'mailserver.myaccount_verify_email' => array(
-				'label' => 'Let players verify their e-mail',
+				'label' => t_default('acp.set.mailserver.myaccount_verify_email.label', 'Let players verify their e-mail'),
 				'type'  => 'bool',
 			),
 			'mailserver.verify_email_points' => array(
-				'label' => 'Points for verifying e-mail',
+				'label' => t_default('acp.set.mailserver.verify_email_points.label', 'Points for verifying e-mail'),
 				'type'  => 'int',
-				'help'  => '0 disables the reward.',
+				'help'  => t_default('acp.set.mailserver.verify_email_points.help', '0 disables the reward.'),
 			),
 			'mailserver.host' => array(
-				'label' => 'SMTP host',
+				'label' => t_default('acp.set.mailserver.host.label', 'SMTP host'),
 				'type'  => 'text',
 			),
 			'mailserver.port' => array(
-				'label' => 'SMTP port',
+				'label' => t_default('acp.set.mailserver.port.label', 'SMTP port'),
 				'type'  => 'int',
-				'help'  => '465 for SSL, 587 for TLS.',
+				'help'  => t_default('acp.set.mailserver.port.help', '465 for SSL, 587 for TLS.'),
 			),
 			'mailserver.securityType' => array(
-				'label' => 'SMTP security',
+				'label' => t_default('acp.set.mailserver.securityType.label', 'SMTP security'),
 				'type'  => 'text',
-				'help'  => 'ssl or tls.',
+				'help'  => t_default('acp.set.mailserver.securityType.help', 'ssl or tls.'),
 			),
 			'mailserver.email' => array(
-				'label' => 'From address',
+				'label' => t_default('acp.set.mailserver.email.label', 'From address'),
 				'type'  => 'text',
 			),
 			'mailserver.username' => array(
-				'label' => 'SMTP username',
+				'label' => t_default('acp.set.mailserver.username.label', 'SMTP username'),
 				'type'  => 'text',
 			),
 			'mailserver.password' => array(
-				'label' => 'SMTP password',
+				'label' => t_default('acp.set.mailserver.password.label', 'SMTP password'),
 				'type'  => 'text',
 			),
 		),

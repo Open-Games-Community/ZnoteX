@@ -251,8 +251,19 @@ function engineIsTFS16() {
 }
 
 function accountField($field) {
+	if ($field === 'premium_ends_at') {
+		if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'premium_ends_at')) {
+			return '`premium_ends_at`';
+		}
+		if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'lastday') && znote_column_exists('accounts', 'premdays')) {
+			return '(`lastday` + (`premdays` * 86400)) AS `premium_ends_at`';
+		}
+		if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'premdays')) {
+			return '(CASE WHEN `premdays` > 0 THEN UNIX_TIMESTAMP() + (`premdays` * 86400) ELSE 0 END) AS `premium_ends_at`';
+		}
+	}
+
 	if (engineIsCanary()) {
-		if ($field === 'premium_ends_at') return '(`lastday` + (`premdays` * 86400)) AS `premium_ends_at`';
 		if ($field === 'secret') return 'NULL AS `secret`';
 	}
 	return '`' . $field . '`';

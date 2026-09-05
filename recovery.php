@@ -43,22 +43,22 @@ if ($config['mailserver']['accountRecovery']) {
 
 					$mailer = new Mail($config['mailserver']);
 					$title = "$_SERVER[HTTP_HOST]: Your username";
-					$body = "<h1>Account Recovery</h1>";
-					$body .= "<p>Your username is: <b>$user[name]</b><br>";
+					$body = "<h1>'. t('recovery.title'). '</h1>";
+					$body .= "<p>'. t('recovery.your_username2'). ' <b>$user[name]</b><br>";
 					$body .= "Enjoy your stay at ".$config['mailserver']['fromName'].". <br>";
 					$body .= "<hr>I am an automatic no-reply e-mail. Any emails sent back to me will be ignored.</p>";
 					$mailer->sendMail($email, $title, $body, $user['name']);
 
 					?>
-					<h1>Account Found!</h1>
-					<p>We have sent your username to <b><?php echo $email; ?></b>.</p>
+					<h1><?= t('recovery.found') ?></h1>
+					<p><?= t('recovery.sent_username2') ?> <b><?php echo $email; ?></b>.</p>
 					<p>If you can't find the email within 5 minutes, check your junk/trash inbox as it may be mislocated there.</p>
 					<?php
 				} else {
 					// Wrong submitted info
 					?>
-					<h1>Account recovery failed!</h1>
-					<p>Submitted data is wrong.</p>
+					<h1><?= t('recovery.failed') ?></h1>
+					<p><?= t('recovery.wrong_data') ?></p>
 					<?php
 				}
 
@@ -90,22 +90,22 @@ if ($config['mailserver']['accountRecovery']) {
 					// Send him a mail with the new password
 					$mailer = new Mail($config['mailserver']);
 					$title = "$_SERVER[HTTP_HOST]: Your new password";
-					$body = "<h1>Account Recovery</h1>";
-					$body .= "<p>Your new password is: <b>$newpass</b><br>";
+					$body = "<h1>'. t('recovery.title'). '</h1>";
+					$body .= "<p>'. t('recovery.new_password'). ' <b>$newpass</b><br>";
 					$body .= "We recommend you to login and change it before you continue playing. <br>";
 					$body .= "Enjoy your stay at ".$config['mailserver']['fromName'].". <br>";
 					$body .= "<hr>I am an automatic no-reply e-mail. Any emails sent back to me will be ignored.</p>";
 					$mailer->sendMail($email, $title, $body, $user['name']);
 					?>
-					<h1>Account Found!</h1>
-					<p>We have sent your new password to <b><?php echo $email; ?></b>.</p>
+					<h1><?= t('recovery.found') ?></h1>
+					<p><?= t('recovery.sent_password') ?> <b><?php echo $email; ?></b>.</p>
 					<p>If you can't find the email within 5 minutes, check your junk/trash inbox as it may be mislocated there.</p>
 					<?php
 				} else {
 					// Wrong submitted info
 					?>
-					<h1>Account recovery failed!</h1>
-					<p>Submitted data is wrong.</p>
+					<h1><?= t('recovery.failed') ?></h1>
+					<p><?= t('recovery.wrong_data') ?></p>
 					<?php
 				}
 			} else { // Token
@@ -115,70 +115,70 @@ if ($config['mailserver']['accountRecovery']) {
 					// Found user
 					$recoverylink = $config['site_url'] . '/recovery.php?a='.$user['id'].'&k='.$user['activekey'];
 					$mailer = new Mail($config['mailserver']);
-					$title = $config['site_title'].": Remove Two-Factor Authentication link";
-					$body = "<h1>Remove Two-Factor Authentication</h1>";
+					$title = $config['site_title'].": '. t('recovery.remove_2fa'). ' link";
+					$body = "<h1>'. t('recovery.remove_2fa'). '</h1>";
 					$body .= "<p>If you really want to remove Two-Factor Authentication, click on the following link:<br>";
 					$body .= "<a href='$recoverylink' target='_BLANK'>$recoverylink</a><br>";
 					$body .= "Enjoy your stay at ".$config['mailserver']['fromName'].". <br>";
 					$body .= "<hr>I am an automatic no-reply e-mail. Any emails sent back to me will be ignored.</p>";
 					$mailer->sendMail($email, $title, $body, $user['name']);
 					?>
-					<h1>Confirm your action through email</h1>
-					<p>We have sent a confirmation link to <b><?php echo $email; ?></b>.</p>
-					<p>You must click the link before we remove Two-factor authentication.</p>
+					<h1><?= t('recovery.confirm_email') ?></h1>
+					<p><?= t('recovery.sent_link') ?> <b><?php echo $email; ?></b>.</p>
+					<p><?= t('recovery.click_link') ?> <?= t('common.2fa') ?>.</p>
 					<p>If you can't find the email within 5 minutes, check your junk/trash inbox as it may be mislocated there.</p>
 					<?php
 				} else {
 					// Wrong submitted info
 					?>
-					<h1>Account recovery failed!</h1>
-					<p>Submitted data is wrong.</p>
+					<h1><?= t('recovery.failed') ?></h1>
+					<p><?= t('recovery.wrong_data') ?></p>
 					<?php
 				}
 
 
 			}
-		} else echo "Captcha image verification was submitted wrong.";
+		} else echo t('recovery.captcha_wrong');
 	} else {
 
 		$a = (isset($_GET['a']) && !empty($_GET['a'])) ? (int)$_GET['a'] : false;
 		$k = (isset($_GET['k']) && !empty($_GET['k'])) ? (int)$_GET['k'] : false;
 
-		// Remove Two-Factor Authentication
+		// '. t('recovery.remove_2fa'). '
 		if ($a !== false && $k !== false && !engineIsCanary()) {
 			$account = mysql_select_single("SELECT `a`.`id`, `a`.`secret`, `za`.`secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id`=`za`.`account_id` WHERE `a`.`id`='$a' AND `za`.`activekey`='$k' LIMIT 1;");
 			if ($account !== false) {
 				mysql_update("UPDATE `accounts` SET `secret`=NULL WHERE `id`='$a' LIMIT 1;");
 				mysql_update("UPDATE `znote_accounts` SET `secret`=NULL WHERE `account_id`='$a' LIMIT 1;");
 				?>
-				<h1>Two-Factor Authentication disabled.</h1>
+				<h1><?= t('recovery.2fa_disabled') ?></h1>
 				<p>You may now login with just your username and password.</p>
 				<?php
 			} else {
 				?>
-				<h1>Failed verify your request.</h1>
-				<p>We are unable to authenticate your account.</p>
+				<h1><?= t('recovery.verify_failed2') ?></h1>
+				<p><?= t('recovery.cannot_auth') ?></p>
 				<?php
 			}
 		} else { // Regular view
 			?>
-			<h1>Account Recovery</h1>
+			<h1><?= t('recovery.title') ?></h1>
 			<!-- HTML code -->
 			<?php
 			if (in_array($mode, array('username', 'password', 'token'))) {
 				?>
 				<form action="" method="POST">
 					<label for="email">Email:</label><input type="text" name="email" placeholder="name@mail.com"><br>
-					<label for="Character">Character: </label><input type="text" name="character"><br>
+					<label for="<?= t('common.character') ?>"><?= t('common.label_character') ?> </label><input type="text" name="character"><br>
 					<?php
 
 					if ($mode === 'password') {
-						echo '<label for="username">Username:</label> <input type="text" name="username"><br>';
+						echo '<label for="username">'. t('common.label_username2'). '</label> <input type="text" name="username"><br>';
 					} elseif ($mode === 'username') {
-						echo '<label for="password">Password:</label> <input type="password" name="password"><br>';
+						echo '<label for="password">'. t('common.label_password') .'</label> <input type="password" name="password"><br>';
 					} elseif ($mode === 'token') {
-						echo '<label for="username">Username:</label> <input type="text" name="username"><br>';
-						echo '<label for="password">Password:</label> <input type="password" name="password"><br>';
+						echo '<label for="username">'. t('common.label_username2') .'</label> <input type="text" name="username"><br>';
+						echo '<label for="password">'. t('common.label_password') .'</label> <input type="password" name="password"><br>';
 					}
 
 					if ($config['use_captcha']) {
@@ -187,17 +187,17 @@ if ($config['mailserver']['accountRecovery']) {
 						<?php
 					}
 					?>
-					<input type="submit" value="Recover Account">
+					<input type="submit" value="<?= t('recovery.submit') ?>">
 				</form>
 				<?php
 			} else {
 				if ($config['twoFactorAuthenticator']) {
 					?>
-					<p>Do you wish to recover your <a href="?mode=username">username</a>, <a href="?mode=password">password</a> or remove <a href="?mode=token">Two-factor authentication</a>?</p>
+					<p><?= t('recovery.wish_recover') ?> <a href="?mode=username">username</a>, <a href="?mode=password">password</a> or remove <a href="?mode=token"><?= t('common.2fa') ?></a>?</p>
 					<?php
 				} else {
 					?>
-					<p>Do you wish to recover your <a href="?mode=username">username</a> or <a href="?mode=password">password</a>?</p>
+					<p><?= t('recovery.wish_recover') ?> <a href="?mode=username">username</a> or <a href="?mode=password">password</a>?</p>
 					<?php
 				}
 			}
@@ -205,8 +205,8 @@ if ($config['mailserver']['accountRecovery']) {
 	}
 } else {
 	?>
-	<h1>System Disabled</h1>
-	<p>The admin have disabled automatic account recovery.</p>
+	<h1><?= t('recovery.disabled') ?></h1>
+	<p><?= t('recovery.disabled_text2') ?></p>
 	<?php
 }
 theme_close(); ?>

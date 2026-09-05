@@ -5,7 +5,7 @@
  * Prepared by support.php: $srtGrp - staff grouped by in-game position.
  */
 ?>
-<h1>Support in-game</h1>
+<h1><?= t('support.title') ?></h1>
 <?php
 $writeHeader = true;
 if (!empty($srtGrp)) {
@@ -15,9 +15,9 @@ if (!empty($srtGrp)) {
 			<?php if ($writeHeader) {
 			$writeHeader = false; ?>
 			<tr class="yellow">
-				<th width="30%">Group</th>
-				<th width="40%">Name</th>
-				<th width="30%">Status</th>
+				<th width="30%"><?= t('common.group') ?></th>
+				<th width="40%"><?= t('common.name') ?></th>
+				<th width="30%"><?= t('common.status') ?></th>
 			</tr>
 			<?php
 			}

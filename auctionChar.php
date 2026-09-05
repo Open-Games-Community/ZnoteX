@@ -25,7 +25,7 @@ function toDuration($is) {
 	return implode(', ', $tmp);
 }
 ?>
-<h1>Character auction</h1>
+<h1><?= t('auc.page_title') ?></h1>
 <?php
 // Import from config:
 $auction = $config['shop_auction'];
@@ -295,12 +295,12 @@ if ($auction['characterAuction']) {
 					LIMIT 1;
 				");
 				?>
-				<p>Detailed character information. <a href="/auctionChar.php?action=list">Go back to list.</a></p>
+				<p><?= t('auc.detailed_info') ?> <a href="/auctionChar.php?action=list"><?= t('auc.go_back_list') ?></a></p>
 				<!-- Basic info -->
 				<table class="auction_char">
 					<tr class="yellow">
 						<td>Level</td>
-						<td>Vocation</td>
+						<td><?= t('common.vocation') ?></td>
 						<?php if ($loadOutfits): ?>
 							<td>Image</td>
 						<?php endif; ?>
@@ -321,7 +321,7 @@ if ($auction['characterAuction']) {
 					<?php if ($bidding_period): ?>
 						<tr>
 							<td colspan="<?php echo ($loadOutfits) ? 5 : 4; ?>">
-								<p><strong>Remaining bid period:</strong> <?php echo toDuration((int)$character['time_end']-time()); ?>.</p>
+								<p><strong><?= t('auc.remaining') ?></strong> <?php echo toDuration((int)$character['time_end']-time()); ?>.</p>
 							</td>
 						</tr>
 					<?php endif; ?>
@@ -330,11 +330,11 @@ if ($auction['characterAuction']) {
 				<?php
 				if ($character['own'] == 0) {
 					if (is_array($account) && !empty($account)): ?>
-						<p>You have <strong><?php echo $account['points']; ?></strong> shop points remaining.</p>
+						<p><?= t('common.you_have') ?> <strong><?php echo $account['points']; ?></strong> shop points remaining.</p>
 
 						<?php if ((int)$character['bidder_account_id'] === $this_account_id): ?>
-							<p><strong>So far so good!</strong>
-								<br>You currently have the highest bid at: <?php echo (int)$character['price']-$step; ?>
+							<p><strong><?= t('auc.so_far_good') ?></strong>
+								<br><?= t('auc.highest_bid') ?> <?php echo (int)$character['price']-$step; ?>
 							</p>
 							<p>If nobody bids higher than you, this character will be yours in:
 								<br><?php echo toDuration((int)$character['time_end']-time()); ?>.
@@ -351,23 +351,23 @@ if ($auction['characterAuction']) {
 						</form>
 					<?php else: ?>
 						<?php if ((int)$character['bidder_account_id'] === $this_account_id): ?>
-							<p><strong>So far so good!</strong>
-								<br>You currently have the highest bid at: <?php echo (int)$character['price']-$step; ?>
+							<p><strong><?= t('auc.so_far_good') ?></strong>
+								<br><?= t('auc.highest_bid') ?> <?php echo (int)$character['price']-$step; ?>
 							</p>
 							<p>If nobody bids higher than you, this character will be yours in:
 								<br><?php echo toDuration((int)$character['time_end']-time()); ?>.
 							</p>
 						<?php else: ?>
-							<p>You cannot afford to buy this character.</p>
+							<p><?= t('auc.cannot_afford') ?></p>
 						<?php endif; ?>
 					<?php endif;
 				} else {
 					?>
-					<p><strong>You are the seller of this character.</strong>
+					<p><strong><?= t('auc.is_seller') ?></strong>
 						<br><strong>Name:</strong> <a href="/characterprofile.php?name=<?php echo $character['name']; ?>"><?php echo $character['name']; ?></a>
 						<br><strong>Price:</strong> <?php echo $character['price']; ?>
 						<br><strong>Bid:</strong> <?php echo $character['bid']; ?>
-						<br><strong>Deposit:</strong> <?php echo $character['deposit']; ?>
+						<br><strong><?= t('auc.deposit') ?></strong> <?php echo $character['deposit']; ?>
 						<?php if (!$bidding_period): ?>
 							<p>The bidding period has ended, you can wait until someone decides to instantly buy it, or you can reclaim your character to your account.</p>
 							<form action="/auctionChar.php" method="POST">
@@ -376,7 +376,7 @@ if ($auction['characterAuction']) {
 								<input type="submit" value="Reclaim character back to your account">
 							</form>
 						<?php else: ?>
-							<p>The bidding period will last for <?php echo toDuration($character['time_end']-time()); ?>. After this period, you can reclaim your character if nobody has bid on it.</p>
+							<p><?= t('auc.bid_period') ?> <?php echo toDuration($character['time_end']-time()); ?>. After this period, you can reclaim your character if nobody has bid on it.</p>
 						<?php endif; ?>
 					</p>
 					<?php
@@ -384,7 +384,7 @@ if ($auction['characterAuction']) {
 				?>
 				<!-- SKILLS -->
 				<table class="auction_skills">
-					<tr class="yellow"><td colspan="4">Character skills:</td></tr>
+					<tr class="yellow"><td colspan="4"><?= t('auc.skills') ?></td></tr>
 					<tr><td>magic</td><td><?php echo $character['magic']; ?></td></tr>
 					<tr><td>fist</td><td><?php echo $character['fist']; ?></td></tr>
 					<tr><td>club</td><td><?php echo $character['club']; ?></td></tr>
@@ -403,7 +403,7 @@ if ($auction['characterAuction']) {
 				<?php if (is_array($player_items) && !empty($player_items)): ?>
 					<table>
 						<tr class="yellow">
-							<td colspan="3">Player items:</td>
+							<td colspan="3"><?= t('auc.player_items') ?></td>
 						</tr>
 						<tr class="yellow">
 							<td>Image</td>
@@ -423,7 +423,7 @@ if ($auction['characterAuction']) {
 				<?php if (is_array($depot_items) && !empty($depot_items)): ?>
 					<table>
 						<tr class="yellow">
-							<td colspan="3">Depot items:</td>
+							<td colspan="3"><?= t('auc.depot_items') ?></td>
 						</tr>
 						<tr class="yellow">
 							<td>Image</td>
@@ -625,36 +625,36 @@ if ($auction['characterAuction']) {
 		$errors = array();
 		//data_dump($_POST, $name, "Post data:");
 		if ($zaid === false) {
-			$errors[] = 'We are unable to find this auction order.';
+			$errors[] = t('auc.not_found');
 		}
 		if ((int)$auction['storage_account_id'] === $this_account_id) {
-			$errors[] = 'Silly you! You cannot claim characters with the storage account configured in <br>$config[\'shop_auction\'][\'storage_account_id\']<br>because you already have those characters in your account! :P';
+			$errors[] = t('auc.storage_account2');
 			if ($is_admin) {
 				$errors[] = "ADMIN: The storage account in config.php should not be the same as the admin account.";
 			}
 		}
 		if ($name === false) {
-			$errors[] = 'Please give the character a name.';
+			$errors[] = t('auc.name_required');
 		} else {
 			// begin name validation
 			$name = validate_name($name);
 			if (user_character_exist($name) !== false) {
-				$errors[] = 'Sorry, that character name already exist.';
+				$errors[] = t('acc.name_taken');
 			}
 			if (!preg_match("/^[a-zA-Z_ ]+$/", $name)) {
-				$errors[] = 'Your name may only contain a-z, A-Z and spaces.';
+				$errors[] = t('acc.name_letters');
 			}
 			if (strlen($name) < $config['minL'] || strlen($name) > $config['maxL']) {
-				$errors[] = 'Your character name must be between ' . $config['minL'] . ' - ' . $config['maxL'] . ' characters long.';
+				$errors[] = t('acc.name_length', ['min' => $config['minL'], 'max' => $config['maxL']]);
 			}
 			// name restriction
 			$resname = explode(" ", $name);
 			foreach($resname as $res) {
 				if(in_array(strtolower($res), $config['invalidNameTags'])) {
-					$errors[] = 'Your username contains a restricted word.';
+					$errors[] = t('reg.restricted_word2');
 				}
 				else if(strlen($res) == 1) {
-					$errors[] = 'Too short words in your name.';
+					$errors[] = t('reg.words_too_short2');
 				}
 			}
 			$name = format_character_name($name);
@@ -726,7 +726,7 @@ if ($auction['characterAuction']) {
 			<table class="auction_error">
 				<tr class="yellow">
 					<td>#</td>
-					<td>Issues occurred while claiming your name</td>
+					<td><?= t('auc.claim_issues') ?></td>
 				</tr>
 				<?php foreach($errors as $i => $error): ?>
 					<tr>
@@ -773,14 +773,14 @@ if ($auction['characterAuction']) {
 		//data_dump($pending, false, "Pending characters:");
 		if ($pending !== false) {
 			?>
-			<h2>Congratulations!</h2>
-			<p>You have <?php echo (COUNT($pending) > 1) ? 'characters' : 'a character'; ?> ready to claim!</p>
+			<h2><?= t('common.congrats') ?></h2>
+			<p><?= t('common.you_have') ?> <?php echo (COUNT($pending) > 1) ? 'characters' : 'a character'; ?> ready to claim!</p>
 			<?php foreach($pending as $character): ?>
 			<table class="auction_char">
 				<tr class="yellow">
 					<td>Level</td>
-					<td>Vocation</td>
-					<td>Details</td>
+					<td><?= t('common.vocation') ?></td>
+					<td><?= t('auc.details') ?></td>
 					<td>Price</td>
 				</tr>
 					<tr>
@@ -796,18 +796,18 @@ if ($auction['characterAuction']) {
 							</td>
 						<?php endif; ?>
 						<td colspan="3">
-							<p>Hello master, what should my new name be?</p>
+							<p><?= t('auc.claim_name') ?></p>
 							<form action="/auctionChar.php" method="POST">
 								<input type="hidden" name="action" value="claim">
 								<input type="hidden" name="zaid" value="<?php echo $character['zaid']; ?>">
 								<input type="text" name="name">
-								<input type="submit" value="Claim character">
+								<input type="submit" value="<?= t('auc.claim_btn') ?>">
 							</form>
 						</td>
 					</tr>
 			</table>
 			<?php endforeach; ?>
-			<h2>Ongoing auctions:</h2>
+			<h2><?= t('auc.ongoing') ?></h2>
 			<?php
 		}
 
@@ -839,7 +839,7 @@ if ($auction['characterAuction']) {
 		//data_dump($characters, false, "List characters");
 		if ($is_admin) {
 			?>
-			<p>Admin: <a href="/admin/index.php?p=auction">Character auction history</a></p>
+			<p>Admin: <a href="/admin/index.php?p=auction"><?= t('auc.history') ?></a></p>
 			<?php
 		}
 		if (is_array($characters) && !empty($characters)):
@@ -847,11 +847,11 @@ if ($auction['characterAuction']) {
 			<table class="auction_char">
 				<tr class="yellow">
 					<td>Level</td>
-					<td>Vocation</td>
+					<td><?= t('common.vocation') ?></td>
 					<?php if ($loadOutfits): ?>
 						<td>Image</td>
 					<?php endif; ?>
-					<td>Details</td>
+					<td><?= t('auc.details') ?></td>
 					<td>Price</td>
 					<td>Added</td>
 					<td>Type</td>
@@ -879,7 +879,7 @@ if ($auction['characterAuction']) {
 			<?php
 		endif;
 		?>
-		<p><a href="/auctionChar.php?action=create">Add a character to the auction</a>.</p>
+		<p><a href="/auctionChar.php?action=create"><?= t('auc.add') ?></a>.</p>
 		<?php
 
 	} elseif ($action === 'create') { // Add player to auction view
@@ -911,10 +911,10 @@ if ($auction['characterAuction']) {
 		if (is_array($own_characters) && !empty($own_characters)) {
 			$max = ($own_characters[0]['points'] / $auction['deposit']) * 100;
 			?>
-			<p><a href="/auctionChar.php?action=list">Go back to list.</a></p>
+			<p><a href="/auctionChar.php?action=list"><?= t('auc.go_back_list') ?></a></p>
 			<form action="/auctionChar.php" method="POST">
 				<input type="hidden" name="action" value="add">
-				<p>Character: (Must be offline)</p>
+				<p><?= t('auc.char_offline') ?></p>
 				<select name="pid">
 					<?php if(is_array($own_characters) && !empty($own_characters))
 					foreach($own_characters as $char): ?>
@@ -923,29 +923,29 @@ if ($auction['characterAuction']) {
 						</option>
 					<?php endforeach; ?>
 				</select>
-				<p><strong>Shop points:</strong>
-					<br>Your current points: <?php echo $own_characters[0]['points']; ?>
-					<br>Minimum: <?php echo $auction['lowestPrice']; ?>
+				<p><strong><?= t('auc.shop_points') ?></strong>
+					<br><?= t('auc.your_points') ?> <?php echo $own_characters[0]['points']; ?>
+					<br><?= t('auc.minimum') ?> <?php echo $auction['lowestPrice']; ?>
 					<br>deposit: <?php echo $auction['deposit']; ?>%
-					<br>Your maximum: <?php echo $max; ?>
+					<br><?= t('auc.your_max') ?> <?php echo $max; ?>
 				</p>
-				<p><strong>Deposit information:</strong>
+				<p><strong><?= t('auc.deposit_info') ?></strong>
 					<br>To ensure you as the seller is a legitimate account, and to encourage fair prices you have to temporarily invest <?php echo $auction['deposit']; ?>% of the selling price as a deposit.
 				</p>
 				<p>Once the auction has completed, the deposit fee will be refunded back to your account.</p>
 				<p>If you wish to reclaim your character, you can do it after the bidding period if nobody has placed an offer on it. But if you do this you will not get the deposit back. It is therefore advisable that you create a good and appealing offer to our community.</p>
-				<p>Sell price:</p>
+				<p><?= t('auc.sell_price') ?></p>
 				<input type="number" name="cost" min="<?php echo $auction['lowestPrice']; ?>" max="<?php echo $max; ?>" step="5" placeholder="<?php echo $auction['lowestPrice']; ?> - <?php echo $max; ?>">
 				<br>
-				<p>Verify with your password:</p>
+				<p><?= t('auc.verify_pw') ?></p>
 				<input type="password" name="password">
 				<br>
-				<input type="submit" value="Sell character">
+				<input type="submit" value="<?= t('auc.sell_btn') ?>">
 			</form>
 			<?php
 		} else {
 			?>
-			<p><a href="/auctionChar.php?action=list">Go back to list.</a></p>
+			<p><a href="/auctionChar.php?action=list"><?= t('auc.go_back_list') ?></a></p>
 			<p>Your account does not follow the required rules to sell characters.
 				<br>1. Minimum level: <?php echo $auction['lowestLevel']; ?>
 				<br>2. Minimum already earned shop points: <?php echo $minToCreate; ?>
@@ -954,5 +954,5 @@ if ($auction['characterAuction']) {
 			<?php
 		}
 	}
-} else echo "<p>Character shop auctioning system is disabled.</p>";
+} else echo "<p>". t('auc.disabled2'). "</p>";
 theme_close(); ?>

@@ -266,8 +266,8 @@ if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 	<table id="guildsTable" class="table table-striped table-hover">
 		<tr class="yellow">
 			<th>Logo</th>
-			<th>Description</th>
-			<th>Guild data</th>
+			<th><?= t('common.description') ?></th>
+			<th><?= t('guild.data') ?></th>
 		</tr>
 			<?php
 			foreach ($guilds as $guild) {
@@ -297,7 +297,7 @@ if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 	</table>
 	<?php
 	}
-} else echo '<p>Guild list is empty.</p>';?>
+} else echo '<p>'. t('guild.empty_list'). '</p>';?>
 
 <!-- POST action: create guild -->
 <?php
@@ -340,11 +340,11 @@ if (user_logged_in() === true) {
 									header('Location: success.php');
 									exit();
 									} else echo 'A guild with that name already exist.';
-								} else echo 'Guild name is to long. It can has to be 30 or less characters long.';
-							} else echo 'Guild name may only contain a-z, A-Z and spaces.';
-						} else echo 'You are already in a guild.';
-					} else echo 'You need a premium account to create a guild.';
-				} else echo 'Your character must be offline to create a guild.';
+								} else echo t('guild.name_too_long2');
+							} else echo t('guild.name_letters');
+						} else echo t('guild.already_in');
+					} else echo t('guild.need_premium');
+				} else echo t('guild.must_offline');
 			} else echo $name .' is level '. $char_data['level'] .'. But you need level '. $config['create_guild_level'] .'+ to create your own guild!';
 		}
 	}
@@ -356,7 +356,7 @@ if (user_logged_in() === true) {
 	<form action="" method="post">
 		<ul>
 			<li>
-				Create Guild:<br>
+				<?= t('guild.create_btn') ?>:<br>
 				<select name="selected_char">
 				<?php
 				for ($i = 0; $i < $char_count; $i++) {
@@ -365,13 +365,13 @@ if (user_logged_in() === true) {
 				?>
 				</select>
 				<input type="text" name="guild_name">
-				<input type="submit" value="Create Guild">
+				<input type="submit" value="<?= t('guild.create_btn') ?>">
 			</li>
 		</ul>
 	</form>
 
 	<?php
-} else echo 'You need to be logged in to create guilds.';
+} else echo t('guild.need_login');
 ?>
 <!-- end user-->
 
@@ -448,8 +448,8 @@ if (user_logged_in() === true) {
 			<th>Rank:</th>
 			<th>Name:</th>
 			<th>Level:</th>
-			<th>Vocation:</th>
-			<th>Status:</th>
+			<th><?= t('common.vocation_label') ?></th>
+			<th><?= t('guild.status') ?></th>
 		</tr>
 			<?php
 			$onlinelist = array();
@@ -489,13 +489,13 @@ if (user_logged_in() === true) {
 
 	<?php // Invited characters
 	if ($inv_count > 0): ?>
-		<h3>Invited characters</h3>
+		<h3><?= t('guild.invited_chars') ?></h3>
 		<table>
 			<tr class="yellow">
 				<td>Name:</td>
 				<?php
 				if ($highest_access == 2 || $highest_access == 3) {
-					echo '<td>Remove:</td>';
+					echo '<td>'. t('guild.remove'). '</td>';
 				}
 				// Shuffle through visitor characters
 				for ($i = 0; $i < $char_count; $i++) {
@@ -506,7 +506,7 @@ if (user_logged_in() === true) {
 							$exist = true;
 						}
 					}
-					if ($exist) echo '<td>Join Guild:</td><td>Reject Invitation:</td>';
+					if ($exist) echo '<td>'. t('guild.join2'). '</td><td>'. t('guild.reject2'). '</td>';
 				}
 				?>
 			</tr>
@@ -520,7 +520,7 @@ if (user_logged_in() === true) {
 					?> <form action="" method="post"> <?php
 						echo '<td>';
 						echo '<input type="hidden" name="uninvite" value="' . $inv['player_id'] . '" />';
-						echo '<input type="submit" value="Remove Invitation">';
+						echo '<input type="submit" value="'. t('guild.remove_invite') .'">';
 						echo '</td>';
 					?> </form> <?php
 					}
@@ -530,7 +530,7 @@ if (user_logged_in() === true) {
 							if ($charactersId[$i] == $inv['player_id']) {
 								echo '<td>';
 								echo '<input type="hidden" name="joinguild" value="' . $inv['player_id'] . '" />';
-								echo '<input type="submit" value="Join Guild">';
+								echo '<input type="submit" value="'. t('guild.join_btn') .'">';
 								echo '</td>';
 								$bool = true;
 							}
@@ -546,7 +546,7 @@ if (user_logged_in() === true) {
 							if ($charactersId[$i] == $inv['player_id']) {
 								echo '<td>';
 								echo '<input type="hidden" name="uninvite" value="' . $inv['player_id'] . '" />';
-								echo '<input type="submit" value="Reject Invitation">';
+								echo '<input type="submit" value="'. t('guild.reject_btn') .'">';
 								echo '</td>';
 								$bool = true;
 							}
@@ -562,7 +562,7 @@ if (user_logged_in() === true) {
 		</table>
 	<?php endif; ?>
 
-	<!-- Leader stuff -->
+	<!-- <?= t('guild.leader') ?> stuff -->
 	<?php
 	if (user_logged_in() === true) {
 
@@ -585,7 +585,7 @@ if (user_logged_in() === true) {
 			$join_account = (int)user_character_account_id(user_character_name($joining_player_id));
 			
 			if ($join_account !== $session_user_id) {
-				echo '<font color="red" size="4">Join guild request sent from wrong account.</font>';
+				echo '<font color="red" size="4">'. t('guild.wrong_acc_join2'). '</font>';
 				theme_close();
 				exit();
 			}
@@ -601,16 +601,16 @@ if (user_logged_in() === true) {
 							if (guild_player_join($joining_player_id, (int)$gid)) {
 								header('Location: guilds.php?name='. $_GET['name']);
 								exit();
-							} else echo '<font color="red" size="4">Failed to find guild position representing member.</font>';
+							} else echo '<font color="red" size="4">'. t('guild.no_position2'). '</font>';
 						
 						} else {
 							$already_guild = get_player_guild_data($joining_player_id);
 							$already_guild_name = get_guild_name($already_guild['guild_id']);
 							
-							echo "<font color='red' size='4'>You are already <strong>{$already_guild['rank_name']}</strong> of another guild: <strong><a href='guilds.php?name={$already_guild_name}'>{$already_guild_name}</a></strong>.<br>You need to leave that guild first before you can join another one.</font>";
+							echo "<font color='red' size='4'>'. t('guild.you_are_already'). ' <strong>{$already_guild['rank_name']}</strong> of another guild: <strong><a href='guilds.php?name={$already_guild_name}'>{$already_guild_name}</a></strong>.<br>You need to leave that guild first before you can join another one.</font>";
 						}
 
-					} else echo '<font color="red" size="4">Character must be offline before joining guild.</font>';
+					} else echo '<font color="red" size="4">'. t('guild.offline_join2'). '</font>';
 				}
 			}
 		}
@@ -622,7 +622,7 @@ if (user_logged_in() === true) {
 			
 			$leave_account = (int)user_character_account_id($name);
 			if ($leave_account !== $session_user_id) {
-				echo '<font color="red" size="4">Leave guild request sent from wrong account.</font>';
+				echo '<font color="red" size="4">'. t('guild.wrong_acc_leave2'). '</font>';
 				theme_close();
 				exit();
 			}
@@ -633,7 +633,7 @@ if (user_logged_in() === true) {
 				guild_player_leave_10($cidd);
 				header('Location: guilds.php?name='. $_GET['name']);
 				exit();
-			} else echo '<font color="red" size="4">Character must be offline first!</font>';
+			} else echo '<font color="red" size="4">'. t('guild.offline_first2'). '</font>';
 		}
 
 		// vice leader (and guild leader) actions
@@ -656,11 +656,11 @@ if (user_logged_in() === true) {
 								update_player_guildnick_10($p_cid, $p_nick);
 								header('Location: guilds.php?name='. $_GET['name']);
 								exit();
-							} else echo '<font color="red" size="4">Character not offline.</font>';
+							} else echo '<font color="red" size="4">'. t('guild.not_offline'). '</font>';
 						}
 
 					} else echo '<font color="red" size="4">Character guild nick may only contain a-z, A-Z and spaces.</font>';
-				} else echo '<font color="red" size="4">Change guild nickname feature has been disabled.</font>';
+				} else echo '<font color="red" size="4">'. t('guild.nick_disabled2'). '</font>';
 			}
 
 			// Invite character to guild
@@ -685,9 +685,9 @@ if (user_logged_in() === true) {
 							header('Location: guilds.php?name='. $_GET['name']);
 							exit();
 						} else echo '<font color="red" size="4">That character is already invited(or a member) on this guild.</font>';
-					} else echo '<font color="red" size="4">That character is already in a guild.</font>';
+					} else echo '<font color="red" size="4">'. t('guild.char_in_guild'). '</font>';
 
-				} else echo '<font color="red" size="4">That character name does not exist.</font>';
+				} else echo '<font color="red" size="4">'. t('guild.char_not_found'). '</font>';
 			}
 
 			// Guild Message (motd)
@@ -724,11 +724,11 @@ if (user_logged_in() === true) {
 							(`name`, `access`, `closed`, `hidden`, `guild_id`)
 							VALUES ('Guild','1','0','0','{$gid}')
 						;");
-						echo '<h1>Guild board has been created.</h1>';
-					} else echo '<h1>Guild board already exist.</h1>';
+						echo '<h1>'. t('guild.board_created2'). '</h1>';
+					} else echo '<h1>'. t('guild.board_exists2'). '</h1>';
 
 				} else {
-					echo '<h1>Error: Guild board system is disabled.</h1>';
+					echo '<h1>'. t('guild.board_disabled2'). '</h1>';
 				}
 			}
 
@@ -772,7 +772,7 @@ if (user_logged_in() === true) {
 							exit();
 						} else echo '<font color="red" size="4">This guild has already been invited to war(or you\'re trying to invite your own).</FONT>';
 
-					} else echo '<font color="red" size="4">That guild name does not exist.</font>';
+					} else echo '<font color="red" size="4">'. t('guild.not_found'). '</font>';
 				}
 
 				if (!empty($_POST['cancel_war_invite'])) {
@@ -804,9 +804,9 @@ if (user_logged_in() === true) {
 					?>
 					<form action="" method="post">
 						<ul>
-							<li>Create forum guild board:<br>
+							<li><?= t('guild.create_board2') ?><br>
 							<input type="hidden" name="forumGuildId" value="<?php echo $gid; ?>">
-							<input type="submit" value="Create Guild Board">
+							<input type="submit" value="<?= t('guild.create_board_btn') ?>">
 						</ul>
 					</form>
 					<?php
@@ -820,7 +820,7 @@ if (user_logged_in() === true) {
 					<ul>
 						<li>Upload guild logo [.gif images only, 100x100px size]:<br>
 							<input type="file" name="file" id="file" accept="image/gif">
-							<input type="submit" name="submit" value="Upload guild logo">
+							<input type="submit" name="submit" value="<?= t('guild.upload_logo') ?>">
 						</li>
 					</ul>
 				</form>
@@ -835,9 +835,9 @@ if (user_logged_in() === true) {
 			<!-- forms to invite character -->
 			<form action="" method="post">
 				<ul>
-					<li>Invite Character to guild:<br>
+					<li><?= t('guild.invite_btn') ?> to guild:<br>
 						<input type="text" name="invite" placeholder="Character name">
-						<input type="submit" value="Invite Character">
+						<input type="submit" value="<?= t('guild.invite_btn') ?>">
 					</li>
 				</ul>
 			</form>
@@ -845,10 +845,10 @@ if (user_logged_in() === true) {
 			<!-- Guild message of the day motd -->
 			<form action="" method="post">
 				<ul>
-					<li>Change guild message:</li>
+					<li><?= t('guild.change_motd') ?></li>
 					<li>
 						<textarea name="motd" placeholder="Guild Message" cols="50" rows="3"><?php echo $guild['motd']; ?></textarea><br>
-						<input type="submit" value="Update guild message">
+						<input type="submit" value="<?= t('guild.update_motd') ?>">
 					</li>
 				</ul>
 			</form>
@@ -875,7 +875,7 @@ if (user_logged_in() === true) {
 							?>
 							</select>
 							<input type="text" name="guildnick" maxlength="15" placeholder="leave blank to erase">
-							<input type="submit" value="Change Nick">
+							<input type="submit" value="<?= t('guild.change_nick_btn') ?>">
 						</li>
 					</ul>
 				</form>
@@ -913,7 +913,7 @@ if (user_logged_in() === true) {
 								}
 								?>
 							</select>
-							<input type="submit" value="Promote Member">
+							<input type="submit" value="<?= t('guild.promote') ?>">
 						</li>
 					</ul>
 				</form>
@@ -940,7 +940,7 @@ if (user_logged_in() === true) {
 								}
 								?>
 							</select>
-							<input type="submit" value="Remove member">
+							<input type="submit" value="<?= t('guild.remove_member') ?>">
 						</li>
 					</ul>
 				</form>
@@ -964,7 +964,7 @@ if (user_logged_in() === true) {
 						update_player_guild_position_10($p_cid, $p_rid);
 						header('Location: guilds.php?name='. $_GET['name']);
 						exit();
-					} else echo '<font color="red" size="4">Character not offline.</font>';
+					} else echo '<font color="red" size="4">'. t('guild.not_offline'). '</font>';
 				}
 			}
 			
@@ -995,7 +995,7 @@ if (user_logged_in() === true) {
 					guild_delete($gid);
 					header('Location: success.php');
 					exit();
-				} else echo '<font color="red" size="4">All members must be offline to disband the guild.</font>';
+				} else echo '<font color="red" size="4">'. t('guild.disband_offline'). '</font>';
 			}
 			
 			// Change guild leader
@@ -1048,7 +1048,7 @@ if (user_logged_in() === true) {
 			<!-- forms to change rank titles -->
 			<form action="" method="post">
 				<ul>
-					<li><b>Change rank titles:</b><br>
+					<li><b><?= t('guild.change_ranks') ?></b><br>
 						<?php
 						$rank_count = 1;
 						foreach ($ranks as $rank) {
@@ -1056,7 +1056,7 @@ if (user_logged_in() === true) {
 						}
 						echo '<input type="hidden" name="change_ranks" value="' . $gid . '" />';
 						?>
-						<input type="submit" value="Update Ranks">
+						<input type="submit" value="<?= t('guild.update_ranks') ?>">
 					</li>
 				</ul>
 			</form>
@@ -1066,7 +1066,7 @@ if (user_logged_in() === true) {
 				<ul>
 					<li><b>DELETE GUILD (All members must be offline):</b><br>
 						<?php echo '<input type="hidden" name="disband" value="' . $gid . '" />'; ?>
-						<input type="submit" value="Disband Guild">
+						<input type="submit" value="<?= t('guild.disband_btn') ?>">
 					</li>
 				</ul>
 			</form>
@@ -1075,7 +1075,7 @@ if (user_logged_in() === true) {
 			<?php if ($members > 1): ?>
 				<form action="" method="post">
 					<ul>
-						<li><b>Change Leadership with:</b><br>
+						<li><b><?= t('guild.change_leader') ?></b><br>
 							<select name="new_leader">
 							<?php
 							//$gid = get_guild_id($_GET['name']);
@@ -1087,7 +1087,7 @@ if (user_logged_in() === true) {
 							}
 							?>
 							</select>
-							<input type="submit" value="Change Leadership">
+							<input type="submit" value="<?= t('guild.change_leader_btn') ?>">
 						</li>
 					</ul>
 				</form>
@@ -1095,13 +1095,13 @@ if (user_logged_in() === true) {
 
 			<!-- Guild war management -->
 			<?php if ($config['guildwar_enabled'] === true) { ?>
-				<h2>Guild War Management:</h2>
+				<h2><?= t('guild.war_management2') ?></h2>
 				<form action="" method="post">
 					<ul>
-						<li>Invite guild to war:<br>
+						<li><?= t('guild.invite_war') ?><br>
 							<input type="text" name="warinvite" placeholder="Guild name">
 							<input type="number" min="10" max="999" name="limit">
-							<input type="submit" value="Invite Guild">
+							<input type="submit" value="<?= t('guild.invite_guild_btn') ?>">
 						</li>
 					</ul>
 				</form>
@@ -1113,8 +1113,8 @@ if (user_logged_in() === true) {
 				
 				<table id="guildsTable" class="table table-striped table-hover">
 					<tr class="yellow">
-						<th>Aggressor</th>
-						<th>Information</th>
+						<th><?= t('guild.aggressor') ?></th>
+						<th><?= t('guild.information') ?></th>
 						<th>Enemy</th>
 					</tr>
 					<?php
@@ -1139,24 +1139,24 @@ if (user_logged_in() === true) {
 							
 							$row .= '<td><center>';
 
-							$row .= '<b>Pending invitation</b>';
-							$row .= '<br />Invited on '. getClock($war['started'], true) .'.';
+							$row .= '<b>'. t('guild.pending_invite'). '</b>';
+							$row .= '<br />'. t('guild.invited_on'). ' '. getClock($war['started'], true) .'.';
 							$row .= "<br />The frag limit is set to {$war['limit']} frags.<br />";
 
 							if ($war['guild1'] == $gid) {
 								$row .= '<br><form action="" method="post">';
 								$row .= "<input type='hidden' name='cancel_war_invite' value='{$war['guild2']}' />";
-								$row .= '<input type="submit" value="Cancel Invitation">';
+								$row .= '<input type="submit" value="'. t('guild.cancel_btn') .'">';
 								$row .= '</form>';
 							} else if ($war['guild2'] == $gid) {
 								$row .= '<br><form action="" method="post">';
 								$row .= "<input type='hidden' name='accept_war_invite' value='{$war['guild1']}' />";
-								$row .= '<input type="submit" value="Accept Invitation">';
+								$row .= '<input type="submit" value="'. t('guild.accept_btn') .'">';
 								$row .= '</form>';
 
 								$row .= '<form action="" method="post">';
 								$row .= "<input type='hidden' name='reject_war_invite' value='{$war['guild1']}' />";
-								$row .= '<input type="submit" ID="btnspace" value="Reject Invitation">';
+								$row .= '<input type="submit" ID="btnspace" value="'. t('guild.reject_btn') .'">';
 								$row .= '</form>';
 							}
 							$row .= '</center></td>';
@@ -1166,7 +1166,7 @@ if (user_logged_in() === true) {
 						endforeach;
 					}
 					
-					if ($i == 0) echo '<tr><td colspan="3"><center>Currently there are no pending invitations.</center></td></tr>';
+					if ($i == 0) echo '<tr><td colspan="3"><center>'. t('guild.no_invites2'). '</center></td></tr>';
 					?>
 				</table>
 				<?php
@@ -1188,11 +1188,11 @@ if (user_logged_in() === true) {
 
 		if ($war_exist) {
 			?>
-			<h2>War overview:</h2>
+			<h2><?= t('guild.war_overview') ?></h2>
 			<table>
 				<tr class="yellow">
-					<td>Attacker:</td>
-					<td>Defender:</td>
+					<td><?= t('guild.attacker') ?></td>
+					<td><?= t('guild.defender') ?></td>
 					<td>status:</td>
 					<td>started:</td>
 				</tr>
@@ -1229,13 +1229,13 @@ if (user_logged_in() === true) {
 		if ($bool) {
 			$forumExist = mysql_select_single("SELECT `id` FROM `znote_forum` WHERE `guild_id`='{$gid}' LIMIT 1;");
 			if ($forumExist !== false) {
-				?> - <font size="4"><a href="forum.php?cat=<?php echo $forumExist['id']; ?>">Visit Guild Board</a></font><br><br><br><?php
+				?> - <font size="4"><a href="forum.php?cat=<?php echo $forumExist['id']; ?>"><?= t('guild.visit_board') ?></a></font><br><br><br><?php
 			}
 			?>
 			<form action="" method="post">
 				<ul>
 					<li>
-						Leave Guild:<br>
+						<?= t('guild.leave_btn') ?>:<br>
 						<select name="leave_guild">
 							<option disabled>With...</option>
 						<?php
@@ -1244,13 +1244,13 @@ if (user_logged_in() === true) {
 								if ($player['name'] == $characters[$i]) {
 									$data = get_player_guild_data($player['id']);
 									if ($data['rank_level'] != 3) echo '<option value="'. $characters[$i] .'">'. $characters[$i] .'</option>';
-									else echo '<option disabled>'. $characters[$i] .' [disabled:Leader]</option>';
+									else echo '<option disabled>'. $characters[$i] .' [disabled:'. t('guild.leader'). ']</option>';
 								}
 							}
 						}
 						?>
 						</select>
-						<input type="submit" value="Leave Guild">
+						<input type="submit" value="<?= t('guild.leave_btn') ?>">
 					</li>
 				</ul>
 			</form>

@@ -13,12 +13,12 @@ if (!defined('ACP_ROOT')) {
 }
 
 $statusTypes = [
-	0 => 'Reported',
-	1 => 'To-do list',
-	2 => 'Confirmed bug',
-	3 => 'Invalid',
-	4 => 'Rejected',
-	5 => 'Fixed',
+	0 => t('acp.rep.status_reported'),
+	1 => t('acp.rep.status_todo'),
+	2 => t('acp.rep.status_confirmed'),
+	3 => t('acp.rep.status_invalid'),
+	4 => t('acp.rep.status_rejected'),
+	5 => t('acp.rep.status_fixed'),
 ];
 
 $statusTone = [
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$price      = intv($_POST['price'] ?? 0) + intv($_POST['customPoints'] ?? 0);
 
 	if ($reportId <= 0 || !isset($statusTypes[$status])) {
-		acp_flash_error('Invalid report or status.');
+		acp_flash_error(t('acp.rep.invalid'));
 		acp_redirect('reports');
 	}
 
@@ -57,7 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		WHERE `id` = {$reportId}
 		LIMIT 1;
 	");
-	acp_flash_success('Report #' . $reportId . ' set to <strong>' . h($statusTypes[$status]) . '</strong>.');
+	acp_log('reports.status', '#' . $reportId, ['status' => $statusTypes[$status]]);
+	acp_flash_success(t('acp.rep.set_to', ['id' => $reportId, 'status' => '<strong>' . h($statusTypes[$status]) . '</strong>']));
 
 	// ------------------------------------------------------ Changelog entry
 	$changelogReportId = intv($_POST['changelogReportId'] ?? 0);
@@ -80,13 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				WHERE `id` = " . (int)$existing['id'] . "
 				LIMIT 1;
 			");
-			acp_flash_info('Changelog entry updated.');
+			acp_flash_info(t('acp.rep.changelog_updated'));
 		} else {
 			mysql_insert("
 				INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
 				VALUES ('" . esc($changelogText) . "', {$now}, {$changelogReportId}, {$status});
 			");
-			acp_flash_info('Changelog entry created.');
+			acp_flash_info(t('acp.rep.changelog_created'));
 		}
 
 		$cache = new Cache('engine/cache/changelog');
@@ -131,12 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					SET `points` = {$newPoints}
 					WHERE `account_id` = {$accountId};
 				");
-				acp_flash_success(h($playerName) . ' received ' . (int)$price . ' points.');
+				acp_log('reports.reward', $playerName, ['points' => $price, 'report_id' => $reportId]);
+				acp_flash_success(t('acp.rep.points_received', ['name' => h($playerName), 'price' => (int)$price]));
 			} else {
-				acp_flash_error('No znote_accounts row for that account - the points were logged but not credited.');
+				acp_flash_error(t('acp.rep.no_account_row'));
 			}
 		} else {
-			acp_flash_error('No account found for character <strong>' . h($playerName) . '</strong> - no points given.');
+			acp_flash_error(t('acp.rep.no_account_found', ['name' => '<strong>' . h($playerName) . '</strong>']));
 		}
 	}
 
@@ -173,7 +175,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 		}
 	}
 	if ($editing === null) {
-		acp_flash_error('That report no longer exists.');
+		acp_flash_error(t('acp.rep.not_found'));
 		acp_redirect('reports');
 	}
 }
@@ -183,30 +185,30 @@ if (($_GET['action'] ?? '') === 'edit') {
 
 	<div class="acp-toolbar">
 		<div>
-			<strong>Report #<?= (int)$editing['id'] ?></strong>
+			<strong><?= t('acp.rep.report_hash', ['id' => (int)$editing['id']]) ?></strong>
 			<span class="acp-pill acp-pill--<?= h($statusTone[(int)$editing['status']] ?? 'grey') ?>">
-				<?= h($statusTypes[(int)$editing['status']] ?? 'Unknown') ?>
+				<?= h($statusTypes[(int)$editing['status']] ?? t('acp.rep.status_unknown')) ?>
 			</span>
 		</div>
 		<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('reports')) ?>">
-			<i class="fa fa-arrow-left"></i> Back to all reports
+			<i class="fa fa-arrow-left"></i> <?= t('acp.rep.back_all') ?>
 		</a>
 	</div>
 
 	<div class="acp-grid acp-grid--2">
 		<section class="acp-card">
-			<header class="acp-card-head"><h2>The report</h2></header>
+			<header class="acp-card-head"><h2><?= t('acp.rep.the_report') ?></h2></header>
 			<div class="acp-card-body">
 				<dl class="acp-dl">
-					<dt>Reporter</dt>
+					<dt><?= t('acp.rep.reporter') ?></dt>
 					<dd>
 						<a href="<?= h(acp_site('characterprofile.php?name=' . urlencode((string)$editing['name']))) ?>" target="_blank" rel="noopener">
 							<?= h((string)$editing['name']) ?>
 						</a>
 					</dd>
-					<dt>Position</dt>
+					<dt><?= t('acp.rep.position') ?></dt>
 					<dd><code>/pos <?= (int)$editing['posx'] ?>, <?= (int)$editing['posy'] ?>, <?= (int)$editing['posz'] ?></code></dd>
-					<dt>Reported</dt>
+					<dt><?= t('acp.rep.reported') ?></dt>
 					<dd><?= h(getClock((int)$editing['date'], true, true)) ?></dd>
 				</dl>
 				<hr>
@@ -215,7 +217,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 		</section>
 
 		<section class="acp-card">
-			<header class="acp-card-head"><h2>Resolve</h2></header>
+			<header class="acp-card-head"><h2><?= t('acp.rep.resolve') ?></h2></header>
 			<div class="acp-card-body">
 				<form method="post">
 					<?= acp_csrf_field() ?>
@@ -223,7 +225,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 					<input type="hidden" name="playerName" value="<?= h((string)$editing['name']) ?>">
 
 					<div class="acp-field">
-						<label class="acp-label" for="status">Status</label>
+						<label class="acp-label" for="status"><?= t('acp.rep.status') ?></label>
 						<select class="acp-select" id="status" name="status">
 							<?php foreach ($statusTypes as $sid => $label): ?>
 								<option value="<?= (int)$sid ?>" <?= (int)$sid === (int)$editing['status'] ? 'selected' : '' ?>>
@@ -235,16 +237,16 @@ if (($_GET['action'] ?? '') === 'edit') {
 
 					<div class="acp-row">
 						<div class="acp-field">
-							<label class="acp-label" for="price">Reward (preset)</label>
+							<label class="acp-label" for="price"><?= t('acp.rep.reward_preset') ?></label>
 							<select class="acp-select" id="price" name="price">
-								<option value="0">No points</option>
+								<option value="0"><?= t('acp.rep.no_points') ?></option>
 								<?php foreach (($config['paypal_prices'] ?? []) as $p): ?>
-									<option value="<?= (int)$p ?>"><?= (int)$p ?> points</option>
+									<option value="<?= (int)$p ?>"><?= t('acp.rep.n_points', ['n' => (int)$p]) ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="customPoints">Extra points</label>
+							<label class="acp-label" for="customPoints"><?= t('acp.rep.extra_points') ?></label>
 							<input class="acp-input" id="customPoints" name="customPoints" type="number" value="0">
 						</div>
 					</div>
@@ -253,21 +255,21 @@ if (($_GET['action'] ?? '') === 'edit') {
 						<hr>
 						<input type="hidden" name="changelogReportId" value="<?= (int)$editing['id'] ?>">
 						<div class="acp-field">
-							<label class="acp-label" for="changelogValue">Publish a changelog entry?</label>
+							<label class="acp-label" for="changelogValue"><?= t('acp.rep.publish_changelog') ?></label>
 							<select class="acp-select" id="changelogValue" name="changelogValue">
-								<option value="1">No</option>
-								<option value="2">Yes</option>
+								<option value="1"><?= t('acp.rep.no') ?></option>
+								<option value="2"><?= t('acp.rep.yes') ?></option>
 							</select>
 						</div>
 						<div class="acp-field">
-							<label class="acp-label" for="changelogText">Changelog text</label>
+							<label class="acp-label" for="changelogText"><?= t('acp.rep.changelog_text') ?></label>
 							<textarea class="acp-textarea" id="changelogText" name="changelogText" rows="5"></textarea>
-							<p class="acp-hint">Shown publicly on the changelog page. Only saved when set to "Yes".</p>
+							<p class="acp-hint"><?= t('acp.rep.changelog_hint') ?></p>
 						</div>
 					<?php endif; ?>
 
 					<div class="acp-actions">
-						<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> Update report</button>
+						<button class="acp-btn acp-btn--green" type="submit"><i class="fa fa-check"></i> <?= t('acp.rep.update_report') ?></button>
 					</div>
 				</form>
 			</div>
@@ -278,7 +280,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 
 	<section class="acp-card">
 		<div class="acp-card-body">
-			<?php acp_empty('No bug reports have been submitted.', 'fa-bug'); ?>
+			<?php acp_empty(t('acp.rep.empty'), 'fa-bug'); ?>
 		</div>
 	</section>
 
@@ -290,10 +292,10 @@ if (($_GET['action'] ?? '') === 'edit') {
 				<summary class="acp-card-head" style="cursor:pointer;">
 					<h2>
 						<span class="acp-pill acp-pill--<?= h($statusTone[$statusId] ?? 'grey') ?>">
-							<?= h($statusTypes[$statusId] ?? 'Unknown') ?>
+							<?= h($statusTypes[$statusId] ?? t('acp.rep.status_unknown')) ?>
 						</span>
 					</h2>
-					<p><?= count($group) ?> report<?= count($group) === 1 ? '' : 's' ?></p>
+					<p><?= t('acp.rep.n_reports', ['n' => count($group)]) ?></p>
 				</summary>
 				<div class="acp-card-body is-flush">
 					<div class="acp-table-wrap">
@@ -301,10 +303,10 @@ if (($_GET['action'] ?? '') === 'edit') {
 							<thead>
 								<tr>
 									<th>#</th>
-									<th>Reporter</th>
-									<th>Position</th>
-									<th>Reported</th>
-									<th>Description</th>
+									<th><?= t('acp.rep.col_reporter') ?></th>
+									<th><?= t('acp.rep.col_position') ?></th>
+									<th><?= t('acp.rep.col_reported') ?></th>
+									<th><?= t('acp.rep.col_description') ?></th>
 									<th class="is-num">&nbsp;</th>
 								</tr>
 							</thead>
@@ -322,7 +324,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 										<td><?= h((string)$r['report_description']) ?></td>
 										<td class="is-num is-nowrap">
 											<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('reports', ['action' => 'edit', 'id' => (int)$r['id']])) ?>">
-												<i class="fa fa-pencil"></i> Handle
+												<i class="fa fa-pencil"></i> <?= t('acp.rep.handle') ?>
 											</a>
 										</td>
 									</tr>

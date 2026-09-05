@@ -10,10 +10,10 @@ $compare = &$_GET['compare'];
 // So if $items is not an array, send an error message, include the footer and ignore rest of this page.
 if (is_array($items) === false):
 	?>
-	<h1>Marketplace</h1>
-	<p>Failed to load item list.</p>
-	<p>Attempted to load this file: <?php echo $items; ?></p>
-	<p>Configure correct 'server_path' in config.php.</p>
+	<h1><?= t('market.title') ?></h1>
+	<p><?= t('market.load_failed2') ?></p>
+	<p><?= t('market.tried_file') ?> <?php echo $items; ?></p>
+	<p><?= t('market.fix_path') ?></p>
 	<p>If the path is correct, make sure your web user has access to read it.</p>
 	<?php
 	theme_close();
@@ -35,23 +35,23 @@ if (!$compare) {
 		$offers = $cache->load();
 	}
 	?>
-	<h1>Marketplace</h1>
-	<p>You can buy and sell items by clicking on the <a target="_BLANK" href="http://znote.eu/images/depotmarket.jpg">market in depot.</a> <br>To sell an item: Place item inside your depot, click on market, search for your item and sell it.</p>
+	<h1><?= t('market.title') ?></h1>
+	<p><?= t('market.hint') ?> <a target="_BLANK" href="http://znote.eu/images/depotmarket.jpg">market in depot.</a> <br>To sell an item: Place item inside your depot, click on market, search for your item and sell it.</p>
 	<form action="" class="market_item_search">
-		<label for="compareSearch">Item search:</label>
+		<label for="compareSearch"><?= t('market.search') ?></label>
 		<input type="text" id="compareSearch" name="compare">
-		<input type="submit" value="Search">
+		<input type="submit" value="<?= t('common.search') ?>">
 	</form>
 	<h2>WTS: Want to sell</h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
-			<td>Item name</td>
+			<td><?= t('market.item_name') ?></td>
 			<td>Item</td>
 			<td>Count</td>
-			<td>Price for 1</td>
+			<td><?= t('market.price_for_1') ?></td>
 			<td>Added</td>
 			<td>By</td>
-			<td>Compare</td>
+			<td><?= t('market.compare') ?></td>
 		</tr>
 		<?php
 		foreach (($offers['wts'] ? $offers['wts'] : array()) as $o) {
@@ -63,7 +63,7 @@ if (!$compare) {
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['created'], true, true); ?></td>
 			<td><?php echo ($o['anonymous'] == 1) ? 'Anonymous' : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
-			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button>Compare</button></a></td>
+			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button><?= t('market.compare') ?></button></a></td>
 		</tr>
 		<?php
 		}
@@ -72,13 +72,13 @@ if (!$compare) {
 	<h2>WTB: Want to buy</h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
-			<td>Item name</td>
+			<td><?= t('market.item_name') ?></td>
 			<td>Item</td>
 			<td>Count</td>
-			<td>Price for 1</td>
+			<td><?= t('market.price_for_1') ?></td>
 			<td>Added</td>
 			<td>By</td>
-			<td>Compare</td>
+			<td><?= t('market.compare') ?></td>
 		</tr>
 		<?php
 		foreach (($offers['wtb'] ? $offers['wtb'] : array()) as $o) {
@@ -90,7 +90,7 @@ if (!$compare) {
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['created'], true, true); ?></td>
 			<td><?php echo ($o['anonymous'] == 1) ? 'Anonymous' : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
-			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button>Compare</button></a></td>
+			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button><?= t('market.compare') ?></button></a></td>
 		</tr>
 		<?php
 		}
@@ -129,13 +129,13 @@ if (!$compare) {
 	else echo "<h1>Search: ". stripslashes($compare) ."</h1>";
 	?>
 	<a href="market.php"><button>Go back</button></a>
-	<h2>Active offers</h2>
+	<h2><?= t('market.active') ?></h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
-			<td>Item name</td>
+			<td><?= t('market.item_name') ?></td>
 			<td>Item</td>
 			<td>Count</td>
-			<td>Price for 1</td>
+			<td><?= t('market.price_for_1') ?></td>
 			<td>Added</td>
 			<td>By</td>
 		</tr>
@@ -164,13 +164,13 @@ if (!$compare) {
 	<?php
 	if ($buylist !== false) {
 		?>
-		<h2>Want to buy:</h2>
+		<h2><?= t('market.want_to_buy') ?></h2>
 		<table class="table tbl-hover">
 			<tr class="yellow">
-				<td>Item name</td>
+				<td><?= t('market.item_name') ?></td>
 				<td>Item</td>
 				<td>Count</td>
-				<td>Price for 1</td>
+				<td><?= t('market.price_for_1') ?></td>
 				<td>Added</td>
 				<td>By</td>
 			</tr>
@@ -192,14 +192,14 @@ if (!$compare) {
 		<?php
 	}
 	?>
-	<h2>Old purchased offers</h2>
+	<h2><?= t('market.old') ?></h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
-			<td>Item name</td>
+			<td><?= t('market.item_name') ?></td>
 			<td>Item</td>
 			<td>Count</td>
-			<td>Price for 1</td>
-			<td>Offer sold</td>
+			<td><?= t('market.price_for_1') ?></td>
+			<td><?= t('market.sold') ?></td>
 		</tr>
 		<?php
 		foreach (($historyOffers ? $historyOffers : array()) as $o) {

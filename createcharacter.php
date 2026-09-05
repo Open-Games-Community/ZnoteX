@@ -7,7 +7,7 @@ if (empty($_POST) === false) {
 	$required_fields = array('name', 'selected_town');
 	foreach($_POST as $key=>$value) {
 		if (empty($value) && in_array($key, $required_fields) === true) {
-			$errors[] = 'You need to fill in all fields.';
+			$errors[] = t('reg.fill_all');
 			break 1;
 		}
 	}
@@ -15,63 +15,63 @@ if (empty($_POST) === false) {
 	// check errors (= user exist, pass long enough
 	if (empty($errors) === true) {
 		if (!Token::isValid($_POST['token'])) {
-			$errors[] = 'Token is invalid.';
+			$errors[] = t('login.token_invalid');
 		}
 		$_POST['name'] = validate_name($_POST['name']);
 		if ($_POST['name'] === false) {
-			$errors[] = 'Your name can not contain more than 2 words.';
+			$errors[] = t('acc.name_max_words');
 		} else {
 			if (user_character_exist($_POST['name']) !== false) {
-				$errors[] = 'Sorry, that character name already exist.';
+				$errors[] = t('acc.name_taken');
 			}
 			if (!preg_match("/^[a-zA-Z ]+$/", $_POST['name'])) {
-				$errors[] = 'Your name may only contain a-z, A-Z and spaces.';
+				$errors[] = t('acc.name_letters');
 			}
 			if (strlen($_POST['name']) < $config['minL'] || strlen($_POST['name']) > $config['maxL']) {
-				$errors[] = 'Your character name must be between ' . $config['minL'] . ' - ' . $config['maxL'] . ' characters long.';
+				$errors[] = t('acc.name_length', ['min' => $config['minL'], 'max' => $config['maxL']]);
 			}
 			// name restriction
 			$resname = explode(" ", $_POST['name']);
 			$username = $_POST['name'];
 			foreach($resname as $res) {
 				if(in_array(strtolower($res), $config['invalidNameTags'])) {
-						$errors[] = 'Your username contains a restricted word.';
+						$errors[] = t('reg.restricted_word');
 				}
 				if(strlen($res) == 1) {
-					$errors[] = 'Too short words in your name.';
+					$errors[] = t('reg.words_too_short');
 				}
 			}
 			if(in_array(strtolower($username), $config['creatureNameTags'])) {
-				$errors[] = 'Your username contains a creature name.';
+				$errors[] = t('createchar.creature_name');
 			}
 			// Validate vocation id
 			if (!in_array((int)$_POST['selected_vocation'], $config['available_vocations'])) {
-				$errors[] = 'Permission Denied. Wrong vocation.';
+				$errors[] = t('createchar.bad_vocation');
 			}
 			// Validate town id
 			if (!in_array((int)$_POST['selected_town'], $config['available_towns'])) {
-				$errors[] = 'Permission Denied. Wrong town.';
+				$errors[] = t('createchar.bad_town');
 			}
 			// Validate gender id
 			if (!in_array((int)$_POST['selected_gender'], array(0, 1))) {
-				$errors[] = 'Permission Denied. Wrong gender.';
+				$errors[] = t('createchar.bad_gender');
 			}
 			if (vocation_id_to_name($_POST['selected_vocation']) === false) {
-				$errors[] = 'Failed to recognize that vocation, does it exist?';
+				$errors[] = t('createchar.no_vocation');
 			}
 			if (town_id_to_name($_POST['selected_town']) === false) {
-				$errors[] = 'Failed to recognize that town, does it exist?';
+				$errors[] = t('createchar.no_town');
 			}
 			if (gender_exist($_POST['selected_gender']) === false) {
-				$errors[] = 'Failed to recognize that gender, does it exist?';
+				$errors[] = t('createchar.no_gender');
 			}
 			// Char count
 			$char_count = user_character_list_count($session_user_id);
 			if ($char_count >= $config['max_characters'] && !is_admin($user_data)) {
-				$errors[] = 'Your account is not allowed to have more than '. $config['max_characters'] .' characters.';
+				$errors[] = t('createchar.max_chars', ['max' => $config['max_characters']]);
 			}
 			if (validate_ip(getIP()) === false && $config['validate_IP'] === true) {
-				$errors[] = 'Failed to recognize your IP address. (Not a valid IPv4 address).';
+				$errors[] = t('reg.bad_ip');
 			}
 		}
 	}

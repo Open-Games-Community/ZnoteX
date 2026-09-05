@@ -41,6 +41,7 @@
 	$config['client_download'] = 'http://tibiaclient.otslist.eu/download/tibia'. $config['client'] .'.exe';
 	$config['client_download_linux'] = 'http://tibiaclient.otslist.eu/download/tibia'. $config['client'] .'.tgz';
 	$config['port'] = 7171;
+	$config['account_create_premdays'] = 0;
 
 	$config['status'] = array(
 		'status_check' => false,
@@ -54,6 +55,22 @@
 		'port' => 7172,
 		'name' => 'Forgotten'
 	);
+
+	// Site language. Falls back to the visitor's browser language, then to this.
+	$config['language'] = 'en';
+
+	// Which flags the language switcher offers. Codes: en, pt_br, es, pl, de.
+	$config['languages_enabled'] = array('en', 'pt_br', 'es', 'pl', 'de');
+
+	// Show the switcher on every theme. Off means only themes that place it.
+	$config['language_selector'] = true;
+
+	// Login web service payload: auto, 11, 12, 13 or 15. auto follows $config['client'].
+	$config['login_protocol'] = 'auto';
+
+	// Canary only. Must match authType in your config.lua: password or session.
+	$config['login_auth_type'] = 'password';
+	$config['login_session_ttl'] = 86400;
 
 	$config['page_admin_access'] = array(
 		'firstaccountName',
@@ -528,7 +545,7 @@
 	$config['htwrite'] = true;
 
 	// Unlock all protocol 12 client features? Free premium in config.lua? Then set this to true.
-	$config['freePremium'] = true;
+	$config['freePremium'] = false;
 
 	// How often do you want highscores (cache) to update?
 	$config['cache'] = array(
@@ -762,6 +779,45 @@
 		20 => 240, // +20% bonus
 		25 => 325, // +30% bonus
 		30 => 420, // +40% bonus
+	);
+
+	//////////////
+	/// STRIPE ///
+	//////////////
+	// https://stripe.com/
+	// Uses hosted Checkout. Points are credited only by payment_webhook.php.
+	$config['stripe'] = array(
+		'enabled' => false,
+		'test_mode' => true,
+		'publishable_key' => '',
+		'secret_key' => '',
+		'webhook_secret' => '',
+		'currency' => 'EUR',
+		'points_per_currency' => 10,
+		'amount_multiplier' => 100, // 100 for EUR/USD/BRL, 1 for zero-decimal currencies.
+		'success' => "http://".$_SERVER['HTTP_HOST']."/success.php",
+		'failed' => "http://".$_SERVER['HTTP_HOST']."/failed.php",
+		'webhook_url' => "http://".$_SERVER['HTTP_HOST']."/payment_webhook.php?provider=stripe",
+		'showBonus' => true,
+	);
+
+	////////////////////
+	/// MERCADO PAGO ///
+	////////////////////
+	// https://www.mercadopago.com/
+	// Uses Checkout Pro preferences. Points are credited only by payment_webhook.php.
+	$config['mercadopago'] = array(
+		'enabled' => false,
+		'test_mode' => true,
+		'public_key' => '',
+		'access_token' => '',
+		'webhook_secret' => '',
+		'currency' => 'BRL',
+		'points_per_currency' => 10,
+		'success' => "http://".$_SERVER['HTTP_HOST']."/success.php",
+		'failed' => "http://".$_SERVER['HTTP_HOST']."/failed.php",
+		'webhook_url' => "http://".$_SERVER['HTTP_HOST']."/payment_webhook.php?provider=mercadopago",
+		'showBonus' => true,
 	);
 
 	/////////////////

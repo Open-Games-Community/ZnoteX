@@ -4,24 +4,24 @@ if ($vocGroups) {
 	$vocGroup = (is_array($vocGroups[$vocation])) ? $vocGroups[$vocation] : $vocGroups[$vocGroups[$vocation]];
 	?>
 
-	<h1>Ranking for <?php echo skillName($type) .", ". (($vocation === 'all') ? 'any vocation' : vocation_id_to_name($vocation)) ?>.</h1>
+	<h1><?= t('highscores.heading', ['what' => skillName($type) .", ". (($vocation === 'all') ? t('vocation.any_lower') : vocation_id_to_name($vocation))]) ?></h1>
 
 	<form action="" method="GET">
 
 		<select name="type">
-			<option value="7" <?php if ($type == 7) echo "selected"; ?>>Experience</option>
-			<option value="8" <?php if ($type == 8) echo "selected"; ?>>Magic</option>
-			<option value="5" <?php if ($type == 5) echo "selected"; ?>>Shield</option>
-			<option value="2" <?php if ($type == 2) echo "selected"; ?>>Sword</option>
-			<option value="1" <?php if ($type == 1) echo "selected"; ?>>Club</option>
-			<option value="3" <?php if ($type == 3) echo "selected"; ?>>Axe</option>
-			<option value="4" <?php if ($type == 4) echo "selected"; ?>>Distance</option>
-			<option value="6" <?php if ($type == 6) echo "selected"; ?>>Fish</option>
-			<option value="9" <?php if ($type == 9) echo "selected"; ?>>Fist</option>
+			<option value="7" <?php if ($type == 7) echo "selected"; ?>><?= t('skill.experience') ?></option>
+			<option value="8" <?php if ($type == 8) echo "selected"; ?>><?= t('skill.magic') ?></option>
+			<option value="5" <?php if ($type == 5) echo "selected"; ?>><?= t('skill.shield') ?></option>
+			<option value="2" <?php if ($type == 2) echo "selected"; ?>><?= t('skill.sword') ?></option>
+			<option value="1" <?php if ($type == 1) echo "selected"; ?>><?= t('skill.club') ?></option>
+			<option value="3" <?php if ($type == 3) echo "selected"; ?>><?= t('skill.axe') ?></option>
+			<option value="4" <?php if ($type == 4) echo "selected"; ?>><?= t('skill.distance') ?></option>
+			<option value="6" <?php if ($type == 6) echo "selected"; ?>><?= t('skill.fishing') ?></option>
+			<option value="9" <?php if ($type == 9) echo "selected"; ?>><?= t('skill.fist') ?></option>
 		</select>
 
 		<select name="vocation">
-			<option value="all" <?php if (!is_int($vocation)) echo "selected"; ?>>Any vocation</option>
+			<option value="all" <?php if (!is_int($vocation)) echo "selected"; ?>><?= t('vocation.any') ?></option>
 			<?php
 			foreach ($configVocations as $v_id => $v_data) {
 				if ($v_data['fromVoc'] === false) {
@@ -37,31 +37,31 @@ if ($vocGroups) {
 			$pages = ($vocGroup[$type] !== false) ? ceil(min(($highscore['rows'] / $highscore['rowsPerPage']), (count($vocGroup[$type]) / $highscore['rowsPerPage']))) : 1;
 			for ($i = 0; $i < $pages; $i++) {
 				$x = $i + 1;
-				if ($x == $page) echo "<option value='".$x."' selected>Page: ".$x."</option>";
-				else echo "<option value='".$x."'>Page: ".$x."</option>";
+				if ($x == $page) echo "<option value='".$x."' selected>". t('highscores.page', ['n' => $x]) ."</option>";
+				else echo "<option value='".$x."'>". t('highscores.page', ['n' => $x]) ."</option>";
 			}
 			?>
 		</select>
 
-		<input type="submit" value=" View " class="btn btn-info">
+		<input type="submit" value="<?= t('common.view') ?>" class="btn btn-info">
 	</form>
 
 	<table id="highscoresTable" class="table table-striped table-hover">
 
 		<tr class="yellow">
-			<?php if ($loadOutfits) echo "<td>Outfit</td>"; ?>
-			<td>Rank</td>
-			<td>Name</td>
-			<td>Vocation</td>
-			<td>Level</td>
-			<?php if ($type === 7) echo "<td>Points</td>"; ?>
+			<?php if ($loadOutfits) echo "<td>". t('common.outfit') ."</td>"; ?>
+			<td><?= t('common.rank') ?></td>
+			<td><?= t('common.name') ?></td>
+			<td><?= t('common.vocation') ?></td>
+			<td><?= t('common.level') ?></td>
+			<?php if ($type === 7) echo "<td>". t('common.points') ."</td>"; ?>
 		</tr>
 
 		<?php
 		if ($vocGroup[$type] === false) {
 			?>
 			<tr>
-				<td colspan="5">Nothing to show here yet.</td>
+				<td colspan="5"><?= t('common.nothing') ?></td>
 			</tr>
 			<?php
 		} else {

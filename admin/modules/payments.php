@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if (isset($_POST['pay'])) {
 		foreach (acp_payments_schema() as $group) {
 			foreach ($group['fields'] as $key => $field) {
+				if (($field['type'] ?? '') === 'secret' && trim((string)($_POST['pay'][$key] ?? '')) === '') {
+					continue;
+				}
 				$value = acp_payment_cast($field['type'], $_POST['pay'][$key] ?? '');
 				setting_set('config:' . $key, $value) ? $saved++ : $failed++;
 			}
@@ -60,9 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	}
 
 	if ($failed > 0) {
-		acp_flash_error($failed . ' value(s) could not be saved. Is the <code>znote_config</code> table present?');
+		acp_flash_error(t('acp.pay.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_flash_success($saved . ' payment settings saved.');
+		acp_log('payments.save', '', ['fields_saved' => $saved]);
+		acp_flash_success(t('acp.pay.save_success', ['n' => $saved]));
 	}
 
 	acp_redirect('payments');
@@ -70,6 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $schema   = acp_payments_schema();
 $hasTable = znote_table_exists('znote_config');
+
+if (function_exists('payment_gateway_ensure_schema')) {
+	payment_gateway_ensure_schema();
+}
 
 $storedTiers = setting('config:paypal_prices', null);
 $tiers = null;
@@ -86,39 +94,66 @@ ksort($tiers, SORT_NUMERIC);
 
 $perCurrency = (int)znote_config_path($config, 'paypal.points_per_currency', 0);
 $currency    = (string)znote_config_path($config, 'paypal.currency', '');
+$modernPayments = znote_table_exists('znote_payment_transactions')
+	? mysql_select_multi("
+		SELECT `provider`, `reference`, `provider_reference`, `account_id`, `price`, `currency`, `points`, `status`, `credited`, `test_mode`, `created_at`, `credited_at`
+		FROM `znote_payment_transactions`
+		ORDER BY `id` DESC
+		LIMIT 10;
+	")
+	: false;
 ?>
 
 <?php if (!$hasTable): ?>
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
-		<span>The <code>znote_config</code> table is missing, so nothing can be saved.</span>
+		<span><?= t('acp.pay.table_missing_short', ['table' => '<code>znote_config</code>']) ?></span>
 	</div>
 <?php endif; ?>
 
 <div class="acp-flash acp-flash--info">
 	<i class="fa fa-info-circle"></i>
 	<span>
-		Stored in the database and applied over <code>config.php</code>, which stays the fallback.
-		Your file is never rewritten. Secrets are held in plain text in <code>znote_config</code>, same
-		as they were in <code>config.php</code> &mdash; keep database backups private.
+		<?= t('acp.pay.stored_note', [
+			'configphp'   => '<code>config.php</code>',
+			'znoteconfig' => '<code>znote_config</code>',
+			'configphp2'  => '<code>config.php</code>',
+		]) ?>
 	</span>
 </div>
+
+<section class="acp-card">
+	<header class="acp-card-head">
+		<h2><i class="fa fa-link"></i> Webhook URLs</h2>
+		<p>Configure these URLs in Stripe and Mercado Pago. Return pages do not credit points.</p>
+	</header>
+	<div class="acp-card-body">
+		<div class="acp-field">
+			<label class="acp-label">Stripe</label>
+			<input class="acp-input" type="text" readonly value="<?= h(function_exists('payment_gateway_webhook_url') ? payment_gateway_webhook_url('stripe') : '') ?>">
+		</div>
+		<div class="acp-field">
+			<label class="acp-label">Mercado Pago</label>
+			<input class="acp-input" type="text" readonly value="<?= h(function_exists('payment_gateway_webhook_url') ? payment_gateway_webhook_url('mercadopago') : '') ?>">
+		</div>
+	</div>
+</section>
 
 <form method="post">
 	<?= acp_csrf_field() ?>
 
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2><i class="fa fa-shopping-cart"></i> Point packages</h2>
-			<p>What a player gets for each amount. Used by the Buy Points page.</p>
+			<h2><i class="fa fa-shopping-cart"></i> <?= t('acp.pay.tiers_title') ?></h2>
+			<p><?= t('acp.pay.tiers_sub') ?></p>
 		</header>
 		<div class="acp-card-body">
 			<div class="acp-table-wrap">
 				<table class="acp-table" id="tierTable">
 					<tr class="yellow">
-						<td>Price<?= $currency !== '' ? ' (' . h($currency) . ')' : '' ?></td>
-						<td>Points</td>
-						<td>Bonus</td>
+						<td><?= t('acp.pay.col_price') ?><?= $currency !== '' ? ' (' . h($currency) . ')' : '' ?></td>
+						<td><?= t('acp.pay.col_points') ?></td>
+						<td><?= t('acp.pay.col_bonus') ?></td>
 						<td></td>
 					</tr>
 					<?php $rows = $tiers ?: array('' => ''); ?>
@@ -139,9 +174,9 @@ $currency    = (string)znote_config_path($config, 'paypal.currency', '');
 				</table>
 			</div>
 			<div class="acp-actions">
-				<button type="button" class="acp-btn acp-btn--ghost" onclick="addTier()"><i class="fa fa-plus"></i> Add package</button>
+				<button type="button" class="acp-btn acp-btn--ghost" onclick="addTier()"><i class="fa fa-plus"></i> <?= t('acp.pay.add_package') ?></button>
 			</div>
-			<p class="acp-hint">A row with an empty or zero price is dropped when you save. Bonus is worked out from "Points per unit of currency" below.</p>
+			<p class="acp-hint"><?= t('acp.pay.tiers_hint') ?></p>
 		</div>
 	</section>
 
@@ -163,12 +198,13 @@ $currency    = (string)znote_config_path($config, 'paypal.currency', '');
 								$fromFile = '';
 							}
 							$current = ($stored !== null) ? $stored : (string)$fromFile;
+							$isSecret = ($field['type'] ?? '') === 'secret';
 						?>
 						<div class="acp-field">
 							<label class="acp-label" for="pay_<?= h($key) ?>">
 								<?= h($field['label']) ?>
 								<?php if ($stored === null): ?>
-									<span class="acp-pill acp-pill--grey" title="Currently following config.php">file</span>
+									<span class="acp-pill acp-pill--grey" title="<?= h(t('acp.pay.following_title')) ?>"><?= t('acp.pay.file_pill') ?></span>
 								<?php endif; ?>
 							</label>
 
@@ -176,13 +212,13 @@ $currency    = (string)znote_config_path($config, 'paypal.currency', '');
 								<label style="display:flex;align-items:center;gap:8px;font-weight:400;">
 									<input type="checkbox" id="pay_<?= h($key) ?>" name="pay[<?= h($key) ?>]" value="1"
 										   <?= ($current !== '' && $current !== '0') ? 'checked' : '' ?>>
-									<span class="is-muted">Enabled</span>
+									<span class="is-muted"><?= t('acp.pay.enabled') ?></span>
 								</label>
 							<?php else: ?>
 								<input class="acp-input" id="pay_<?= h($key) ?>" name="pay[<?= h($key) ?>]"
 									   type="<?= $field['type'] === 'int' ? 'number' : ($field['type'] === 'secret' ? 'password' : 'text') ?>"
-									   value="<?= h($current) ?>"
-									   <?= $field['type'] === 'secret' ? 'autocomplete="new-password"' : '' ?>>
+									   value="<?= $isSecret ? '' : h($current) ?>"
+									   <?= $isSecret ? 'autocomplete="new-password" placeholder="' . h($current !== '' ? 'Configured - leave blank to keep' : '') . '"' : '' ?>>
 							<?php endif; ?>
 
 							<?php if (!empty($field['help'])): ?>
@@ -197,10 +233,41 @@ $currency    = (string)znote_config_path($config, 'paypal.currency', '');
 
 	<div class="acp-actions">
 		<button class="acp-btn acp-btn--green" type="submit" <?= $hasTable ? '' : 'disabled' ?>>
-			<i class="fa fa-check"></i> Save payment settings
+			<i class="fa fa-check"></i> <?= t('acp.pay.save_btn') ?>
 		</button>
 	</div>
 </form>
+
+<section class="acp-card">
+	<header class="acp-card-head">
+		<h2><i class="fa fa-history"></i> Recent Stripe / Mercado Pago Transactions</h2>
+		<p>Credited means the webhook has passed signature and provider verification.</p>
+	</header>
+	<div class="acp-card-body">
+		<?php if (is_array($modernPayments) && $modernPayments): ?>
+			<div class="acp-table-wrap">
+				<table class="acp-table">
+					<thead><tr><th>Provider</th><th>Account</th><th>Amount</th><th class="is-num">Points</th><th>Status</th><th>Created</th><th>Credited</th></tr></thead>
+					<tbody>
+						<?php foreach ($modernPayments as $row): ?>
+							<tr>
+								<td><?= h(ucfirst((string)$row['provider'])) ?><?= !empty($row['test_mode']) ? ' <span class="acp-pill acp-pill--grey">test</span>' : '' ?></td>
+								<td class="is-num"><?= (int)$row['account_id'] ?></td>
+								<td><?= h(number_format((float)$row['price'], 2, '.', '')) ?> <?= h($row['currency']) ?></td>
+								<td class="is-num"><?= (int)$row['points'] ?></td>
+								<td><?= h($row['status']) ?><?= !empty($row['credited']) ? ' <span class="acp-pill acp-pill--green">credited</span>' : '' ?></td>
+								<td><?= !empty($row['created_at']) ? date('Y-m-d H:i', (int)$row['created_at']) : '-' ?></td>
+								<td><?= !empty($row['credited_at']) ? date('Y-m-d H:i', (int)$row['credited_at']) : '-' ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		<?php else: ?>
+			<?php acp_empty('No Stripe or Mercado Pago transaction yet.', 'fa-credit-card'); ?>
+		<?php endif; ?>
+	</div>
+</section>
 
 <script>
 function addTier() {

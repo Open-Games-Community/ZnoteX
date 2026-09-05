@@ -5,12 +5,12 @@
  * Prepared by changelog.php: $changelogs - newest first, or an empty array.
  */
 ?>
-<h1>Changelog</h1>
+<h1><?= t('changelog.title') ?></h1>
 
 <?php if ($changelogs): ?>
 	<table id="changelogTable">
 		<tr class="yellow">
-			<td>Changelogs</td>
+			<td><?= t('changelog.header') ?></td>
 		</tr>
 		<?php foreach ($changelogs as $changelog): ?>
 			<tr>
@@ -22,5 +22,5 @@
 		<?php endforeach; ?>
 	</table>
 <?php else: ?>
-	<h2>Currently no change logs submitted.</h2>
+	<h2><?= t('changelog.none') ?></h2>
 <?php endif; ?>
