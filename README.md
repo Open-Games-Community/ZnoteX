@@ -8,6 +8,9 @@ Version 2.0.0 · Maintained by [Open Games Community](https://opengamescommunity
 
 [Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Themes](layouts/README.md) · [Plugins](plugins/README.md)
 
+[![CodeFactor](https://www.codefactor.io/repository/github/open-games-community/znotex/badge/main)](https://www.codefactor.io/repository/github/open-games-community/znotex/overview/main)
+[![PHP Compatibility](https://github.com/Open-Games-Community/ZnoteX/actions/workflows/php-compatibility.yml/badge.svg)](https://github.com/Open-Games-Community/ZnoteX/actions/workflows/php-compatibility.yml)
+
 </div>
 
 ---
