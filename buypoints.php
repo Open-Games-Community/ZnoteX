@@ -3,7 +3,7 @@ protect_page();
 theme_open();
 
 if (empty($config['buypoints_enabled'])) {
-	echo '<p>Buying points is currently disabled.</p>';
+	echo '<p>'. t('buypoints.off') .'</p>';
 	theme_close();
 	exit();
 }
@@ -11,6 +11,8 @@ if (empty($config['buypoints_enabled'])) {
 // Import from config:
 $pagseguro = $config['pagseguro'];
 $paypal = $config['paypal'];
+$stripe = $config['stripe'] ?? array('enabled' => false);
+$mercadopago = $config['mercadopago'] ?? array('enabled' => false);
 $prices = $config['paypal_prices'];
 
 view('buypoints');

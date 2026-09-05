@@ -69,6 +69,7 @@ if (PHP_SAPI !== 'cli'
 
 require_once 'database/connect.php';
 require_once 'function/general.php';
+require_once 'function/translate.php';
 require_once 'function/bbcode.php';
 require_once 'function/users.php';
 require_once 'function/cache.php';
@@ -76,12 +77,15 @@ require_once 'function/mail.php';
 require_once 'function/token.php';
 require_once 'function/itemparser/itemlistparser.php';
 require_once 'function/settings.php';
+require_once 'function/adminlog.php';
 require_once 'function/theme.php';
 require_once 'function/menus.php';
 require_once 'function/landing.php';
 require_once 'function/minimap.php';
 require_once 'function/serverdata.php';
 require_once 'function/plugins.php';
+require_once 'function/loginwebservice.php';
+require_once 'function/payments.php';
 
 // Settings saved from the admin panel override the values in config.php.
 znote_apply_settings();
