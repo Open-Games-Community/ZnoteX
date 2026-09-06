@@ -67,8 +67,7 @@
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.zip",
     "url": "https://opengamescommunity.com/resources/void-layout.1028/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.png"
-  }
-  ,
+  },
   {
     "key": "telara",
     "name": "Telara",
@@ -81,5 +80,18 @@
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/telara.zip",
     "url": "https://opengamescommunity.com/resources/telara-layout.1029/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/telara.png"
+  },
+  {
+    "key": "eclipse",
+    "name": "Eclipse",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Eclipse theme by alexv45 for ZnoteX.",
+    "update": [
+      "Eclipse Layout."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/eclipse.zip",
+    "url": "https://opengamescommunity.com/resources/eclipse-layout.1035/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/eclipse.png"
   }
 ]
