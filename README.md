@@ -269,7 +269,7 @@ contents into a public page.
 
 - Database shop offers managed from the admin panel: items, premium days, gender change, name change, outfits, mounts, and custom types
 - Item market: buy and sell listings, item search, price comparison and transaction history
-- Payment gateways: **PayPal**, **PagSeguro** and **PayGol** (SMS)
+- Payment gateways: **PayPal**, **PagSeguro** , **Mercado Pago**, **Stripe** and **PayGol** (SMS)
 
 </details>
 
