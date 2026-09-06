@@ -67,6 +67,9 @@ function theme_menu_items(string $location): array {
 			case 'admin': $show = $isAdmin;   break;
 			default:      $show = true;
 		}
+		if ($show && !menu_url_available((string)$row['url'])) {
+			$show = false;
+		}
 		if ($show) {
 			$visible[(int)$row['id']] = array(
 				'id'       => (int)$row['id'],
@@ -98,6 +101,42 @@ function theme_menu_items(string $location): array {
 	}
 
 	return $cache[$location] = array_values($tree);
+}
+
+function menu_url_available(string $url): bool {
+	global $config;
+
+	$url = trim($url);
+	if ($url === '' || $url === '#') {
+		return true;
+	}
+
+	$path = parse_url($url, PHP_URL_PATH);
+	$page = strtolower(basename($path !== null && $path !== false ? $path : $url));
+
+	switch ($page) {
+		case 'shop.php':
+			return !empty($config['shop']['enabled']);
+		case 'buypoints.php':
+			return !empty($config['buypoints_enabled']);
+		case 'guildwar.php':
+		case 'guildwars.php':
+			return !empty($config['guildwar_enabled']);
+		case 'forum.php':
+			return !empty($config['forum']['enabled']);
+		case 'powergamers.php':
+			return !empty($config['powergamers']['enabled']);
+		case 'toponline.php':
+			return !empty($config['toponline']['enabled']);
+		case 'achievements.php':
+			return !empty($config['Ach']);
+		case 'items.php':
+			return !empty($config['items']);
+		case 'credits.php':
+			return $config['credits_enabled'] ?? true;
+		default:
+			return true;
+	}
 }
 
 function theme_menu_label(string $label): string {
