@@ -1,11 +1,7 @@
 -- <globalevent name="Znote Shop" interval="30000" script="znoteshop.lua"/>
 -- Znote Auto Shop v2.1 for Znote AAC on TFS 1.2+
 function onThink(interval, lastExecution)
-	local shopTypes = {1,5,7}
-	-- If game support mount orders
-	if Game.getClientVersion().min >= 870 then
-		table.insert(shopTypes, 6);
-	end
+	local shopTypes = {1,5,6,7}
 	local orderQuery = db.storeQuery([[
 		SELECT
 			MIN(`po`.`player_id`) AS `player_id`,

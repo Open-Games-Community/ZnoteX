@@ -1,0 +1,20 @@
+TFS 1.6 uses the same revscriptsys API as TFS 1.0 / 1.4, so these files are
+identical to the ones in Lua/TFS_10/revscriptsys.
+
+Step 1: Copy the .lua files you need into data/scripts/ (any sub-folder works).
+        The shop system needs both:
+          - shopsystem_talkaction.lua   (players type !shop to receive orders)
+          - shopsystem_globalevent.lua  (delivers orders to online players every
+                                         30s, only while they stand in a PZ)
+        You can run just the talkaction if you prefer manual !shop delivery.
+
+Step 2: Restart the server (or /reload scripts).
+
+Notes:
+  - shopsystem: znote_shop_orders.itemid holds the item id (type 1), the packed
+    outfit pair male*1000 + female (type 5), the mount id (type 6), or the house
+    id (type 7, with the buyer player id in `count`).
+  - znote_login.lua keeps SERVER_NAME / IP / GAME_PORT in znote_global_storage in
+    sync with config.lua for the AAC login web service.
+  - powergamers.lua and player_history.lua need the SQL columns / tables listed
+    at the top of each file before first use.

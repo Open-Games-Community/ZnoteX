@@ -76,18 +76,16 @@ function onSay(player, words, param)
 					end
 				end
 
-				if Game.getClientVersion().min >= 870 then
-					-- ORDER TYPE 6 (Mounts)
-					if q_type == 6 then
-						served = true
-						-- Make sure player don't already have this outfit and addon
-						if not player:hasMount(q_itemid) then
-							db.query("DELETE FROM `znote_shop_orders` WHERE `id` = " .. q_id .. ";")
-							player:addMount(q_itemid)
-							player:sendTextMessage(MESSAGE_INFO_DESCR, "Congratulations! You have received a new mount!")
-						else
-							player:sendTextMessage(MESSAGE_STATUS_WARNING, "You already have this mount!")
-						end
+				-- ORDER TYPE 6 (Mounts). itemid holds the mount id.
+				if q_type == 6 then
+					served = true
+					-- Make sure player don't already have this mount
+					if not player:hasMount(q_itemid) then
+						db.query("DELETE FROM `znote_shop_orders` WHERE `id` = " .. q_id .. ";")
+						player:addMount(q_itemid)
+						player:sendTextMessage(MESSAGE_INFO_DESCR, "Congratulations! You have received a new mount!")
+					else
+						player:sendTextMessage(MESSAGE_STATUS_WARNING, "You already have this mount!")
 					end
 				end
 

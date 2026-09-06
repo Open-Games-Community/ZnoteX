@@ -1,0 +1,38 @@
+Znote AAC server scripts for Canary (opentibiabr) and otservbr-global.
+
+WHERE TO PUT THEM
+  Canary:           data/scripts/          (or data-otservbr-global/scripts/ on
+                                            an otservbr-global data pack)
+  otservbr-global:  data-otservbr-global/scripts/
+  Drop the .lua files in there (any sub-folder is fine) and restart the server
+  or run "/reload scripts".
+
+FILES
+  znoteshop_talkaction.lua   !shop - player pulls their website shop orders.
+  znoteshop_globalevent.lua  Auto-delivers the same orders every 30s to online
+                             buyers standing in a protection zone. Use BOTH, or
+                             just the talkaction for manual delivery only.
+  znote_login.lua            Syncs SERVER_NAME / IP / GAME_PORT from config.lua
+                             into znote_global_storage for the AAC login web
+                             service. Needs an up-to-date Znote AAC.
+  powergamers.lua            Daily exp / online-time history for powergamers.php.
+                             Run the ALTER TABLE at the top of the file once.
+  player_history.lua         Per-logout skill snapshots (auto-creates its table).
+  sync_outfit.lua            Marks which full outfits a character owns so
+                             characterprofile.php can show them. storage_value
+                             must match $config['EQ_shower'] in the AAC. The
+                             look type lists are the complete Female / Male sets
+                             from canary  data/XML/outfits.xml (127 / 125).
+
+COMPATIBILITY NOTES
+  - Every Canary / otservbr-global protocol (10.98+: otservbr-global 12.x,
+    Canary 13.x, and the current 15.x) supports outfits, addons, mounts and
+    houses, so the shop scripts handle order types 1, 5, 6 and 7 unconditionally
+    - no Game.getClientVersion() guard.
+  - Canary / otservbr-global already log deaths to `player_deaths` and hand out
+    first items on their data pack, so the TFS playerdeath.lua / first_items.lua
+    from Lua/TFS_10 are NOT included here - use the engine's own systems.
+  - House order type 7 uses house:setHouseOwner(guid, true) (the Canary name).
+    On plain TFS use Lua/TFS_10 instead - that build calls house:setOwnerGuid().
+  - Message constants used: MESSAGE_EVENT_ADVANCE (success), MESSAGE_FAILURE
+    (blocked), MESSAGE_STATUS (info). Swap them if your build differs.
