@@ -208,7 +208,16 @@ Then apply any new file in `SQL/migrations/`, and check **Admin Panel → Plugin
 plugin has an update waiting.
 
 ---
+## Update ZnoteX 
 
+- To update ZnoteX to latest version without installing again the motor, drag and drop all files except:
+
+- install/
+- config.php
+
+Then process migrations from SQL/migrations if needed.
+
+---
 ## Features
 
 <details open>

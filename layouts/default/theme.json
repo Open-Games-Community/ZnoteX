@@ -9,6 +9,12 @@
   },
   "options": [
     {
+      "key": "favicon",
+      "label": "Browser tab icon",
+      "type": "image",
+      "help": "Shown in the browser tab. Leave empty for no icon."
+    },
+    {
       "key": "background_image",
       "label": "Page background image",
       "type": "image",

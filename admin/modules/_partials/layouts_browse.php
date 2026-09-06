@@ -101,6 +101,16 @@ $repoError  = (string)($catalogue['error'] ?? '');
 
 					<p><?= h($item['description']) ?></p>
 
+					<?php if ($isUpdate && (string)($item['changelog'] ?? '') !== ''): ?>
+						<div style="margin:10px 0;padding:10px 12px;border:1px solid var(--acp-border);border-left:3px solid var(--acp-amber);border-radius:8px;background:var(--acp-panel-2);font-size:12px;">
+							<strong style="display:block;margin-bottom:5px;">
+								<i class="fa fa-list-ul"></i>
+								What&apos;s new in v<?= h($item['version']) ?>
+							</strong>
+							<div class="is-muted" style="white-space:pre-line;line-height:1.45;"><?= h($item['changelog']) ?></div>
+						</div>
+					<?php endif; ?>
+
 					<p class="is-muted" style="font-size:12px;">
 						<code>layouts/<?= h($key) ?>/</code>
 						<?php if ($item['author'] !== ''): ?>&middot; <?= t('acp.laybr.by_author', ['author' => h($item['author'])]) ?><?php endif; ?>
@@ -192,6 +202,10 @@ $repoError  = (string)($catalogue['error'] ?? '');
     "version": "1.0.0",
     "author": "Alex",
     "description": "One or two sentences.",
+    "update": [
+      "Added a responsive character profile.",
+      "Fixed sidebar spacing on mobile."
+    ],
     "screenshot": "https://raw.githubusercontent.com/&lt;user&gt;/&lt;repo&gt;/layouts/darkfantasy/screenshot.png",
     "download":   "https://raw.githubusercontent.com/&lt;user&gt;/&lt;repo&gt;/layouts/darkfantasy.zip",
     "url":        "https://github.com/&lt;user&gt;/&lt;repo&gt;/tree/layouts/darkfantasy"

@@ -7,7 +7,7 @@
  * pages keep doing the queries, the theme only decides how the result looks.
  *
  *   layouts/<name>/
- *     theme.json          name, author, version, description
+ *     theme.json          name, author, version, description, update
  *     screenshot.png      thumbnail shown in the admin panel
  *     shells/default.php  the page frame: <html>, header, {{content}}, footer
  *     views/<page>.php    the middle block of one root page
@@ -179,6 +179,7 @@ function theme_manifest(string $name): array {
 		'author'      => '',
 		'version'     => '',
 		'description' => '',
+		'update'      => '',
 		'url'         => '',
 	);
 
@@ -189,9 +190,14 @@ function theme_manifest(string $name): array {
 
 	$data = json_decode((string)file_get_contents($file), true);
 
-	return $cache[$name] = is_array($data)
-		? array_merge($defaults, $data, array('key' => $name))
-		: $defaults;
+	if (!is_array($data)) {
+		return $cache[$name] = $defaults;
+	}
+
+	$manifest = array_merge($defaults, $data, array('key' => $name));
+	$manifest['update'] = theme_repository_notes($manifest['update']);
+
+	return $cache[$name] = $manifest;
 }
 
 /**
@@ -433,6 +439,36 @@ function theme_repository_get(string $url, ?string $toFile = null, ?string &$err
 	return $toFile === null ? $body : true;
 }
 
+function theme_repository_notes($value): string {
+	if (is_string($value) || is_numeric($value)) {
+		return trim((string)$value);
+	}
+
+	if (!is_array($value)) {
+		return '';
+	}
+
+	$lines = array();
+	foreach ($value as $key => $item) {
+		if (is_array($item)) {
+			$nested = theme_repository_notes($item);
+			if ($nested !== '') {
+				$lines[] = is_string($key) ? $key . ":\n" . $nested : $nested;
+			}
+			continue;
+		}
+
+		$text = trim((string)$item);
+		if ($text === '') {
+			continue;
+		}
+
+		$lines[] = is_string($key) ? $key . ': ' . $text : '- ' . $text;
+	}
+
+	return trim(implode("\n", $lines));
+}
+
 /**
  * The catalogue, normalised and cached on disk so opening the page does not
  * hit the network every time.
@@ -485,6 +521,13 @@ function theme_repository_list(bool $refresh = false): array {
 
 		$download   = trim((string)($entry['download'] ?? ''));
 		$screenshot = trim((string)($entry['screenshot'] ?? ''));
+		$changelog  = '';
+		foreach (array('changelog', 'changes', 'release_notes', 'update') as $notesKey) {
+			if (array_key_exists($notesKey, $entry)) {
+				$changelog = theme_repository_notes($entry[$notesKey]);
+				break;
+			}
+		}
 
 		$themes[$key] = array(
 			'key'         => $key,
@@ -492,6 +535,7 @@ function theme_repository_list(bool $refresh = false): array {
 			'author'      => (string)($entry['author'] ?? ''),
 			'version'     => (string)($entry['version'] ?? ''),
 			'description' => (string)($entry['description'] ?? ''),
+			'changelog'   => $changelog,
 			'url'         => (string)($entry['url'] ?? ''),
 			'screenshot'  => theme_repository_url_allowed($screenshot) ? $screenshot : '',
 			'download'    => $download,
@@ -883,9 +927,9 @@ function theme_close(): void {
 	$injectHead = function_exists('znote_hook_collect') ? znote_hook_collect('page.head') : '';
 	$injectFoot = function_exists('znote_hook_collect') ? znote_hook_collect('page.footer') : '';
 
-	// Background and logo overrides set in the admin panel. Written here rather
-	// than by each theme, so a theme only has to declare the option.
-	$injectHead = theme_style_overrides() . $injectHead;
+	// Background, logo and favicon overrides set in the admin panel. Written
+	// here rather than by each theme, so a theme only has to declare the option.
+	$injectHead = theme_style_overrides() . theme_favicon_links() . $injectHead;
 
 	// A shell is included from inside this function, so without this it would
 	// see none of the page's variables - unlike views and widgets, which do.
@@ -1110,6 +1154,39 @@ function theme_style_overrides(?string $theme = null): string {
 	return '<style id="znote-theme-options">' . "\n" . implode("\n", $rules) . "\n" . '</style>' . "\n";
 }
 
+function theme_favicon_links(?string $theme = null): string {
+	$theme = $theme ?? theme_active();
+	if ($theme === 'void') {
+		return '';
+	}
+
+	$options = theme_options($theme);
+	if (!isset($options['favicon']) || $options['favicon']['type'] !== 'image') {
+		return '';
+	}
+
+	$stored = function_exists('setting') ? setting(theme_option_key($theme, 'favicon'), null) : null;
+	$value  = ($stored !== null)
+		? trim($stored)
+		: (string)$options['favicon']['default'];
+
+	$url = theme_css_url($value);
+	$blank = ($url === '');
+	if ($blank) {
+		$url = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=';
+	}
+
+	$href  = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+	$links = '<link rel="icon" href="' . $href . '">' . "\n"
+		. '<link rel="shortcut icon" href="' . $href . '">' . "\n";
+
+	if (!$blank) {
+		$links .= '<link rel="apple-touch-icon" href="' . $href . '">' . "\n";
+	}
+
+	return $links;
+}
+
 const THEME_IMAGE_MAX_BYTES = 4194304;
 
 /**
@@ -1141,9 +1218,12 @@ function theme_image_store(string $theme, string $key, string $tmpFile, ?string 
 		IMAGETYPE_GIF  => 'gif',
 		IMAGETYPE_WEBP => 'webp',
 	);
+	if (defined('IMAGETYPE_ICO')) {
+		$types[IMAGETYPE_ICO] = 'ico';
+	}
 
 	if (!$info || !isset($types[$info[2]])) {
-		$error = 'Only JPG, PNG, GIF and WebP images are accepted.';
+		$error = 'Only JPG, PNG, GIF, WebP and ICO images are accepted.';
 		return '';
 	}
 

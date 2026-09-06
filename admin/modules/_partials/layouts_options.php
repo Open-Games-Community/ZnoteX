@@ -54,7 +54,8 @@ $backUrl  = acp_url('layouts');
 			<input type="hidden" name="theme_options" value="<?= h($optionTheme) ?>">
 
 			<?php foreach ($optionList as $optKey => $opt):
-				$value = theme_option($optKey, '', $optionTheme);
+				$stored = function_exists('setting') ? setting(theme_option_key($optionTheme, $optKey), null) : null;
+				$value = ($stored !== null) ? $stored : theme_option($optKey, '', $optionTheme);
 			?>
 				<div class="acp-field">
 					<label class="acp-label" for="opt_<?= h($optKey) ?>"><?= h($opt['label']) ?></label>
@@ -78,7 +79,7 @@ $backUrl  = acp_url('layouts');
 							   type="text" value="<?= h($value) ?>"
 							   placeholder="<?= h($opt['default'] !== '' ? $opt['default'] : t('acp.layopt.image_placeholder')) ?>">
 						<p class="acp-hint" style="margin:6px 0 4px;"><?= t('acp.layopt.upload_hint') ?></p>
-						<input class="acp-input" type="file" name="optfile[<?= h($optKey) ?>]" accept="image/png,image/jpeg,image/gif,image/webp">
+						<input class="acp-input" type="file" name="optfile[<?= h($optKey) ?>]" accept="image/png,image/jpeg,image/gif,image/webp,image/x-icon,image/vnd.microsoft.icon">
 					<?php else: ?>
 						<input class="acp-input" id="opt_<?= h($optKey) ?>" name="opt[<?= h($optKey) ?>]"
 							   type="<?= in_array($opt['type'], array('url', 'datetime-local'), true) ? h($opt['type']) : 'text' ?>"
