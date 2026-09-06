@@ -9,7 +9,7 @@
       "Added a redemption log to the admin module: who redeemed which code and when.",
       "Coupon create and delete now show in Admin Panel > Logs."
     ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons/shop_coupons.png",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.zip",
     "url": "https://opengamescommunity.com/resources/plugin-shop-coupons.1030/"
   }
