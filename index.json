@@ -79,5 +79,18 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.zip",
     "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
+  },
+  {
+    "key": "battle_pass",
+    "name": "Battlepass",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Battlepass plugin, make missions each day and claim rewards.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.zip",
+    "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
   }
 ]
