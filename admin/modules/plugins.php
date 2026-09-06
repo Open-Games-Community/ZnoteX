@@ -26,6 +26,39 @@ if (!defined('ACP_ROOT')) {
 	die('Direct access denied.');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repo_install'])) {
+
+	$key       = znote_plugin_sanitize((string)$_POST['repo_install']);
+	$overwrite = !empty($_POST['overwrite']);
+	$result    = plugin_repository_install($key, $overwrite);
+
+	if ($result === '') {
+		$sqlError = znote_plugin_install($key);
+		if ($sqlError !== '') {
+			acp_flash_error(t('acp.plgbr.install_failed', ['error' => h($sqlError)]));
+		} else {
+			znote_plugin_set_enabled($key, true);
+			acp_log('plugins.repo_install', $key);
+			$m = znote_plugin_manifest($key);
+			acp_flash_success(t('acp.plgbr.installed', [
+				'plugin' => '<strong>' . h($m['name']) . '</strong>',
+				'path'   => '<code>plugins/' . h($key) . '/</code>',
+			]));
+		}
+	} elseif ($result === 'already-installed') {
+		acp_flash_error(t('acp.plgbr.already_installed', ['plugin' => '<strong>' . h($key) . '</strong>']));
+	} else {
+		acp_flash_error(t('acp.plgbr.install_failed', ['error' => h($result)]));
+	}
+
+	acp_redirect('plugins', array('tab' => 'browse'));
+}
+
+if (($_GET['tab'] ?? '') === 'browse') {
+	include ACP_ROOT . '/modules/_partials/plugins_browse.php';
+	return;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$name   = znote_plugin_sanitize((string)($_POST['plugin'] ?? ''));
 	$action = (string)($_POST['action'] ?? '');
@@ -108,6 +141,17 @@ foreach ($plugins as $plugin) {
 	}
 }
 ?>
+
+<?php if (plugin_repository_config()['enabled']): ?>
+	<div class="acp-toolbar">
+		<div></div>
+		<div class="acp-actions is-tight">
+			<a class="acp-btn" href="<?= h(acp_url('plugins', array('tab' => 'browse'))) ?>">
+				<i class="fa fa-cloud-download"></i> <?= t('acp.plg.browse_plugins') ?>
+			</a>
+		</div>
+	</div>
+<?php endif; ?>
 
 <div class="acp-grid">
 	<?php

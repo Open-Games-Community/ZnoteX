@@ -19,3 +19,9 @@ PULL_REQUEST.md
 
 # Theme background/logo images uploaded from the admin panel.
 engine/img/theme/
+
+# Plugins are distributed on the plugins branch and downloaded / dropped into
+# plugins/. The code branch only ships the folder, its README and .htaccess.
+plugins/*/
+plugins/.*
+!plugins/.htaccess
