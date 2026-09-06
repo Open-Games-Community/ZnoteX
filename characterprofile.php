@@ -12,12 +12,12 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		$loadOutfits = $config['show_outfits']['characterprofile'];
 
 		if (!$loadOutfits) {
-			$profile_data = user_character_data($user_id, 'account_id', 'name', 'level', 'group_id', 'vocation', 'health', 'healthmax', 'experience', 'mana', 'manamax', 'sex', 'lastlogin');
+			$profile_data = user_character_data($user_id, 'account_id', 'name', 'level', 'group_id', 'vocation', 'health', 'healthmax', 'experience', 'mana', 'manamax', 'sex', 'lastlogin', 'town_id');
 		} else { // Load outfits
 			if ($config['client'] < 780) {
-				$profile_data = user_character_data($user_id, 'account_id', 'name', 'level', 'group_id', 'vocation', 'health', 'healthmax', 'experience', 'mana', 'manamax', 'sex', 'lastlogin', 'lookbody', 'lookfeet', 'lookhead', 'looklegs', 'looktype');
+				$profile_data = user_character_data($user_id, 'account_id', 'name', 'level', 'group_id', 'vocation', 'health', 'healthmax', 'experience', 'mana', 'manamax', 'sex', 'lastlogin', 'town_id', 'lookbody', 'lookfeet', 'lookhead', 'looklegs', 'looktype');
 			} else {
-				$profile_data = user_character_data($user_id, 'account_id', 'name', 'level', 'group_id', 'vocation', 'health', 'healthmax', 'experience', 'mana', 'manamax', 'sex', 'lastlogin', 'lookbody', 'lookfeet', 'lookhead', 'looklegs', 'looktype', 'lookaddons');
+				$profile_data = user_character_data($user_id, 'account_id', 'name', 'level', 'group_id', 'vocation', 'health', 'healthmax', 'experience', 'mana', 'manamax', 'sex', 'lastlogin', 'town_id', 'lookbody', 'lookfeet', 'lookhead', 'looklegs', 'looktype', 'lookaddons');
 			}
 		}
 		$profile_data['online'] = user_is_online_10($user_id);
@@ -34,130 +34,32 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 			$guild = get_player_guild_data($user_id);
 			$guild_name = get_guild_name($guild['guild_id']);
 		}
+
+		$position = '';
+		if ($profile_data['group_id'] > 1) {
+			$position_data = mysql_select_single("
+				SELECT `a`.`type`
+				FROM `players` AS `p`
+				INNER JOIN `accounts` AS `a`
+					ON `p`.`account_id` = `a`.`id`
+				WHERE
+					`a`.`type` > 1
+					AND `p`.`id` = '{$user_id}'
+			");
+			$position_type = ($position_data !== false) ? $position_data['type'] : null;
+			$position = (isset($config['ingame_positions'][$position_type])) ? $config['ingame_positions'][$position_type] : 'Unknown';
+		}
+
+		$deletion_time = mysql_select_single("SELECT `time` FROM `znote_deleted_characters` WHERE `character_name`='{$name}' AND `done` = '0' LIMIT 1;");
+		$houses = mysql_select_multi("
+			SELECT `id`, `owner`, `name`, `town_id` AS `town_id`
+			FROM `houses`
+			WHERE `owner` = {$user_id};
+		");
 		?>
 
 		<!-- PROFILE MARKUP HERE-->
-		<table id="characterProfileTable">
-			<thead>
-				<tr class="yellow">
-					<th>
-						<?php if ($loadOutfits): ?>
-							<div class="outfit">
-								<img src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $profile_data['looktype']; ?>&addons=<?php echo $profile_data['lookaddons']; ?>&head=<?php echo $profile_data['lookhead']; ?>&body=<?php echo $profile_data['lookbody']; ?>&legs=<?php echo $profile_data['looklegs']; ?>&feet=<?php echo $profile_data['lookfeet']; ?>" alt="img">
-							</div>
-						<?php endif;
-						$flags = $config['country_flags'];
-						if ($flags['enabled'] && $flags['characterprofile']) {
-							$account_data = user_znote_account_data($profile_data['account_id'], 'flag');
-							if (strlen($account_data['flag']) > 0):
-								?><!-- Player country data -->
-								<div class="flag">
-									<img src="<?php echo $flags['server'] . '/' . $account_data['flag']; ?>.png">
-								</div>
-								<?php
-							endif;
-						}
-						?>
-					</th>
-					<th>
-						<h1><?php echo $profile_data['name']; ?></h1>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<!-- Player <?= t('char.position') ?> -->
-				<?php if ($profile_data['group_id'] > 1): 
-					$position = mysql_select_single("
-					SELECT 
-						`a`.`type` 
-					FROM `players` AS `p` 
-					INNER JOIN `accounts` AS `a` 
-						ON `p`.`account_id` = `a`.`id` 
-					WHERE 
-						`a`.`type` > 1 
-						AND `p`.`id` = '{$user_id}'
-					");
-					$position = (isset($config['ingame_positions'][$position['type']])) ? $config['ingame_positions'][$position['type']] : "Unknown";
-					?>
-					<tr>
-						<td><?= t('char.position') ?></td>
-						<td><?php echo $position; ?></td>
-					</tr>
-				<?php endif;
-				// pending deletion?
-				$deletion_time = mysql_select_single("SELECT `time` FROM `znote_deleted_characters` WHERE `character_name`='{$name}' AND `done` = '0' LIMIT 1;");
-				if ($deletion_time !== false): ?>
-					<tr>
-						<td colspan="2" style="color: red;"><?= t('char.flagged_delete2') ?> <?php echo $deletion_time['time']; ?>.</td>
-					</tr>
-				<?php endif; ?>
-				<!-- Player male / female -->
-				<tr>
-					<td>Sex</td>
-					<td><?php echo ($profile_data['sex'] == 1) ? 'Male' : 'Female'; ?></td>
-				</tr>
-				<!-- Player level -->
-				<tr>
-					<td>Level</td>
-					<td><?php echo $profile_data['level']; ?></td>
-				</tr>
-				<!-- Player vocation -->
-				<tr>
-					<td><?= t('common.vocation') ?></td>
-					<td><?php echo vocation_id_to_name($profile_data['vocation']); ?></td>
-				</tr>
-				<!-- Player guild -->
-				<?php if ($guild_exist): ?>
-					<tr>
-						<td>Guild</td>
-						<td><b><?php echo $guild['rank_name']; ?> </b> of <a href="guilds.php?name=<?php echo $guild_name; ?>"><?php echo $guild_name; ?></a></td>
-					</tr>
-				<?php endif; ?>
-				<!-- Player last login -->
-				<tr>
-					<td><?= t('char.last_login') ?></td>
-					<td><?php echo ($profile_data['lastlogin'] != 0) ? getClock($profile_data['lastlogin'], true, true) : 'Never.'; ?></td>
-				</tr>
-				<!-- Achievement start -->
-				<?php if ($config['Ach'] && (int)$achievementPoints['sum'] > 0): ?>
-					<tr>
-						<td><?= t('char.ach_points') ?></td>
-						<td><?php echo (int)$achievementPoints['sum']; ?></td>
-					</tr>
-				<?php endif; ?>
-				<!-- Display house start -->
-				<?php
-
-				$houses = mysql_select_multi("
-					SELECT `id`, `owner`, `name`, `town_id` AS `town_id`
-					FROM `houses`
-					WHERE `owner` = {$user_id};
-				");
-
-				if ($houses !== false) {
-					foreach ($houses as $h): ?>
-						<tr>
-							<td>House</td>
-							<td><?php echo $h['name'] . ', ' . $config['towns'][$h['town_id']]; ?></td>
-						</tr>
-					<?php endforeach;
-				}
-				?>
-				<!-- Display player status -->
-				<tr class="status_<?php echo ($profile_data['online']) ? 'online' : 'offline'; ?>">
-					<td>Status</td>
-					<td><?php echo ($profile_data['online']) ? 'online' : 'offline'; ?></td>
-				</tr>
-				<!-- Player created -->
-				<tr>
-					<td>Created</td>
-					<td><?php echo getClock($profile_znote_data['created'], true); ?></td>
-				</tr>
-
-				<!-- EQ shower -->
-				<?php if ($config['EQ_shower']['enabled']): ?>
-					<tr>
-						<?php
+		<?php
 						// Item image server
 						$imageServer = $config['shop']['imageServer'];
 						$imageType = $config['shop']['imageType'];
@@ -198,397 +100,485 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 						";
 						$playerstats = mysql_select_single($player_query);
 
-						$playerstats['experience'] = number_format($playerstats['experience'],0,'',',');
-						$playerstats['stamina'] = number_format($playerstats['stamina']/60,2,':','');
-
-						$bar_length = 100;
-						$bar_health = (int)($bar_length * ($playerstats['health'] / $playerstats['healthmax']));
-						if ($playerstats['manamax'] > 0) {
-							$bar_mana = (int)($bar_length * ($playerstats['mana'] / $playerstats['manamax']));
+						$player_experience_raw = (int)$playerstats['experience'];
+						$profile_flag = '';
+						$flags = $config['country_flags'];
+						if ($flags['enabled'] && $flags['characterprofile']) {
+							$flag_account = user_znote_account_data($profile_data['account_id'], 'flag');
+							if ($flag_account !== false && strlen($flag_account['flag']) > 0) {
+								$profile_flag = (string)$flag_account['flag'];
+							}
 						}
-						else {
-							$bar_mana = 100;
+						$profile_houses = array();
+						if ($houses !== false) {
+							foreach ($houses as $h) {
+								$profile_houses[] = $h['name'] . ', ' . ($config['towns'][$h['town_id']] ?? $h['town_id']);
+							}
 						}
-
-						$outfit_server = $config['show_outfits']['imageServer'];
-						$outfit_storage = $config['EQ_shower']['storage_value'];
-
-						$male_outfits = array(
-							[128,129,130,131,132],
-							[133,134,143,144,145],
-							[146,151,152,153,154],
-							[251,268,273,278,289],
-							[325,328,335,367],
-							//430,432,463,465,472,512,516,541,574,577,610,619,633,634,637,665,667,684,695,697,699,725,733,746,750,760,846,853,873,884,899
+						$profile_account = user_data((int)$profile_data['account_id'], 'premium_ends_at');
+						$premium_until = ($profile_account !== false) ? (int)($profile_account['premium_ends_at'] ?? 0) : 0;
+						$account_status = ((bool)($config['freePremium'] ?? false) || $premium_until > time()) ? 'VIP active' : 'VIP inactive';
+						$profile_lookaddons = (int)($profile_data['lookaddons'] ?? 0);
+						$current_outfit_src = $loadOutfits
+							? $config['show_outfits']['imageServer'] . '?id=' . (int)$profile_data['looktype'] . '&addons=' . $profile_lookaddons . '&head=' . (int)$profile_data['lookhead'] . '&body=' . (int)$profile_data['lookbody'] . '&legs=' . (int)$profile_data['looklegs'] . '&feet=' . (int)$profile_data['lookfeet']
+							: '';
+						$health_percent = ((int)$playerstats['healthmax'] > 0) ? min(100, max(0, round(((int)$playerstats['health'] / (int)$playerstats['healthmax']) * 100, 2))) : 100;
+						$mana_percent = ((int)$playerstats['manamax'] > 0) ? min(100, max(0, round(((int)$playerstats['mana'] / (int)$playerstats['manamax']) * 100, 2))) : 100;
+						$experience_raw = $player_experience_raw;
+						$level_raw = (int)$playerstats['level'];
+						$level_start_exp = (int)level_to_experience($level_raw);
+						$level_next_exp = (int)level_to_experience($level_raw + 1);
+						$level_exp_span = max(1, $level_next_exp - $level_start_exp);
+						$level_exp_done = min($level_exp_span, max(0, $experience_raw - $level_start_exp));
+						$level_percent = round(($level_exp_done / $level_exp_span) * 100, 2);
+						$level_needed = max(0, $level_next_exp - $experience_raw);
+						$detail_skill_rows = array(
+							array('label' => t('common.level'), 'value' => $playerstats['level']),
+							array('label' => 'Magic Level', 'value' => $playerstats['maglevel']),
+							array('label' => t('skill.fist'), 'value' => $playerstats['skill_fist']),
+							array('label' => t('skill.club'), 'value' => $playerstats['skill_club']),
+							array('label' => t('skill.sword'), 'value' => $playerstats['skill_sword']),
+							array('label' => t('skill.axe'), 'value' => $playerstats['skill_axe']),
+							array('label' => t('skill.distance'), 'value' => $playerstats['skill_dist']),
+							array('label' => t('skill.shielding'), 'value' => $playerstats['skill_shielding']),
+							array('label' => t('skill.fishing'), 'value' => $playerstats['skill_fishing']),
 						);
-
-						$female_outfits = array(
-							[136,137,138,139,140],
-							[141,142,147,148,149],
-							[150,155,156,157,158],
-							[252,269,270,279,288],
-							[324,329,336,366],
-							//431,433,464,466,471,513,514,542,575,578,618,620,632,635,636,664,666,683,694,696,698,724,732,745,749,759,845,852,874,885,900
-						);
-
-						$featured_outfits = ($profile_data['sex'] == 1) ? $male_outfits : $female_outfits;
-						$outfit_list = array();
-						$outfit_rows = COUNT($featured_outfits);
-						$outfit_columns = COUNT($featured_outfits[0]);
-
-						foreach ($featured_outfits as $row) {
-							if (COUNT($row) > $outfit_columns) {
-								$outfit_columns = COUNT($row);
-							}
-							foreach ($row as $column) {
-								$outfit_list[] = $column;
-							}
-						}
-
-						$highest_outfit_id = MAX($outfit_list);
-						$outfit_storage_max = $outfit_storage + $highest_outfit_id + 1;
-
-						$player_outfits = array();
-						$storage_sql = mysql_select_multi("
-							SELECT `key`, `value`
-							FROM `player_storage`
-							WHERE `player_id`={$user_id}
-							AND `key` > {$outfit_storage}
-							AND `key` < {$outfit_storage_max}
-						");
-						if ($storage_sql !== false && !empty($storage_sql)) {
-							foreach ($storage_sql as $row) {
-								$player_outfits[$row['key']] = $row['value'];
-							}
-						}
-
-						$aquired_outfits = array();
-						foreach ($outfit_list as $outfit_id) {
-							$outfit_key = $outfit_storage + $outfit_id;
-							if (isset($player_outfits[$outfit_key]) && $player_outfits[$outfit_key] == 3) {
-								$aquired_outfits[$outfit_id] = true;
-							}
-						}
 						?>
-						<td colspan="2" id="piv">
-							<div id="piv_flex">
-
-								<?php if ($config['EQ_shower']['equipment']): ?>
-									<div id="piv_i">
-										<img class="bg" src="/engine/img/outfit.png">
-										<div id="piv_lifebar"></div><div id="piv_lifetext"><span><?php echo $playerstats['health']; ?></span></div>
-										<div id="piv_manabar"></div><div id="piv_manatext"><span><?php echo $playerstats['mana']; ?></span></div>
-										<?php if ($PEQ !== false && !empty($PEQ)): foreach($PEQ as $item): ?>
-											<div class="itm itm-<?php echo $item['pid']; ?>">
-												<img src="<?php echo "http://{$imageServer}/".$item['itemtype'].".{$imageType}"; ?>">
-											</div>
-										<?php endforeach; endif; ?>
-										<span id="piv_cap">Cap:<br><?php echo $playerstats['cap']; ?></span>
-										<?php if ($loadOutfits): ?>
-											<div class="inventory_outfit">
-												<img src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $profile_data['looktype']; ?>&addons=<?php echo $profile_data['lookaddons']; ?>&head=<?php echo $profile_data['lookhead']; ?>&body=<?php echo $profile_data['lookbody']; ?>&legs=<?php echo $profile_data['looklegs']; ?>&feet=<?php echo $profile_data['lookfeet']; ?>" alt="img">
-											</div>
-										<?php endif; ?>
-									</div>
+						<div id="characterProfileTable" class="cp-profile-shell">
+							<div class="cp-profile-rebuild">
+								<?php if ($deletion_time !== false): ?>
+									<div class="cp-alert"><?= t('char.flagged_delete2') ?> <?php echo htmlspecialchars((string)$deletion_time['time'], ENT_QUOTES, 'UTF-8'); ?>.</div>
 								<?php endif; ?>
 
-								<?php if ($config['EQ_shower']['skills']): ?>
-									<div id="piv_s">
-										<img class="bg" src="/engine/img/skillsbackground.png">
-										<span id="s_exp" class="txt"><?php echo $playerstats['experience']; ?></span>
-										<span id="s_lvl" class="txt"><?php echo $playerstats['level']; ?></span>
-										<span id="s_hp" class="txt"><?php echo number_format($playerstats['health'],0,'',','); ?></span>
-										<span id="s_mp" class="txt"><?php echo number_format($playerstats['mana'],0,'',','); ?></span>
-										<span id="s_soul" class="txt"><?php echo $playerstats['soul']; ?></span>
-										<span id="s_cap" class="txt"><?php echo number_format($playerstats['cap'],0,'',','); ?></span>
-										<span id="s_stamina" class="txt"><?php echo $playerstats['stamina']; ?></span>
-										<span id="s_maglevel" class="txt"><?php echo $playerstats['maglevel']; ?></span>
-										<span id="s_skill_fist" class="txt"><?php echo $playerstats['skill_fist']; ?></span>
-										<span id="s_skill_club" class="txt"><?php echo $playerstats['skill_club']; ?></span>
-										<span id="s_skill_sword" class="txt"><?php echo $playerstats['skill_sword']; ?></span>
-										<span id="s_skill_axe" class="txt"><?php echo $playerstats['skill_axe']; ?></span>
-										<span id="s_skill_dist" class="txt"><?php echo $playerstats['skill_dist']; ?></span>
-										<span id="s_skill_shielding" class="txt"><?php echo $playerstats['skill_shielding']; ?></span>
-										<span id="s_skill_fishing" class="txt"><?php echo $playerstats['skill_fishing']; ?></span>
-									</div>
-								<?php endif; ?>
-
-								<?php if ($config['EQ_shower']['outfits']): ?>
-									<div id="piv_o">
-										<div class="bg">
-											<div class="bg_t">
-												<div class="t_m"></div>
-												<div class="t_l"></div>
-												<div class="t_r"></div>
+								<div class="cp-profile-top">
+									<section class="cp-panel cp-info-panel">
+										<header class="cp-panel-head">
+											<h2>Character Information</h2>
+										</header>
+										<div class="cp-info-list">
+											<div class="cp-info-row">
+												<span>Name</span>
+												<strong><?php echo htmlspecialchars($profile_data['name'], ENT_QUOTES, 'UTF-8'); ?> <em class="cp-status cp-status--<?php echo $profile_data['online'] ? 'online' : 'offline'; ?>"><?php echo $profile_data['online'] ? 'ON' : 'OFF'; ?></em></strong>
 											</div>
-											<div class="bg_m">
-												<div class="m_l"></div>
-												<div class="m_m"></div>
-												<div class="m_r"></div>
+											<?php if ($position !== ''): ?>
+												<div class="cp-info-row">
+													<span><?= t('char.position') ?></span>
+													<strong><?php echo htmlspecialchars($position, ENT_QUOTES, 'UTF-8'); ?></strong>
+												</div>
+											<?php endif; ?>
+											<?php if ($profile_flag !== ''): ?>
+												<div class="cp-info-row">
+													<span>Country</span>
+													<strong><?php echo strtoupper(htmlspecialchars($profile_flag, ENT_QUOTES, 'UTF-8')); ?> <img class="cp-flag" src="<?php echo htmlspecialchars($flags['server'] . '/' . $profile_flag . '.png', ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($profile_flag, ENT_QUOTES, 'UTF-8'); ?>"></strong>
+												</div>
+											<?php endif; ?>
+											<div class="cp-info-row">
+												<span>Sex</span>
+												<strong><?php echo ($profile_data['sex'] == 1) ? 'male' : 'female'; ?></strong>
 											</div>
-											<div class="bg_b">
-												<div class="b_m"></div>
-												<div class="b_l"></div>
-												<div class="b_r"></div>
+											<div class="cp-info-row">
+												<span><?= t('common.vocation') ?></span>
+												<strong><?php echo htmlspecialchars(vocation_id_to_name($profile_data['vocation']), ENT_QUOTES, 'UTF-8'); ?></strong>
+											</div>
+											<div class="cp-info-row">
+												<span><?= t('common.level') ?></span>
+												<strong><?php echo (int)$profile_data['level']; ?></strong>
+											</div>
+											<?php if ($config['Ach']): ?>
+												<div class="cp-info-row">
+													<span><?= t('char.ach_points') ?></span>
+													<strong><?php echo (int)($achievementPoints['sum'] ?? 0); ?></strong>
+												</div>
+											<?php endif; ?>
+											<div class="cp-info-row">
+												<span>Residence</span>
+												<strong><?php echo htmlspecialchars($config['towns'][$profile_data['town_id']] ?? (string)$profile_data['town_id'], ENT_QUOTES, 'UTF-8'); ?></strong>
+											</div>
+											<?php if (!empty($profile_houses)): ?>
+												<div class="cp-info-row">
+													<span>House</span>
+													<strong><?php echo htmlspecialchars(implode(', ', $profile_houses), ENT_QUOTES, 'UTF-8'); ?></strong>
+												</div>
+											<?php endif; ?>
+											<?php if ($guild_exist): ?>
+												<div class="cp-info-row">
+													<span>Guild</span>
+													<strong><?php echo htmlspecialchars($guild['rank_name'], ENT_QUOTES, 'UTF-8'); ?> of <a href="guilds.php?name=<?php echo urlencode($guild_name); ?>"><?php echo htmlspecialchars($guild_name, ENT_QUOTES, 'UTF-8'); ?></a></strong>
+												</div>
+											<?php endif; ?>
+											<div class="cp-info-row">
+												<span><?= t('char.last_login') ?></span>
+												<strong><?php echo ($profile_data['lastlogin'] != 0) ? htmlspecialchars(getClock($profile_data['lastlogin'], true, true), ENT_QUOTES, 'UTF-8') : 'Never.'; ?></strong>
+											</div>
+											<div class="cp-info-row">
+												<span>Created</span>
+												<strong><?php echo htmlspecialchars(getClock($profile_znote_data['created'], true), ENT_QUOTES, 'UTF-8'); ?></strong>
+											</div>
+											<div class="cp-info-row">
+												<span>Account Status</span>
+												<strong><?php echo htmlspecialchars($account_status, ENT_QUOTES, 'UTF-8'); ?></strong>
 											</div>
 										</div>
-										<div id="piv_o_container">
-											<?php foreach ($featured_outfits as $row): foreach($row as $outfit_id): $g = (isset($aquired_outfits[$outfit_id])) ? "" : "grayimg"; ?>
-												<img class="o <?php echo $g; ?>" src="<?php echo $outfit_server . "?id=" . $outfit_id; ?>&addons=3&head=0&body=0&legs=0&feet=0">
-											<?php endforeach; endforeach; ?>
+									</section>
+
+									<?php if ($config['EQ_shower']['equipment']): ?>
+										<section class="cp-panel cp-equipment-panel">
+											<header class="cp-panel-head">
+												<h2>Equipment</h2>
+											</header>
+											<div class="cp-equipment-stage">
+												<?php if ($loadOutfits && $current_outfit_src !== ''): ?>
+													<div class="cp-current-outfit">
+														<img src="<?php echo htmlspecialchars($current_outfit_src, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($profile_data['name'], ENT_QUOTES, 'UTF-8'); ?>">
+													</div>
+												<?php endif; ?>
+												<div id="cp_equipment_board">
+													<img class="cp-equipment-bg" src="/engine/img/outfit.png" alt="">
+													<?php if ($PEQ !== false && !empty($PEQ)): foreach($PEQ as $item): ?>
+														<div class="itm itm-<?php echo (int)$item['pid']; ?>">
+															<img class="cp-slot-empty" src="/engine/img/empty.png" alt="">
+															<img class="cp-slot-item" src="<?php echo htmlspecialchars("http://{$imageServer}/" . (int)$item['itemtype'] . ".{$imageType}", ENT_QUOTES, 'UTF-8'); ?>" alt="">
+														</div>
+													<?php endforeach; endif; ?>
+												</div>
+												<div class="cp-equipment-meta">
+													<span>Soul <strong><?php echo (int)$playerstats['soul']; ?></strong></span>
+													<span>Cap <strong><?php echo number_format((int)$playerstats['cap'],0,'',','); ?></strong></span>
+												</div>
+											</div>
+										</section>
+									<?php endif; ?>
+								</div>
+
+								<section class="cp-panel cp-details-panel">
+									<header class="cp-panel-head">
+										<h2>Character Details</h2>
+									</header>
+									<div class="cp-bars">
+										<div class="cp-bar-block">
+											<div class="cp-bar-label"><span>Health</span><strong><?php echo number_format((int)$playerstats['health'],0,'',','); ?> / <?php echo number_format((int)$playerstats['healthmax'],0,'',','); ?></strong></div>
+											<div class="cp-bar-track"><i class="cp-bar-fill cp-bar-fill--health" style="width: <?php echo $health_percent; ?>%;"></i></div>
+										</div>
+										<div class="cp-bar-block">
+											<div class="cp-bar-label"><span>Mana</span><strong><?php echo number_format((int)$playerstats['mana'],0,'',','); ?> / <?php echo number_format((int)$playerstats['manamax'],0,'',','); ?></strong></div>
+											<div class="cp-bar-track"><i class="cp-bar-fill cp-bar-fill--mana" style="width: <?php echo $mana_percent; ?>%;"></i></div>
+										</div>
+										<div class="cp-bar-block">
+											<div class="cp-bar-label"><span><?= t('skill.experience') ?> - <?= t('common.level') ?> <?php echo (int)$playerstats['level']; ?></span><strong><?php echo $level_percent; ?>% to <?php echo (int)$playerstats['level'] + 1; ?></strong></div>
+											<div class="cp-bar-track"><i class="cp-bar-fill cp-bar-fill--experience" style="width: <?php echo $level_percent; ?>%;"></i></div>
+											<div class="cp-exp-note">Need <strong><?php echo number_format($level_needed,0,'',','); ?></strong> experience to reach level <?php echo (int)$playerstats['level'] + 1; ?></div>
 										</div>
 									</div>
-								<?php endif; ?>
+									<?php if ($config['EQ_shower']['skills']): ?>
+										<div class="cp-skill-strip">
+											<?php foreach ($detail_skill_rows as $skill_row): ?>
+												<div class="cp-skill-tile">
+													<span><?php echo htmlspecialchars((string)$skill_row['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+													<strong><?php echo htmlspecialchars((string)$skill_row['value'], ENT_QUOTES, 'UTF-8'); ?></strong>
+												</div>
+											<?php endforeach; ?>
+										</div>
+									<?php endif; ?>
+								</section>
 							</div>
 
 							<!-- Inventory style positioning -->
 							<style type="text/css">
-								#piv {
-									background-image: url("/engine/img/o/m_m.png");
-								}
-								#piv_flex {
-									display: flex;
-									flex-wrap: wrap;
-									/*align-items: center;*/
-									justify-content: space-between;
-									width: 100%;
-									font-family: Verdana,Geneva,sans-serif;
-									font-size: 7.0pt;
-									line-height: 1;
-									color: rgb(201,201,201);
-								}
-								#piv_i, #piv_s, #piv_o {
-									position: relative;
-								}
-
-								#piv_i {
-									width: 126px;
-									height: 207px;
-								}
-								#piv_s {
-									width: 184px;
-									height: 232px;
-								}
-								#piv_o {
-									width: <?php echo 16 + $outfit_columns * 40; ?>px;
-									height: <?php echo 29 + $outfit_rows * 33; ?>px;
-								}
-								#piv_flex img {
-									position: absolute;
-									bottom:  0;
-									right:  0;
-								}
-								#piv_i .inventory_outfit {
-									position: absolute;
-									top: 130px;
-									left: -24px;
-									width: 64px;
-									height: 64px;
-								}
-								#piv_lifebar {
-									position: absolute;
-									border-radius: 6px;
-									top: 6px;
-									left: 14px;
-									height: 11px;
-									/*width: 95px;*/
-									width: <?php echo $bar_health; ?>px;
-									background-image: url("/engine/img/lifebarra.png");
-								}
-								#piv_manabar {
-									position: absolute;
-									border-radius: 6px;
-									top: 19px;
-									left: 14px;
-									height: 11px;
-									/*width: 95px;*/
-									width: <?php echo $bar_mana; ?>px;
-									background-image: url("/engine/img/manabar.png");
-								}
-								#piv_lifetext,
-								#piv_manatext {
-									position: absolute;
+								#characterProfileTable {
+									background: transparent !important;
+									border: 0 !important;
+									box-shadow: none !important;
+									overflow: visible !important;
 									display: block;
-									left: 15px;
-									width: <?php echo $bar_length; ?>px;
+									width: 100%;
+									max-width: 100%;
+									margin: 0 0 16px;
+								}
+								.cp-profile-rebuild {
+									--cp-border: var(--s-border, rgba(255, 255, 255, .16));
+									--cp-border-strong: var(--s-border2, rgba(255, 255, 255, .28));
+									--cp-text: var(--s-text, currentColor);
+									--cp-muted: var(--s-muted, currentColor);
+									--cp-accent: var(--s-gold, #f0c028);
+									--cp-panel-bg: var(--profile-panel-bg, transparent);
+									color: var(--cp-text);
+								}
+								.cp-profile-top {
+									display: grid;
+									grid-template-columns: minmax(280px, 1fr) minmax(300px, 1fr);
+									gap: 16px;
+									align-items: stretch;
+								}
+								.cp-panel {
+									position: relative;
+									min-width: 0;
+									border: 1px solid var(--cp-border);
+									border-radius: 10px;
+									background: var(--cp-panel-bg);
+									overflow: hidden;
+								}
+								.cp-panel-head {
+									display: flex;
+									align-items: center;
+									min-height: 46px;
+									padding: 0 16px;
+									border-bottom: 1px solid var(--cp-border);
+									background: transparent;
+								}
+								.cp-panel-head h2 {
+									margin: 0;
+									color: inherit;
+									font-size: 15px;
+									font-weight: 800;
+									letter-spacing: 0;
+								}
+								.cp-info-list {
+									padding: 12px 16px 16px;
+								}
+								.cp-info-row {
+									display: grid;
+									grid-template-columns: minmax(120px, 42%) 1fr;
+									gap: 14px;
+									align-items: center;
+									min-height: 39px;
+									border-bottom: 1px solid var(--cp-border);
+								}
+								.cp-info-row:last-child {
+									border-bottom: 0;
+								}
+								.cp-info-row > span {
+									color: var(--cp-muted);
+									font-weight: 800;
+								}
+								.cp-info-row > strong {
+									display: flex;
+									align-items: center;
+									gap: 6px;
+									min-width: 0;
+									color: inherit;
+									font-weight: 700;
+								}
+								.cp-flag {
+									display: inline-block;
+									width: auto;
+									height: 11px;
+									max-width: none;
+								}
+								.cp-status {
+									color: #ff3b3b;
+									font-size: 9px;
+									font-style: normal;
+									font-weight: 900;
+								}
+								.cp-status--online {
+									color: #35d27f;
+								}
+								.cp-alert {
+									margin-bottom: 12px;
+									padding: 10px 14px;
+									border: 1px solid var(--cp-border-strong);
+									border-left: 3px solid #ff3b3b;
+									border-radius: 8px;
+								}
+								.cp-equipment-stage {
+									min-height: 390px;
+									padding: 12px 16px 28px;
+									display: flex;
+									flex-direction: column;
+									align-items: center;
+									justify-content: center;
+								}
+								.cp-current-outfit {
+									width: 100%;
+									height: 88px;
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									margin-bottom: 24px;
+									position: relative;
+									z-index: 2;
+								}
+								.cp-current-outfit img {
+									width: 96px;
+									height: 96px;
+									max-width: 96px;
+									max-height: 96px;
+									object-fit: contain;
+									object-position: center;
+									transform: translateX(-22px);
+									filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .42));
+								}
+								#cp_equipment_board {
+									--cp-equipped-slot-width: 50px;
+									--cp-equipped-slot-height: 51px;
+									--cp-equipped-item-size: 48px;
+									position: relative;
+									width: min(168px, 100%);
+									aspect-ratio: 3 / 4;
+								}
+								#cp_equipment_board .cp-equipment-bg {
+									width: 100%;
+									height: 100%;
+									object-fit: contain;
+									max-width: none;
+								}
+								#cp_equipment_board .itm {
+									position: absolute;
+									width: var(--cp-equipped-slot-width);
+									height: var(--cp-equipped-slot-height);
+									display: flex;
+									align-items: center;
+									justify-content: center;
+									transform: translate(-50%, -50%);
+								}
+								#cp_equipment_board .itm img {
+									position: absolute !important;
+									object-fit: contain;
+								}
+								#cp_equipment_board .cp-slot-empty {
+									left: 50%;
+									top: 50%;
+									z-index: 1;
+									width: var(--cp-equipped-slot-width);
+									height: var(--cp-equipped-slot-height);
+									max-width: var(--cp-equipped-slot-width);
+									max-height: var(--cp-equipped-slot-height);
+									transform: translate(-50%, -50%);
+								}
+								#cp_equipment_board .cp-slot-item {
+									left: 50%;
+									top: 50%;
+									z-index: 2;
+									width: var(--cp-equipped-item-size);
+									height: var(--cp-equipped-item-size);
+									max-width: var(--cp-equipped-item-size);
+									max-height: var(--cp-equipped-item-size);
+									transform: translate(-50%, -50%);
+									transition: transform .16s ease, filter .16s ease;
+								}
+								#cp_equipment_board .itm:hover .cp-slot-item {
+									transform: translate(-50%, calc(-50% - 4px));
+									filter: drop-shadow(0 7px 9px rgba(0, 0, 0, .5));
+								}
+								#cp_equipment_board .itm-1 { left: 50%; top: 18.04%; }
+								#cp_equipment_board .itm-2 { left: 20.17%; top: 18.04%; }
+								#cp_equipment_board .itm-3 { left: 79.67%; top: 18.04%; }
+								#cp_equipment_board .itm-4 { left: 50%; top: 40.02%; }
+								#cp_equipment_board .itm-5 { left: 79.67%; top: 40.02%; }
+								#cp_equipment_board .itm-6 { left: 20.17%; top: 40.02%; }
+								#cp_equipment_board .itm-7 { left: 50%; top: 61.56%; }
+								#cp_equipment_board .itm-8 { left: 50%; top: 83.25%; }
+								#cp_equipment_board .itm-9 { left: 20.17%; top: 61.56%; }
+								#cp_equipment_board .itm-10 { left: 79.67%; top: 61.56%; }
+								.cp-equipment-meta {
+									display: flex;
+									justify-content: center;
+									gap: 28px;
+									margin-top: 24px;
+									color: var(--cp-muted);
+									font-weight: 700;
+								}
+								.cp-equipment-meta strong {
+									color: inherit;
+								}
+								.cp-details-panel {
+									margin-top: 10px;
+								}
+								.cp-bars {
+									padding: 14px 16px 4px;
+								}
+								.cp-bar-block {
+									margin-bottom: 14px;
+								}
+								.cp-bar-label {
+									display: flex;
+									justify-content: space-between;
+									gap: 16px;
+									margin-bottom: 7px;
+									font-weight: 800;
+								}
+								.cp-bar-label strong {
+									color: inherit;
+								}
+								.cp-exp-note strong {
+									color: var(--cp-accent);
+								}
+								.cp-bar-track {
+									height: 12px;
+									border: 1px solid var(--cp-border);
+									border-radius: 999px;
+									background: var(--cp-track-bg, transparent);
+									overflow: hidden;
+								}
+								.cp-bar-fill {
+									display: block;
+									height: 100%;
+									border-radius: inherit;
+								}
+								.cp-bar-fill--health { background: #bd2b2b; }
+								.cp-bar-fill--mana { background: #2f84c9; }
+								.cp-bar-fill--experience { background: var(--cp-accent); }
+								.cp-exp-note {
+									margin-top: 6px;
+									color: var(--cp-muted);
+									font-size: 12px;
+								}
+								.cp-skill-strip {
+									display: grid;
+									grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+									gap: 8px;
+									padding: 0 16px 16px;
+								}
+								.cp-skill-tile {
+									min-height: 84px;
+									padding: 10px 8px;
+									border: 1px solid var(--cp-border);
+									border-top: 2px solid var(--cp-border-strong);
+									border-radius: 8px;
+									background: transparent;
 									text-align: center;
+									overflow: hidden;
 								}
-								#piv_lifetext {
-									top: 7px;
+								.cp-skill-tile span {
+									display: block;
+									min-height: 28px;
+									color: var(--cp-muted);
+									font-size: 10px;
+									font-weight: 800;
+									line-height: 1.25;
+									text-transform: uppercase;
 								}
-								#piv_manatext {
-									top: 20px;
+								.cp-skill-tile strong {
+									display: block;
+									margin-top: 4px;
+									color: inherit;
+									font-size: 18px;
+									font-weight: 900;
 								}
-								#piv_lifetext span,
-								#piv_manatext span {
-									background-color: rgba(0,0,0,0.7);
-									border-radius: 3px;
+								@media (max-width: 980px) {
+									.cp-profile-top {
+										grid-template-columns: 1fr;
+									}
 								}
-								#piv_flex .itm { 
-									background-image: url("/engine/img/bg.png"); 
-									width: 32px; 
-									height: 32px; 
-									position: absolute; 
-								}
-								#piv_flex .itm-1 { left: 48px; top: 39px; }
-								#piv_flex .itm-2 { left: 11px; top: 53px; }
-								#piv_flex .itm-3 { left: 85px; top: 53px; }
-								#piv_flex .itm-4 { left: 48px; top: 76px; }
-								#piv_flex .itm-5 { left: 85px; top: 90px; }
-								#piv_flex .itm-6 { left: 11px; top: 90px; }
-								#piv_flex .itm-7 { left: 48px; top: 113px; }
-								#piv_flex .itm-8 { left: 48px; top: 150px; }
-								#piv_flex .itm-9 { left: 11px; top: 127px; }
-								#piv_flex .itm-10 { left: 85px; top: 127px; }
-								#piv_cap {
-									position: absolute;
-									top: 162px;
-									left: 85px;
-									min-width: 32px;
-									text-align: center;
-								}
-
-								#piv_s .txt {
-									position: absolute;
-								}
-								#s_exp 				{ right: 22px; top: 16px; }
-								#s_lvl 				{ right: 22px; top: 30px; }
-								#s_hp 				{ right: 22px; top: 44px; }
-								#s_mp 				{ right: 22px; top: 58px; }
-								#s_soul 			{ right: 22px; top: 71px; }
-								#s_cap 				{ right: 22px; top: 86px; }
-								#s_stamina 			{ right: 22px; top: 100px; }
-								#s_maglevel 		{ right: 22px; top: 114px; }
-								#s_skill_fist 		{ right: 22px; top: 132px; }
-								#s_skill_club 		{ right: 22px; top: 146px; }
-								#s_skill_sword 		{ right: 22px; top: 160px; }
-								#s_skill_axe 		{ right: 22px; top: 174px; }
-								#s_skill_dist 		{ right: 22px; top: 188px; }
-								#s_skill_shielding 	{ right: 22px; top: 202px; }
-								#s_skill_fishing 	{ right: 22px; top: 215px; }
-
-								/* Dynamically render background container size for outfits */
-								#piv_o .bg {
-									width: inherit;
-									height: inherit;
-									position: absolute;
-									left: 0;
-									top: 0;
-								}
-								#piv_o .bg_t {
-									height: 21px;
-									width: 100%;
-								}
-								#piv_o .bg_m {
-									width: 100%;
-									height: <?php echo $outfit_rows * 33; ?>px;
-								}
-								#piv_o .t_l {
-									position: absolute;
-									left: 0;
-									top: 0;
-									background-image: url("/engine/img/o/t_l.png");
-									width: 8px;
-									height: 21px;
-								}
-								#piv_o .t_m {
-									position: absolute;
-									right: 0;
-									top: 0;
-									background-image: url("/engine/img/o/t_m.png");
-									width: 100%;
-									height: 21px;
-								}
-								#piv_o .t_r {
-									position: absolute;
-									right: 0;
-									top: 0;
-									background-image: url("/engine/img/o/t_r.png");
-									width: 50px;
-									height: 21px;
-								}
-								#piv_o .m_l {
-									background-image: url("/engine/img/o/m_l.png");
-									width: 8px;
-									height: inherit;
-									float: left;
-								}
-								#piv_o .m_m {
-									background-image: url("/engine/img/o/m_m.png");
-									width: calc(100% - 16px);
-									height: inherit;
-									float: left;
-								}
-								#piv_o .m_r {
-									background-image: url("/engine/img/o/m_r.png");
-									width: 8px;
-									height: inherit;
-									float: left;
-								}
-								#piv_o .b_l {
-									position: absolute;
-									left: 0;
-									bottom: 0;
-									background-image: url("/engine/img/o/b_l.png");
-									width: 8px;
-									height: 8px;
-								}
-								#piv_o .b_m {
-									position: absolute;
-									right: 0;
-									bottom: 0;
-									background-image: url("/engine/img/o/b_m.png");
-									width: 100%;
-									height: 8px;
-								}
-								#piv_o .b_r {
-									position: absolute;
-									right: 0;
-									bottom: 0;
-									background-image: url("/engine/img/o/b_r.png");
-									width: 8px;
-									height: 8px;
+								@media (max-width: 520px) {
+									.cp-info-row {
+										grid-template-columns: 1fr;
+										gap: 2px;
+										padding: 8px 0;
+									}
+									.cp-bar-label {
+										flex-direction: column;
+										gap: 2px;
+									}
+									.cp-equipment-stage {
+										padding-left: 10px;
+										padding-right: 10px;
+									}
 								}
 
-								/* Render outfit player sprites */
-								#piv_o_container {
-									height: inherit;
-									width: inherit;
-								}
-								#piv_o_container .o {
-									position: absolute;
-									right: 0;
-									bottom: 0;
-								}
-
-								/* Outfit column positions */
-								<?php for ($column = 1; $column <= $outfit_columns; $column++): ?>
-									#piv_o_container .o:nth-child(<?php echo $outfit_columns.'n+'.$column;?>) { right: <?php echo 10 + 40 * ($outfit_columns-$column); ?>px; }
-								<?php endfor; ?>
-
-								/* Outfit row positions */
-								<?php for ($row = 1; $row <= $outfit_rows; $row++): ?>
-									#piv_o_container .o:nth-child(n+<?php echo $outfit_columns * ($row-1)+1; ?>):nth-child(-n+<?php echo $outfit_columns*$row; ?>) { bottom: <?php echo 10 + 33 * ($outfit_rows-$row); ?>px; }
-								<?php endfor; ?>
-
-								#piv_o_container .o.grayimg {
-									filter: none;
-									-webkit-filter: grayscale(100%);
-									-moz-filter: grayscale(100%);
-									-ms-filter: grayscale(100%);
-									-o-filter: grayscale(100%);
-									opacity: .5;
-									filter: alpha(opacity=50);
-									margin-left: -25pt;
-									margin-top: -25px;
-								}
 							</style>
-						</td>
-					</tr>
-				<?php endif; ?>
-				<!-- End EQ shower -->
-			</tbody>
-		</table>
+						</div>
+		<!-- End profile -->
 
 		<!-- Player Comment -->
 		<?php if (!empty($profile_znote_data['comment'])): ?>
