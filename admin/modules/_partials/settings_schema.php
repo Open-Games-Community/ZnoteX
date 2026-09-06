@@ -133,9 +133,19 @@ return array(
 				'type'  => 'bool',
 				'help'  => t_default('acp.set.items.help', 'Shows items.php and its menu link.'),
 			),
+			'queststatus_enabled' => array(
+				'label' => t_default('acp.set.queststatus_enabled.label', 'Quest Status page'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.queststatus_enabled.help', 'Shows queststatus.php and its menu link. Off by default; edit the quest list in queststatus.php.'),
+			),
 			'allowSubPages' => array(
 				'label' => t_default('acp.set.allowSubPages.label', 'Allow theme sub pages'),
 				'type'  => 'bool',
+			),
+			'contact_info' => array(
+				'label' => t_default('acp.set.contact_info.label', 'Contact page text'),
+				'type'  => 'textarea',
+				'help'  => t_default('acp.set.contact_info.help', 'Shown on contact.php. Plain text, line breaks are kept. Leave empty to use the translation default.'),
 			),
 		),
 

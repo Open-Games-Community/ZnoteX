@@ -1,0 +1,9 @@
+Add to data/talkactions/talkactions.xml:
+
+<talkaction words="!shop" script="znoteshop.lua"/>
+
+Then put znoteshop.lua in data/talkactions/scripts/ and restart the server.
+
+OTHire (7.72) has no mounts or addons, so only shop order types 1 (items) and
+5 (outfit look type) are delivered in game. Everything else is handled by the
+website.

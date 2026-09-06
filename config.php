@@ -483,7 +483,11 @@
 	$config['UseChangelogTicker'] = true;
 
 	$config['credits_enabled'] = true;
-	
+
+	$config['queststatus_enabled'] = false;
+
+	$config['contact_info'] = '';
+
 	// Highscore configuration
 	$config['highscore'] = array(
 		'rows' => 100,

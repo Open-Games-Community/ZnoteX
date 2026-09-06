@@ -1,54 +1,69 @@
-<table id="questTable">
-	<?php
-	$completed = '<font color="green">[Completed]</font>';
-	$notstarted = '';
-	function Progress($min, $max, $design = '<font color="orange">[x%]</font>') {
-		$design = explode("x%",$design);
-		$percent = ($min / $max) * 100;
-		return $design[0] . $percent . $design[1];
-	}
-	$quests = array(
-		// Simple quests
-		'Bearslayer' => 1050,
-		'Sword Quest' => 1337,
+<?php require_once 'engine/init.php';
 
-		// Advanced quest with progress par:
-		'Postman Quest' => array(
-			1338,
-			3,
-		),
-	);
-	?>
+if (empty($config['queststatus_enabled'])) {
+	header('Location: index.php');
+	exit();
+}
+
+protect_page();
+theme_open();
+
+$characters = user_character_list($session_user_id);
+$selected = isset($_GET['name']) ? htmlspecialchars($_GET['name']) : false;
+
+$user_id = false;
+foreach ($characters as $char) {
+	if ($selected === false) { $selected = $char['name']; }
+	if ($char['name'] === $selected) { $user_id = (int)$char['id']; }
+}
+
+$quests = array(
+	'Bearslayer' => 1050,
+	'Sword Quest' => 1337,
+	'Postman Quest' => array(1338, 3),
+);
+
+$completed = '<font color="green">[' . t('quest.completed') . ']</font>';
+$notstarted = '';
+
+function queststatus_progress($min, $max) {
+	$percent = $max > 0 ? round(($min / $max) * 100) : 0;
+	return '<font color="orange">[' . $percent . '%]</font>';
+}
+?>
+<?php if ($characters !== false && count($characters) > 0): ?>
+<form method="get" action="queststatus.php" style="margin-bottom:10px;">
+	<select name="name" onchange="this.form.submit();">
+		<?php foreach ($characters as $char): ?>
+			<option value="<?= htmlspecialchars($char['name']) ?>"<?= $char['name'] === $selected ? ' selected' : '' ?>><?= htmlspecialchars($char['name']) ?></option>
+		<?php endforeach; ?>
+	</select>
+	<noscript><input type="submit" value="Go"></noscript>
+</form>
+<table id="questTable">
 	<tr class="yellow">
 		<td><?= t('quest.name') ?></td>
-		<td>Status</td>
+		<td><?= t('quest.status') ?></td>
 	</tr>
-	<?php
-	// Rolling through quests
-	foreach ($quests as $key => $quest) {
-
-		// Is quest NOT an array (advanced quest?)
+	<?php foreach ($quests as $key => $quest):
 		if (!is_array($quest)) {
-			// Query to find quest results
-			$query = mysql_select_single("SELECT `value` FROM `player_storage` WHERE `key`='$quest' AND `player_id`='$user_id' AND `value`='1' LIMIT 1;");
-
-			if ($query !== false) $quest = $completed;
-			else $quest = $notstarted;
-
+			$query = mysql_select_single("SELECT `value` FROM `player_storage` WHERE `key`='" . (int)$quest . "' AND `player_id`='" . (int)$user_id . "' AND `value`='1' LIMIT 1;");
+			$quest = ($query !== false) ? $completed : $notstarted;
 		} else {
-			$query = mysql_select_single("SELECT `value` FROM `player_storage` WHERE `key`='".$quest[0]."' AND `player_id`='$user_id' AND `value`>'0' LIMIT 1;");
+			$query = mysql_select_single("SELECT `value` FROM `player_storage` WHERE `key`='" . (int)$quest[0] . "' AND `player_id`='" . (int)$user_id . "' AND `value`>'0' LIMIT 1;");
 			if (!$query) $quest = $notstarted;
-			else {
-				if ($query['value'] >= $quest[1]) $quest = $completed;
-				else $quest = Progress($query['value'], $quest[1]);
-			}
+			elseif ($query['value'] >= $quest[1]) $quest = $completed;
+			else $quest = queststatus_progress($query['value'], $quest[1]);
 		}
 		?>
 		<tr>
-			<td><?php echo $key; ?></td>
-			<td><?php echo $quest; ?></td>
+			<td><?= $key ?></td>
+			<td><?= $quest ?></td>
 		</tr>
-		<?php
-	}
-	?>
+	<?php endforeach; ?>
 </table>
+<?php else: ?>
+<p><?= t('quest.no_characters') ?></p>
+<?php endif; ?>
+<?php
+theme_close();
