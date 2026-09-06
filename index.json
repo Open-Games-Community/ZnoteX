@@ -2,9 +2,14 @@
   {
     "key": "tibiacom_v1",
     "name": "TibiaCOM v1",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "author": "Alex - opengamescommunity.com",
     "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
+    "update": [
+      "Improved character profile compatibility.",
+      "Added visible profile blocks and separators.",
+      "Fixed responsive skill tiles on narrow layouts."
+    ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.zip",
     "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/tibiacom_v1",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.png"
@@ -12,9 +17,14 @@
   {
     "key": "old_school",
     "name": "Old School",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "Hemrenus321",
     "description": "old_school theme converted by alexv45 for ZnoteX.",
+    "update": [
+      "Uses the shared modern character profile.",
+      "Added parchment-friendly profile blocks and borders.",
+      "Fixed layout override so Name, Level and Equipment display correctly."
+    ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.zip",
     "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/old_school",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.png"
