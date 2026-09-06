@@ -12,5 +12,20 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.zip",
     "url": "https://opengamescommunity.com/resources/plugin-shop-coupons.1030/"
+  },
+  {
+    "key": "referral_system",
+    "name": "Referral System",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Account referral codes with registration tracking, automatic points and premium rewards, My Account injection and an admin overview.",
+    "update": [
+      "My Account injection now works with themes that nest the account heading (e.g. Eclipse).",
+      "Admin settings for referrer/new account points and premium days.",
+      "Referral ledger with basic same-IP abuse protection."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.zip",
+    "url": "https://opengamescommunity.com/resources/referral.1031/"
   }
 ]
