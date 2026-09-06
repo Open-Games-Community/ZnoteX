@@ -134,6 +134,8 @@ function menu_url_available(string $url): bool {
 			return !empty($config['items']);
 		case 'credits.php':
 			return $config['credits_enabled'] ?? true;
+		case 'queststatus.php':
+			return !empty($config['queststatus_enabled']);
 		default:
 			return true;
 	}
