@@ -1,6 +1,6 @@
 <!-- Tell the user to use the aside menu -->
-<h1 class="toright">Login</h1>
-<p class="toright">Please fill the login form in this aside bar to login. &rarr;</p>
+<h1 class="toright"><?= h(t('login.title')) ?></h1>
+<p class="toright"><?= h(t('login.help_text')) ?> &rarr;</p>
 <style type="text/css">
 	/* Align the text to the right of the page. */
 	.toright {

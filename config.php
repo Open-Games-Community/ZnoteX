@@ -482,6 +482,8 @@
 	// Enable or disable changelog ticker in news page.
 	$config['UseChangelogTicker'] = true;
 
+	$config['credits_enabled'] = true;
+	
 	// Highscore configuration
 	$config['highscore'] = array(
 		'rows' => 100,

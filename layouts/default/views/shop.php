@@ -149,7 +149,7 @@ foreach ($shop_list as $key => $offer) {
 					<form action="" method="POST">
 						<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
 						<input type="hidden" name="session" value="<?php echo time(); ?>">
-						<input type="submit" value="  PURCHASE  "  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
+						<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 					</form>
 				</td>
 				<?php endif; ?>
@@ -173,14 +173,14 @@ foreach ($shop_list as $key => $offer) {
 			<?php if ($config['shop']['showImage']):?>
 				<td><img src="http://<?php echo $config['shop']['imageServer']; ?>/<?php echo $offers['itemid']; ?>.<?php echo $config['shop']['imageType']; ?>" alt="img"></td>
 			<?php endif; ?>
-			<td><?php echo $offers['count']; ?> Days</td>
+				<td><?= h(t('shop.days', ['count' => $offers['count']])) ?></td>
 			<td><?php echo $offers['points']; ?></td>
 			<?php if ($loggedin === true): ?>
 			<td>
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
 					<input type="hidden" name="session" value="<?php echo time(); ?>">
-					<input type="submit" value="  PURCHASE  "  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
+					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
 			<?php endif; ?>
@@ -202,7 +202,7 @@ foreach ($shop_list as $key => $offer) {
 		if (COUNT($offers['itemid']) > 2): ?>
 			<tr class="special">
 				<td colspan="2">
-					<p><strong><?= t('shop.error') ?></strong> Outfit offer don't support more than 2 outfits. <?php echo COUNT($offers['itemid']); ?> configured.
+					<p><strong><?= t('shop.error') ?></strong> <?= h(t('shop.outfit_limit_error', ['count' => COUNT($offers['itemid'])])) ?>
 						<br>[<?php echo implode(',', $offers['itemid']); ?>]</p>
 				</td>
 			</tr>
@@ -220,7 +220,7 @@ foreach ($shop_list as $key => $offer) {
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
 					<input type="hidden" name="session" value="<?php echo time(); ?>">
-					<input type="submit" value="  PURCHASE  "  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
+					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
 			<?php endif; ?>
@@ -249,7 +249,7 @@ foreach ($shop_list as $key => $offer) {
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
 					<input type="hidden" name="session" value="<?php echo time(); ?>">
-					<input type="submit" value="  PURCHASE  "  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
+					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
 			<?php endif; ?>
@@ -284,7 +284,7 @@ foreach ($shop_list as $key => $offer) {
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
 					<input type="hidden" name="session" value="<?php echo time(); ?>">
-					<input type="submit" value="  PURCHASE  "  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
+					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
 			<?php endif; ?>

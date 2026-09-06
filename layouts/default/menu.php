@@ -14,10 +14,14 @@
  */
 
 $menuItems = theme_menu_items('main');
+$menuLive = function_exists('theme_menu_available') ? theme_menu_available() : (bool)$menuItems;
+$menuLabel = static function ($value): string {
+	return htmlspecialchars(function_exists('theme_menu_label') ? theme_menu_label((string)$value) : (string)$value, ENT_QUOTES, 'UTF-8');
+};
 
 // A site that has not run the menu migration yet gets the old hardcoded links,
 // so upgrading never leaves someone with no navigation at all.
-$menuFallback = !$menuItems;
+$menuFallback = !$menuLive;
 ?>
 <nav>
 	<div class="container">
@@ -34,7 +38,7 @@ $menuFallback = !$menuItems;
 									<?php if ($item['icon'] !== ''): ?>
 										<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
 									<?php endif; ?>
-									<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+									<?= $menuLabel($item['label']) ?>
 								</span>
 							<?php else: ?>
 								<a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>"
@@ -42,7 +46,7 @@ $menuFallback = !$menuItems;
 									<?php if ($item['icon'] !== ''): ?>
 										<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
 									<?php endif; ?>
-									<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+									<?= $menuLabel($item['label']) ?>
 								</a>
 							<?php endif; ?>
 
@@ -52,7 +56,7 @@ $menuFallback = !$menuItems;
 										<li>
 											<a href="<?= htmlspecialchars($child['url'], ENT_QUOTES, 'UTF-8') ?>"
 											   <?= $child['target'] !== '' ? 'target="' . htmlspecialchars($child['target'], ENT_QUOTES, 'UTF-8') . '" rel="noopener"' : '' ?>>
-												<?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?>
+												<?= $menuLabel($child['label']) ?>
 											</a>
 										</li>
 									<?php endforeach; ?>
@@ -63,12 +67,12 @@ $menuFallback = !$menuItems;
 				</ul>
 			<?php else: ?>
 				<ul>
-					<li><a href="/"><i class="fa fa-home"></i> Home</a></li>
-					<li><a id="accountLink" href="myaccount.php"><i class="fa fa-user-circle"></i> Account</a></li>
-					<li><a href="onlinelist.php"><i class="fa fa-users"></i> Community</a></li>
-					<li><a href="serverinfo.php"><i class="fa fa-book"></i> Library</a></li>
-					<li><a href="support.php"><i class="fa fa-info-circle"></i> Support</a></li>
-					<li><a href="shop.php"><i class="fa fa-shopping-cart"></i> Shop</a></li>
+					<li><a href="/"><i class="fa fa-home"></i> <?= h(t('nav.home')) ?></a></li>
+					<li><a id="accountLink" href="myaccount.php"><i class="fa fa-user-circle"></i> <?= h(t('nav.account')) ?></a></li>
+					<li><a href="onlinelist.php"><i class="fa fa-users"></i> <?= h(t('nav.community')) ?></a></li>
+					<li><a href="serverinfo.php"><i class="fa fa-book"></i> <?= h(t('nav.library')) ?></a></li>
+					<li><a href="support.php"><i class="fa fa-info-circle"></i> <?= h(t('nav.support')) ?></a></li>
+					<li><a href="shop.php"><i class="fa fa-shopping-cart"></i> <?= h(t('nav.shop')) ?></a></li>
 				</ul>
 			<?php endif; ?>
 		</div>
@@ -78,10 +82,10 @@ $menuFallback = !$menuItems;
 			<ul>
 				<?php if (user_logged_in() === true): ?>
 					<li><a href="myaccount.php"><i class="fa fa-user"></i> <?= htmlspecialchars($user_data['name'] ?? '', ENT_QUOTES, 'UTF-8') ?></a></li>
-					<li><a href="logout.php"><i class="fa fa-sign-out"></i> Logout</a></li>
+					<li><a href="logout.php"><i class="fa fa-sign-out"></i> <?= h(t('nav.logout')) ?></a></li>
 				<?php else: ?>
-					<li><a href="#loginContainer" class="modIcon loginBtn"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i> Login</a></li>
-					<li><a href="register.php"><i class="fa fa-key"></i> Register</a></li>
+					<li><a href="#loginContainer" class="modIcon loginBtn"><i class="fa fa-lock"></i><i class="fa fa-unlock"></i> <?= h(t('nav.login')) ?></a></li>
+					<li><a href="register.php"><i class="fa fa-key"></i> <?= h(t('nav.register')) ?></a></li>
 				<?php endif; ?>
 			</ul>
 		</div>

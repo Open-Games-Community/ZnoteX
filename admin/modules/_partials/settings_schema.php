@@ -118,6 +118,21 @@ return array(
 				'label' => t_default('acp.set.UseChangelogTicker.label', 'Changelog ticker on the front page'),
 				'type'  => 'bool',
 			),
+			'credits_enabled' => array(
+				'label' => t_default('acp.set.credits_enabled.label', 'Credits page'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.credits_enabled.help', 'Off hides credits.php and its menu link.'),
+			),
+			'Ach' => array(
+				'label' => t_default('acp.set.Ach.label', 'Achievements page'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.Ach.help', 'Shows achievements.php, its menu link and the achievement block on character profiles. Needs the achievements configured in config.php.'),
+			),
+			'items' => array(
+				'label' => t_default('acp.set.items.label', 'Items page'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.items.help', 'Shows items.php and its menu link.'),
+			),
 			'allowSubPages' => array(
 				'label' => t_default('acp.set.allowSubPages.label', 'Allow theme sub pages'),
 				'type'  => 'bool',

@@ -1258,6 +1258,22 @@ function user_count_online() {
 	return ($online !== false) ? $online['value'] : 0;
 }
 
+// Total number of accounts.
+if (!function_exists('user_count_accounts')) {
+	function user_count_accounts() {
+		$row = mysql_select_single("SELECT COUNT(`id`) AS `value` FROM `accounts`;");
+		return ($row !== false) ? $row['value'] : 0;
+	}
+}
+
+// Total number of characters (players).
+if (!function_exists('user_count_characters')) {
+	function user_count_characters() {
+		$row = mysql_select_single("SELECT COUNT(`id`) AS `value` FROM `players`;");
+		return ($row !== false) ? $row['value'] : 0;
+	}
+}
+
 /* user_character_data (fetches whatever data you want from players table)!
 	Usage:
 	$player = user_data(player_ID, 'name', 'level');

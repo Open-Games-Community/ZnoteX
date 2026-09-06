@@ -95,14 +95,14 @@ $aacQueries = $aacQueries ?? 0;
 			<?php endif; ?>
 			<div class="pull-left">
 				<p>&copy; <?= theme_title() ?>.
-					Page generated in <?= elapsedTime() ?> seconds.
+					<?= h(t('footer.generated_in', ['time' => elapsedTime()])) ?>
 					Q: <?= (int)$aacQueries ?>.
-					Designed By <a href="https://otland.net/members/snavy.155163/" target="_blank" rel="noopener">Snavy</a>.
-					Engine: <a href="credits.php">ZnoteX</a>.
+					<?= h(t('footer.designed_by')) ?> <a href="https://otland.net/members/snavy.155163/" target="_blank" rel="noopener">Snavy</a>.
+					<?= h(t('footer.engine')) ?> <a href="credits.php">ZnoteX</a>.
 				</p>
 			</div>
 			<div class="pull-right">
-				<p>Server date and clock is: <?= getClock(false, true) ?></p>
+				<p><?= h(t('footer.server_clock', ['clock' => getClock(false, true)])) ?></p>
 			</div>
 		</footer>
 

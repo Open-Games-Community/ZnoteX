@@ -44,7 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if ($do === 'delete' && $id > 0) {
 		$entry = mysql_select_single("SELECT `parent_id`, `label` FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
 		if (is_array($entry) && (int)$entry['parent_id'] === 0) {
-			acp_flash_error(t('acp.menu.cat_no_delete'));
+			mysql_delete("DELETE FROM `znote_menu` WHERE `id` = {$id} OR `parent_id` = {$id};");
+			acp_log('menu.delete_category', (string)$entry['label']);
+			acp_flash_success(t('acp.menu.category_deleted'));
 			acp_redirect('menus', array('loc' => $loc));
 		}
 		mysql_delete("DELETE FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
@@ -59,8 +61,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	}
 
 	if ($do === 'move' && $id > 0) {
-		$dir  = ((string)($_POST['dir'] ?? '') === 'up') ? -15 : 15;
-		mysql_update("UPDATE `znote_menu` SET `sort_order` = `sort_order` + ({$dir}) WHERE `id` = {$id} LIMIT 1;");
+		$item = mysql_select_single("
+			SELECT `id`, `parent_id`, `location`
+			FROM `znote_menu`
+			WHERE `id` = {$id}
+			LIMIT 1;
+		");
+		if (is_array($item)) {
+			$siblings = mysql_select_multi("
+				SELECT `id`
+				FROM `znote_menu`
+				WHERE `location` = '" . esc((string)$item['location']) . "'
+				  AND `parent_id` = " . (int)$item['parent_id'] . "
+				ORDER BY `sort_order` ASC, `id` ASC;
+			");
+			if (is_array($siblings)) {
+				$ids  = array_map('intval', array_column($siblings, 'id'));
+				$pos  = array_search($id, $ids, true);
+				$swap = ((string)($_POST['dir'] ?? '') === 'up') ? ((int)$pos - 1) : ((int)$pos + 1);
+
+				if ($pos !== false && isset($ids[$swap])) {
+					$ids[$pos]  = $ids[$swap];
+					$ids[$swap] = $id;
+					foreach ($ids as $index => $rowId) {
+						mysql_update("UPDATE `znote_menu` SET `sort_order` = " . (($index + 1) * 10) . " WHERE `id` = {$rowId} LIMIT 1;");
+					}
+				}
+			}
+		}
 		acp_redirect('menus', array('loc' => $loc));
 	}
 
@@ -103,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		if ($editingCategory) {
 			$parent = 0;
-		} else {
+		} elseif ($parent > 0) {
 			$category = $parent > 0 ? mysql_select_single("
 				SELECT `id`
 				FROM `znote_menu`
@@ -173,6 +201,32 @@ foreach ($entries as $entry) {
 		$parents[(int)$entry['id']] = (string)$entry['label'];
 	}
 }
+
+$topEntries = array();
+$childrenByParent = array();
+foreach ($entries as $entry) {
+	$parentId = (int)$entry['parent_id'];
+	if ($parentId === 0) {
+		$topEntries[] = $entry;
+	} else {
+		$childrenByParent[$parentId][] = $entry;
+	}
+}
+
+$displayEntries = array();
+foreach ($topEntries as $entry) {
+	$displayEntries[] = $entry;
+	foreach ($childrenByParent[(int)$entry['id']] ?? array() as $child) {
+		$displayEntries[] = $child;
+	}
+}
+foreach ($childrenByParent as $parentId => $children) {
+	if (!isset($parents[(int)$parentId]) && (int)$parentId !== (int)($editing['id'] ?? 0)) {
+		foreach ($children as $child) {
+			$displayEntries[] = $child;
+		}
+	}
+}
 ?>
 
 <?php if (!$hasTable): ?>
@@ -207,12 +261,6 @@ foreach ($entries as $entry) {
 			<p><?= t('acp.menu.to_location', ['location' => h($locations[$location])]) ?></p>
 		</header>
 		<div class="acp-card-body">
-			<?php if ($editing === null && !$parents): ?>
-				<div class="acp-flash acp-flash--error">
-					<i class="fa fa-exclamation-triangle"></i>
-					<span><?= t('acp.menu.no_category') ?></span>
-				</div>
-			<?php endif; ?>
 			<form method="post">
 				<?= acp_csrf_field() ?>
 				<input type="hidden" name="do" value="save">
@@ -250,7 +298,7 @@ foreach ($entries as $entry) {
 							<input class="acp-input" id="parent_id" value="<?= h(t('acp.menu.top_level')) ?>" disabled>
 						<?php else: ?>
 							<select class="acp-select" id="parent_id" name="parent_id" required>
-								<option value="" disabled <?= (int)($editing['parent_id'] ?? 0) === 0 ? 'selected' : '' ?>><?= t('acp.menu.choose_category_opt') ?></option>
+								<option value="0" <?= (int)($editing['parent_id'] ?? 0) === 0 ? 'selected' : '' ?>><?= t('acp.menu.top_level') ?></option>
 								<?php foreach ($parents as $pid => $plabel): ?>
 									<option value="<?= $pid ?>" <?= (int)($editing['parent_id'] ?? 0) === $pid ? 'selected' : '' ?>>
 										<?= h($plabel) ?>
@@ -287,7 +335,7 @@ foreach ($entries as $entry) {
 				</div>
 
 				<div class="acp-actions">
-					<button class="acp-btn acp-btn--green" type="submit" <?= $editing === null && !$parents ? 'disabled' : '' ?>>
+					<button class="acp-btn acp-btn--green" type="submit">
 						<i class="fa fa-check"></i> <?= $editing !== null ? t('acp.menu.save_entry') : t('acp.menu.add_entry_btn') ?>
 					</button>
 					<?php if ($editing !== null): ?>
@@ -338,7 +386,7 @@ foreach ($entries as $entry) {
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($entries as $entry):
+						<?php foreach ($displayEntries as $entry):
 							$id     = (int)$entry['id'];
 							$child  = (int)$entry['parent_id'] > 0;
 							$hidden = ((int)$entry['active'] === 0);
@@ -389,15 +437,13 @@ foreach ($entries as $entry) {
 										<i class="fa fa-pencil"></i>
 									</a>
 
-									<?php if ($child): ?>
-										<form class="acp-inline-form" method="post" data-confirm="<?= h(t('acp.menu.confirm_delete')) ?>">
-											<?= acp_csrf_field() ?>
-											<input type="hidden" name="do" value="delete">
-											<input type="hidden" name="id" value="<?= $id ?>">
-											<input type="hidden" name="location" value="<?= h($location) ?>">
-											<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i></button>
-										</form>
-									<?php endif; ?>
+									<form class="acp-inline-form" method="post" data-confirm="<?= h(t($child ? 'acp.menu.confirm_delete' : 'acp.menu.confirm_delete_category')) ?>">
+										<?= acp_csrf_field() ?>
+										<input type="hidden" name="do" value="delete">
+										<input type="hidden" name="id" value="<?= $id ?>">
+										<input type="hidden" name="location" value="<?= h($location) ?>">
+										<button class="acp-btn acp-btn--red acp-btn--sm" type="submit"><i class="fa fa-trash"></i></button>
+									</form>
 								</td>
 							</tr>
 						<?php endforeach; ?>

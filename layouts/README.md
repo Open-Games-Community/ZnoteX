@@ -25,7 +25,7 @@ exists; there is no registry to edit.
 
 ```
 layouts/yourtheme/
-  theme.json           name, author, version, description       [recommended]
+  theme.json           name, author, version, description, update [recommended]
   screenshot.png       thumbnail in the admin panel             [optional]
 
   shells/

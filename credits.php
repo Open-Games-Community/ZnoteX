@@ -1,4 +1,11 @@
-<?php require_once 'engine/init.php'; theme_open();
+<?php require_once 'engine/init.php';
+
+if (!($config['credits_enabled'] ?? true)) {
+	header('Location: index.php');
+	exit();
+}
+
+theme_open();
 
 $creditsMaintainer = array(
 	'login'  => 'Alexv45',
