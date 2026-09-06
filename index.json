@@ -68,4 +68,18 @@
     "url": "https://opengamescommunity.com/resources/void-layout.1028/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.png"
   }
+  ,
+  {
+    "key": "telara",
+    "name": "Telara",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Telara theme converted by alexv45 for ZnoteX.",
+    "update": [
+      "Telara Layout."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/telara.zip",
+    "url": "https://opengamescommunity.com/resources/telara-layout.1029/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/telara.png"
+  }
 ]
