@@ -16,16 +16,68 @@
   {
     "key": "referral_system",
     "name": "Referral System",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Account referral codes with registration tracking, automatic points and premium rewards, My Account injection and an admin overview.",
     "update": [
       "My Account injection now works with themes that nest the account heading (e.g. Eclipse).",
       "Admin settings for referrer/new account points and premium days.",
-      "Referral ledger with basic same-IP abuse protection."
+      "Referral ledger with basic same-IP abuse protection.",
     ],
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.zip",
     "url": "https://opengamescommunity.com/resources/referral.1031/"
+  },
+  {
+    "key": "account_security",
+    "name": "Account Security",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Account security adds a box on My Account page with the current IP adress, recent activity, 2FA Status.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/account_security.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/account_security.zip",
+    "url": "https://opengamescommunity.com/resources/account-security.1032/"
+  },
+  {
+    "key": "daily_rewards",
+    "name": "Daily Rewards",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Daily Reward reseted each monday, claim rewards (premium points, premium days, item id / count )",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/daily_rewards.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/daily_rewards.zip",
+    "url": "https://opengamescommunity.com/resources/daily-rewards.1033/"
+  },
+  {
+    "key": "loyalty_shop",
+    "name": "Loyalty Shop",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Loyalty Shop, Progress bar advancing by tiers giving discounts on shop & purchases.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loyalty_shop.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loyalty_shop.zip",
+    "url": "https://opengamescommunity.com/resources/loyalty-shop.1034/"
+  },
+  {
+    "key": "guild_recruitment",
+    "name": "Guild Recruitment",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Guild Recruitment enables a box above guilds with posts for guild leaders a recruitment message with an apply button.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.zip",
+    "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
   }
 ]
