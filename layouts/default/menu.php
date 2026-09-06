@@ -14,10 +14,14 @@
  */
 
 $menuItems = theme_menu_items('main');
+$menuLive = function_exists('theme_menu_available') ? theme_menu_available() : (bool)$menuItems;
+$menuLabel = static function ($value): string {
+	return htmlspecialchars(function_exists('theme_menu_label') ? theme_menu_label((string)$value) : (string)$value, ENT_QUOTES, 'UTF-8');
+};
 
 // A site that has not run the menu migration yet gets the old hardcoded links,
 // so upgrading never leaves someone with no navigation at all.
-$menuFallback = !$menuItems;
+$menuFallback = !$menuLive;
 ?>
 <nav>
 	<div class="container">
@@ -34,7 +38,7 @@ $menuFallback = !$menuItems;
 									<?php if ($item['icon'] !== ''): ?>
 										<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
 									<?php endif; ?>
-									<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+									<?= $menuLabel($item['label']) ?>
 								</span>
 							<?php else: ?>
 								<a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>"
@@ -42,7 +46,7 @@ $menuFallback = !$menuItems;
 									<?php if ($item['icon'] !== ''): ?>
 										<i class="fa <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i>
 									<?php endif; ?>
-									<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+									<?= $menuLabel($item['label']) ?>
 								</a>
 							<?php endif; ?>
 
@@ -52,7 +56,7 @@ $menuFallback = !$menuItems;
 										<li>
 											<a href="<?= htmlspecialchars($child['url'], ENT_QUOTES, 'UTF-8') ?>"
 											   <?= $child['target'] !== '' ? 'target="' . htmlspecialchars($child['target'], ENT_QUOTES, 'UTF-8') . '" rel="noopener"' : '' ?>>
-												<?= htmlspecialchars($child['label'], ENT_QUOTES, 'UTF-8') ?>
+												<?= $menuLabel($child['label']) ?>
 											</a>
 										</li>
 									<?php endforeach; ?>

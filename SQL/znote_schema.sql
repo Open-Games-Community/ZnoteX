@@ -426,30 +426,37 @@ INSERT INTO `znote` (`version`, `installed`) VALUES
 INSERT INTO `znote_config` (`key`, `value`) VALUES
 ('layout', 'default');
 
--- Default navigation, mirroring the stock layout's menu.
-INSERT INTO `znote_menu` (`location`, `parent_id`, `label`, `url`, `icon`, `visibility`, `sort_order`) VALUES
-('main', 0, 'Home',        'index.php',       'fa-home',            'all',   10),
-('main', 0, 'Changelog',   'changelog.php',   '',                   'all',   20),
-('main', 0, 'Account',     'myaccount.php',   'fa-user-circle',     'user',  30),
-('main', 0, 'Login',       'login.php',       'fa-user-circle',     'guest', 30),
-('main', 0, 'Register',    'register.php',    'fa-key',             'guest', 40),
-('main', 0, 'Downloads',   'downloads.php',   '',                   'all',   50),
-('main', 0, 'Community',   'onlinelist.php',  'fa-users',           'all',   60),
-('main', 0, 'Highscores',  'highscores.php',  '',                   'all',   70),
-('main', 0, 'Guilds',      'guilds.php',      '',                   'all',   80),
-('main', 0, 'Forum',       'forum.php',       '',                   'all',   90),
-('main', 0, 'Houses',      'houses.php',      '',                   'all',  100),
-('main', 0, 'Latest deaths','deaths.php',     '',                   'all',  110),
-('main', 0, 'Kill statistics','killers.php',  '',                   'all',  120),
-('main', 0, 'Bans',        'bans.php',        '',                   'all',  125),
-('main', 0, 'Creatures',   'creatures.php',   '',                   'all',  135),
-('main', 0, 'Library',     'serverinfo.php',  'fa-book',            'all',  130),
-('main', 0, 'Spells',      'spells.php',      '',                   'all',  140),
-('main', 0, 'Support',     'support.php',     'fa-info-circle',     'all',  150),
-('main', 0, 'Helpdesk',    'helpdesk.php',    '',                   'all',  160),
-('main', 0, 'Shop',        'shop.php',        'fa-shopping-cart',   'all',  170),
-('main', 0, 'Buy points',  'buypoints.php',   '',                   'all',  180),
-('main', 0, 'Admin Panel', 'admin/index.php', 'fa-sliders',         'admin',190);
+INSERT INTO `znote_menu` (`location`, `parent_id`, `label`, `url`, `icon`, `visibility`, `sort_order`)
+SELECT `seed`.`location`, `seed`.`parent_id`, `seed`.`label`, `seed`.`url`, `seed`.`icon`, `seed`.`visibility`, `seed`.`sort_order`
+FROM (
+  SELECT 'main' AS `location`, 0 AS `parent_id`, 'Home' AS `label`, 'index.php' AS `url`, 'fa-home' AS `icon`, 'all' AS `visibility`, 10 AS `sort_order`
+  UNION ALL SELECT 'main', 0, 'Changelog', 'changelog.php', '', 'all', 20
+  UNION ALL SELECT 'main', 0, 'Account', 'myaccount.php', 'fa-user-circle', 'user', 30
+  UNION ALL SELECT 'main', 0, 'Login', 'login.php', 'fa-user-circle', 'guest', 30
+  UNION ALL SELECT 'main', 0, 'Register', 'register.php', 'fa-key', 'guest', 40
+  UNION ALL SELECT 'main', 0, 'Downloads', 'downloads.php', '', 'all', 50
+  UNION ALL SELECT 'main', 0, 'Community', 'onlinelist.php', 'fa-users', 'all', 60
+  UNION ALL SELECT 'main', 0, 'Highscores', 'highscores.php', '', 'all', 70
+  UNION ALL SELECT 'main', 0, 'Guilds', 'guilds.php', '', 'all', 80
+  UNION ALL SELECT 'main', 0, 'Forum', 'forum.php', '', 'all', 90
+  UNION ALL SELECT 'main', 0, 'Houses', 'houses.php', '', 'all', 100
+  UNION ALL SELECT 'main', 0, 'Latest deaths', 'deaths.php', '', 'all', 110
+  UNION ALL SELECT 'main', 0, 'Kill statistics', 'killers.php', '', 'all', 120
+  UNION ALL SELECT 'main', 0, 'Bans', 'bans.php', '', 'all', 125
+  UNION ALL SELECT 'main', 0, 'Creatures', 'creatures.php', '', 'all', 135
+  UNION ALL SELECT 'main', 0, 'Library', 'serverinfo.php', 'fa-book', 'all', 130
+  UNION ALL SELECT 'main', 0, 'Spells', 'spells.php', '', 'all', 140
+  UNION ALL SELECT 'main', 0, 'Support', 'support.php', 'fa-info-circle', 'all', 150
+  UNION ALL SELECT 'main', 0, 'Helpdesk', 'helpdesk.php', '', 'all', 160
+  UNION ALL SELECT 'main', 0, 'Shop', 'shop.php', 'fa-shopping-cart', 'all', 170
+  UNION ALL SELECT 'main', 0, 'Buy points', 'buypoints.php', '', 'all', 180
+  UNION ALL SELECT 'main', 0, 'Admin Panel', 'admin/index.php', 'fa-sliders', 'admin', 190
+) `seed`
+LEFT JOIN `znote_menu` `existing`
+  ON `existing`.`location` = `seed`.`location`
+ AND `existing`.`label` = `seed`.`label`
+ AND `existing`.`url` = `seed`.`url`
+WHERE `existing`.`id` IS NULL;
 
 
 -- Nest the sub-entries under their section. Done as a second pass because the

@@ -100,6 +100,80 @@ function theme_menu_items(string $location): array {
 	return $cache[$location] = array_values($tree);
 }
 
+function theme_menu_label(string $label): string {
+	$raw = trim($label);
+	if ($raw === '') {
+		return '';
+	}
+
+	if (function_exists('t') && preg_match('/^[a-z0-9_.-]+$/i', $raw)) {
+		$translated = t($raw);
+		if ($translated !== $raw) {
+			return $translated;
+		}
+	}
+
+	$keyByLabel = array(
+		'account' => 'nav.account_section',
+		'account management' => 'nav.account_management',
+		'admin panel' => 'widget.admin.panel',
+		'bans' => 'bans.title',
+		'buy points' => 'shop.buy_points',
+		'changelog' => 'changelog.title',
+		'community' => 'nav.community',
+		'contact' => 'nav.contact',
+		'create account' => 'nav.register',
+		'create character' => 'account.create_character',
+		'credits' => 'nav.credits',
+		'creatures' => 'creatures.title',
+		'donate' => 'shop.buy_points',
+		'download' => 'downloads.download',
+		'download client' => 'nav.download_client',
+		'download game' => 'nav.downloads',
+		'downloads' => 'nav.downloads',
+		'forum' => 'nav.forum',
+		'guilds' => 'nav.guilds',
+		'helpdesk' => 'helpdesk.title',
+		'highscores' => 'nav.highscores',
+		'home' => 'nav.home',
+		'houses' => 'nav.houses',
+		'information' => 'front.server_information',
+		'item market' => 'nav.item_market',
+		'kill statistics' => 'nav.kill_statistics',
+		'kills statistics' => 'nav.kill_statistics',
+		'latest deaths' => 'deaths.latest',
+		'latest news' => 'nav.latest_news',
+		'library' => 'nav.library',
+		'log in' => 'nav.login',
+		'login' => 'nav.login',
+		'logout' => 'nav.logout',
+		'lost account' => 'recovery.lost_account_title',
+		'lost account?' => 'nav.lost_account',
+		'my account' => 'nav.account',
+		'news' => 'nav.news',
+		'register' => 'nav.register',
+		'server info' => 'nav.serverinfo',
+		'server information' => 'front.server_information',
+		'settings' => 'settings.title',
+		'shop' => 'nav.shop',
+		'spells' => 'spells.title',
+		'store' => 'nav.shop',
+		'support' => 'nav.support',
+		'vote for us' => 'nav.vote_for_us',
+		'vote for us!' => 'nav.vote_for_us',
+		'who is online' => 'nav.online',
+		'wikipedia' => 'nav.wikipedia',
+		'wiki search' => 'nav.wiki_search',
+	);
+
+	$normalized = strtolower(preg_replace('/\s+/', ' ', str_replace(array('_', '-'), ' ', $raw)));
+	if (isset($keyByLabel[$normalized]) && function_exists('t_default')) {
+		return t_default($keyByLabel[$normalized], $label);
+	}
+
+	return $label;
+}
+
 /**
  * The menu slots the active theme declares, as slug => label.
  * Falls back to a single "main" slot so the admin page is never empty.
