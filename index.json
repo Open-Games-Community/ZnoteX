@@ -11,7 +11,7 @@
       "Fixed responsive skill tiles on narrow layouts."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.zip",
-    "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/tibiacom_v1",
+    "url": "https://opengamescommunity.com/resources/znotex-tibiacomv1.1024/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.png"
   },
   {
@@ -26,7 +26,46 @@
       "Fixed layout override so Name, Level and Equipment display correctly."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.zip",
-    "url": "https://github.com/Open-Games-Community/ZnoteX/tree/layouts/old_school",
+    "url": "https://opengamescommunity.com/resources/znotex-old-school.1025/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.png"
+  },
+  {
+    "key": "time_sand",
+    "name": "Time Sand",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Time Sand theme by alexv45 for ZnoteX.",
+    "update": [
+      "New modern responsive layout.",
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/time_sand.zip",
+    "url": "https://opengamescommunity.com/resources/time-sand.1026/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/time_sand.png"
+  },
+  {
+    "key": "black_mirror",
+    "name": "Black Mirror",
+    "version": "1.0.3",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Black Mirror theme by alexv45 for ZnoteX.",
+    "update": [
+      "New Black & Gold Theme.",
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/black_mirror.zip",
+    "url": "https://opengamescommunity.com/resources/black-mirror-layout.1027/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/black_mirror.png"
+  },
+  {
+    "key": "void",
+    "name": "Void",
+    "version": "1.0.4",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Void theme by alexv45 for ZnoteX.",
+    "update": [
+      "Purple Theme.",
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.zip",
+    "url": "https://opengamescommunity.com/resources/void-layout.1028/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.png"
   }
 ]
