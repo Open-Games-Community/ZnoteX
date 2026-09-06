@@ -355,3 +355,336 @@ function znote_plugin_url(string $plugin, string $page): string {
 function znote_plugin_asset(string $plugin, string $file): string {
 	return 'plugins/' . znote_plugin_sanitize($plugin) . '/assets/' . ltrim($file, '/');
 }
+
+function plugin_repository_config(): array {
+	global $config;
+	$cfg = $config['plugin_repository'] ?? array();
+
+	return array(
+		'enabled'       => !empty($cfg['enabled']),
+		'index'         => trim((string)($cfg['index'] ?? '')),
+		'allowed_hosts' => array_map('strtolower', (array)($cfg['allowed_hosts'] ?? array())),
+		'cache_time'    => max(60, (int)($cfg['cache_time'] ?? 3600)),
+		'max_size'      => max(1, (int)($cfg['max_size_mb'] ?? 64)) * 1024 * 1024,
+	);
+}
+
+function plugin_repository_url_allowed(string $url): bool {
+	$cfg   = plugin_repository_config();
+	$parts = parse_url($url);
+
+	if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])) {
+		return false;
+	}
+
+	return in_array(strtolower($parts['host']), $cfg['allowed_hosts'], true);
+}
+
+function plugin_repository_get(string $url, ?string $toFile = null, ?string &$error = null) {
+	$cfg = plugin_repository_config();
+
+	if (!plugin_repository_url_allowed($url)) {
+		$error = 'Refused: the URL must be https and its host must be listed in $config[\'plugin_repository\'][\'allowed_hosts\'].';
+		return false;
+	}
+	if (!function_exists('curl_init')) {
+		$error = 'The curl extension is not loaded.';
+		return false;
+	}
+
+	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, $toFile === null);
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.0'));
+
+	$ca = function_exists('znote_cainfo') ? znote_cainfo() : '';
+	if ($ca !== '') {
+		curl_setopt($ch, CURLOPT_CAINFO, $ca);
+	}
+
+	$handle = null;
+	if ($toFile !== null) {
+		$handle = @fopen($toFile, 'wb');
+		if ($handle === false) {
+			$error = 'Cannot write to ' . $toFile;
+			curl_close($ch);
+			return false;
+		}
+		curl_setopt($ch, CURLOPT_FILE, $handle);
+		curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+		curl_setopt($ch, CURLOPT_PROGRESSFUNCTION, function ($res, $dlTotal, $dlNow) use ($cfg) {
+			return ($dlNow > $cfg['max_size'] || $dlTotal > $cfg['max_size']) ? 1 : 0;
+		});
+	}
+
+	$body   = curl_exec($ch);
+	$status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	$errNo  = curl_errno($ch);
+	$errStr = curl_error($ch);
+	curl_close($ch);
+
+	if ($handle !== null) {
+		fclose($handle);
+	}
+
+	if ($errNo !== 0) {
+		$error = ($errNo === 42 || $errNo === 23)
+			? 'Download aborted: the file is larger than the configured limit.'
+			: 'Download failed (curl ' . $errNo . '): ' . $errStr;
+		return false;
+	}
+	if ($status < 200 || $status >= 300) {
+		$error = 'The server answered HTTP ' . $status . '.';
+		return false;
+	}
+
+	return $toFile === null ? $body : true;
+}
+
+function plugin_repository_notes($value): string {
+	return function_exists('theme_repository_notes')
+		? theme_repository_notes($value)
+		: (is_string($value) || is_numeric($value) ? trim((string)$value) : '');
+}
+
+function plugin_repository_list(bool $refresh = false): array {
+	$cfg = plugin_repository_config();
+
+	if (!$cfg['enabled'] || $cfg['index'] === '') {
+		return array('plugins' => array(), 'error' => '');
+	}
+
+	$cache = new Cache('engine/cache/plugin_repository');
+	$cache->useMemory(false);
+
+	if (!$refresh && !$cache->hasExpired()) {
+		$cached = $cache->load();
+		if (is_array($cached)) {
+			return array('plugins' => $cached, 'error' => '', 'cached' => true);
+		}
+	}
+
+	$error = null;
+	$body  = plugin_repository_get($cfg['index'], null, $error);
+
+	if ($body === false) {
+		return array('plugins' => array(), 'error' => (string)$error);
+	}
+
+	$data = json_decode((string)$body, true);
+	if (!is_array($data)) {
+		return array('plugins' => array(), 'error' => 'The catalogue is not valid JSON.');
+	}
+
+	if (isset($data['plugins']) && is_array($data['plugins'])) {
+		$data = $data['plugins'];
+	}
+
+	$plugins = array();
+	foreach ($data as $entry) {
+		if (!is_array($entry)) {
+			continue;
+		}
+		$key = znote_plugin_sanitize((string)($entry['key'] ?? ''));
+		if ($key === '') {
+			continue;
+		}
+
+		$download   = trim((string)($entry['download'] ?? ''));
+		$screenshot = trim((string)($entry['screenshot'] ?? ''));
+		$changelog  = '';
+		foreach (array('changelog', 'changes', 'release_notes', 'update') as $notesKey) {
+			if (array_key_exists($notesKey, $entry)) {
+				$changelog = plugin_repository_notes($entry[$notesKey]);
+				break;
+			}
+		}
+
+		$plugins[$key] = array(
+			'key'         => $key,
+			'name'        => (string)($entry['name'] ?? ucfirst($key)),
+			'author'      => (string)($entry['author'] ?? ''),
+			'version'     => (string)($entry['version'] ?? ''),
+			'description' => (string)($entry['description'] ?? ''),
+			'changelog'   => $changelog,
+			'url'         => (string)($entry['url'] ?? ''),
+			'screenshot'  => plugin_repository_url_allowed($screenshot) ? $screenshot : '',
+			'download'    => $download,
+			'installable' => plugin_repository_url_allowed($download),
+		);
+	}
+
+	ksort($plugins);
+
+	$cache->setContent($plugins);
+	$cache->save();
+
+	return array('plugins' => $plugins, 'error' => '');
+}
+
+function plugin_repository_install(string $key, bool $overwrite = false): string {
+	$key = znote_plugin_sanitize($key);
+	if ($key === '') {
+		return 'Invalid plugin name.';
+	}
+
+	$catalogue = plugin_repository_list();
+	if (!isset($catalogue['plugins'][$key])) {
+		return 'That plugin is not in the catalogue.';
+	}
+
+	$entry = $catalogue['plugins'][$key];
+	if (!$entry['installable']) {
+		return 'Its download URL is not https, or its host is not on the allow list.';
+	}
+
+	$target = ZNOTE_PLUGIN_DIR . '/' . $key;
+	if (is_dir($target) && !$overwrite) {
+		return 'already-installed';
+	}
+	if (!is_writable(ZNOTE_PLUGIN_DIR)) {
+		return 'The plugins/ directory is not writable by PHP.';
+	}
+
+	$tmp = ZNOTE_PLUGIN_DIR . '/.' . $key . '.download.zip';
+	$err = null;
+	if (plugin_repository_get($entry['download'], $tmp, $err) === false) {
+		@unlink($tmp);
+		return (string)$err;
+	}
+
+	$result = plugin_archive_install($key, $tmp, $overwrite);
+	@unlink($tmp);
+
+	return $result;
+}
+
+function plugin_archive_install(string $key, string $zipPath, bool $overwrite = false): string {
+	$key = znote_plugin_sanitize($key);
+	if ($key === '') {
+		return 'Invalid plugin name.';
+	}
+	$target = ZNOTE_PLUGIN_DIR . '/' . $key;
+	if (is_dir($target) && !$overwrite) {
+		return 'already-installed';
+	}
+	if (!function_exists('theme_archive_open')) {
+		return 'Archive support is unavailable (engine/function/theme.php not loaded).';
+	}
+
+	$archive = theme_archive_open($zipPath);
+	if (is_string($archive)) {
+		return $archive;
+	}
+
+	$files  = array();
+	$prefix = null;
+
+	foreach ($archive['names'] as $name) {
+		if ($name === '') {
+			continue;
+		}
+		if ($name[0] === '/' || strpos($name, '../') !== false || strpos($name, ':') !== false) {
+			$archive['close']();
+			return 'Refused: the archive contains a path that would write outside plugins/ (' . $name . ').';
+		}
+
+		$files[] = $name;
+
+		$top = explode('/', $name)[0];
+		if ($prefix === null) {
+			$prefix = $top;
+		} elseif ($prefix !== $top) {
+			$prefix = '';
+		}
+	}
+
+	if (!$files) {
+		$archive['close']();
+		return 'The archive is empty.';
+	}
+
+	$strip = ($prefix !== null && $prefix !== '') ? strlen($prefix) + 1 : 0;
+
+	$hasManifest = false;
+	foreach ($files as $name) {
+		if (substr($name, $strip) === 'plugin.json') {
+			$hasManifest = true;
+			break;
+		}
+	}
+	if (!$hasManifest) {
+		$archive['close']();
+		return 'Refused: no plugin.json in the archive, so this is not a usable plugin.';
+	}
+
+	$staging = ZNOTE_PLUGIN_DIR . '/.' . $key . '.staging';
+	znote_rrmdir($staging);
+	if (!@mkdir($staging, 0775, true)) {
+		$archive['close']();
+		return 'Could not create a staging directory inside plugins/.';
+	}
+
+	foreach ($files as $name) {
+		$relative = substr($name, $strip);
+		if ($relative === '' || $relative === false) {
+			continue;
+		}
+
+		$dest = $staging . '/' . $relative;
+
+		if (substr($name, -1) === '/') {
+			@mkdir($dest, 0775, true);
+			continue;
+		}
+
+		$dir = dirname($dest);
+		if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+			continue;
+		}
+
+		$stream = $archive['read']($name);
+		if ($stream === false) {
+			continue;
+		}
+		$out = @fopen($dest, 'wb');
+		if ($out !== false) {
+			stream_copy_to_stream($stream, $out);
+			fclose($out);
+		}
+		fclose($stream);
+	}
+
+	$archive['close']();
+
+	if (!is_file($staging . '/plugin.json')) {
+		znote_rrmdir($staging);
+		return 'The archive unpacked without a plugin.json. Nothing was installed.';
+	}
+
+	if (is_dir($target)) {
+		$backup = ZNOTE_PLUGIN_DIR . '/.' . $key . '.previous';
+		znote_rrmdir($backup);
+
+		if (!@rename($target, $backup)) {
+			znote_rrmdir($staging);
+			return 'Could not move the existing plugin aside. Check permissions on plugins/' . $key . '.';
+		}
+		if (!@rename($staging, $target)) {
+			@rename($backup, $target);
+			znote_rrmdir($staging);
+			return 'Could not put the new plugin in place. The previous one was restored.';
+		}
+		znote_rrmdir($backup);
+	} elseif (!@rename($staging, $target)) {
+		znote_rrmdir($staging);
+		return 'Could not create plugins/' . $key . '.';
+	}
+
+	return '';
+}

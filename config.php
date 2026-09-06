@@ -1006,6 +1006,24 @@
 		'max_size_mb' => 64,
 	);
 
+	// Plugin repository
+	$config['plugin_repository'] = array(
+		'enabled' => true,
+
+		// JSON catalogue of downloadable plugins. See plugins/README.md for its shape.
+		'index' => 'https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/index.json',
+
+		'allowed_hosts' => array(
+			'raw.githubusercontent.com',
+			'codeload.github.com',
+			'github.com',
+			'objects.githubusercontent.com',
+		),
+
+		'cache_time' => 3600,
+		'max_size_mb' => 64,
+	);
+
 	// -------------------------------------------------------------------- \
 	// LOCAL OVERRIDES                                                       \
 	// -------------------------------------------------------------------- \
