@@ -79,7 +79,7 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.zip",
     "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
-  },
+  ,
   {
     "key": "battle_pass",
     "name": "Battlepass",
@@ -92,5 +92,32 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.zip",
     "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
+  },
+  {
+    "key": "purchase_history",
+    "name": "Purchase History",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Purchase History added on a new box inside My Account after character section.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/purchase_history.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/purchase_history.zip",
+    "url": "https://opengamescommunity.com/resources/purchase-history.1037/"
+  },
+  {
+    "key": "starter_pack",
+    "name": "Starter Pack",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
+    "update": [
+      "First Release.",
+	  "Starter Packs options: Outfit ID Male/Female, Mount ID, Item ID, Storage Key (+Text), House ID"
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.zip",
+    "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
   }
 ]
