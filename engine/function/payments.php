@@ -495,6 +495,19 @@ function payment_gateway_credit_transaction(string $provider, string $reference,
 		");
 
 		mysqli_commit($connect);
+		if (function_exists('znote_hook')) {
+			znote_hook('payment.completed', array(
+				'provider' => $provider,
+				'reference' => $reference,
+				'provider_reference' => $providerReference,
+				'account_id' => $accountId,
+				'price' => $tx['price'],
+				'currency' => $tx['currency'],
+				'points' => $points,
+				'status' => $expectedStatus,
+				'payload' => $payload,
+			));
+		}
 		return 'credited';
 	} catch (Throwable $e) {
 		mysqli_rollback($connect);
