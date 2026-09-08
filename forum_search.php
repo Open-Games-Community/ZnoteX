@@ -1,4 +1,6 @@
 <?php require_once 'engine/init.php'; theme_open(); protect_page();
+echo '<link rel="stylesheet" href="assets/forum.css?v=4.1.0">' . "\n";
+echo '<div class="znx-forum">';
 
 // Search CONFIG
 $searchResults = 30; // How many max search results
@@ -197,8 +199,8 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 		foreach ($results as $r) if ($r['forum_id'] !== false) $count++;
 		if ($count > 0) {
 			?>
-			<table>
-				<tr>
+			<table class="znoteTable" id="forumThreadTable">
+				<tr class="yellow">
 					<th>Char</th>
 					<th>Thread</th>
 					<th>Post</th>
@@ -227,5 +229,6 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 	} else echo t('fsearch.no_results');
 } else echo "<br><b>". t('fsearch.fill_all2'). "</b>";
 
+echo '</div>';
 theme_close();
 ?>

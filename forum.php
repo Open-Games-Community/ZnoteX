@@ -2,6 +2,8 @@
 protect_page();
 error_reporting(E_ALL ^ E_NOTICE);
 if (!$config['forum']['enabled']) admin_only($user_data);
+znote_forum_style();
+echo '<div class="znx-forum">';
 /*  -------------------------------
 	---		Znote AAC forum 	---
 	-------------------------------
@@ -71,8 +73,22 @@ function znote_forum_style() {
 	static $done = false;
 	if ($done) return;
 	$done = true;
-	echo '<link rel="stylesheet" href="assets/forum.css?v=2.0.0">' . "\n";
+	echo '<link rel="stylesheet" href="assets/forum.css?v=4.1.0">' . "\n";
 }
+
+/** Short relative time for the board / thread lists. */
+function znote_forum_ago($ts) {
+	$ts = (int)$ts;
+	if ($ts <= 0) return '';
+	$d = time() - $ts;
+	if ($d < 0) $d = 0;
+	if ($d < 60)     return t('forum.ago_now');
+	if ($d < 3600)   return t('forum.ago_min', array('n' => (int)floor($d / 60)));
+	if ($d < 86400)  return t('forum.ago_hour', array('n' => (int)floor($d / 3600)));
+	if ($d < 2592000) return t('forum.ago_day', array('n' => (int)floor($d / 86400)));
+	return date('M j, Y', $ts);
+}
+function znote_forum_e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
 function znote_forum_character_picker(array $chars, string $field, string $submitLabel, string $submitClass = 'btn btn-primary') {
 	znote_forum_style();
@@ -472,7 +488,7 @@ if (!empty($_GET)) {
 			} else echo '<p><b><font color="red">You don\'t have permission to post on this thread. [Thread: Closed]</font></b></p>';
 		} else {
 			?>
-				<font class="forumCooldown" color="red"><?= t('forum.antispam') ?> <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</font>
+				<p class="forumCooldown"><?= t('forum.antispam') ?> <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</p>
 			<?php
 		}
 	}
@@ -515,7 +531,7 @@ if (!empty($_GET)) {
 			} else echo t('forum.cat_missing');
 		} else {
 			?>
-				<font class="forumCooldown" color="red"><?= t('forum.antispam') ?> <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</font>
+				<p class="forumCooldown"><?= t('forum.antispam') ?> <?php echo ($user_znote_data['cooldown'] - time()); ?> seconds before you can create or post.</p>
 			<?php
 		}
 	}
@@ -537,7 +553,7 @@ if (!empty($_GET)) {
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_posts` SET `text`='$update_post_text', `updated`='". time() ."' WHERE `id`='$update_post_id';");
 			echo '<h1>post has been updated.</h1>';
-		} else echo "<p><font color='red'>'. t('forum.edit_post_denied'). '</font></p>";
+		} else echo "<p class='znf-alert'>" . t('forum.edit_post_denied') . "</p>";
 	}
 
 	/////////////////////
@@ -555,7 +571,7 @@ if (!empty($_GET)) {
 		if ($access) {
 			mysql_update("UPDATE `znote_forum_threads` SET `title`='$update_thread_title', `text`='$update_thread_text' WHERE `id`='$update_thread_id';");
 			echo '<h1>'. t('forum.thread_updated'). '</h1>';
-		} else echo "<p><font color='red'>'. t('forum.edit_thread_denied'). '</font></p>";
+		} else echo "<p class='znf-alert'>" . t('forum.edit_thread_denied') . "</p>";
 	}
 
 	/////////////////////
@@ -634,100 +650,68 @@ if (!empty($_GET)) {
 			if ($access) {
 				$threadPlayer = ($config['forum']['outfit_avatars'] || $config['forum']['player_position']) ? mysql_select_single("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id`='".$threadData['player_id']."';") : false;
 				?>
-				<font><?= t('forum.linkmap') ?> <a href="forum.php">Forum</a> - <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></font><br>
-				<font size="5" id="ThreadTitle"><?= t('forum.viewing') ?> <?php echo "<a href='?forum=". $getForum ."&cat=". $getCat ."&thread=". $threadData['id'] ."'>". $threadData['title'] ."</a>"; ?></font>
-				<table class="znoteTable ThreadTable table table-striped">
-					<tr class="yellow">
-						<th<?php if ($threadPlayer !== false) echo ' colspan="2"'; ?>>
-							<?php
-							echo getClock($threadData['created'], true);
-							if ($threadPlayer === false): ?>
-								 - Created by:
-								<?php
-						 		echo "<a href='characterprofile.php?name=". $threadData['player_name'] ."'>". $threadData['player_name'] ."</a>";
-					 		endif;
-					 		?>
-						</th>
-					</tr>
-					<tr>
-						<?php if ($threadPlayer !== false): ?>
-						<td class="avatar">
-							<a href='characterprofile.php?name=<?php echo $threadData['player_name']; ?>'><?php echo $threadData['player_name']; ?></a>
-							<?php if ($config['forum']['outfit_avatars']): ?>
-							<br><img src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $threadPlayer['looktype']; ?>&addons=<?php echo $threadPlayer['lookaddons']; ?>&head=<?php echo $threadPlayer['lookhead']; ?>&body=<?php echo $threadPlayer['lookbody']; ?>&legs=<?php echo $threadPlayer['looklegs']; ?>&feet=<?php echo $threadPlayer['lookfeet']; ?>" alt="img">
-							<?php endif; ?>
-							<?php if ($config['forum']['player_position']): ?>
-							<br><span><?php echo group_id_to_name($threadPlayer['group_id']); ?></span>
-							<?php endif; ?>
-						</td>
+				<nav class="znf-crumbs"><a href="forum.php">Forum</a> <span>/</span> <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></nav>
+				<h1 id="ThreadTitle" class="znf-title"><?php echo "<a href='?forum=". $getForum ."&cat=". $getCat ."&thread=". $threadData['id'] ."'>". $threadData['title'] ."</a>"; ?></h1>
+				<article class="znf-post is-op">
+					<div class="znf-post__side avatar">
+						<a class="znf-post__author" href="characterprofile.php?name=<?php echo $threadData['player_name']; ?>"><?php echo $threadData['player_name']; ?></a>
+						<?php if ($threadPlayer !== false && $config['forum']['outfit_avatars']): ?>
+						<img class="znf-post__outfit" src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $threadPlayer['looktype']; ?>&addons=<?php echo $threadPlayer['lookaddons']; ?>&head=<?php echo $threadPlayer['lookhead']; ?>&body=<?php echo $threadPlayer['lookbody']; ?>&legs=<?php echo $threadPlayer['looklegs']; ?>&feet=<?php echo $threadPlayer['lookfeet']; ?>" alt="img">
 						<?php endif; ?>
-						<td>
-							<p><?php echo znote_bbcode($threadData['text']); ?></p>
-						</td>
-					</tr>
-				</table>
-				<hr class="bighr">
+						<?php if ($threadPlayer !== false && $config['forum']['player_position']): ?>
+						<span class="znf-post__rank"><?php echo group_id_to_name($threadPlayer['group_id']); ?></span>
+						<?php endif; ?>
+					</div>
+					<div class="znf-post__body">
+						<div class="znf-post__meta"><span class="znf-tag znf-tag--sticky"><?= t('forum.op_tag') ?></span> <?php echo getClock($threadData['created'], true); ?></div>
+						<div class="znf-post__text"><?php echo znote_bbcode($threadData['text']); ?></div>
+					</div>
+				</article>
 				<?php
 				if ($admin || $leader) {
-					// PlayerHaveAccess($yourChars, $thread['player_name']) ||
-					// $yourChars
 					?>
-					<table class="adminTable table">
-						<tr>
-							<td>
-								<form action="" method="post">
-									<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-									<input type="submit" name="admin_thread_delete" value="<?= t('forum.delete_thread') ?>" class="btn btn-danger">
-								</form>
-							</td>
-							<td>
-								<?php if ($threadData['closed'] == 0) { ?>
-									<form action="" method="post">
-										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_close" value="<?= t('forum.close_thread') ?>" class="btn btn-warning">
-									</form>
-								<?php } else { ?>
-									<form action="" method="post">
-										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_open" value="<?= t('forum.open_thread') ?>" class="btn btn-success">
-									</form>
-								<?php } ?>
-							</td>
-							<td>
-								<?php if ($threadData['sticky'] == 0) { ?>
-									<form action="" method="post">
-										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_sticky" value="<?= t('forum.stick') ?>" class="btn btn-info">
-									</form>
-								<?php } else { ?>
-									<form action="" method="post">
-										<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="admin_thread_unstick" value="<?= t('forum.unstick') ?>" class="btn btn-primary">
-									</form>
-								<?php } ?>
-							</td>
-							<td>
-								<form action="" method="post">
-									<input type="hidden" name="edit_thread_id" value="<?php echo $threadData['id']; ?>">
-									<input type="submit" name="edit_thread" value="<?= t('forum.edit_thread') ?>" class="btn btn-warning">
-								</form>
-							</td>
-						</tr>
-					</table>
+					<div class="znf-mod">
+						<form action="" method="post">
+							<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
+							<input type="submit" name="admin_thread_delete" value="<?= t('forum.delete_thread') ?>" class="btn btn-danger">
+						</form>
+						<?php if ($threadData['closed'] == 0) { ?>
+						<form action="" method="post">
+							<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
+							<input type="submit" name="admin_thread_close" value="<?= t('forum.close_thread') ?>" class="btn btn-warning">
+						</form>
+						<?php } else { ?>
+						<form action="" method="post">
+							<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
+							<input type="submit" name="admin_thread_open" value="<?= t('forum.open_thread') ?>" class="btn btn-success">
+						</form>
+						<?php } ?>
+						<?php if ($threadData['sticky'] == 0) { ?>
+						<form action="" method="post">
+							<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
+							<input type="submit" name="admin_thread_sticky" value="<?= t('forum.stick') ?>" class="btn btn-info">
+						</form>
+						<?php } else { ?>
+						<form action="" method="post">
+							<input type="hidden" name="admin_thread_id" value="<?php echo $threadData['id']; ?>">
+							<input type="submit" name="admin_thread_unstick" value="<?= t('forum.unstick') ?>" class="btn btn-primary">
+						</form>
+						<?php } ?>
+						<form action="" method="post">
+							<input type="hidden" name="edit_thread_id" value="<?php echo $threadData['id']; ?>">
+							<input type="submit" name="edit_thread" value="<?= t('forum.edit_thread') ?>" class="btn btn-warning">
+						</form>
+					</div>
 					<?php
 				} else {
 					if ($threadData['closed'] == 0 && PlayerHaveAccess($yourChars, $threadData['player_name'])) {
 						?>
-						<table class="editThread">
-							<tr>
-								<td>
-									<form action="" method="post">
-										<input type="hidden" name="edit_thread_id" value="<?php echo $threadData['id']; ?>">
-										<input type="submit" name="edit_thread" value="<?= t('forum.edit_thread') ?>" class="btn btn-info">
-									</form>
-								</td>
-							</tr>
-						</table>
+						<div class="znf-mod">
+							<form action="" method="post">
+								<input type="hidden" name="edit_thread_id" value="<?php echo $threadData['id']; ?>">
+								<input type="submit" name="edit_thread" value="<?= t('forum.edit_thread') ?>" class="btn btn-info">
+							</form>
+						</div>
 						<?php
 					}
 				}
@@ -755,34 +739,20 @@ if (!empty($_GET)) {
 
 					foreach($posts as $post) {
 						?>
-						<table class="znoteTable ThreadTable table table-striped">
-							<tr class="yellow">
-								<th<?php if ($extra) echo ' colspan="2"'; ?>>
-									<?php echo getClock($post['created'], true);
-									if (!$extra): ?>
-										 - Posted by:
-										 <?php echo "<a href='characterprofile.php?name=". $post['player_name'] ."'>". $post['player_name'] ."</a>";
-									 endif; ?>
-								</th>
-							</tr>
-							<tr>
-								<?php if ($extra): ?>
-								<td class="avatar">
-									<a href='characterprofile.php?name=<?php echo $post['player_name']; ?>'><?php echo $post['player_name']; ?></a>
-									<?php if ($config['forum']['outfit_avatars']): ?>
-									<br><img src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $players[$post['player_id']]['looktype']; ?>&addons=<?php echo $players[$post['player_id']]['lookaddons']; ?>&head=<?php echo $players[$post['player_id']]['lookhead']; ?>&body=<?php echo $players[$post['player_id']]['lookbody']; ?>&legs=<?php echo $players[$post['player_id']]['looklegs']; ?>&feet=<?php echo $players[$post['player_id']]['lookfeet']; ?>" alt="img">
-									<?php endif; ?>
-									<?php if ($config['forum']['player_position']): ?>
-									<br><span><?php echo group_id_to_name($players[$post['player_id']]['group_id']); ?></span>
-									<?php endif; ?>
-								</td>
+						<article class="znf-post<?php echo ($post['player_name'] === $threadData['player_name']) ? ' is-op' : ''; ?>">
+							<div class="znf-post__side avatar">
+								<a class="znf-post__author" href="characterprofile.php?name=<?php echo $post['player_name']; ?>"><?php echo $post['player_name']; ?></a>
+								<?php if ($extra && $config['forum']['outfit_avatars']): ?>
+								<img class="znf-post__outfit" src="<?php echo $config['show_outfits']['imageServer']; ?>?id=<?php echo $players[$post['player_id']]['looktype']; ?>&addons=<?php echo $players[$post['player_id']]['lookaddons']; ?>&head=<?php echo $players[$post['player_id']]['lookhead']; ?>&body=<?php echo $players[$post['player_id']]['lookbody']; ?>&legs=<?php echo $players[$post['player_id']]['looklegs']; ?>&feet=<?php echo $players[$post['player_id']]['lookfeet']; ?>" alt="img">
 								<?php endif; ?>
-								<td>
-									<p><?php echo znote_bbcode($post['text']); ?></p>
-								</td>
-							</tr>
-						</table>
-						<hr class="bighr">
+								<?php if ($extra && $config['forum']['player_position']): ?>
+								<span class="znf-post__rank"><?php echo group_id_to_name($players[$post['player_id']]['group_id']); ?></span>
+								<?php endif; ?>
+							</div>
+							<div class="znf-post__body">
+								<div class="znf-post__meta"><?php echo getClock($post['created'], true); ?></div>
+								<div class="znf-post__text"><?php echo znote_bbcode($post['text']); ?></div>
+								<div class="znf-post__actions">
 						<?php
 						if (PlayerHaveAccess($yourChars, $post['player_name']) || $admin) {
 							if ($admin) {
@@ -802,6 +772,11 @@ if (!empty($_GET)) {
 								<?php
 							}
 						}
+						?>
+								</div>
+							</div>
+						</article>
+						<?php
 					}
 				}
 
@@ -809,18 +784,20 @@ if (!empty($_GET)) {
 				if ($charCount > 0) {
 					if ($threadData['closed'] == 0 || $yourAccess > 3) {
 						?>
-						<form action="" method="post">
-							<input name="reply_thread" type="hidden" value="<?php echo $threadData['id']; ?>"><br>
-
-							<?php znote_forum_editor('reply_text', '', 200); ?>
-							<?php znote_forum_character_picker($yourChars, 'reply_cid', 'Post Reply', 'btn btn-primary'); ?>
-						</form>
+						<div class="znf-reply">
+							<h3 class="znf-reply__title"><?= t('forum.reply_title') ?></h3>
+							<form action="" method="post">
+								<input name="reply_thread" type="hidden" value="<?php echo $threadData['id']; ?>">
+								<?php znote_forum_editor('reply_text', '', 200); ?>
+								<?php znote_forum_character_picker($yourChars, 'reply_cid', 'Post Reply', 'btn btn-primary'); ?>
+							</form>
+						</div>
 						<?php
-					} else echo '<p><b>You don\'t have permission to post on this thread. [Thread: Closed]</b></p>';
+					} else echo '<p class="znf-note">You don\'t have permission to post on this thread. [Thread: Closed]</p>';
 				} else {
-					?><p>You must have a character on your account that is level <?php echo $config['forum']['level']; ?>+ to reply to this thread.</p><?php
+					?><p class="znf-note">You must have a character on your account that is level <?php echo (int)$config['forum']['level']; ?>+ to reply to this thread.</p><?php
 				}
-			} else echo "<p><font color='red'>Your permission to access this thread has been denied.</font></p>";
+			} else echo '<p class="znf-alert">Your permission to access this thread has been denied.</p>';
 		} else {
 			?>
 			<h1><?= t('forum.thread_unavailable') ?></h1>
@@ -905,274 +882,218 @@ if (!empty($_GET)) {
 		if ($category !== false) {
 			// TODO : Verify guild access
 			//foreach($charData)
-			echo "<h1><a href='forum.php'>Forum</a> Board: ". $category['name'] ."</h1>";
+			$getCatInt = (int)$getCat;
+			echo '<nav class="znf-crumbs"><a href="forum.php">' . t('forum.boards') . '</a> <span>/</span> ' . znote_forum_e($category['name']) . '</nav>';
+			echo '<div class="znf-bhead"><h1 class="znf-h1">' . znote_forum_e($category['name']) . '</h1></div>';
 
-			// Threads
-			//  - id - forum_id - player_id - player_name - title - text - created - updated - sticky - hidden - closed
-			$threads = mysql_select_multi("SELECT `id`, `player_name`, `title`, `sticky`, `closed` FROM `znote_forum_threads` WHERE `forum_id`='$getCat' ORDER BY `sticky` DESC, `updated` DESC;");
+			$threads = mysql_select_multi(
+				"SELECT `t`.`id`, `t`.`player_name`, `t`.`title`, `t`.`sticky`, `t`.`closed`, `t`.`created`, `t`.`updated`, "
+				. "COUNT(`p`.`id`) AS `reply_count`, COALESCE(MAX(`p`.`created`), 0) AS `last_reply_at` "
+				. "FROM `znote_forum_threads` `t` LEFT JOIN `znote_forum_posts` `p` ON `p`.`thread_id` = `t`.`id` "
+				. "WHERE `t`.`forum_id` = '{$getCatInt}' "
+				. "GROUP BY `t`.`id`, `t`.`player_name`, `t`.`title`, `t`.`sticky`, `t`.`closed`, `t`.`created`, `t`.`updated` "
+				. "ORDER BY `t`.`sticky` DESC, `t`.`updated` DESC;"
+			);
 
-			///// HTML \\\\\
-			if ($threads !== false) {
+			$lastReplyBy = array();
+			$lrRows = mysql_select_multi(
+				"SELECT `x`.`thread_id`, `x`.`player_name` FROM `znote_forum_posts` `x` JOIN ("
+				. "SELECT `p2`.`thread_id`, MAX(`p2`.`created`) AS `mc` FROM `znote_forum_posts` `p2` "
+				. "JOIN `znote_forum_threads` `t2` ON `t2`.`id` = `p2`.`thread_id` WHERE `t2`.`forum_id` = '{$getCatInt}' "
+				. "GROUP BY `p2`.`thread_id`) `y` ON `y`.`thread_id` = `x`.`thread_id` AND `y`.`mc` = `x`.`created`;"
+			);
+			foreach ((array)$lrRows as $row) if (!isset($lastReplyBy[$row['thread_id']])) $lastReplyBy[$row['thread_id']] = $row['player_name'];
+
+			$visibleThreads = array();
+			foreach ((array)$threads as $thread) {
+				$access = true;
+				if ($category['hidden'] == 1) {
+					$access = PlayerHaveAccess($yourChars, $thread['player_name']);
+					if ($yourAccess > 3 || $admin) $access = true;
+				}
+				if ($access) $visibleThreads[] = $thread;
+			}
+			?>
+			<div class="znf-threads">
+				<?php if (!$visibleThreads): ?>
+					<p class="znf-empty"><?php echo t('forum.board_empty'); ?></p>
+				<?php endif; ?>
+				<?php foreach ($visibleThreads as $thread):
+					$e = 'znote_forum_e';
+					$turl = 'forum.php?forum=' . urlencode($category['name']) . '&cat=' . $getCatInt . '&thread=' . (int)$thread['id'];
+					$replyBy = $lastReplyBy[$thread['id']] ?? '';
 				?>
-				<table class="znoteTable table table-bordered table-striped table-hover" id="forumThreadTable">
-					<tr class="yellow">
-						<th width="80%">Title</th>
-						<th width="20%">By</th>
-					</tr>
-					<?php
-					foreach($threads as $thread) {
-						$access = true;
-						if ($category['hidden'] == 1) {
-							if (!$admin) $access = false;
-							$access = PlayerHaveAccess($yourChars, $thread['player_name']);
-							if ($yourAccess > 3) $access = true;
-						}
-
-						if ($access) {
-							?>
-							<tr class="special">
-								<?php
-								$url = url("forum.php?forum=". $category['name'] ."&cat=". $getCat ."&thread=". $thread['id']);
-								echo '<td onclick="javascript:window.location.href=\'' . $url . '\'">';
-								?>
-								<!--<td>-->
-									<?php
-									if ($thread['sticky'] == 1) echo $config['forum']['sticky'],' ';
-									if ($thread['closed'] == 1) echo $config['forum']['closed'],' ';
-									echo $thread['title'];
-									?>
-								</td>
-								<?php
-								$url = url("characterprofile.php?name=". $thread['player_name']);
-								echo '<td onclick="javascript:window.location.href=\'' . $url . '\'">';
-								?>
-								<!--<td>-->
-									<?php
-									echo $thread['player_name'];
-									?>
-								</td>
-							</tr>
-							<?php
-						}
-					}
-					?>
-				</table>
-				<?php
-			} else echo t('forum.board_empty');
+					<div class="znf-thread<?php echo $thread['sticky'] ? ' is-sticky' : ''; echo $thread['closed'] ? ' is-locked' : ''; ?>" data-href="<?php echo $e($turl); ?>" onclick="if(!event.target.closest('a,button,form,input'))window.location.href=this.dataset.href">
+						<span class="znf-thread__ico"><?php echo $thread['sticky'] ? '&#128204;' : ($thread['closed'] ? '&#128274;' : '&#128172;'); ?></span>
+						<span class="znf-thread__main">
+							<a class="znf-thread__title" href="<?php echo $e($turl); ?>"><?php echo $e($thread['title']); ?></a>
+							<span class="znf-thread__meta"><?php echo t('forum.started_by', array('name' => $e($thread['player_name']), 'ago' => znote_forum_ago($thread['created']))); ?></span>
+						</span>
+						<span class="znf-thread__stats">
+							<b><?php echo (int)$thread['reply_count']; ?></b> <?php echo t('forum.replies_word'); ?><br>
+							<?php echo (int)$thread['last_reply_at'] > 0
+								? t('forum.last_by', array('name' => $e($replyBy), 'ago' => znote_forum_ago($thread['last_reply_at'])))
+								: t('forum.no_replies'); ?>
+						</span>
+					</div>
+				<?php endforeach; ?>
+			</div>
+			<?php
 
 			///////////
 			// Create thread button
 			if ($charCount > 0) {
 				if ($category['closed'] == 0  || $admin) {
 					?>
+					<div class="znf-newwrap">
 					<form action="" method="post">
 						<input type="hidden" value="<?php echo $getCat; ?>" name="new_thread_category">
 						<?php znote_forum_character_picker($yourChars, 'new_thread_cid', t('forum.create_thread_new'), 'btn btn-primary'); ?>
 					</form>
+					</div>
 					<?php
-				} else echo '<p>'. t('forum.board_closed'). '</p>';
-			} else echo "<p>You must have a character on your account that is level ". $config['forum']['level'] ."+ to create new threads.</p>";
-		} else echo "<p><font color='red'>Your permission to access this board has been denied.<br>If you are trying to access a Guild Board, you need level: ". $config['forum']['level'] ."+</font></p>";
+				} else echo '<p class="znf-note">'. t('forum.board_closed'). '</p>';
+			} else echo '<p class="znf-note">You must have a character on your account that is level '. (int)$config['forum']['level'] .'+ to create new threads.</p>';
+		} else echo '<p class="znf-alert">Your permission to access this board has been denied.<br>If you are trying to access a Guild Board, you need level: '. (int)$config['forum']['level'] .'+</p>';
 
 	}
 } else {
 
 	//////////////////////
 	// No category specified, show list of available categories
-	if (!$admin) $categories = mysql_select_multi(
-		"SELECT `id`, `name`, `access`, `closed`, `hidden`, `guild_id` FROM `znote_forum` WHERE `access`<='$yourAccess' ORDER BY `name`;");
-		else $categories = mysql_select_multi("SELECT `id`, `name`, `access`, `closed`, `hidden`, `guild_id` FROM `znote_forum` ORDER BY `name`;");
+	$boardWhere = $admin ? '' : " WHERE `f`.`access` <= '" . (int)$yourAccess . "'";
+	$categories = mysql_select_multi(
+		"SELECT `f`.`id`, `f`.`name`, `f`.`access`, `f`.`closed`, `f`.`hidden`, `f`.`guild_id`, "
+		. "COUNT(`t`.`id`) AS `thread_count`, COALESCE(MAX(`t`.`updated`), 0) AS `last_time` "
+		. "FROM `znote_forum` `f` LEFT JOIN `znote_forum_threads` `t` ON `t`.`forum_id` = `f`.`id`"
+		. $boardWhere
+		. " GROUP BY `f`.`id`, `f`.`name`, `f`.`access`, `f`.`closed`, `f`.`hidden`, `f`.`guild_id` ORDER BY `f`.`name`;"
+	);
 
+	$lastThreads = array();
+	$ltRows = mysql_select_multi(
+		"SELECT `x`.`forum_id`, `x`.`player_name`, `x`.`title`, `x`.`id` FROM `znote_forum_threads` `x` "
+		. "JOIN (SELECT `forum_id`, MAX(`updated`) AS `mu` FROM `znote_forum_threads` GROUP BY `forum_id`) `y` "
+		. "ON `y`.`forum_id` = `x`.`forum_id` AND `y`.`mu` = `x`.`updated`;"
+	);
+	foreach ((array)$ltRows as $row) if (!isset($lastThreads[$row['forum_id']])) $lastThreads[$row['forum_id']] = $row;
+
+	$guild = false;
+	foreach ($charData as $char) if ($char['guild'] > 0) $guild = true;
+	if (!isset($guilds)) {
+		$guilds = mysql_select_multi("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
+		$guilds[] = array('id' => '0', 'name' => 'No guild');
+	}
+	$guildName = array();
+	foreach ((array)$guilds as $g) $guildName[$g['id']] = $g['name'];
+
+	$mainBoards = array();
 	$guildboard = array();
-	?>
-	<table class="znoteTable table table-striped table-hover" id="forumCategoryTable">
-		<tr class="yellow">
-			<th><?= t('forum.boards') ?></th>
-			<?php
-			$guild = false;
-			foreach($charData as $char) {
-				if ($char['guild'] > 0) $guild = true;
-			}
-
-			if ($admin || $guild) {
-				if (!isset($guilds))  {
-					$guilds = mysql_select_multi("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
-					$guilds[] = array('id' => '0', 'name' => 'No guild');
-				}
-				$guildName = array();
-				foreach($guilds as $guild) {
-					$guildName[$guild['id']] = $guild['name'];
-				}
-				if ($admin) {
-					?>
-					<th>Edit</th>
-					<th>Delete</th>
-					<?php
-				}
-			}
-			?>
-		</tr>
-		<?php
-		if ($categories !== false) {
-			foreach ($categories as $category) {
-				$access = true;
-				if ($category['guild_id'] > 0) {
-					$guildboard[] = $category;
-					$access = false;
-				}
-
-				/*
-				if ($guild) {
-					foreach($charData as $char) {
-						if ($category['guild_id'] == $char['guild']) $access = true;
-					}
-				}
-				*/
-				if ($access) {
-					$url = url("forum.php?cat=". $category['id']);
-					echo '<tr class="special">';
-					echo '<td onclick="javascript:window.location.href=\'' . $url . '\'">';
-					if ($category['closed'] == 1) echo $config['forum']['closed'],' ';
-					if ($category['hidden'] == 1) echo $config['forum']['hidden'],' ';
-					if ($category['guild_id'] > 0) {
-						echo "[". $guildName[$category['guild_id']] ."] ";
-					}
-					echo $category['name'] ."</td>";
-
-					// Admin columns
-					if ($admin) {
-						?>
-						<td style="margin: 0px; padding: 0px; width: 100px;">
-							<form action="" method="post">
-								<input type="hidden" name="admin_category_id" value="<?php echo $category['id']; ?>">
-								<input type="submit" name="admin_category_edit" value="Edit" style="margin: 0px; padding: 0px; width: 50px; height: 22px;" class="btn btn-warning">
-							</form>
-						</td>
-						<td style="margin: 0px; padding: 0px; width: 100px;">
-							<form action="" method="post">
-								<input type="hidden" name="admin_category_id" value="<?php echo $category['id']; ?>">
-								<input type="submit" name="admin_category_delete" value="<?= t('forum.delete_btn') ?>" style="margin: 0px; padding: 0px; width: 75px; height: 22px;" class="btn btn-danger">
-							</form>
-						</td>
-						<?php
-					}
-					echo '</tr>';
-				}
-			}
+	foreach ((array)$categories as $b) {
+		$li = $lastThreads[$b['id']] ?? null;
+		$b['last_author'] = $li['player_name'] ?? '';
+		$b['last_title']  = $li['title'] ?? '';
+		if ((int)$b['guild_id'] > 0) {
+			$inGuild = $admin;
+			foreach ($charData as $char) if ((int)$b['guild_id'] === (int)$char['guild']) $inGuild = true;
+			if ($inGuild) $guildboard[] = $b;
+		} else {
+			$mainBoards[] = $b;
 		}
+	}
+
+	$znfBoardRow = static function (array $b) use ($admin, $guildName) {
+		$e  = 'znote_forum_e';
+		$id = (int)$b['id'];
 		?>
-	</table>
+		<div class="znf-board" data-href="forum.php?cat=<?php echo $id; ?>" onclick="if(!event.target.closest('a,button,form,input'))window.location.href=this.dataset.href">
+			<span class="znf-board__icon"><?php echo (int)$b['guild_id'] > 0 ? '&#9876;' : '&#128172;'; ?></span>
+			<span class="znf-board__main">
+				<span class="znf-board__name">
+					<a href="forum.php?cat=<?php echo $id; ?>"><?php echo $e($b['name']); ?></a>
+					<?php if ($b['closed']): ?><span class="znf-tag znf-tag--lock"><?php echo t('forum.locked_tag'); ?></span><?php endif; ?>
+					<?php if ($b['hidden']): ?><span class="znf-tag znf-tag--hidden"><?php echo t('forum.hidden_tag'); ?></span><?php endif; ?>
+					<?php if ((int)$b['guild_id'] > 0): ?><span class="znf-tag znf-tag--guild"><?php echo $e($guildName[$b['guild_id']] ?? ''); ?></span><?php endif; ?>
+				</span>
+				<?php if (!empty($b['last_time'])): ?>
+					<span class="znf-board__last"><?php echo t('forum.lastpost'); ?> <b><?php echo $e($b['last_title']); ?></b> &middot; <?php echo $e($b['last_author']); ?> &middot; <?php echo znote_forum_ago($b['last_time']); ?></span>
+				<?php else: ?>
+					<span class="znf-board__last"><?php echo t('forum.board_empty'); ?></span>
+				<?php endif; ?>
+			</span>
+			<span class="znf-board__count"><b><?php echo (int)$b['thread_count']; ?></b> <?php echo t('forum.threads_word'); ?></span>
+			<?php if ($admin): ?>
+			<span class="znf-board__admin">
+				<form method="post"><input type="hidden" name="admin_category_id" value="<?php echo $id; ?>"><button class="btn btn-warning btn--sm" type="submit" name="admin_category_edit" value="Edit"><?php echo t('forum.edit'); ?></button></form>
+				<form method="post"><input type="hidden" name="admin_category_id" value="<?php echo $id; ?>"><button class="btn btn-danger btn--sm" type="submit" name="admin_category_delete" value="1"><?php echo t('forum.delete_btn'); ?></button></form>
+			</span>
+			<?php endif; ?>
+		</div>
+		<?php
+	};
+	?>
+
+	<?php if (!$mainBoards && !$guildboard): ?>
+		<p class="znf-empty"><?php echo t('forum.no_boards'); ?></p>
+	<?php endif; ?>
+
+	<?php if ($mainBoards): ?>
+	<div class="znf-boards">
+		<div class="znf-boards__title"><?php echo t('forum.boards'); ?></div>
+		<?php foreach ($mainBoards as $b) $znfBoardRow($b); ?>
+	</div>
+	<?php endif; ?>
+
+	<?php if ($guildboard || ($guild && $admin)): ?>
+	<div class="znf-boards">
+		<div class="znf-boards__title"><?php echo t('forum.guild_boards'); ?></div>
+		<?php if ($guildboard) { foreach ($guildboard as $b) $znfBoardRow($b); } else { ?>
+			<p class="znf-empty"><?php echo t('forum.no_guildboards2'); ?></p>
+		<?php } ?>
+	</div>
+	<?php endif; ?>
 	<hr class="bighr">
 	<?php
-	if (!empty($guildboard) && $guild || !empty($guildboard) && $admin) {
-		//
-		?>
-		<table class="table table-striped table-hover znoteTable" id="forumCategoryTable">
-			<tr class="yellow">
-				<th><?= t('forum.guild_boards') ?></th>
-				<?php
-				foreach($charData as $char) {
-					if ($char['guild'] > 0) $guild = true;
-				}
-
-				if ($admin || $guild) {
-					if (!isset($guilds))  {
-						$guilds = mysql_select_multi("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
-						$guilds[] = array('id' => '0', 'name' => 'No guild');
-					}
-					$guildName = array();
-					foreach($guilds as $guild) {
-						$guildName[$guild['id']] = $guild['name'];
-					}
-					if ($admin) {
-						?>
-						<th width="100">Edit</th>
-						<th width="100">Delete</th>
-						<?php
-					}
-				}
-				?>
-			</tr>
-			<?php
-			$count = 0;
-			foreach ($guildboard as $board) {
-				$access = false;
-				foreach($charData as $char) {
-					if ($board['guild_id'] == $char['guild']) {
-						$access = true;
-						$count++;
-					}
-				}
-				if ($access || $admin) {
-					$url = url("forum.php?cat=". $board['id']);
-					echo '<tr class="special">';
-					echo '<td onclick="javascript:window.location.href=\'' . $url . '\'">';
-					if ($board['closed'] == 1) echo $config['forum']['closed'],' ';
-					if ($board['hidden'] == 1) echo $config['forum']['hidden'],' ';
-					if ($board['guild_id'] > 0) {
-						echo "[". $guildName[$board['guild_id']] ."] ";
-					}
-					echo $board['name'] ."</td>";
-
-					// Admin columns
-					if ($admin) {
-						?>
-						<td style="margin: 0px; padding: 0px; width: 100px;">
-							<form action="" method="post">
-								<input type="hidden" name="admin_category_id" value="<?php echo $board['id']; ?>">
-								<input type="submit" name="admin_category_edit" value="Edit" style="margin: 0px; padding: 0px; width: 50px; height: 22px;" class="btn btn-warning">
-							</form>
-						</td>
-						<td style="margin: 0px; padding: 0px; width: 100px;">
-							<form action="" method="post">
-								<input type="hidden" name="admin_category_id" value="<?php echo $board['id']; ?>">
-								<input type="submit" name="admin_category_delete" value="<?= t('forum.delete_btn') ?>" style="margin: 0px; padding: 0px; width: 75px; height: 22px;" class="btn btn-danger">
-							</form>
-						</td>
-						<?php
-					}
-					echo '</tr>';
-				}
-			}
-			if ($count == 0 && !$admin) echo '<tr><td>'. t('forum.no_guildboards2') .'</td></tr>';
-			?>
-		</table>
-		<?php
-	}
 	if ($admin) {
 		?>
-		<h2><?= t('forum.create_board') ?></h2>
-		<form action="" method="post">
-			<input type="text" name="admin_board_create_name" placeholder="Board name"><br><br>
-
-			Required access: <select name="admin_board_create_access">
-				<?php
-				foreach($config['ingame_positions'] as $access => $name) {
-					echo "<option value='$access'>$name</option>";
-				}
-				?>
-			</select><br><br>
-
-			Board closed: <select name="admin_board_create_closed">
-				<option value="0">No</option>
-				<option value="1">Yes</option>
-			</select><br>
-
-			Board hidden: <select name="admin_board_create_hidden">
-				<option value="0">No</option>
-				<option value="1">Yes</option>
-			</select><br><br>
-
-			Guild board: <select name="admin_board_create_guild_id">
-				<?php
-				foreach($guilds as $guild) {
-					if ($guild['id'] == 0) echo "<option value='". $guild['id'] ."' selected>". $guild['name'] ."</option>";
-					else echo "<option value='". $guild['id'] ."'>". $guild['name'] ."</option>";
-				}
-				?>
-			</select><br><br>
-
-			<input type="submit" value="<?= t('forum.create_board_btn') ?>" class="btn btn-primary">
+		<form action="" method="post" class="znf-form">
+			<h2 class="znf-form__title"><?= t('forum.create_board') ?></h2>
+			<div class="znf-field">
+				<label for="admin_board_create_name"><?= t('forum.board_name') ?></label>
+				<input type="text" id="admin_board_create_name" name="admin_board_create_name" placeholder="<?= t('forum.board_name') ?>">
+			</div>
+			<div class="znf-field">
+				<label for="admin_board_create_access"><?= t('forum.required_access') ?></label>
+				<select id="admin_board_create_access" name="admin_board_create_access">
+					<?php foreach($config['ingame_positions'] as $access => $name) echo "<option value='$access'>$name</option>"; ?>
+				</select>
+			</div>
+			<div class="znf-field">
+				<label for="admin_board_create_closed"><?= t('forum.closed') ?></label>
+				<select id="admin_board_create_closed" name="admin_board_create_closed">
+					<option value="0">No</option>
+					<option value="1">Yes</option>
+				</select>
+			</div>
+			<div class="znf-field">
+				<label for="admin_board_create_hidden"><?= t('forum.hidden') ?></label>
+				<select id="admin_board_create_hidden" name="admin_board_create_hidden">
+					<option value="0">No</option>
+					<option value="1">Yes</option>
+				</select>
+			</div>
+			<div class="znf-field">
+				<label for="admin_board_create_guild_id"><?= t('forum.guild_boards') ?></label>
+				<select id="admin_board_create_guild_id" name="admin_board_create_guild_id">
+					<?php foreach($guilds as $guild) {
+						$sel = ($guild['id'] == 0) ? ' selected' : '';
+						echo "<option value='". $guild['id'] ."'$sel>". $guild['name'] ."</option>";
+					} ?>
+				</select>
+			</div>
+			<div class="znf-field znf-field--submit">
+				<input type="submit" value="<?= t('forum.create_board_btn') ?>" class="btn btn-primary">
+			</div>
 		</form>
 		<?php
 	}
@@ -1180,4 +1101,5 @@ if (!empty($_GET)) {
 }
 
 
+echo '</div>';
 theme_close(); ?>
