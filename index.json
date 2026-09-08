@@ -32,11 +32,11 @@
   {
     "key": "time_sand",
     "name": "Time Sand",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Time Sand theme by alexv45 for ZnoteX.",
     "update": [
-      "New modern responsive layout."
+      "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/time_sand.zip",
     "url": "https://opengamescommunity.com/resources/time-sand.1026/",
@@ -58,11 +58,11 @@
   {
     "key": "void",
     "name": "Void",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "author": "Alex - opengamescommunity.com",
     "description": "Void theme by alexv45 for ZnoteX.",
     "update": [
-      "Purple Theme."
+      "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.zip",
     "url": "https://opengamescommunity.com/resources/void-layout.1028/",
@@ -84,11 +84,11 @@
   {
     "key": "eclipse",
     "name": "Eclipse",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Eclipse theme by alexv45 for ZnoteX.",
     "update": [
-      "Eclipse Layout."
+      "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/eclipse.zip",
     "url": "https://opengamescommunity.com/resources/eclipse-layout.1035/",
