@@ -52,6 +52,13 @@ function sanitize($data) {
 	return htmlentities(strip_tags(mysql_znote_escape_string($data)));
 }
 
+require_once 'engine/function/translate.php';
+require_once 'engine/function/settings.php';
+require_once 'engine/function/users.php';
+require_once 'engine/function/plugins.php';
+znote_apply_settings();
+znote_plugins_load();
+
 function VerifyPaypalIPN(?array $IPN = null){
 	if(empty($IPN)){
 		$IPN = $_POST;
@@ -114,7 +121,8 @@ $payment_currency = $_POST['mc_currency'] ?? null;
 $txn_id           = getValue($_POST['txn_id'] ?? null);
 $receiver_email   = getValue($_POST['receiver_email'] ?? null);
 $payer_email      = getValue($_POST['payer_email'] ?? null);
-$custom           = (int)($_POST['custom'] ?? 0);
+$custom_raw       = (string)($_POST['custom'] ?? '');
+$custom           = (int)$custom_raw;
 
 $connectedIp = $_SERVER['REMOTE_ADDR'];
 mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '0', 'Connection from IP: $connectedIp', '0', '0', '0')");
@@ -134,16 +142,38 @@ if ($status) {
 				$status = true;
 				$paidMoney = 0;
 				$paidPoints = 0;
+				$payment = array(
+					'provider' => 'paypal',
+					'reference' => (string)$txn_id,
+					'custom' => $custom_raw,
+					'account_id' => $custom,
+					'price' => $payment_amount,
+					'currency' => $payment_currency,
+					'points' => 0,
+					'status' => 'Completed',
+					'raw' => $_POST,
+					'resolved' => false,
+				);
+				if (function_exists('znote_hook_filter')) {
+					$payment = znote_hook_filter('payment.resolve', $payment, array('provider' => 'paypal', 'raw' => $_POST));
+				}
 
-				foreach ($prices as $priceValue => $pointsValue) {
-					if ($priceValue == $payment_amount) {
-						$paidMoney = $priceValue;
-						$paidPoints = $pointsValue;
+				if (!empty($payment['resolved'])) {
+					$custom = (int)($payment['account_id'] ?? 0);
+					$paidMoney = $payment['price'] ?? 0;
+					$paidPoints = (int)($payment['points'] ?? 0);
+				} else {
+					foreach ($prices as $priceValue => $pointsValue) {
+						if ($priceValue == $payment_amount) {
+							$paidMoney = $priceValue;
+							$paidPoints = $pointsValue;
+						}
 					}
 				}
 
-				if ($paidMoney == 0) $status = false; // Wrong ammount of money
-				if ($payment_currency != $paypal['currency']) $status = false; // Wrong currency
+				if ($paidMoney == 0 || number_format((float)$paidMoney, 2, '.', '') !== number_format((float)$payment_amount, 2, '.', '')) $status = false; // Wrong ammount of money
+				if ($payment_currency != ($payment['currency'] ?? $paypal['currency'])) $status = false; // Wrong currency
+				if ($custom <= 0) $status = false;
 
 				// Verify that the user havent messed around with POST data
 				if ($status) {
@@ -157,6 +187,18 @@ if ($status) {
 					if (is_array($data)) {
 						$new_points = (int)$data['old_points'] + $paidPoints;
 						mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+						if (function_exists('znote_hook')) {
+							znote_hook('payment.completed', array_merge($payment, array(
+								'provider' => 'paypal',
+								'reference' => (string)$txn_id,
+								'custom' => $custom_raw,
+								'account_id' => $custom,
+								'price' => $paidMoney,
+								'currency' => $payment_currency,
+								'points' => $paidPoints,
+								'status' => 'Completed',
+							)));
+						}
 					} else {
 						mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '$txn_id', 'ERROR: No znote_accounts row for account_id $custom', '0', '0', '0')");
 					}

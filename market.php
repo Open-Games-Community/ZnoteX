@@ -58,7 +58,7 @@ if (!$compare) {
 		?>
 		<tr>
 			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo "http://".$server."/".$o['item_id'].".".$imageType; ?>" alt="Item Image"></td>
+			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 			<td><?php echo $o['amount']; ?></td>
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['created'], true, true); ?></td>
@@ -85,7 +85,7 @@ if (!$compare) {
 		?>
 		<tr>
 			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo "http://".$server."/".$o['item_id'].".".$imageType; ?>" alt="Item Image"></td>
+			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 			<td><?php echo $o['amount']; ?></td>
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['created'], true, true); ?></td>
@@ -150,7 +150,7 @@ if (!$compare) {
 				?>
 				<tr>
 					<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-					<td><img src="<?php echo "http://".$server."/".$o['item_id'].".".$imageType; ?>" alt="Item Image"></td>
+					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 					<td><?php echo $o['amount']; ?></td>
 					<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 					<td><?php echo getClock($o['created'], true, true); ?></td>
@@ -179,7 +179,7 @@ if (!$compare) {
 				?>
 				<tr>
 					<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-					<td><img src="<?php echo "http://".$server."/".$o['item_id'].".".$imageType; ?>" alt="Item Image"></td>
+					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 					<td><?php echo $o['amount']; ?></td>
 					<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 					<td><?php echo getClock($o['created'], true, true); ?></td>
@@ -206,7 +206,7 @@ if (!$compare) {
 		?>
 		<tr>
 			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo "http://".$server."/".$o['item_id'].".".$imageType; ?>" alt="Item Image"></td>
+			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 			<td><?php echo $o['amount']; ?></td>
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['inserted'], true, true); ?></td>

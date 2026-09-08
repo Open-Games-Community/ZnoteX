@@ -237,7 +237,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 													<?php if ($PEQ !== false && !empty($PEQ)): foreach($PEQ as $item): ?>
 														<div class="itm itm-<?php echo (int)$item['pid']; ?>">
 															<img class="cp-slot-empty" src="/engine/img/empty.png" alt="">
-															<img class="cp-slot-item" src="<?php echo htmlspecialchars("http://{$imageServer}/" . (int)$item['itemtype'] . ".{$imageType}", ENT_QUOTES, 'UTF-8'); ?>" alt="">
+															<img class="cp-slot-item" src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES, "UTF-8"); ?>" alt="">
 														</div>
 													<?php endforeach; endif; ?>
 												</div>

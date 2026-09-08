@@ -17,6 +17,13 @@
 		return htmlentities(strip_tags(mysql_znote_escape_string($data)));
 	}
 
+	require_once 'engine/function/translate.php';
+	require_once 'engine/function/settings.php';
+	require_once 'engine/function/users.php';
+	require_once 'engine/function/plugins.php';
+	znote_apply_settings();
+	znote_plugins_load();
+
 	// Util function to insert log
 	function report($code, $details = '') {
 		$connectedIp = $_SERVER['REMOTE_ADDR'];
@@ -90,7 +97,8 @@
 		// Check that transaction has not been previously processed
 		$transaction = mysql_select_single('SELECT `transaction`, `completed` FROM `znote_pagseguro` WHERE `transaction`= \'' . $paymentCode .'\'');
 		$status = true;
-		$custom = (int) $payment->reference;
+		$customRaw = (string)$payment->reference;
+		$custom = (int)$customRaw;
 
 		if (!is_array($transaction) || $transaction['completed'] == '1') {
 			$status = false;
@@ -98,7 +106,26 @@
 
 		if ($payment->grossAmount == 0.0) $status = false; // Wrong ammount of money
 		$item = $payment->items->item[0];
-		if ($item->amount != ($pagseguro['price'] / 100)) $status = false;
+		$paymentData = array(
+			'provider' => 'pagseguro',
+			'reference' => (string)$paymentCode,
+			'custom' => $customRaw,
+			'account_id' => $custom,
+			'price' => (float)$item->amount,
+			'currency' => $pagseguro['currency'] ?? '',
+			'points' => (int)$item->quantity,
+			'status' => 'completed',
+			'raw' => $rawPayment,
+			'resolved' => false,
+		);
+		if (function_exists('znote_hook_filter')) {
+			$paymentData = znote_hook_filter('payment.resolve', $paymentData, array('provider' => 'pagseguro', 'raw' => $rawPayment));
+		}
+		if (!empty($paymentData['resolved'])) {
+			$custom = (int)($paymentData['account_id'] ?? 0);
+		} elseif ($item->amount != ($pagseguro['price'] / 100)) $status = false;
+		if (number_format((float)$item->amount, 2, '.', '') !== number_format((float)($paymentData['price'] ?? 0), 2, '.', '')) $status = false;
+		if ($custom <= 0) $status = false;
 
 		if ($status) {
 			// transaction log
@@ -109,8 +136,21 @@
 
 			// Give points to user
 			if (is_array($data)) {
-				$new_points = (int)$data['old_points'] + (int)$item->quantity;
+				$paidPoints = (int)($paymentData['points'] ?? $item->quantity);
+				$new_points = (int)$data['old_points'] + $paidPoints;
 				mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+				if (function_exists('znote_hook')) {
+					znote_hook('payment.completed', array_merge($paymentData, array(
+						'provider' => 'pagseguro',
+						'reference' => (string)$paymentCode,
+						'custom' => $customRaw,
+						'account_id' => $custom,
+						'price' => $paymentData['price'] ?? (float)$item->amount,
+						'currency' => $paymentData['currency'] ?? ($pagseguro['currency'] ?? ''),
+						'points' => $paidPoints,
+						'status' => 'completed',
+					)));
+				}
 			} else {
 				report($notificationCode, 'No znote_accounts row for account_id ' . $custom);
 			}

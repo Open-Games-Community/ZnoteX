@@ -15,7 +15,7 @@
 if ($items) {
 	// Preparing data
 	$types = array_keys($items);
-	$itemServer = 'http://'.$config['shop']['imageServer'].'/';
+	$itemImg = static function($id){ return function_exists('znote_item_image_url') ? htmlspecialchars(znote_item_image_url((int)$id, 'gif'), ENT_QUOTES) : ''; };
 
 	//slotType values and names
 	if(isset($_GET['slot'])) {
@@ -95,26 +95,26 @@ if ($items) {
 	<table>
 		<tbody>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=helmet"><?= t('items.helmets') ?><br><img src="<?php echo $itemServer.'2471.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=sword"><?= t('items.swords') ?><br><img src="<?php echo $itemServer.'8931.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=shield"><?= t('items.shields') ?><br><img src="<?php echo $itemServer.'2523.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=necklace"><?= t('items.amulets') ?><br><img src="<?php echo $itemServer.'2173.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=helmet"><?= t('items.helmets') ?><br><img src="<?php echo $itemImg(2471); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=sword"><?= t('items.swords') ?><br><img src="<?php echo $itemImg(8931); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=shield"><?= t('items.shields') ?><br><img src="<?php echo $itemImg(2523); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=necklace"><?= t('items.amulets') ?><br><img src="<?php echo $itemImg(2173); ?>" /></a></td>
 			</tr>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=armor"><?= t('items.armors') ?><br><img src="<?php echo $itemServer.'2466.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=club"><?= t('items.clubs') ?><br><img src="<?php echo $itemServer.'2444.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=wand"><?= t('items.wands') ?><br><img src="<?php echo $itemServer.'2190.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=ammunition"><?= t('items.ammunition') ?><br><img src="<?php echo $itemServer.'6529.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=armor"><?= t('items.armors') ?><br><img src="<?php echo $itemImg(2466); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=club"><?= t('items.clubs') ?><br><img src="<?php echo $itemImg(2444); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=wand"><?= t('items.wands') ?><br><img src="<?php echo $itemImg(2190); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=ammunition"><?= t('items.ammunition') ?><br><img src="<?php echo $itemImg(6529); ?>" /></a></td>
 			</tr>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=legs"><?= t('items.legs') ?><br><img src="<?php echo $itemServer.'2470.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=axe"><?= t('items.axes') ?><br><img src="<?php echo $itemServer.'8925.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=ring"><?= t('items.rings') ?><br><img src="<?php echo $itemServer.'6093.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=legs"><?= t('items.legs') ?><br><img src="<?php echo $itemImg(2470); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=axe"><?= t('items.axes') ?><br><img src="<?php echo $itemImg(8925); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=ring"><?= t('items.rings') ?><br><img src="<?php echo $itemImg(6093); ?>" /></a></td>
 			</tr>
 			<tr>
-				<td style="text-align:center;"><a href="?slot=feet"><?= t('items.boots') ?><br><img src="<?php echo $itemServer.'2646.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=distance"><?= t('items.distance') ?><br><img src="<?php echo $itemServer.'5803.gif'; ?>" /></a></td>
-				<td style="text-align:center;"><a href="?slot=backpack"><?= t('items.backpacks') ?><br><img src="<?php echo $itemServer.'9774.gif'; ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=feet"><?= t('items.boots') ?><br><img src="<?php echo $itemImg(2646); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=distance"><?= t('items.distance') ?><br><img src="<?php echo $itemImg(5803); ?>" /></a></td>
+				<td style="text-align:center;"><a href="?slot=backpack"><?= t('items.backpacks') ?><br><img src="<?php echo $itemImg(9774); ?>" /></a></td>
 			</tr>
 		</tbody>
 	</table>
@@ -144,7 +144,7 @@ if ($items) {
 
 			if($show == true) { ?>
 			<tr>
-				<td><img src="<?php echo $itemServer.$itemid.'.gif'; ?>" /></td>
+				<td><img src="<?php echo $itemImg($itemid); ?>" /></td>
 				<td><?php echo ucwords($select['name']); ?></td>
 				<td><?php
 				foreach ($select['attributes'] as $array => $value) {
