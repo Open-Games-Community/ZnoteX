@@ -135,11 +135,11 @@
   {
     "key": "wheel_of_fortune",
     "name": "Wheel of Fortune",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
     "update": [
-      "First Release."
+      "Update icons."
     ],
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.zip",
