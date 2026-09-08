@@ -880,8 +880,6 @@ if (!empty($_GET)) {
 		}
 
 		if ($category !== false) {
-			// TODO : Verify guild access
-			//foreach($charData)
 			$getCatInt = (int)$getCat;
 			echo '<nav class="znf-crumbs"><a href="forum.php">' . t('forum.boards') . '</a> <span>/</span> ' . znote_forum_e($category['name']) . '</nav>';
 			echo '<div class="znf-bhead"><h1 class="znf-h1">' . znote_forum_e($category['name']) . '</h1></div>';

@@ -1,0 +1,18 @@
+# CodeFactor configuration.
+# Keep analysis on hand-written application code; skip vendored, generated,
+# minified and machine-converted files that we do not maintain by hand.
+
+exclude_paths:
+  - "assets/sceditor/**"
+  - "assets/fontawesome/**"
+  - "**/*.min.js"
+  - "**/*.min.css"
+  - "**/*.map"
+  - "layouts/*/_locale_update/**"
+  - "layouts/*/assets/**"
+  - "engine/function/itemparser/**"
+  - "engine/cert/**"
+  - "engine/cache/**"
+  - "TO_CONVERT/**"
+  - "SQL/**"
+  - "install/**"

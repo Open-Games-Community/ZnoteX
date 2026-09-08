@@ -49,7 +49,6 @@ if (isset($_GET['authenticate']) && $config['mailserver']['myaccount_verify_emai
 				echo '<h1>'. t('common.congrats') .'</h1> <p>'. t('acc.email_verified') .'</p>';
 				if ($verify_points !== '') echo "<p>As thanks for having a verified email, you have received <a href='/shop.php'>{$config['mailserver']['verify_email_points']} shop points</a>!</p>";
 				$user_znote_data['active_email'] = 1;
-				// Todo: Bonus points as thanks for verifying email
 			} else {
 				echo '<h1>'. t('acc.auth_failed'). '</h1> <p>Either the activation link is wrong, or your account is already activated.</p>';
 			}
@@ -301,7 +300,6 @@ if ($render_page) {
 		<h1><?= t('acc.page_title') ?></h1>
 		<p><?= t('acc.welcome') ?> <?php echo $user_data['name']; ?><br>
 			<?php 
-			// Todo: If premdays is less than 2, inform how many hours are left.
 			if ($user_data['premdays'] != 0) echo t('acc.premium_days', ['days' => $user_data['premdays']]); 
 			else echo t('acc.free_account');
 
