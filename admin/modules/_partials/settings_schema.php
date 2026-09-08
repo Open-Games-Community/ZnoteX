@@ -1,5 +1,18 @@
 <?php
 
+global $config;
+
+$acp_voc_options = array();
+foreach (($config['vocations'] ?? array()) as $vid => $voc) {
+	if ((int)$vid <= 0) continue;
+	$acp_voc_options[(string)$vid] = ($voc['name'] ?? ('Vocation ' . $vid)) . ' (#' . $vid . ')';
+}
+
+$acp_town_options = array();
+foreach (($config['towns'] ?? array()) as $tid => $tname) {
+	$acp_town_options[(string)$tid] = $tname . ' (#' . $tid . ')';
+}
+
 return array(
 
 		t_default('acp.sec.Site', 'Site') => array(
@@ -64,6 +77,11 @@ return array(
 		),
 
 		t_default('acp.sec.Game server', 'Game server') => array(
+			'server_path' => array(
+				'label' => t_default('acp.set.server_path.label', 'Server data folder path'),
+				'type'  => 'text',
+				'help'  => t_default('acp.set.server_path.help', 'Absolute path to the server folder, no trailing slash (e.g. /home/ots or C:/tfs). Used by Server-Info and plugins that read data/monster, items.xml, etc.'),
+			),
 			'client' => array(
 				'label' => t_default('acp.set.client.label', 'Client version'),
 				'type'  => 'int',
@@ -83,6 +101,20 @@ return array(
 				'min'   => 0,
 				'max'   => 999,
 				'help'  => t_default('acp.set.account_create_premdays.help', '0 disables it. New accounts only; existing accounts are not changed.'),
+			),
+			'website_char' => array(
+				'label' => t_default('acp.set.website_char.label', 'Website ban character'),
+				'type'  => 'text',
+				'help'  => t_default('acp.set.website_char.help', 'An existing character name that represents website bans. Bans from the panel need this.'),
+			),
+			'htwrite' => array(
+				'label' => t_default('acp.set.htwrite.label', 'Friendly URLs'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.htwrite.help', 'Needs mod_rewrite and the shipped .htaccess.'),
+			),
+			'ping' => array(
+				'label' => t_default('acp.set.ping.label', 'In-game ping measurement'),
+				'type'  => 'bool',
 			),
 		),
 
@@ -106,6 +138,53 @@ return array(
 			'create_guild_level' => array(
 				'label' => t_default('acp.set.create_guild_level.label', 'Level required to create a guild'),
 				'type'  => 'int',
+			),
+			'free_sex_change' => array(
+				'label' => t_default('acp.set.free_sex_change.label', 'Free sex change'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.free_sex_change.help', 'Let players switch their character sex for free from My Account.'),
+			),
+			'delete_character_interval' => array(
+				'label' => t_default('acp.set.delete_character_interval.label', 'Character deletion delay'),
+				'type'  => 'text',
+				'help'  => t_default('acp.set.delete_character_interval.help', 'MySQL interval before a deletion request runs, e.g. "3 DAY", "1 HOUR", "2 MONTH".'),
+			),
+		),
+
+		t_default('acp.sec.Character creation', 'Character creation') => array(
+			'available_vocations' => array(
+				'label'      => t_default('acp.set.available_vocations.label', 'Vocations players can pick'),
+				'type'       => 'checklist',
+				'options'    => $acp_voc_options,
+				'int_values' => true,
+				'help'       => t_default('acp.set.available_vocations.help', 'Shown on the create-character page. Options come from the vocations list below.'),
+			),
+			'available_towns' => array(
+				'label'      => t_default('acp.set.available_towns.label', 'Starting towns players can pick'),
+				'type'       => 'checklist',
+				'options'    => $acp_town_options,
+				'int_values' => true,
+				'help'       => t_default('acp.set.available_towns.help', 'Options come from the towns list below.'),
+			),
+			'towns' => array(
+				'label' => t_default('acp.set.towns.label', 'Towns'),
+				'type'  => 'json',
+				'help'  => t_default('acp.set.towns.help', 'Map of town id to name: {"1":"Rookgaard","8":"Thais"}. In RME press CTRL+T to see ids.'),
+			),
+			'vocations' => array(
+				'label' => t_default('acp.set.vocations.label', 'Vocations'),
+				'type'  => 'json',
+				'help'  => t_default('acp.set.vocations.help', 'Each entry: {"name":"Knight","fromVoc":4}. fromVoc is the base vocation id, or false for a base vocation.'),
+			),
+			'vocations_gain' => array(
+				'label' => t_default('acp.set.vocations_gain.label', 'Per-level stat gains'),
+				'type'  => 'json',
+				'help'  => t_default('acp.set.vocations_gain.help', 'Per vocation id: {"hp":15,"mp":5,"cap":25}. Used to compute starting health/mana/cap.'),
+			),
+			'player' => array(
+				'label' => t_default('acp.set.player.label', 'Starting character (level, stats, skills, outfits)'),
+				'type'  => 'json',
+				'help'  => t_default('acp.set.player.help', 'The full base/create block: starting level, base health/mana/cap/soul, per-vocation skills and the default male/female outfits.'),
 			),
 		),
 
@@ -138,6 +217,11 @@ return array(
 				'type'  => 'bool',
 				'help'  => t_default('acp.set.queststatus_enabled.help', 'Shows queststatus.php and its menu link. Off by default; edit the quest list in queststatus.php.'),
 			),
+			'EnableQuests' => array(
+				'label' => t_default('acp.set.EnableQuests.label', 'Quest points block on profiles'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.EnableQuests.help', 'Shows the quest progress block on character profiles. Needs the quest storages configured in config.php.'),
+			),
 			'allowSubPages' => array(
 				'label' => t_default('acp.set.allowSubPages.label', 'Allow theme sub pages'),
 				'type'  => 'bool',
@@ -154,6 +238,11 @@ return array(
 				'label' => t_default('acp.set.log_ip.label', 'Log visitor IPs'),
 				'type'  => 'bool',
 				'help'  => t_default('acp.set.log_ip.help', 'Feeds the Visitors page. Turning it off stops the collection entirely.'),
+			),
+			'flush_ip_logs' => array(
+				'label' => t_default('acp.set.flush_ip_logs.label', 'IP log retention (rows)'),
+				'type'  => 'int',
+				'help'  => t_default('acp.set.flush_ip_logs.help', 'Old visitor-IP rows past this count are trimmed.'),
 			),
 		),
 
@@ -287,6 +376,15 @@ return array(
 			),
 			'guildwar_enabled' => array(
 				'label' => t_default('acp.set.guildwar_enabled.label', 'Guild wars'),
+				'type'  => 'bool',
+			),
+			'require_login.guilds' => array(
+				'label' => t_default('acp.set.require_login.guilds.label', 'Require login to view guilds'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.require_login.guilds.help', 'Eases database load on large servers.'),
+			),
+			'require_login.guildwars' => array(
+				'label' => t_default('acp.set.require_login.guildwars.label', 'Require login to view guild wars'),
 				'type'  => 'bool',
 			),
 		),
@@ -437,6 +535,11 @@ return array(
 			'captcha_secret_key' => array(
 				'label' => t_default('acp.set.captcha_secret_key.label', 'reCaptcha secret key'),
 				'type'  => 'text',
+			),
+			'captcha_use_curl' => array(
+				'label' => t_default('acp.set.captcha_use_curl.label', 'Verify reCaptcha with cURL'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.captcha_use_curl.help', 'On if the cURL extension is available, off to use file_get_contents.'),
 			),
 			'twoFactorAuthenticator' => array(
 				'label' => t_default('acp.set.twoFactorAuthenticator.label', 'Two-factor authentication'),

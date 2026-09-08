@@ -492,11 +492,18 @@ UPDATE `znote_menu` `c`
   WHERE `c`.`location` = 'main' AND `c`.`label` IN ('Buy points');
 
 -- Add default forum boards
-INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`) VALUES
-('Staff Board', '4', '0', '0', '0'),
-('Tutors Board', '2', '0', '0', '0'),
-('Discussion', '1', '0', '0', '0'),
-('Feedback', '1', '0', '1', '0');
+INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`)
+SELECT 'Staff Board', '4', '0', '0', '0' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `znote_forum` WHERE `name` = 'Staff Board' AND `guild_id` = '0');
+INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`)
+SELECT 'Tutors Board', '2', '0', '0', '0' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `znote_forum` WHERE `name` = 'Tutors Board' AND `guild_id` = '0');
+INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`)
+SELECT 'Discussion', '1', '0', '0', '0' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `znote_forum` WHERE `name` = 'Discussion' AND `guild_id` = '0');
+INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`)
+SELECT 'Feedback', '1', '0', '1', '0' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `znote_forum` WHERE `name` = 'Feedback' AND `guild_id` = '0');
 
 -- Convert existing accounts in database to be Znote AAC compatible
 INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`)

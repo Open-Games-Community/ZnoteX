@@ -41,6 +41,12 @@ function acp_setting_cast(array $field, $raw): string {
 			$value   = trim((string)$raw);
 			return isset($options[$value]) ? $value : (string)array_key_first($options);
 
+		case 'json':
+			$decoded = json_decode(is_string($raw) ? $raw : '', true);
+			return is_array($decoded)
+				? (string)json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+				: '';
+
 		case 'checklist':
 			$options = $field['options'] ?? array();
 			$picked  = is_array($raw) ? $raw : array();
@@ -54,6 +60,10 @@ function acp_setting_cast(array $field, $raw): string {
 
 			if (!$kept && $options) {
 				$kept[] = (string)array_key_first($options);
+			}
+
+			if (!empty($field['int_values'])) {
+				$kept = array_values(array_map('intval', $kept));
 			}
 
 			return (string)json_encode($kept);
@@ -73,7 +83,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	foreach ($schema as $fields) {
 		foreach ($fields as $key => $field) {
-			$value = acp_setting_cast($field, $_POST['set'][$key] ?? '');
+			$raw = $_POST['set'][$key] ?? '';
+
+			if (($field['type'] ?? '') === 'json') {
+				$decoded = json_decode(is_string($raw) ? $raw : '', true);
+				if (!is_array($decoded)) { $failed++; continue; }
+				setting_set('config:' . $key, (string)json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ? $saved++ : $failed++;
+				continue;
+			}
+
+			$value = acp_setting_cast($field, $raw);
 			setting_set('config:' . $key, $value) ? $saved++ : $failed++;
 		}
 	}
@@ -133,9 +152,21 @@ $hasTable = znote_table_exists('znote_config');
 						if (is_bool($fromFile)) {
 							$fromFile = $fromFile ? '1' : '0';
 						} elseif (is_array($fromFile)) {
-							$fromFile = ($field['type'] === 'checklist') ? (string)json_encode(array_values($fromFile)) : '';
+							if ($field['type'] === 'checklist') {
+								$fromFile = (string)json_encode(array_values($fromFile));
+							} elseif ($field['type'] === 'json') {
+								$fromFile = (string)json_encode($fromFile, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+							} else {
+								$fromFile = '';
+							}
 						}
 						$current = ($stored !== null) ? $stored : (string)$fromFile;
+						if ($field['type'] === 'json' && $stored !== null) {
+							$decoded = json_decode($stored, true);
+							if (is_array($decoded)) {
+								$current = (string)json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+							}
+						}
 						$fromDb  = ($stored !== null);
 					?>
 						<div class="acp-field">
@@ -154,6 +185,9 @@ $hasTable = znote_table_exists('znote_config');
 								</label>
 							<?php elseif ($field['type'] === 'textarea'): ?>
 								<textarea class="acp-textarea" id="set_<?= h($key) ?>" name="set[<?= h($key) ?>]" rows="3"><?= h($current) ?></textarea>
+							<?php elseif ($field['type'] === 'json'): ?>
+								<textarea class="acp-textarea" id="set_<?= h($key) ?>" name="set[<?= h($key) ?>]" rows="12" spellcheck="false"
+										  style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;min-height:200px;"><?= h($current) ?></textarea>
 							<?php elseif ($field['type'] === 'checklist'):
 								$picked = json_decode($current, true);
 								if (!is_array($picked)) {

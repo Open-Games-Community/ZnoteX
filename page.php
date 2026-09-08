@@ -66,6 +66,16 @@ if ($file === null) {
 // Lets a theme style one of its own pages from CSS alone: body.page_wiki
 $page_filename = 'page_' . ($pluginName !== '' ? $pluginName . '_' : '') . $requested;
 
+$page_title = ucwords(str_replace(array('-', '_'), ' ', $requested !== '' ? $requested : 'index'));
+if (function_exists('znote_hook_filter')) {
+	$page_title = (string) znote_hook_filter('page.title', $page_title, array(
+		'plugin'   => $pluginName,
+		'page'     => $requested,
+		'filename' => $page_filename,
+	));
+}
+$GLOBALS['page_title'] = $page_title;
+
 theme_open();
 include $file;
 theme_close();
