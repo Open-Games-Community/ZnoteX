@@ -109,15 +109,106 @@
   {
     "key": "starter_pack",
     "name": "Starter Pack",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
     "update": [
-      "First Release.",
-	  "Starter Packs options: Outfit ID Male/Female, Mount ID, Item ID, Storage Key (+Text), House ID"
+      "Update Image Path selection, requires last update ZnoteX."
     ],
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.zip",
     "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
+  },
+  {
+    "key": "boosted_creatures",
+    "name": "Boosted Creatures",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Show Boosted Creatures at right/left floating box on website.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/boosted_creatures.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/boosted_creatures.zip",
+    "url": "https://opengamescommunity.com/resources/boosted-creatures.1039/"
+  },
+  {
+    "key": "wheel_of_fortune",
+    "name": "Wheel of Fortune",
+    "version": "1.1.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.zip",
+    "url": "https://opengamescommunity.com/resources/wheel-of-fortune.1040/"
+  },
+  {
+    "key": "bounty_board",
+    "name": "Bounty Board",
+    "version": "1.1.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Bounty Board appearing under Community Menu, each player can post up to 3 bounty with premium points, first to reach will earn reward (automatic).",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/bounty_board.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/bounty_board.zip",
+    "url": "https://opengamescommunity.com/resources/bounty-board.1041/"
+  },
+  {
+    "key": "custom_leaderboards",
+    "name": "Custom Leaderboards",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Show Multiples Custom Leaderboards, simple highscores with prizes or custom rankings of a system with storage key per week, per month per season or from all of time.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/custom_leaderboards.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/custom_leaderboards.zip",
+    "url": "https://opengamescommunity.com/resources/custom-leaderboard.1042/"
+  },
+  {
+    "key": "forum_avatars",
+    "name": "Forum Avatars",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Show a custom avatar (image upload, max 2MB), outfit or a basic icon on forum.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/forum_avatars.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/forum_avatars.zip",
+    "url": "https://opengamescommunity.com/resources/forum-avatars.1043/"
+  },
+  {
+    "key": "pvp_ranked",
+    "name": "PvP Ranked",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "PvP Ranked Leaderboard, with prizes per ranking up to 10 rankings. Points required per rank, Soft Reset, Seasonal.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/pvp_ranked.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/pvp_ranked.zip",
+    "url": "https://opengamescommunity.com/resources/pvp-ranked.1044/"
+  },
+  {
+    "key": "loot_search",
+    "name": "Loot Search",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Loot Search by monster name or boss or item name, see resistances, def, hp, experience, bestiary, occurence and loot percentages.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.zip",
+    "url": "https://opengamescommunity.com/resources/loot-search.1045/"
   }
+  
 ]
