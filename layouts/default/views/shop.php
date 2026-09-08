@@ -140,7 +140,7 @@ foreach ($shop_list as $key => $offer) {
 			<tr class="special">
 				<td><?php echo $offers['description']; ?></td>
 				<?php if ($config['shop']['showImage']):?>
-					<td><img src="http://<?php echo $config['shop']['imageServer']; ?>/<?php echo $offers['itemid']; ?>.<?php echo $config['shop']['imageType']; ?>" alt="img"></td>
+					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$offers['itemid']), ENT_QUOTES); ?>" alt="img"></td>
 				<?php endif; ?>
 				<td><?php echo $offers['count']; ?>x</td>
 				<td><?php echo $offers['points']; ?></td>
@@ -171,7 +171,7 @@ foreach ($shop_list as $key => $offer) {
 		<tr class="special">
 			<td><?php echo $offers['description']; ?></td>
 			<?php if ($config['shop']['showImage']):?>
-				<td><img src="http://<?php echo $config['shop']['imageServer']; ?>/<?php echo $offers['itemid']; ?>.<?php echo $config['shop']['imageType']; ?>" alt="img"></td>
+				<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$offers['itemid']), ENT_QUOTES); ?>" alt="img"></td>
 			<?php endif; ?>
 				<td><?= h(t('shop.days', ['count' => $offers['count']])) ?></td>
 			<td><?php echo $offers['points']; ?></td>
@@ -271,7 +271,7 @@ foreach ($shop_list as $key => $offer) {
 		<tr class="special">
 			<td><?php echo $offers['description']; ?></td>
 			<?php if ($config['shop']['showImage']):?>
-				<td><img src="http://<?php echo $config['shop']['imageServer']; ?>/<?php echo $offers['itemid']; ?>.<?php echo $config['shop']['imageType']; ?>" alt="img"></td>
+				<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$offers['itemid']), ENT_QUOTES); ?>" alt="img"></td>
 			<?php endif;
 			if ($offers['count'] === 0): ?>
 				<td><?= t('common.unlimited') ?></td>

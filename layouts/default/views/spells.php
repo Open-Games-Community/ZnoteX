@@ -11,7 +11,7 @@ if ($spells) {
 	// Preparing data
 	$configVoc = $config['vocations'];
 	$types = array_keys($spells);
-	$itemServer = 'http://'.$config['shop']['imageServer'].'/';
+	$itemImg = static function($id){ return function_exists('znote_item_image_url') ? htmlspecialchars(znote_item_image_url((int)$id, 'gif'), ENT_QUOTES) : ''; };
 
 	// Filter spells by vocation
 	$getVoc = (isset($_GET['vocation'])) ? getValue($_GET['vocation'] ?? null) : 'all';
@@ -99,7 +99,7 @@ if ($spells) {
 				<td><?php echo $spell['name']; ?></td>
 				<td><?php echo $spell['lvl']; ?></td>
 				<td><?php echo $spell['maglv']; ?></td>
-				<td><img src="<?php echo $itemServer.$spell['id'].'.gif'; ?>" alt="<?= h(t('spells.rune_image')) ?>"></td>
+				<td><img src="<?php echo $itemImg($spell['id']); ?>" alt="<?= h(t('spells.rune_image')) ?>"></td>
 				<td><?php
 				if (!empty($spell['vocations'])) {
 					if ($getVoc !== 'all') {
@@ -142,7 +142,7 @@ if ($spells) {
 				<td><?php echo $spell['mana']; ?></td>
 				<td><?php echo $spell['soul']; ?></td>
 				<td><?php echo $spell['conjureCount']; ?></td>
-				<td><img src="<?php echo $itemServer.$spell['conjureId'].'.gif'; ?>" alt="<?= h(t('spells.rune_image')) ?>"></td>
+				<td><img src="<?php echo $itemImg($spell['conjureId']); ?>" alt="<?= h(t('spells.rune_image')) ?>"></td>
 				<td><?php
 				if (!empty($spell['vocations'])) {
 					if ($getVoc !== 'all') {

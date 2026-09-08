@@ -22,6 +22,7 @@ ob_start();
 
 require_once 'config.php';
 $sessionPrefix = $config['session_prefix'];
+
 if ($config['paypal']['enabled'] || $config['use_captcha']) {
 	$curlcheck = extension_loaded('curl');
 	if (!$curlcheck) die("php cURL is not enabled. It is required to for paypal or captcha services.<br>1. Find your php.ini file.<br>2. Uncomment extension=php_curl<br>Restart web server.<br><br><b>If you don't want this then disable paypal & use_captcha in config.php.</b>");
@@ -89,6 +90,33 @@ require_once 'function/payments.php';
 
 // Settings saved from the admin panel override the values in config.php.
 znote_apply_settings();
+
+// Local item-image passthrough: when $config['shop']['imageServer'] points at a
+// disk folder, serve <folder>/<id>.<png|gif|jpg|...> straight from PHP. Placed
+// after znote_apply_settings() so the admin-panel value wins over config.php.
+if (isset($_GET['znote_item_img'])) {
+	while (ob_get_level() > 0) ob_end_clean();
+	$zii_id  = (int) $_GET['znote_item_img'];
+	$zii_dir = function_exists('znote_item_image_dir') ? znote_item_image_dir() : '';
+	if ($zii_dir === '' || $zii_id <= 0) { http_response_code(404); exit; }
+	$zii_cfg  = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) ($config['shop']['imageType'] ?? '')));
+	$zii_exts = array_values(array_unique(array_filter(array_merge(array($zii_cfg), array('png', 'gif', 'jpg', 'jpeg', 'webp')))));
+	$zii_file = '';
+	foreach ($zii_exts as $zii_e) {
+		$zii_p = $zii_dir . DIRECTORY_SEPARATOR . $zii_id . '.' . $zii_e;
+		if (is_file($zii_p)) { $zii_file = $zii_p; break; }
+	}
+	$zii_real = $zii_file !== '' ? realpath($zii_file) : false;
+	if ($zii_real === false || strncmp($zii_real, $zii_dir, strlen($zii_dir)) !== 0) { http_response_code(404); exit; }
+	$zii_mime = array('png' => 'image/png', 'gif' => 'image/gif', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp');
+	$zii_x = strtolower(pathinfo($zii_real, PATHINFO_EXTENSION));
+	header('Content-Type: ' . ($zii_mime[$zii_x] ?? 'application/octet-stream'));
+	header('Content-Length: ' . (string) filesize($zii_real));
+	header('Cache-Control: public, max-age=86400');
+	header('X-Content-Type-Options: nosniff');
+	readfile($zii_real);
+	exit;
+}
 
 // Enabled plugins register their hooks here, once the database and settings
 // are available and before any page has done anything.

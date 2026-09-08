@@ -267,6 +267,7 @@ return array(
 			'shop.imageServer' => array(
 				'label' => t_default('acp.set.shop.imageServer.label', 'Item image server'),
 				'type'  => 'text',
+				'help'  => t_default('acp.set.shop.imageServer.help', 'An http(s):// URL, "/items" for a folder in this website, or a disk folder path (e.g. F:/server/items) served straight from PHP. Used by the shop, market, character equipment and plugins.'),
 			),
 			'shop.imageType' => array(
 				'label' => t_default('acp.set.shop.imageType.label', 'Item image extension'),

@@ -412,7 +412,7 @@ if ($auction['characterAuction']) {
 						</tr>
 						<?php foreach($player_items as $item): ?>
 							<tr>
-								<td><img src="<?php echo "http://".$server."/".$item['itemtype'].".".$imageType; ?>" alt="Item Image"></td>
+								<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 								<td><a href="/market.php?compare=<?php echo $item['itemtype']; ?>" target="_BLANK"><?php echo (isset($items[$item['itemtype']])) ? $items[$item['itemtype']] : $item['itemtype']; ?></a></td>
 								<td><?php echo $item['count']; ?></td>
 							</tr>
@@ -432,7 +432,7 @@ if ($auction['characterAuction']) {
 						</tr>
 						<?php foreach($depot_items as $item): ?>
 							<tr>
-								<td><img src="<?php echo "http://".$server."/".$item['itemtype'].".".$imageType; ?>" alt="Item Image"></td>
+								<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES); ?>" alt="Item Image"></td>
 								<td><a href="/market.php?compare=<?php echo $item['itemtype']; ?>" target="_BLANK"><?php echo (isset($items[$item['itemtype']])) ? $items[$item['itemtype']] : $item['itemtype']; ?></a></td>
 								<td><?php echo $item['count']; ?></td>
 							</tr>

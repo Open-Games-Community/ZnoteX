@@ -658,3 +658,37 @@ function znote_cainfo() {
 
 	return is_file($bundle) ? $bundle : '';
 }
+
+function znote_media_base(string $srv): string {
+	$srv = trim($srv);
+	if ($srv === '') return '';
+	if (preg_match('#^(https?:)?//#i', $srv)) return rtrim($srv, '/');
+	if (preg_match('#^[a-zA-Z]:[\\/]#', $srv) || strncmp($srv, '\\', 2) === 0) return '';
+	if ($srv[0] === '/') return rtrim($srv, '/');
+	return 'http://' . rtrim($srv, '/');
+}
+
+function znote_item_image_dir(): string {
+	static $dir = null;
+	if ($dir !== null) return $dir;
+	global $config;
+	$srv = trim((string) ($config['shop']['imageServer'] ?? ''));
+	if ($srv === '' || preg_match('#^(https?:)?//#i', $srv) || (isset($srv[0]) && $srv[0] === '/' && !@is_dir($srv))) return $dir = '';
+	$real = @realpath($srv);
+	return $dir = ($real !== false && @is_dir($real)) ? $real : '';
+}
+
+function znote_item_image_url(int $id, ?string $type = null): string {
+	if ($id <= 0) return '';
+	global $config;
+	if (znote_item_image_dir() !== '') return 'index.php?znote_item_img=' . $id;
+	$type = ($type !== null && $type !== '') ? $type : (string) ($config['shop']['imageType'] ?? 'gif');
+	$type = preg_replace('/[^a-z0-9]/i', '', $type) ?: 'gif';
+	$base = znote_media_base((string) ($config['shop']['imageServer'] ?? ''));
+	return $base === '' ? '' : $base . '/' . $id . '.' . $type;
+}
+
+function znote_outfit_image_base(): string {
+	global $config;
+	return znote_media_base((string) ($config['show_outfits']['imageServer'] ?? ''));
+}
