@@ -495,25 +495,30 @@ function payment_gateway_credit_transaction(string $provider, string $reference,
 		");
 
 		mysqli_commit($connect);
-		if (function_exists('znote_hook')) {
-			znote_hook('payment.completed', array(
-				'provider' => $provider,
-				'reference' => $reference,
-				'provider_reference' => $providerReference,
-				'account_id' => $accountId,
-				'price' => $tx['price'],
-				'currency' => $tx['currency'],
-				'points' => $points,
-				'status' => $expectedStatus,
-				'payload' => $payload,
-			));
-		}
+		payment_gateway_fire_completed($provider, $reference, $providerReference, $expectedStatus, $accountId, $points, $tx, $payload);
 		return 'credited';
 	} catch (Throwable $e) {
 		mysqli_rollback($connect);
 		error_log('Payment credit failed: ' . $e->getMessage());
 		return 'credit_failed';
 	}
+}
+
+function payment_gateway_fire_completed(string $provider, string $reference, string $providerReference, string $status, int $accountId, int $points, array $tx, array $payload): void {
+	if (!function_exists('znote_hook')) {
+		return;
+	}
+	znote_hook('payment.completed', array(
+		'provider' => $provider,
+		'reference' => $reference,
+		'provider_reference' => $providerReference,
+		'account_id' => $accountId,
+		'price' => $tx['price'] ?? null,
+		'currency' => $tx['currency'] ?? null,
+		'points' => $points,
+		'status' => $status,
+		'payload' => $payload,
+	));
 }
 
 function payment_gateway_provider_amount_matches(string $provider, array $transaction, array $payload): bool {
