@@ -93,5 +93,44 @@
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/eclipse.zip",
     "url": "https://opengamescommunity.com/resources/eclipse-layout.1035/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/eclipse.png"
+  },
+  {
+    "key": "brightness",
+    "name": "Brightness",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Brightness theme by alexv45 for ZnoteX.",
+    "update": [
+      "Update new image path method."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/brightness.zip",
+    "url": "https://opengamescommunity.com/resources/brightness.1050/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/brightness.png"
+  },
+  {
+    "key": "wildlands",
+    "name": "Wildlands",
+    "version": "1.0.2",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Wildlands theme by alexv45 for ZnoteX.",
+    "update": [
+      "Update new image path method."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/wildlands.zip",
+    "url": "https://opengamescommunity.com/resources/wildlands.1051/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/wildlands.png"
+  },
+  {
+    "key": "bloodfang",
+    "name": "Bloodfang",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Bloodfang theme by alexv45 for ZnoteX.",
+    "update": [
+      "Update new image path method."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/bloodfang.zip",
+    "url": "https://opengamescommunity.com/resources/bloodfang.1052/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/bloodfang.png"
   }
 ]
