@@ -22,7 +22,7 @@
     "update": [
       "My Account injection now works with themes that nest the account heading (e.g. Eclipse).",
       "Admin settings for referrer/new account points and premium days.",
-      "Referral ledger with basic same-IP abuse protection.",
+      "Referral ledger with basic same-IP abuse protection."
     ],
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.zip",
@@ -79,7 +79,7 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.zip",
     "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
-  ,
+  },
   {
     "key": "battle_pass",
     "name": "Battlepass",
