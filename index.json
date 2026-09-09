@@ -209,6 +209,19 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.zip",
     "url": "https://opengamescommunity.com/resources/loot-search.1045/"
+  },
+  {
+    "key": "patron_names",
+    "name": "Loot Search",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Allows to customize player names as premium or vip (storage key) with animation & color.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.zip",
+    "url": "https://opengamescommunity.com/resources/patron-names.1047/"
   }
   
 ]
