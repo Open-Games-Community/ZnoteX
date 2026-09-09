@@ -248,5 +248,18 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.zip",
     "url": "https://opengamescommunity.com/resources/patron-names.1047/"
-  } 
+  },
+  {
+    "key": "server_statistics",
+    "name": "Server Statistics",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Show Server Statistics under community menu.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.zip",
+    "url": "https://opengamescommunity.com/resources/server-statistics.1053/"
+  }
 ]
