@@ -222,6 +222,31 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.zip",
     "url": "https://opengamescommunity.com/resources/patron-names.1047/"
-  }
-  
+  },
+  {
+    "key": "calendar",
+    "name": "Calendar",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Calendar: Add a Double EXP, Loot, Spawn or A Storage Key event on a selected day, download the script related to your server.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.zip",
+    "url": "https://opengamescommunity.com/resources/calendar.1048/"
+  },
+  {
+    "key": "streamers",
+    "name": "Streamers",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Show Streamers from Kick, Twich or Youtube on home page, select the position of the box and edit colors, you need use your Key.",
+    "update": [
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.zip",
+    "url": "https://opengamescommunity.com/resources/patron-names.1047/"
+  } 
 ]
