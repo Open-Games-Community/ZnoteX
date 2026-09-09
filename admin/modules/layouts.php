@@ -12,6 +12,18 @@ if (!defined('ACP_ROOT')) {
 	die('Direct access denied.');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_layout_repository_cache'])) {
+	if (theme_repository_clear_cache()) {
+		acp_flash_success(t('acp.laybr.cache_deleted'));
+	} else {
+		acp_flash_error(t('acp.laybr.cache_delete_failed', [
+			'path' => '<code>' . h(theme_repository_cache_path()) . '</code>',
+		]));
+	}
+
+	acp_redirect('layouts', array('tab' => 'browse', 'refresh' => 1));
+}
+
 // ---------------------------------------------------------------------------
 // Activate a theme
 // ---------------------------------------------------------------------------
@@ -188,6 +200,12 @@ $active  = theme_active();
 
 // The Browse tab is a separate view over the same module.
 if (($_GET['tab'] ?? '') === 'browse') {
+	// "Refresh catalogue" also wipes the local caches - a stale cache is what
+	// usually keeps a just-installed or updated theme (and its options/locale)
+	// from showing correctly.
+	if (isset($_GET['refresh']) && function_exists('znote_cache_flush')) {
+		znote_cache_flush();
+	}
 	include ACP_ROOT . '/modules/_partials/layouts_browse.php';
 	return;
 }

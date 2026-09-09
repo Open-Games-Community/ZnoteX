@@ -355,6 +355,20 @@ function theme_repository_config(): array {
 	);
 }
 
+function theme_repository_cache_path(): string {
+	return 'engine/cache/layout_repository' . Cache::EXT;
+}
+
+function theme_repository_clear_cache(): bool {
+	$file = theme_repository_cache_path();
+
+	if (!is_file($file)) {
+		return true;
+	}
+
+	return @unlink($file);
+}
+
 /** True when a URL is https and points at a host on the allow list. */
 function theme_repository_url_allowed(string $url): bool {
 	$cfg   = theme_repository_config();

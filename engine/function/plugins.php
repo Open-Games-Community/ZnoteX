@@ -369,6 +369,20 @@ function plugin_repository_config(): array {
 	);
 }
 
+function plugin_repository_cache_path(): string {
+	return 'engine/cache/plugin_repository' . Cache::EXT;
+}
+
+function plugin_repository_clear_cache(): bool {
+	$file = plugin_repository_cache_path();
+
+	if (!is_file($file)) {
+		return true;
+	}
+
+	return @unlink($file);
+}
+
 function plugin_repository_url_allowed(string $url): bool {
 	$cfg   = plugin_repository_config();
 	$parts = parse_url($url);

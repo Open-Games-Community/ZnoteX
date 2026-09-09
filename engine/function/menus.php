@@ -114,6 +114,17 @@ function menu_url_available(string $url): bool {
 	$path = parse_url($url, PHP_URL_PATH);
 	$page = strtolower(basename($path !== null && $path !== false ? $path : $url));
 
+	// A plugin page (page.php?plugin=X): gone from the menu the moment the
+	// plugin is disabled or uninstalled, without the plugin having to run.
+	if ($page === 'page.php' && function_exists('setting')) {
+		parse_str((string)(parse_url($url, PHP_URL_QUERY) ?: ''), $mq);
+		$mp = isset($mq['plugin']) ? preg_replace('/[^a-z0-9_-]/i', '', (string)$mq['plugin']) : '';
+		if ($mp !== '') {
+			return setting('plugin:' . $mp . ':enabled', '0') === '1'
+				&& (string)setting('plugin:' . $mp . ':version', '') !== '';
+		}
+	}
+
 	switch ($page) {
 		case 'shop.php':
 			return !empty($config['shop']['enabled']);

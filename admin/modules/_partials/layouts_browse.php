@@ -40,6 +40,16 @@ $repoError  = (string)($catalogue['error'] ?? '');
 
 <?php elseif ($repoError !== ''): ?>
 
+	<div class="acp-actions is-tight" style="margin-bottom:12px;">
+		<form class="acp-inline-form" method="post">
+			<?= acp_csrf_field() ?>
+			<input type="hidden" name="clear_layout_repository_cache" value="1">
+			<button class="acp-btn acp-btn--red acp-btn--sm" type="submit">
+				<i class="fa fa-trash"></i> <?= t('acp.laybr.delete_cache') ?>
+			</button>
+		</form>
+	</div>
+
 	<div class="acp-flash acp-flash--error">
 		<i class="fa fa-exclamation-triangle"></i>
 		<span>
