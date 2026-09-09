@@ -226,11 +226,11 @@
   {
     "key": "calendar",
     "name": "Calendar",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Calendar: Add a Double EXP, Loot, Spawn or A Storage Key event on a selected day, download the script related to your server.",
     "update": [
-      "First Release."
+      "Update: Remove page if plugin disabled."
     ],
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.zip",
