@@ -281,5 +281,19 @@
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.png",
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.zip",
     "url": "https://opengamescommunity.com/resources/server-statistics.1053/"
+  },
+  {
+    "key": "server_goals",
+    "name": "Server Statistics",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Server Goals, ex: Kill 100.000 Demons from X to X time, setting a global game storage (ex: double exp, double spawn... or anything else)",
+    "update": [
+      "Migrated SQL to prepared statements (db()).",
+      "First Release."
+    ],
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_goals.png",
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_goals.zip",
+    "url": "https://opengamescommunity.com/resources/server-goals.1054/"
   }
 ]
