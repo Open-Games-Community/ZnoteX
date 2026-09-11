@@ -4,7 +4,7 @@
 
 **A complete website for your Open Tibia server.**
 
-Version 2.0.0 · Maintained by [Open Games Community](https://opengamescommunity.com)
+Version 2.0.1 · Maintained by [Open Games Community](https://opengamescommunity.com)
 
 [Website](https://opengamescommunity.com) · [Source & releases](https://github.com/Open-Games-Community/ZnoteX) · [Themes](layouts/README.md) · [Plugins](plugins/README.md)
 

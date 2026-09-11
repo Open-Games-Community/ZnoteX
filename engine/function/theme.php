@@ -405,7 +405,7 @@ function theme_repository_get(string $url, ?string $toFile = null, ?string &$err
 	curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.0'));
+	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.1'));
 
 	// The CA bundle shipped with ZnoteX, so this works on Windows too.
 	$ca = znote_cainfo();

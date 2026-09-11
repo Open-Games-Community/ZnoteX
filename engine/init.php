@@ -10,7 +10,7 @@ $l_start = $GLOBALS['__znote_start_time'];
 $start = $GLOBALS['__znote_start_time'];
 
 $time = time();
-$version = '2.0.0';
+$version = '2.0.1';
 
 $aacQueries = 0;
 $accQueriesData = array();

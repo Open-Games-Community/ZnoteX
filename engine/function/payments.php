@@ -197,7 +197,7 @@ function payment_gateway_http(string $method, string $url, array $headers = [], 
 	curl_setopt($ch, CURLOPT_TIMEOUT, 45);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.0'));
+	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.1'));
 
 	$ca = __DIR__ . '/../cert/cacert.pem';
 	if (is_file($ca)) {

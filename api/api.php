@@ -8,7 +8,7 @@ if (!isset($filepath)) {
     $filepath = '../';
 }
 
-$version = '2.0.0';
+$version = '2.0.1';
 
 ob_start();
 require_once $filepath.'config.php';

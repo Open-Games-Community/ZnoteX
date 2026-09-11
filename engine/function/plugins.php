@@ -414,7 +414,7 @@ function plugin_repository_get(string $url, ?string $toFile = null, ?string &$er
 	curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.0'));
+	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.1'));
 
 	$ca = function_exists('znote_cainfo') ? znote_cainfo() : '';
 	if ($ca !== '') {

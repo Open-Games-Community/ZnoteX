@@ -4,7 +4,7 @@ if (PHP_VERSION_ID < 80100) {
 	exit('PHP 8.1 or higher is required.');
 }
 
-$version = '2.0.0';
+$version = '2.0.1';
 $time = time();
 $aacQueries = 0;
 $accQueriesData = [];

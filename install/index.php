@@ -63,7 +63,7 @@ $content = ob_get_clean();
 
 	<header class="head">
 		<div class="brand"><span class="mark">ZX</span> Install ZnoteX</div>
-		<span class="version">2.0.0</span>
+		<span class="version">2.0.1</span>
 	</header>
 
 	<?php if ($locked === ''): ?>
