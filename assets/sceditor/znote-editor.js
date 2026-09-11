@@ -38,6 +38,7 @@
 			});
 
 			mirrorTheme(box);
+			mirrorColors(box);
 
 			var limit = parseInt(box.getAttribute('data-maxlength'), 10);
 			if (!isNaN(limit) && limit > 0) {
@@ -67,6 +68,57 @@
 
 		apply();
 		instance.bind('ready', apply);
+	}
+
+	function cssVar(styles, name) {
+		return (styles.getPropertyValue(name) || '').trim();
+	}
+
+	function parseRgb(value) {
+		var match = String(value || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+		if (!match) {
+			return null;
+		}
+
+		return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+	}
+
+	function isDark(value) {
+		var rgb = parseRgb(value);
+		if (!rgb) {
+			return true;
+		}
+
+		return ((rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000) < 128;
+	}
+
+	function mirrorColors(box) {
+		var rootStyles = window.getComputedStyle(document.documentElement);
+		var bodyStyles = window.getComputedStyle(document.body);
+		var bg = cssVar(rootStyles, '--secondary') || cssVar(rootStyles, '--primary') || bodyStyles.backgroundColor || '#191c21';
+		var color = cssVar(rootStyles, '--font-color') || bodyStyles.color || (isDark(bg) ? '#dfe4ec' : '#1c1f27');
+		var link = cssVar(rootStyles, '--anchor') || cssVar(rootStyles, '--anchor-hover') || (isDark(bg) ? '#d9a441' : '#b9762a');
+		var scheme = isDark(bg) ? 'dark' : 'light';
+
+		var instance = sceditor.instance(box);
+		var apply = function () {
+			var body = instance.getBody();
+			if (!body || !body.ownerDocument || !body.ownerDocument.documentElement) {
+				return;
+			}
+
+			var html = body.ownerDocument.documentElement;
+			html.setAttribute('data-znote-editor-scheme', scheme);
+			html.style.setProperty('--znote-editor-bg', 'transparent');
+			html.style.setProperty('--znote-editor-color', color);
+			html.style.setProperty('--znote-editor-link', link);
+			html.style.setProperty('--znote-editor-selection-bg', scheme === 'dark' ? '#0b65c2' : '#bcd7ff');
+			html.style.setProperty('--znote-editor-selection-color', scheme === 'dark' ? '#ffffff' : '#111827');
+		};
+
+		apply();
+		instance.bind('ready', apply);
+		instance.bind('focus', apply);
 	}
 
 	function instanced(form) {
