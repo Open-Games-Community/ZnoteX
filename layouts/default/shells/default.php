@@ -35,29 +35,36 @@ $aacQueries = $aacQueries ?? 0;
 	<link rel="stylesheet" href="assets/fontawesome/css/font-awesome.min.css">
 	<link rel="stylesheet" href="<?= theme_asset('css/resp.css') ?>">
 
-	<script src="assets/js/jquery.js" charset="utf-8"></script>
 	<?php if ($delay_hide > 0): ?>
 		<script src="<?= theme_asset('js/countdown.js') ?>" charset="utf-8"></script>
 	<?php endif; ?>
 
 	<script>
-		$(document).ready(function () {
+		document.addEventListener('DOMContentLoaded', function () {
 			<?php if ($delay_hide > 0): ?>
 				countDown("countDownTimer", <?= (int)$launch_seconds ?>, <?= json_encode($countDown_complete) ?>);
 			<?php endif; ?>
 
-			$('.loginBtn').click(function (event) {
-				var $firstLoginInput = $('.loginContainer input:first-of-type');
-				if ($firstLoginInput.length) {
-					event.preventDefault();
-					$firstLoginInput.focus();
-				}
+			document.querySelectorAll('.loginBtn').forEach(function (button) {
+				button.addEventListener('click', function (event) {
+					var firstLoginInput = document.querySelector('.loginContainer input:first-of-type');
+					if (firstLoginInput) {
+						event.preventDefault();
+						firstLoginInput.focus();
+					}
+				});
 			});
-			$('#accountLink').click(function () {
-				if (this.href.indexOf('#') >= 0) {
-					$('.loginContainer input:first-of-type').focus();
-				}
-			});
+
+			var accountLink = document.getElementById('accountLink');
+			if (accountLink) {
+				accountLink.addEventListener('click', function (event) {
+					var firstLoginInput = document.querySelector('.loginContainer input:first-of-type');
+					if (firstLoginInput && this.href.indexOf('#') >= 0) {
+						event.preventDefault();
+						firstLoginInput.focus();
+					}
+				});
+			}
 		});
 	</script>
 </head>

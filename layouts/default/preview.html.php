@@ -69,14 +69,21 @@
 		<link rel="stylesheet" href="./css/resp.css">
 
 		<!-- JavaScript(s) -->
-		<script src="./js/jq331.js" charset="utf-8"></script>
 		<script src="./js/countdown.js" charset="utf-8"></script>
 		<script type="text/javascript">
-			$(document).ready(function(){
-				countDown("countDownTimer", $("#countDownTimer").data("date"));
+			document.addEventListener('DOMContentLoaded', function () {
+				var timer = document.getElementById('countDownTimer');
+				if (timer) {
+					countDown('countDownTimer', timer.getAttribute('data-date'));
+				}
 
-				$('.loginBtn').click(function(){
-					$('.loginContainer').fadeIn(2000);
+				document.querySelectorAll('.loginBtn').forEach(function (button) {
+					button.addEventListener('click', function () {
+						var container = document.querySelector('.loginContainer');
+						if (container) {
+							container.style.display = 'block';
+						}
+					});
 				});
 			});
 		</script>

@@ -13,7 +13,10 @@
 </style>
 <script type="text/javascript">
 	// Auto focus to login username box
-	$(function() {
-		$('#login_username').focus();
+	document.addEventListener('DOMContentLoaded', function () {
+		var input = document.getElementById('login_username');
+		if (input) {
+			input.focus();
+		}
 	});
 </script>
