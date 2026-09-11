@@ -510,42 +510,60 @@ function resize_imagex($file, $width, $height) {
 	return true;
 }
 
+function guild_logo_safe_name(string $name): ?string {
+	$name = trim($name);
+	if ($name === '' || strlen($name) > 60) {
+		return null;
+	}
+	if (preg_match('#[\\\\/\x00]#', $name) || strpos($name, '..') !== false) {
+		return null;
+	}
+	return $name;
+}
+
 // Validate guild logo
 function check_image($image) {
+	$rawName = (string)($_GET['name'] ?? '');
+	$safeName = guild_logo_safe_name($rawName);
+	if ($safeName === null) {
+		header('Location: guilds.php?error=Invalid guild name.');
+		exit;
+	}
+
 	$image_data = array(
-		'new_name' => $_GET['name'].'.gif', 
-		'name' => $image['name'], 
-		'tmp' => $image['tmp_name'], 
-		'error' => $image['error'], 
-		'size' => $image['size'], 
+		'new_name' => $safeName.'.gif',
+		'name' => $image['name'],
+		'tmp' => $image['tmp_name'],
+		'error' => $image['error'],
+		'size' => $image['size'],
 		'type' => $image['type']
 	);
 
 	if ($image_data['type'] !== 'image/gif') {
-		header('Location: guilds.php?error=Only gif images are accepted, you uploaded:['.$image_data['type'].'].&name='. $_GET['name']);
+		header('Location: guilds.php?error=Only gif images are accepted, you uploaded:['.$image_data['type'].'].&name='. urlencode($rawName));
 		exit;
 	}
 
 	$check = getimagesize($image_data['tmp']);
 	if (!$check) {
-		header('Location: guilds.php?error=Uploaded image is invalid.&name='. $_GET['name']);
+		header('Location: guilds.php?error=Uploaded image is invalid.&name='. urlencode($rawName));
 		exit;
 	}
 
 	if ($check['mime'] !== 'image/gif') {
-		header('Location: guilds.php?error=Only gif images accepted, you uploaded:['.$check['mime'].'].&name='. $_GET['name']);
+		header('Location: guilds.php?error=Only gif images accepted, you uploaded:['.$check['mime'].'].&name='. urlencode($rawName));
 		exit;
 	}
-	
+
 	$path_info = pathinfo($image_data['name']);
 	if ($path_info['extension'] !== 'gif') {
-		header('Location: guilds.php?error=Only gif images accepted, you uploaded:['.$path_info['extension'].'].&name='. $_GET['name']);
+		header('Location: guilds.php?error=Only gif images accepted, you uploaded:['.$path_info['extension'].'].&name='. urlencode($rawName));
 		exit;
 	}
-	
+
 	// Resize image
 	if (resize_imagex($image_data, 100, 100)) {
-		header('Location: guilds.php?name='. $_GET['name']);
+		header('Location: guilds.php?name='. urlencode($rawName));
 		exit;
 	}
 }
