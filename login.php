@@ -25,7 +25,7 @@ if (empty($_POST) === false) {
 		$errors[] = t('login.not_found');
 	} /*else if (user_activated($username) === false) {
 		$errors[] = t('login.not_activated');
-	} */else if ($config['use_token'] && !Token::isValid($_POST['token'] ?? null)) {
+	} */else if (!Token::isValid($_POST['token'] ?? null)) {
 		$errors[] = t('login.token_invalid');
 	} else {
 

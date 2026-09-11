@@ -1,4 +1,6 @@
-<?php require_once 'engine/init.php'; theme_open();
+<?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
+theme_open();
 protect_page();
 error_reporting(E_ALL ^ E_NOTICE);
 if (!$config['forum']['enabled']) admin_only($user_data);

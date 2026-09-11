@@ -33,6 +33,12 @@ if ($locked === '' && $step > install_max_step()) {
 	$step = install_max_step();
 }
 
+if ($locked === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !install_csrf_validate()) {
+	install_error('Invalid or expired form token. Please refresh the page and try again.');
+	header('Location: ' . install_url($step));
+	exit;
+}
+
 $error = install_take_error();
 
 // A step handles its own POST and either advances or sets an error.
@@ -47,6 +53,9 @@ if ($locked === '') {
 	}
 }
 $content = ob_get_clean();
+if ($locked === '') {
+	$content = install_csrf_inject($content);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">

@@ -1,4 +1,5 @@
 <?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
 logged_in_redirect();
 theme_open();
 if ($config['mailserver']['accountRecovery']) {

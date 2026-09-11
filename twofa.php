@@ -1,4 +1,8 @@
-<?php require_once 'engine/init.php'; if ($config['twoFactorAuthenticator'] === false) die("twoFactorAuthenticator is disabled in config.php"); protect_page(); theme_open();
+<?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
+if ($config['twoFactorAuthenticator'] === false) die("twoFactorAuthenticator is disabled in config.php");
+protect_page();
+theme_open();
 // '. t('twofa.title'). ' setup page
 if ($config['ServerEngine'] !== 'TFS_10') {
 	?>
@@ -9,7 +13,7 @@ if ($config['ServerEngine'] !== 'TFS_10') {
 	<?php
 } else {
 	// If user wishes to disable Two-Factor Authentication
-	if (isset($_GET['disable'])) {
+	if (isset($_POST['disable_2fa'])) {
 		db()->execute("UPDATE `accounts` SET `secret` = NULL WHERE `id` = ? LIMIT 1;", [(int)$session_user_id]);
 		db()->execute("UPDATE `znote_accounts` SET `secret` = NULL WHERE `account_id` = ? LIMIT 1;", [(int)$session_user_id]);
 	}
@@ -38,7 +42,9 @@ if ($config['ServerEngine'] !== 'TFS_10') {
 	<?php if ($status === false): ?>
 		<p><strong>Login with a token generated from this QR code to activate:</strong></p>
 	<?php else: ?>
-		<p>Click <a href="?disable">HERE</a> to disable <?= t('twofa.title') ?> and generate a new QR code.</p>
+		<form method="post" data-confirm="Disable two-factor authentication?">
+			<button type="submit" name="disable_2fa" value="1">Disable <?= t('twofa.title') ?></button>
+		</form>
 	<?php endif; ?>
 
 	<img

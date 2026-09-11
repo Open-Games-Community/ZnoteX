@@ -1,4 +1,6 @@
-<?php require_once 'engine/init.php'; theme_open();
+<?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
+theme_open();
 
 /* SETUP INSTALLATION
  - See comments above $config['gallery'] in config.php */

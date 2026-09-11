@@ -1,4 +1,5 @@
 <?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
 protect_page();
 theme_open();
 // Convert a seconds integer value into days, hours, minutes and seconds string.

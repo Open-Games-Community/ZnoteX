@@ -288,6 +288,48 @@ function install_take_error(): string {
 	return $error;
 }
 
+function install_csrf_token(): string {
+	if (empty($_SESSION['install_csrf']) || !is_string($_SESSION['install_csrf'])) {
+		$_SESSION['install_csrf'] = bin2hex(random_bytes(32));
+	}
+
+	return $_SESSION['install_csrf'];
+}
+
+function install_csrf_field(): string {
+	return '<input type="hidden" name="install_csrf" value="' . ih(install_csrf_token()) . '">';
+}
+
+function install_csrf_validate(): bool {
+	$posted = $_POST['install_csrf'] ?? null;
+	$token = $_SESSION['install_csrf'] ?? null;
+
+	if (!is_string($posted) || $posted === '' || !is_string($token) || $token === '') {
+		return false;
+	}
+
+	$valid = hash_equals($token, $posted);
+	if ($valid) {
+		$_SESSION['install_csrf'] = bin2hex(random_bytes(32));
+	}
+
+	return $valid;
+}
+
+function install_csrf_inject(string $html): string {
+	if (stripos($html, '<form') === false || stripos($html, 'method') === false) {
+		return $html;
+	}
+
+	return preg_replace_callback(
+		'~<form\b(?=[^>]*\bmethod\s*=\s*["\']?post["\']?)[^>]*>~i',
+		static function (array $match): string {
+			return $match[0] . "\n" . install_csrf_field();
+		},
+		$html
+	) ?? $html;
+}
+
 /**
  * Write the admin character name into config.php's page_admin_access array.
  *

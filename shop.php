@@ -1,4 +1,5 @@
 <?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
 theme_open();
 
 if (isset($_GET['callback']) && $_GET['callback'] === 'processing') {
