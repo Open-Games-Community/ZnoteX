@@ -41,7 +41,7 @@ $queueFeedback = acp_badge_feedback();
 // ---------------------------------------------------------------------------
 // Recent activity
 // ---------------------------------------------------------------------------
-$latestAccounts = mysql_select_multi("
+$latestAccounts = db()->fetchAll("
 	SELECT `a`.`id` AS `account_id`, {$accNameCol} AS `account_name`, `za`.`created`, `za`.`points`
 	FROM `znote_accounts` `za`
 	INNER JOIN `accounts` `a` ON `a`.`id` = `za`.`account_id`
@@ -49,14 +49,14 @@ $latestAccounts = mysql_select_multi("
 	LIMIT 10;
 ");
 
-$latestPlayers = mysql_select_multi("
+$latestPlayers = db()->fetchAll("
 	SELECT `name`, `level`, `vocation`
 	FROM `players`
 	ORDER BY `id` DESC
 	LIMIT 10;
 ");
 
-$topPoints = mysql_select_multi("
+$topPoints = db()->fetchAll("
 	SELECT `a`.`id` AS `account_id`, {$accNameCol} AS `account_name`, `za`.`points`
 	FROM `znote_accounts` `za`
 	INNER JOIN `accounts` `a` ON `a`.`id` = `za`.`account_id`
@@ -69,7 +69,7 @@ $topPoints = mysql_select_multi("
 // the old admin.php did on every visit.
 $znote = user_znote_data('version', 'installed', 'cached');
 if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
-	mysql_update("UPDATE `znote` SET `version`='" . esc($version) . "';");
+	db()->execute("UPDATE `znote` SET `version` = ?;", [$version]);
 	$znote['version'] = $version;
 }
 ?>

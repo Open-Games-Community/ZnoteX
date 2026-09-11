@@ -36,16 +36,17 @@ function acp_log(string $action, string $target = '', array $details = array()):
 		}
 	}
 
-	return (bool)mysql_insert("
-		INSERT INTO `znote_admin_log` (`admin_id`, `admin_name`, `action`, `target`, `details`, `ip`, `created`)
-		VALUES (
-			" . $adminId . ",
-			'" . mysql_znote_escape_string($adminName) . "',
-			'" . mysql_znote_escape_string(substr($action, 0, 64)) . "',
-			'" . mysql_znote_escape_string(substr($target, 0, 191)) . "',
-			'" . mysql_znote_escape_string($detailsJson) . "',
-			'" . mysql_znote_escape_string(getIP()) . "',
-			" . time() . "
-		);
-	");
+	return db()->execute(
+		"INSERT INTO `znote_admin_log` (`admin_id`, `admin_name`, `action`, `target`, `details`, `ip`, `created`)
+		 VALUES (?, ?, ?, ?, ?, ?, ?);",
+		[
+			$adminId,
+			$adminName,
+			substr($action, 0, 64),
+			substr($target, 0, 191),
+			$detailsJson,
+			getIP(),
+			time(),
+		]
+	);
 }

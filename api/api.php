@@ -10,10 +10,13 @@ if (!isset($filepath)) {
 
 $version = '2.0.0';
 
-session_start();
 ob_start();
-
 require_once $filepath.'config.php';
+require_once $filepath.'engine/session.php';
+require_once $filepath.'engine/security.php';
+znote_session_start((array)($config['session'] ?? array()));
+znote_security_boot((array)($config['security'] ?? array()));
+
 $sessionPrefix = $config['session_prefix'];
 
 $config['ServerEngineReal'] = $config['ServerEngine'] ?? 'TFS_10';
@@ -67,7 +70,7 @@ function UseClass($name = false, $module = false, $path = false) {
 function SendResponse(array $response): void {
 	global $config;
 
-	if ($config['api']['debug'] || isset($_GET['debug'])) {
+	if ($config['api']['debug']) {
 		data_dump($response, false, "Response (debug mode)");
 		return;
 	}

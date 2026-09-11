@@ -42,13 +42,13 @@ function theme_menu_items(string $location): array {
 		return $cache[$location];
 	}
 
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `id`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`
 		FROM `znote_menu`
-		WHERE `location` = '" . mysql_znote_escape_string($location) . "'
+		WHERE `location` = ?
 		  AND `active` = 1
 		ORDER BY `sort_order` ASC, `id` ASC;
-	");
+	", [$location]);
 
 	if (!is_array($rows)) {
 		// No table yet (migration not run) or nothing defined: the theme falls
@@ -259,6 +259,6 @@ function theme_menu_locations(?string $theme = null): array {
  * A theme can use it to decide between the managed menu and its own fallback.
  */
 function theme_menu_available(): bool {
-	$row = mysql_select_single("SELECT `id` FROM `znote_menu` LIMIT 1;");
+	$row = db()->fetchOne("SELECT `id` FROM `znote_menu` LIMIT 1;");
 	return is_array($row) && $row;
 }

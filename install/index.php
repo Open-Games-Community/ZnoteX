@@ -14,7 +14,10 @@ if (PHP_VERSION_ID < 80100) {
 	die('ZnoteX needs PHP 8.1 or newer. You are on PHP ' . PHP_VERSION . '.');
 }
 
-session_start();
+require_once __DIR__ . '/../engine/session.php';
+require_once __DIR__ . '/../engine/security.php';
+znote_session_start();
+znote_security_boot();
 
 require_once __DIR__ . '/bootstrap.php';
 

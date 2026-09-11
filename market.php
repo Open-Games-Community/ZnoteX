@@ -26,8 +26,8 @@ if (!$compare) {
 	$cache->setExpiration(60);
 	if ($cache->hasExpired()) {
 		$offers = array(
-			'wts' => mysql_select_multi("SELECT `mo`.`id`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.`sale` = '1'  ORDER BY `mo`.`created` DESC;"),
-			'wtb' => mysql_select_multi("SELECT `mo`.`id`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.`sale` = '0'  ORDER BY `mo`.`created` DESC;")
+			'wts' => db()->fetchAll("SELECT `mo`.`id`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.`sale` = '1'  ORDER BY `mo`.`created` DESC;"),
+			'wtb' => db()->fetchAll("SELECT `mo`.`id`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.`sale` = '0'  ORDER BY `mo`.`created` DESC;")
 		);
 		$cache->setContent($offers);
 		$cache->save();
@@ -101,25 +101,31 @@ if (!$compare) {
 	// Else You want to compare price
 	$compare = ((int)$compare > 0) ? (int)$compare : getValue($compare);
 
-	$condition = "`itemtype`='$compare'";
+	$conditionSql = '`itemtype` = ?';
+	$conditionParams = [$compare];
 
 	if (is_string($compare)) {
 		$query = array();
 		foreach ($items as $id => $name) {
 			if (strpos(strtolower($name), stripslashes(strtolower($compare))) !== false) {
-				$query[] = $id;
+				$query[] = (int)$id;
 			}
 		}
-		$condition = (!empty($query)) ? "`itemtype` IN (". implode(',', $query) .")" : false;
+		if (!empty($query)) {
+			$conditionSql = '`itemtype` IN (' . implode(',', array_fill(0, count($query), '?')) . ')';
+			$conditionParams = $query;
+		} else {
+			$conditionSql = false;
+		}
 	}
 
 	// First list active bids
-	if ($condition === false) {
+	if ($conditionSql === false) {
 		$offers = array();
 		$historyOffers = array();
 	} else {
-		$offers = mysql_select_multi("SELECT `mo`.`id`, `mo`.`sale`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.$condition ORDER BY `mo`.`price` ASC;");
-		$historyOffers = mysql_select_multi("SELECT `id`, `itemtype` AS `item_id`, `amount`, `price`, `inserted`, `expires_at` FROM `market_history` WHERE $condition AND `state`='255' ORDER BY `price` ASC;");
+		$offers = db()->fetchAll("SELECT `mo`.`id`, `mo`.`sale`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.{$conditionSql} ORDER BY `mo`.`price` ASC;", $conditionParams);
+		$historyOffers = db()->fetchAll("SELECT `id`, `itemtype` AS `item_id`, `amount`, `price`, `inserted`, `expires_at` FROM `market_history` WHERE {$conditionSql} AND `state`='255' ORDER BY `price` ASC;", $conditionParams);
 	}
 	$buylist = false;
 

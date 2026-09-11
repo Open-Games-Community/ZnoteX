@@ -46,7 +46,7 @@ function accountAccess($accountId, $TFS) {
 	$access = 0;
 
 	// TFS 0.3/4
-	$yourChars = mysql_select_multi("SELECT `name`, `group_id`, `account_id` FROM `players` WHERE `account_id`='$accountId';");
+	$yourChars = db()->fetchAll("SELECT `name`, `group_id`, `account_id` FROM `players` WHERE `account_id` = ?;", [$accountId]);
 	if ($yourChars !== false) {
 		foreach ($yourChars as $char) {
 			if ($TFS === 'TFS_03' || $TFS === 'OTHIRE') {
@@ -54,7 +54,7 @@ function accountAccess($accountId, $TFS) {
 			} else {
 				if ($char['group_id'] > 1) {
 					if ($access == 0) {
-						$acc = mysql_select_single("SELECT `type` FROM `accounts` WHERE `id`='". $char['account_id'] ."' LIMIT 1;");
+						$acc = db()->fetchOne("SELECT `type` FROM `accounts` WHERE `id` = ? LIMIT 1;", [$char['account_id']]);
 						$access = $acc['type'];
 					}
 				}
@@ -97,18 +97,17 @@ function url($path = false) {
 }
 
 function getCache() {
-	$results = mysql_select_single("SELECT `cached` FROM `znote`;");
+	$results = db()->fetchOne("SELECT `cached` FROM `znote`;");
 	return ($results !== false) ? $results['cached'] : false;
 }
 
 function setCache($time) {
-	$time = (int)$time;
-	mysql_update("UPDATE `znote` set `cached`='$time'");
+	db()->execute("UPDATE `znote` set `cached` = ?", [(int)$time]);
 }
 
 // Get visitor basic data
 function znote_visitors_get_data() {
-	return mysql_select_multi("SELECT `ip`, `value` FROM `znote_visitors` ORDER BY `id` DESC LIMIT 1000;");
+	return db()->fetchAll("SELECT `ip`, `value` FROM `znote_visitors` ORDER BY `id` DESC LIMIT 1000;");
 }
 
 // Set visitor basic data
@@ -126,17 +125,17 @@ function znote_visitor_set_data($visitor_data) {
 	if ($exist && isset($value)) {
 		// Update the value
 		$value++;
-		mysql_update("UPDATE `znote_visitors` SET `value` = '$value' WHERE `ip` = '$ip'");
+		db()->execute("UPDATE `znote_visitors` SET `value` = ? WHERE `ip` = ?", [$value, $ip]);
 	} else {
 		// Insert new row
-		mysql_insert("INSERT INTO `znote_visitors` (`ip`, `value`) VALUES ('$ip', '1')");
+		db()->execute("INSERT INTO `znote_visitors` (`ip`, `value`) VALUES (?, 1)", [$ip]);
 	}
 }
 
 // Get visitor basic data
 function znote_visitors_get_detailed_data($cache_time) {
 	$period = (int)time() - (int)$cache_time;
-	return mysql_select_multi("SELECT `ip`, `time`, `type`, `account_id` FROM `znote_visitors_details` WHERE `time` >= '$period' LIMIT 0, 50");
+	return db()->fetchAll("SELECT `ip`, `time`, `type`, `account_id` FROM `znote_visitors_details` WHERE `time` >= ? LIMIT 0, 50", [$period]);
 }
 
 function znote_visitor_insert_detailed_data($type) {
@@ -150,10 +149,8 @@ function znote_visitor_insert_detailed_data($type) {
 	*/
 	$time = time();
 	$ip = getIPLong();
-	if (user_logged_in()) {
-		$acc = (int)getSession('user_id');
-		mysql_insert("INSERT INTO `znote_visitors_details` (`ip`, `time`, `type`, `account_id`) VALUES ('$ip', '$time', '$type', '$acc')");
-	} else mysql_insert("INSERT INTO `znote_visitors_details` (`ip`, `time`, `type`, `account_id`) VALUES ('$ip', '$time', '$type', '0')");
+	$acc = user_logged_in() ? (int)getSession('user_id') : 0;
+	db()->execute("INSERT INTO `znote_visitors_details` (`ip`, `time`, `type`, `account_id`) VALUES (?, ?, ?, ?)", [$ip, $time, $type, $acc]);
 }
 
 function something () {

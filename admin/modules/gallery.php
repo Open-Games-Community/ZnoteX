@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				curl_close($ch);
 			}
 
-			mysql_delete("DELETE FROM `znote_images` WHERE `id` = {$id} LIMIT 1;");
+			db()->execute("DELETE FROM `znote_images` WHERE `id` = ? LIMIT 1;", [$id]);
 			acp_gallery_rebuild_cache();
 			acp_log('gallery.remove', '#' . $id);
 			acp_flash_success(t('acp.gal.removed', ['id' => $id]));

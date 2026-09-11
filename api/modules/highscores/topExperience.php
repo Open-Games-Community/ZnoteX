@@ -28,10 +28,10 @@ $query = "
         ON p.id = z.player_id
     WHERE p.group_id < 2
     ORDER BY p.experience DESC
-    LIMIT {$rows}
+    LIMIT ?
 ";
 
-$players = mysql_select_multi($query);
+$players = db()->fetchAll($query, [$rows]);
 
 // Always return array
 if (!is_array($players)) {

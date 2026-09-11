@@ -5,19 +5,21 @@ if ($config['log_ip']) {
 
 $house = (isset($_GET['id']) && (int)$_GET['id'] > 0) ? (int)$_GET['id'] : false;
 $house_SQL = "";
+$house_SQL_params = [];
 if ($house !== false) {
 	$house_SQL = "
-		SELECT 
-			`h`.`id`, `h`.`owner`, `h`.`paid`, `h`.`name`, `h`.`rent`, `h`.`town_id`, 
-			`h`.`size`, `h`.`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder'), 'h') . ", 
+		SELECT
+			`h`.`id`, `h`.`owner`, `h`.`paid`, `h`.`name`, `h`.`rent`, `h`.`town_id`,
+			`h`.`size`, `h`.`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder'), 'h') . ",
 			`p`.`name` AS `ownername`
 		FROM `houses` AS `h`
 		LEFT JOIN `players` AS `p`
 			ON `h`.`owner` > 0
 			AND `p`.`id` = `h`.`owner`
-		WHERE `h`.`id`='{$house}';
+		WHERE `h`.`id` = ?;
 	";
-	$house = mysql_select_single($house_SQL);
+	$house_SQL_params = [$house];
+	$house = db()->fetchOne($house_SQL, $house_SQL_params);
 	if (!is_array($house)) {
 		?>
 		<h1><?= t('house.not_found') ?></h1>
@@ -47,11 +49,11 @@ if ($house !== false) {
 		$bid_char = (int)$bid_char;
 		$bid_amount = (int)$bid_amount;
 		
-		$player = mysql_select_single("
-			SELECT `id`, `account_id`, `name`, `level`, `balance` 
-			FROM `players` 
-			WHERE `id`='$bid_char' LIMIT 1;
-		");
+		$player = db()->fetchOne("
+			SELECT `id`, `account_id`, `name`, `level`, `balance`
+			FROM `players`
+			WHERE `id` = ? LIMIT 1;
+		", [$bid_char]);
 
 		if (user_logged_in() === true && is_array($player) && $player['account_id'] == $session_user_id) {
 			// Does player have or need premium?
@@ -59,16 +61,16 @@ if ($house !== false) {
 			if ($premstatus) {
 				
 				// Can player have or bid on more houses?
-				$pHouseCount = mysql_select_single("
-					SELECT COUNT('id') AS `value` 
-					FROM `houses` 
+				$pHouseCount = db()->fetchOne("
+					SELECT COUNT('id') AS `value`
+					FROM `houses`
 					WHERE (
-						(`" . houseCol('highest_bidder') . "`='{$bid_char}' AND `owner`='{$bid_char}') 
-						OR (`" . houseCol('highest_bidder') . "`='{$bid_char}') 
-						OR (`owner`='{$bid_char}')
-					) 
-					AND `id`!='{$house['id']}' LIMIT 1;
-				");
+						(`" . houseCol('highest_bidder') . "` = ? AND `owner` = ?)
+						OR (`" . houseCol('highest_bidder') . "` = ?)
+						OR (`owner` = ?)
+					)
+					AND `id` != ? LIMIT 1;
+				", [$bid_char, $bid_char, $bid_char, $bid_char, $house['id']]);
 
 				if ($pHouseCount['value'] < $config['houseConfig']['housesPerPlayer']) {
 					// Is character level high enough?
@@ -91,45 +93,45 @@ if ($house !== false) {
 									if ($house['bid_end'] > 0) {
 										if ($house['bid_end'] > time()) {
 											
-											mysql_update("
-												UPDATE `houses` 
-												SET 
-													`" . houseCol('highest_bidder') . "`='{$player['id']}', 
-													`" . houseCol('bid') . "`='{$bid_amount}', 
-													`" . houseCol('last_bid') . "`='{$lastbid}' 
-												WHERE `id`='{$house['id']}' LIMIT 1;
-											");
+											db()->execute("
+												UPDATE `houses`
+												SET
+													`" . houseCol('highest_bidder') . "` = ?,
+													`" . houseCol('bid') . "` = ?,
+													`" . houseCol('last_bid') . "` = ?
+												WHERE `id` = ? LIMIT 1;
+											", [$player['id'], $bid_amount, $lastbid, $house['id']]);
 
-											$house = mysql_select_single("
-												SELECT 
-													`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`, 
-													`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
-												FROM `houses` 
-												WHERE `id`='{$house['id']}';
-											");
+											$house = db()->fetchOne("
+												SELECT
+													`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`,
+													`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . "
+												FROM `houses`
+												WHERE `id` = ?;
+											", [$house['id']]);
 										}
 
 									} else {
 										$lastbid = $minbid + 1;
 										$bidend = time() + $config['houseConfig']['auctionPeriod'];
-										
-										mysql_update("
-											UPDATE `houses` 
-											SET 
-												`" . houseCol('highest_bidder') . "`='{$player['id']}', 
-												`" . houseCol('bid') . "`='{$bid_amount}', 
-												`" . houseCol('last_bid') . "`='{$lastbid}', 
-												`" . houseCol('bid_end') . "`='{$bidend}' 
-											WHERE `id`='{$house['id']}' LIMIT 1;
-										");
 
-										$house = mysql_select_single("
-											SELECT 
-												`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`, 
-												`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
-											FROM `houses` 
-											WHERE `id`='{$house['id']}';
-										");
+										db()->execute("
+											UPDATE `houses`
+											SET
+												`" . houseCol('highest_bidder') . "` = ?,
+												`" . houseCol('bid') . "` = ?,
+												`" . houseCol('last_bid') . "` = ?,
+												`" . houseCol('bid_end') . "` = ?
+											WHERE `id` = ? LIMIT 1;
+										", [$player['id'], $bid_amount, $lastbid, $bidend, $house['id']]);
+
+										$house = db()->fetchOne("
+											SELECT
+												`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`,
+												`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . "
+											FROM `houses`
+											WHERE `id` = ?;
+										", [$house['id']]);
 
 									}
 									echo "<b><font color='green'>". t('house.highest_bid') ."</font></b>";
@@ -143,20 +145,20 @@ if ($house !== false) {
 									if ($house['highest_bidder'] != $player['id']) {
 										$lastbid = $bid_amount + 1;
 										
-										mysql_update("
-											UPDATE `houses` 
-											SET `" . houseCol('last_bid') . "`='$lastbid' 
-											WHERE `id`='{$house['id']}' LIMIT 1;
-										");
-										
-										$house = mysql_select_single("
-											SELECT 
-												`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`, 
-												`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
-											FROM `houses` 
-											WHERE `id`='{$house['id']}';
-										");
-										
+										db()->execute("
+											UPDATE `houses`
+											SET `" . houseCol('last_bid') . "` = ?
+											WHERE `id` = ? LIMIT 1;
+										", [$lastbid, $house['id']]);
+
+										$house = db()->fetchOne("
+											SELECT
+												`id`, `owner`, `paid`, `name`, `rent`, `town_id`, `size`,
+												`beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . "
+											FROM `houses`
+											WHERE `id` = ?;
+										", [$house['id']]);
+
 										echo "<b><font color='orange'>Unfortunately your bid was not higher than previous bidder.</font></b>";
 									} else {
 										echo "<b><font color='orange'>". t('house.already_higher') ."</font></b>";
@@ -185,22 +187,22 @@ if ($house !== false) {
 		if ($account_points >= $house['points']) {
 
 			$bid_char = (int)$bid_char;
-			$player = mysql_select_single("
-				SELECT `id`, `account_id`, `name`, `level` 
-				FROM `players` 
-				WHERE `id`='$bid_char' LIMIT 1;
-			");
-			
-			$pHouseCount = mysql_select_single("
-				SELECT COUNT('id') AS `value` 
-				FROM `houses` 
+			$player = db()->fetchOne("
+				SELECT `id`, `account_id`, `name`, `level`
+				FROM `players`
+				WHERE `id` = ? LIMIT 1;
+			", [$bid_char]);
+
+			$pHouseCount = db()->fetchOne("
+				SELECT COUNT('id') AS `value`
+				FROM `houses`
 				WHERE (
-					(`" . houseCol('highest_bidder') . "`='$bid_char' AND `owner`='$bid_char') 
-					OR (`" . houseCol('highest_bidder') . "`='$bid_char') 
-					OR (`owner`='$bid_char')
-				) 
-				AND `id`!='{$house['id']}' LIMIT 1;
-			");
+					(`" . houseCol('highest_bidder') . "` = ? AND `owner` = ?)
+					OR (`" . houseCol('highest_bidder') . "` = ?)
+					OR (`owner` = ?)
+				)
+				AND `id` != ? LIMIT 1;
+			", [$bid_char, $bid_char, $bid_char, $bid_char, $house['id']]);
 
 			if (user_logged_in() === true
 				&& $player['account_id'] == $session_user_id
@@ -209,51 +211,61 @@ if ($house !== false) {
 
 				$house_points = (int)$house['points'];
 				$house_id = $house['id'];
-
-				// Remove points from account
-				mysql_update("
-					UPDATE `znote_accounts`
-					SET `points` = `points`-{$house_points}
-					WHERE `account_id`={$session_user_id}
-					LIMIT 1;
-				");
-
-				// Give new ownership to house
-				mysql_update("
-					UPDATE `houses`
-					SET `owner` = {$bid_char}
-					WHERE `id` = {$house_id}
-					LIMIT 1;
-				");
-
-				// Log purchase in znote_shop_logs and znote_shop_orders
 				$time = time();
-				mysql_insert("
-					INSERT INTO `znote_shop_logs`
-					(`account_id`, `player_id`, `type`, `itemid`, `count`, `points`, `time`) VALUES
-					({$session_user_id}, {$bid_char}, 7, {$house_id}, 1, {$house_points}, {$time})
-				");
-				mysql_insert("
-					INSERT INTO `znote_shop_orders`
-					(`account_id`, `type`, `itemid`, `count`, `time`) VALUES
-					({$session_user_id}, 7, {$house_id}, {$bid_char}, {$time})
-				");
 
-				// Reload house data
-				$house = mysql_select_single($house_SQL);
-				$minbid = $config['houseConfig']['minimumBidSQM'] * $house['size'];
-				if ($house['owner'] > 0) $house['ownername'] = user_name($house['owner']);
+				// Lock the account balance and the house row together, so two
+				// concurrent purchases (or a purchase racing a bid) cannot both
+				// succeed or spend points that were already spent.
+				$purchased = db()->transaction(function ($db) use ($session_user_id, $bid_char, $house_id, $house_points, $time) {
+					$account = $db->fetchOne("SELECT `points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;", [$session_user_id]);
+					if (!is_array($account) || (int)$account['points'] < $house_points) {
+						return false;
+					}
 
-				// Congratulate user and tell them they still has to pay rent (if rent > 0)
-				?>
-				<p><strong><?= t('house.congrats') ?></strong>
-					<br>You now own this house!
-					<br><?= t('house.remember_say') ?> <strong>!shop</strong> in-game to process your ownership!
-					<?php if ($house['rent'] > 0): ?>
-						<br>Keep in mind you still need to pay rent on this house, make sure you have enough bank balance to cover it!
-					<?php endif; ?>
-				</p>
-				<?php
+					$houseRow = $db->fetchOne("SELECT `owner` FROM `houses` WHERE `id` = ? LIMIT 1 FOR UPDATE;", [$house_id]);
+					if (!is_array($houseRow) || (int)$houseRow['owner'] !== 0) {
+						return false;
+					}
+
+					$db->execute("UPDATE `znote_accounts` SET `points` = `points` - ? WHERE `account_id` = ? LIMIT 1;", [$house_points, $session_user_id]);
+					$db->execute("UPDATE `houses` SET `owner` = ? WHERE `id` = ? LIMIT 1;", [$bid_char, $house_id]);
+					$db->execute("
+						INSERT INTO `znote_shop_logs`
+						(`account_id`, `player_id`, `type`, `itemid`, `count`, `points`, `time`) VALUES
+						(?, ?, 7, ?, 1, ?, ?)
+					", [$session_user_id, $bid_char, $house_id, $house_points, $time]);
+					$db->execute("
+						INSERT INTO `znote_shop_orders`
+						(`account_id`, `type`, `itemid`, `count`, `time`) VALUES
+						(?, 7, ?, ?, ?)
+					", [$session_user_id, $house_id, $bid_char, $time]);
+
+					return true;
+				});
+
+				if ($purchased) {
+					// Reload house data
+					$house = db()->fetchOne($house_SQL, $house_SQL_params);
+					$minbid = $config['houseConfig']['minimumBidSQM'] * $house['size'];
+					if ($house['owner'] > 0) $house['ownername'] = user_name($house['owner']);
+
+					// Congratulate user and tell them they still has to pay rent (if rent > 0)
+					?>
+					<p><strong><?= t('house.congrats') ?></strong>
+						<br>You now own this house!
+						<br><?= t('house.remember_say') ?> <strong>!shop</strong> in-game to process your ownership!
+						<?php if ($house['rent'] > 0): ?>
+							<br>Keep in mind you still need to pay rent on this house, make sure you have enough bank balance to cover it!
+						<?php endif; ?>
+					</p>
+					<?php
+				} else {
+					?>
+					<p><strong>Error:</strong>
+						<br>This house was already bought or your points balance changed. Please refresh and try again.
+					</p>
+					<?php
+				}
 			} else {
 				?>
 				<p><strong>Error:</strong>
@@ -294,7 +306,7 @@ if ($house !== false) {
 		<?php
 		if ($house['highest_bidder'] == 0) echo "<b>'. t('house.no_bidders2'). '</b>";
 		else {
-			$bidder = mysql_select_single("SELECT `name` FROM `players` WHERE `id`='{$house['highest_bidder']}' LIMIT 1;");
+			$bidder = db()->fetchOne("SELECT `name` FROM `players` WHERE `id` = ? LIMIT 1;", [$house['highest_bidder']]);
 			echo "<b>This house have bidders! If you want this house, now is your chance!</b>";
 			echo "<br><b>'. t('house.active_bid'). '</b> {$house['last_bid']}gp";
 			echo "<br><b>'. t('house.active_bid_by'). '</b> <a href='characterprofile.php?name={$bidder['name']}' target='_BLANK'>{$bidder['name']}</a>";
@@ -304,7 +316,7 @@ if ($house !== false) {
 		if ($house['bid_end'] == 0 || $house['bid_end'] > time()) {
 			if (user_logged_in()) {
 				// Your characters, indexed by char_id
-				$yourChars = mysql_select_multi("SELECT `id`, `name`, `balance` FROM `players` WHERE `account_id`='{$user_data['id']}';");
+				$yourChars = db()->fetchAll("SELECT `id`, `name`, `balance` FROM `players` WHERE `account_id` = ?;", [$user_data['id']]);
 				if ($yourChars !== false) {
 					$charData = array();
 					foreach ($yourChars as $char) {

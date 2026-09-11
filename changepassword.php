@@ -50,7 +50,7 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 	$formState = 'success';
 
 	// The password changed, so this session is no longer valid.
-	session_destroy();
+	znote_session_destroy();
 	header('refresh:2;url=index.php');
 
 } elseif (empty($_POST) === false && empty($errors) === true) {

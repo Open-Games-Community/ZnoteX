@@ -21,7 +21,7 @@ $cache = new Cache('engine/cache/onlinelist');
 $cache->setExpiration(30);
 if ($cache->hasExpired()) {
 	// Load online list data from SQL
-	$array = ($loadFlags === true) ? mysql_select_multi("SELECT `p`.`name` AS `name`, `p`.`level` AS `level`, `p`.`vocation` AS `vocation`, `g`.`name` AS `gname`, `za`.`flag` AS `flag` $outfitQuery FROM `players_online` AS `o` INNER JOIN `players` AS `p` ON `o`.`player_id` = `p`.`id` INNER JOIN `znote_accounts` AS `za` ON `p`.`account_id` = `za`.`account_id` LEFT JOIN `guild_membership` AS `gm` ON `o`.`player_id` = `gm`.`player_id` LEFT JOIN `guilds` AS `g` ON `gm`.`guild_id` = `g`.`id`;") : mysql_select_multi("SELECT `p`.`name` AS `name`, `p`.`level` AS `level`, `p`.`vocation` AS `vocation`, `g`.`name` AS `gname` $outfitQuery FROM `players_online` AS `o` INNER JOIN `players` AS `p` ON `o`.`player_id` = `p`.`id` LEFT JOIN `guild_membership` AS `gm` ON `o`.`player_id` = `gm`.`player_id` LEFT JOIN `guilds` AS `g` ON `gm`.`guild_id` = `g`.`id`;");
+	$array = ($loadFlags === true) ? db()->fetchAll("SELECT `p`.`name` AS `name`, `p`.`level` AS `level`, `p`.`vocation` AS `vocation`, `g`.`name` AS `gname`, `za`.`flag` AS `flag` $outfitQuery FROM `players_online` AS `o` INNER JOIN `players` AS `p` ON `o`.`player_id` = `p`.`id` INNER JOIN `znote_accounts` AS `za` ON `p`.`account_id` = `za`.`account_id` LEFT JOIN `guild_membership` AS `gm` ON `o`.`player_id` = `gm`.`player_id` LEFT JOIN `guilds` AS `g` ON `gm`.`guild_id` = `g`.`id`;") : db()->fetchAll("SELECT `p`.`name` AS `name`, `p`.`level` AS `level`, `p`.`vocation` AS `vocation`, `g`.`name` AS `gname` $outfitQuery FROM `players_online` AS `o` INNER JOIN `players` AS `p` ON `o`.`player_id` = `p`.`id` LEFT JOIN `guild_membership` AS `gm` ON `o`.`player_id` = `gm`.`player_id` LEFT JOIN `guilds` AS `g` ON `gm`.`guild_id` = `g`.`id`;");
 	// End loading data from SQL
 	$cache->setContent($array);
 	$cache->save();
@@ -48,40 +48,41 @@ if ($history["enabled"]) {
 	$cache->setExpiration($history['cache']);
 	if ($cache->hasExpired()) {
 		// Load online list data from SQL
-		$recents = ($loadFlags === true) ? mysql_select_multi("
-			SELECT 
-				`p`.`name` AS `name`, 
-				`p`.`level` AS `level`, 
-				`p`.`vocation` AS `vocation`, 
+		$sinceThreshold = $time - ((int)$history['days'] * 24 * 60 * 60);
+		$recents = ($loadFlags === true) ? db()->fetchAll("
+			SELECT
+				`p`.`name` AS `name`,
+				`p`.`level` AS `level`,
+				`p`.`vocation` AS `vocation`,
 				`p`.`lastlogout`,
-				`g`.`name` AS `gname`, 
-				`za`.`flag` AS `flag` 
-				$outfitQuery 
-			FROM `players` AS `p` 
-			INNER JOIN `znote_accounts` AS `za` 
-				ON `p`.`account_id` = `za`.`account_id` 
-			LEFT JOIN `guild_membership` AS `gm` 
-				ON `p`.`id` = `gm`.`player_id` 
-			LEFT JOIN `guilds` AS `g` 
+				`g`.`name` AS `gname`,
+				`za`.`flag` AS `flag`
+				$outfitQuery
+			FROM `players` AS `p`
+			INNER JOIN `znote_accounts` AS `za`
+				ON `p`.`account_id` = `za`.`account_id`
+			LEFT JOIN `guild_membership` AS `gm`
+				ON `p`.`id` = `gm`.`player_id`
+			LEFT JOIN `guilds` AS `g`
 				ON `gm`.`guild_id` = `g`.`id`
-			WHERE `p`.`lastlogout` >= $time - ({$history['days']} * 24 * 60 * 60)
+			WHERE `p`.`lastlogout` >= ?
 			ORDER BY `p`.`lastlogout` DESC;
-		") : mysql_select_multi("
-			SELECT 
-				`p`.`name` AS `name`, 
-				`p`.`level` AS `level`, 
-				`p`.`vocation` AS `vocation`, 
+		", [$sinceThreshold]) : db()->fetchAll("
+			SELECT
+				`p`.`name` AS `name`,
+				`p`.`level` AS `level`,
+				`p`.`vocation` AS `vocation`,
 				`p`.`lastlogout`,
-				`g`.`name` AS `gname` 
-				$outfitQuery 
-			FROM `players` AS `p` 
-			LEFT JOIN `guild_membership` AS `gm` 
-				ON `p`.`id` = `gm`.`player_id` 
-			LEFT JOIN `guilds` AS `g` 
+				`g`.`name` AS `gname`
+				$outfitQuery
+			FROM `players` AS `p`
+			LEFT JOIN `guild_membership` AS `gm`
+				ON `p`.`id` = `gm`.`player_id`
+			LEFT JOIN `guilds` AS `g`
 				ON `gm`.`guild_id` = `g`.`id`
-			WHERE `p`.`lastlogout` >= $time - ({$history['days']} * 24 * 60 * 60)
+			WHERE `p`.`lastlogout` >= ?
 			ORDER BY `p`.`lastlogout` DESC;
-		");
+		", [$sinceThreshold]);
 		// End loading data from SQL
 		$cache->setContent($recents);
 		$cache->save();

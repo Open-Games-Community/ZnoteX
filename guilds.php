@@ -5,18 +5,18 @@ if ($config['require_login']['guilds']) protect_page();
 function guild_list($TFSVersion) {
 	$cache = new Cache('engine/cache/guildlist');
 	if ($cache->hasExpired()) {
-		$guilds = mysql_select_multi("
-			SELECT 
-				`id`, 
-				`name`, 
-				`creationdata`, 
-				`motd`, 
-				(	SELECT 
-						COUNT('guild_id') 
-					FROM `guild_membership` 
+		$guilds = db()->fetchAll("
+			SELECT
+				`id`,
+				`name`,
+				`creationdata`,
+				`motd`,
+				(	SELECT
+						COUNT('guild_id')
+					FROM `guild_membership`
 					WHERE `guild_id`=`id`
-				) AS `total` 
-			FROM `guilds` 
+				) AS `total`
+			FROM `guilds`
 			ORDER BY `name`;
 		");
 
@@ -34,8 +34,7 @@ function guild_list($TFSVersion) {
 }
 
 function get_guild_position($rid) {
-	$rid = (int)$rid;
-	$data = mysql_select_single("SELECT `level` FROM `guild_ranks` WHERE `id`={$rid};");
+	$data = db()->fetchOne("SELECT `level` FROM `guild_ranks` WHERE `id` = ?;", [(int)$rid]);
 	return ($data !== false) ? $data['level'] : false;
 }
 
@@ -55,19 +54,16 @@ function logo_exists($guild) {
 
 // Remove cid invitation from guild (gid)
 function guild_remove_invitation($cid, $gid) {
-	$cid = (int)$cid;
-	$gid = (int)$gid;
-	mysql_delete("
-		DELETE FROM `guild_invites` 
-		WHERE `player_id`='{$cid}' 
-		AND `guild_id`='{$gid}'
-	;");
+	db()->execute("
+		DELETE FROM `guild_invites`
+		WHERE `player_id` = ?
+		AND `guild_id` = ?
+	;", [(int)$cid, (int)$gid]);
 }
 
 function update_player_guildnick_10($cid, $nick) {
-	$cid = (int)$cid;
 	$nick = sanitize($nick);
-	mysql_update("UPDATE `guild_membership` SET `nick`='{$nick}' WHERE `player_id`={$cid}");
+	db()->execute("UPDATE `guild_membership` SET `nick` = ? WHERE `player_id` = ?", [$nick, (int)$cid]);
 }
 
 function guild_player_join($cid, $gid) {
@@ -75,22 +71,22 @@ function guild_player_join($cid, $gid) {
 	$gid = (int)$gid;
 
 	// Find rank id for regular member in this guild
-	$guildrank = mysql_select_single("
-		SELECT `id` 
-		FROM `guild_ranks` 
-		WHERE `guild_id`='{$gid}' 
-		AND `level`='1' LIMIT 1;
-	");
+	$guildrank = db()->fetchOne("
+		SELECT `id`
+		FROM `guild_ranks`
+		WHERE `guild_id` = ?
+		AND `level` = 1 LIMIT 1;
+	", [$gid]);
 
 	if ($guildrank !== false) {
 		$rid = $guildrank['id'];
 		// Remove invite
-		mysql_delete("DELETE FROM `guild_invites` WHERE `player_id`='{$cid}';");
+		db()->execute("DELETE FROM `guild_invites` WHERE `player_id` = ?;", [$cid]);
 		// Add to guild
-		mysql_insert("
-			INSERT INTO `guild_membership` (`player_id`, `guild_id`, `rank_id`, `nick`) 
-			VALUES ('{$cid}', '{$gid}', '{$rid}', '')
-		;");
+		db()->execute("
+			INSERT INTO `guild_membership` (`player_id`, `guild_id`, `rank_id`, `nick`)
+			VALUES (?, ?, ?, '')
+		;", [$cid, $gid, $rid]);
 		// Return success
 		return true;
 	}
@@ -99,43 +95,33 @@ function guild_player_join($cid, $gid) {
 }
 
 function guild_player_leave_10($cid) {
-	$cid = (int)$cid;
-	mysql_delete("DELETE FROM `guild_membership` WHERE `player_id`='{$cid}' LIMIT 1;");
+	db()->execute("DELETE FROM `guild_membership` WHERE `player_id` = ? LIMIT 1;", [(int)$cid]);
 }
 
 function update_player_guild_position_10($cid, $rid) {
-	$cid = (int)$cid;
-	$rid = (int)$rid;
-	mysql_update("UPDATE `guild_membership` SET `rank_id`='{$rid}' WHERE `player_id`={$cid}");
+	db()->execute("UPDATE `guild_membership` SET `rank_id` = ? WHERE `player_id` = ?", [(int)$rid, (int)$cid]);
 }
 
 function guild_invite_player($cid, $gid) {
-	$cid = (int)$cid;
-	$gid = (int)$gid;
-	mysql_insert("INSERT INTO `guild_invites` (`player_id`, `guild_id`) VALUES ('{$cid}', '{$gid}')");
+	db()->execute("INSERT INTO `guild_invites` (`player_id`, `guild_id`) VALUES (?, ?)", [(int)$cid, (int)$gid]);
 }
 
 function guild_remove_invites($gid) {
-	$gid = (int)$gid;
-	mysql_delete("DELETE FROM `guild_invites` WHERE `guild_id`='{$gid}';");
+	db()->execute("DELETE FROM `guild_invites` WHERE `guild_id` = ?;", [(int)$gid]);
 }
 
 function guild_delete($gid) {
-	$gid = (int)$gid;
-	mysql_delete("DELETE FROM `guilds` WHERE `id`='{$gid}';");
+	db()->execute("DELETE FROM `guilds` WHERE `id` = ?;", [(int)$gid]);
 }
 
 // Get guild data, using guild id.
 function get_guild_rank_data($gid) {
-	$gid = (int)$gid;
-	return mysql_select_multi("SELECT `id`, `guild_id`, `name`, `level` FROM `guild_ranks` WHERE `guild_id`='{$gid}' ORDER BY `id` DESC LIMIT 0, 30");
+	return db()->fetchAll("SELECT `id`, `guild_id`, `name`, `level` FROM `guild_ranks` WHERE `guild_id` = ? ORDER BY `id` DESC LIMIT 0, 30", [(int)$gid]);
 }
 
 // Changes leadership of a guild to player_id
 function guild_new_leader($new_leader, $gid) {
-	$new_leader = (int)$new_leader;
-	$gid = (int)$gid;
-	mysql_update("UPDATE `guilds` SET `ownerid`='{$new_leader}' WHERE `id`={$gid}");
+	db()->execute("UPDATE `guilds` SET `ownerid` = ? WHERE `id` = ?", [(int)$new_leader, (int)$gid]);
 }
 
 // Change guild leader (parameters: cid, new and old leader).
@@ -157,8 +143,8 @@ function guild_change_leader($nCid, $oCid) {
 
 	if ($status) {
 		// Update players and set their new rank id
-		mysql_update("UPDATE `guild_membership` SET `rank_id`='{$leader_rid}' WHERE `player_id`={$nCid} LIMIT 1;");
-		mysql_update("UPDATE `guild_membership` SET `rank_id`='{$vice_rid}' WHERE `player_id`={$oCid} LIMIT 1;");
+		db()->execute("UPDATE `guild_membership` SET `rank_id` = ? WHERE `player_id` = ? LIMIT 1;", [$leader_rid, $nCid]);
+		db()->execute("UPDATE `guild_membership` SET `rank_id` = ? WHERE `player_id` = ? LIMIT 1;", [$vice_rid, $oCid]);
 
 		// Update guilds set new ownerid
 		guild_new_leader($nCid, $gid);
@@ -174,23 +160,22 @@ function create_guild($cid, $name) {
 	$time = time();
 
 	// Create the guild
-	mysql_insert("INSERT INTO `guilds` (`name`, `ownerid`, `creationdata`, `motd`) VALUES ('{$name}', '{$cid}', '{$time}', '');");
+	db()->execute("INSERT INTO `guilds` (`name`, `ownerid`, `creationdata`, `motd`) VALUES (?, ?, ?, '');", [$name, $cid, $time]);
 
 	// Get guild id
 	$gid = get_guild_id($name);
 
 	// Get rank id for guild leader
-	$data = mysql_select_single("SELECT `id` FROM `guild_ranks` WHERE `guild_id`='{$gid}' AND `level`='3' LIMIT 1;");
+	$data = db()->fetchOne("SELECT `id` FROM `guild_ranks` WHERE `guild_id` = ? AND `level` = 3 LIMIT 1;", [$gid]);
 	$rid = ($data !== false) ? $data['id'] : false;
 
 	// Give player rank id for leader of his guild
-	mysql_insert("INSERT INTO `guild_membership` (`player_id`, `guild_id`, `rank_id`, `nick`) VALUES ('{$cid}', '{$gid}', '{$rid}', '');");
+	db()->execute("INSERT INTO `guild_membership` (`player_id`, `guild_id`, `rank_id`, `nick`) VALUES (?, ?, ?, '');", [$cid, $gid, $rid]);
 }
 
 // Returns total members in a guild (integer)
 function count_guild_members($gid) {
-	$gid = (int)$gid;
-	$data = mysql_select_single("SELECT COUNT('guild_id') AS `total` FROM `guild_membership` WHERE `guild_id`='{$gid}';");
+	$data = db()->fetchOne("SELECT COUNT('guild_id') AS `total` FROM `guild_membership` WHERE `guild_id` = ?;", [(int)$gid]);
 	return ($data !== false) ? $data['total'] : false;
 }
 
@@ -201,30 +186,22 @@ function guild_war_invitation($cid, $gid) {
 	$gname = get_guild_name($cid);
 	$ename = get_guild_name($gid);
 	$time = time();
-	mysql_insert("
-		INSERT INTO `guild_wars` (`guild1`, `guild2`, `name1`, `name2`, `status`, `started`, `ended`) 
-		VALUES ('{$cid}', '{$gid}', '{$gname}', '{$ename}', '0', '{$time}', '0')
-	;");
+	db()->execute("
+		INSERT INTO `guild_wars` (`guild1`, `guild2`, `name1`, `name2`, `status`, `started`, `ended`)
+		VALUES (?, ?, ?, ?, 0, ?, 0)
+	;", [$cid, $gid, $gname, $ename, $time]);
 }
 
 function accept_war_invitation($cid, $gid) {
-	$cid = (int)$cid;
-	$gid = (int)$gid;
-	mysql_update("UPDATE `guild_wars` SET `status` = 1 WHERE `guild1` = '{$cid}' AND `guild2` = '{$gid}' AND `status` = 0;");
+	db()->execute("UPDATE `guild_wars` SET `status` = 1 WHERE `guild1` = ? AND `guild2` = ? AND `status` = 0;", [(int)$cid, (int)$gid]);
 }
 
 function reject_war_invitation($cid, $gid) {
-	$cid = (int)$cid;
-	$gid = (int)$gid;
-	$time = time();
-	mysql_update("UPDATE `guild_wars` SET `status` = 2, `ended` = '{$time}' WHERE `guild1` = '{$cid}' AND `guild2` = '{$gid}';");
+	db()->execute("UPDATE `guild_wars` SET `status` = 2, `ended` = ? WHERE `guild1` = ? AND `guild2` = ?;", [time(), (int)$cid, (int)$gid]);
 }
 
 function cancel_war_invitation($cid, $gid) {
-	$cid = (int)$cid;
-	$gid = (int)$gid;
-	$time = time();
-	mysql_update("UPDATE `guild_wars` SET `status` = 3, `ended` = '{$time}' WHERE `guild2` = '{$cid}' AND `guild1` = '{$gid}';");
+	db()->execute("UPDATE `guild_wars` SET `status` = 3, `ended` = ? WHERE `guild2` = ? AND `guild1` = ?;", [time(), (int)$cid, (int)$gid]);
 }
 
 theme_open();
@@ -457,12 +434,12 @@ if (user_logged_in() === true) {
 			foreach ($players as $player) {
 				$gplayers[] = $player['id'];
 			}
-			$gplayers = join(',',$gplayers);
-			$onlinequery = mysql_select_multi("
-				SELECT `player_id` 
-				FROM `players_online` 
-				WHERE `player_id` IN({$gplayers});
-			");
+			$gplayerPlaceholders = implode(',', array_fill(0, count($gplayers), '?'));
+			$onlinequery = db()->fetchAll("
+				SELECT `player_id`
+				FROM `players_online`
+				WHERE `player_id` IN({$gplayerPlaceholders});
+			", $gplayers);
 			if ($onlinequery !== false) foreach ($onlinequery as $online) {
 				$onlinelist[] = $online['player_id'];
 			}
@@ -668,7 +645,7 @@ if (user_logged_in() === true) {
 				if (user_character_exist($_POST['invite'])) {
 					// Make sure they are not in another guild
 					$charid = user_character_id($_POST['invite']);
-					$membership = mysql_select_single("SELECT `rank_id` FROM `guild_membership` WHERE `player_id`='{$charid}' LIMIT 1;");
+					$membership = db()->fetchOne("SELECT `rank_id` FROM `guild_membership` WHERE `player_id` = ? LIMIT 1;", [$charid]);
 					if (!$membership) {
 						$status = false;
 						if ($inv_data !== false) {
@@ -693,7 +670,7 @@ if (user_logged_in() === true) {
 			// Guild Message (motd)
 			if (!empty($_POST['motd'])) {
 				$motd = sanitize($_POST['motd']);
-				mysql_update("UPDATE `guilds` SET `motd`='{$motd}' WHERE `id`='{$gid}' LIMIT 1;");
+				db()->execute("UPDATE `guilds` SET `motd` = ? WHERE `id` = ? LIMIT 1;", [$motd, $gid]);
 				header('Location: guilds.php?name='. $_GET['name']);
 				exit();
 			}
@@ -715,15 +692,15 @@ if (user_logged_in() === true) {
 			if (!empty($_POST['forumGuildId'])) {
 				
 				if ($config['forum']['guildboard'] === true) {
-					$forumExist = mysql_select_single("SELECT `id` FROM `znote_forum` WHERE `guild_id`='{$gid}' LIMIT 1;");
-						
+					$forumExist = db()->fetchOne("SELECT `id` FROM `znote_forum` WHERE `guild_id` = ? LIMIT 1;", [$gid]);
+
 					if ($forumExist === false) {
 						// Insert data
-						mysql_insert("
-							INSERT INTO `znote_forum` 
+						db()->execute("
+							INSERT INTO `znote_forum`
 							(`name`, `access`, `closed`, `hidden`, `guild_id`)
-							VALUES ('Guild','1','0','0','{$gid}')
-						;");
+							VALUES ('Guild', 1, 0, 0, ?)
+						;", [$gid]);
 						echo '<h1>'. t('guild.board_created2'). '</h1>';
 					} else echo '<h1>'. t('guild.board_exists2'). '</h1>';
 
@@ -741,7 +718,7 @@ if (user_logged_in() === true) {
 					if ($targetGuild) {
 						$status = false;
 						
-						$war_invite = mysql_select_single("SELECT `id` FROM `guilds` WHERE `id` = '$gid';");
+						$war_invite = db()->fetchOne("SELECT `id` FROM `guilds` WHERE `id` = ?;", [$gid]);
 						if ($war_invite !== false) {
 							foreach ($war_invite as $inv) {
 								if ($inv['id'] == $targetGuild) $status = true;
@@ -755,19 +732,19 @@ if (user_logged_in() === true) {
 
 						if ((int)$gid === (int)$targetGuild) $status = true;
 
-						$wars = mysql_select_multi("
-							SELECT 
-								`id`, `guild1`, `guild2`, `status` 
-							FROM `guild_wars` 
-							WHERE (`guild1` = '$gid' OR `guild1` = '$targetGuild') 
-							AND (`guild2` = '$gid' OR `guild2` = '$targetGuild') 
+						$wars = db()->fetchAll("
+							SELECT
+								`id`, `guild1`, `guild2`, `status`
+							FROM `guild_wars`
+							WHERE (`guild1` = ? OR `guild1` = ?)
+							AND (`guild2` = ? OR `guild2` = ?)
 							AND `status` IN (0, 1)
-						;");
+						;", [$gid, $targetGuild, $gid, $targetGuild]);
 
 						if ($status == false && $wars == false) {
 							guild_war_invitation($gid, $targetGuild);
 							$limit = (empty($_POST['limit'])) ? 100 : (int)$_POST['limit'];
-							mysql_insert("INSERT INTO `znote_guild_wars` (`limit`) VALUES ('$limit');");
+							db()->execute("INSERT INTO `znote_guild_wars` (`limit`) VALUES (?);", [$limit]);
 							header('Location: guilds.php?name='. $_GET['name']);
 							exit();
 						} else echo '<font color="red" size="4">This guild has already been invited to war(or you\'re trying to invite your own).</FONT>';
@@ -799,7 +776,7 @@ if (user_logged_in() === true) {
 			
 			// Form to create guild board
 			if ($config['forum']['guildboard'] === true && $config['forum']['enabled'] === true) {
-				$forumExist = mysql_select_single("SELECT `id` FROM `znote_forum` WHERE `guild_id`='$gid' LIMIT 1;");
+				$forumExist = db()->fetchOne("SELECT `id` FROM `znote_forum` WHERE `guild_id` = ? LIMIT 1;", [$gid]);
 				if ($forumExist === false) {
 					?>
 					<form action="" method="post">
@@ -1037,7 +1014,7 @@ if (user_logged_in() === true) {
 				foreach ($rank_data as $level => $name) {
 					$rid = (int)$rank_ids[$level];
 					$name = sanitize($name);
-					mysql_update("UPDATE `guild_ranks` SET `name`='{$name}' WHERE `id`={$rid}");
+					db()->execute("UPDATE `guild_ranks` SET `name` = ? WHERE `id` = ?", [$name, $rid]);
 				}
 
 				header('Location: guilds.php?name='. $_GET['name']);
@@ -1119,18 +1096,18 @@ if (user_logged_in() === true) {
 					</tr>
 					<?php
 					$i = 0;
-					$wars = mysql_select_multi("
-						SELECT 
-							`guild1`, `guild2`, `name1`, `name2`, `started`, 
-							(	SELECT `limit` 
-								FROM `znote_guild_wars` 
+					$wars = db()->fetchAll("
+						SELECT
+							`guild1`, `guild2`, `name1`, `name2`, `started`,
+							(	SELECT `limit`
+								FROM `znote_guild_wars`
 								WHERE `znote_guild_wars`.`id` = `guild_wars`.`id`
-							) AS `limit` 
-						FROM `guild_wars` 
-						WHERE (`guild1` = '$gid' OR `guild2` = '$gid') 
-						AND `status` = 0 
+							) AS `limit`
+						FROM `guild_wars`
+						WHERE (`guild1` = ? OR `guild2` = ?)
+						AND `status` = 0
 						ORDER BY `started` DESC
-					");
+					", [$gid, $gid]);
 					if (!empty($wars) || $wars !== false) {
 						foreach($wars as $war): 
 							$i++;
@@ -1227,7 +1204,7 @@ if (user_logged_in() === true) {
 			}
 		}
 		if ($bool) {
-			$forumExist = mysql_select_single("SELECT `id` FROM `znote_forum` WHERE `guild_id`='{$gid}' LIMIT 1;");
+			$forumExist = db()->fetchOne("SELECT `id` FROM `znote_forum` WHERE `guild_id` = ? LIMIT 1;", [$gid]);
 			if ($forumExist !== false) {
 				?> - <font size="4"><a href="forum.php?cat=<?php echo $forumExist['id']; ?>"><?= t('guild.visit_board') ?></a></font><br><br><br><?php
 			}

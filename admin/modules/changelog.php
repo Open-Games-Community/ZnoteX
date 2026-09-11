@@ -21,7 +21,7 @@ if (!defined('ACP_ROOT')) {
 function acp_changelog_rebuild_cache(): void {
 	$cache = new Cache('engine/cache/changelog');
 	$cache->useMemory(false);
-	$cache->setContent(mysql_select_multi("
+	$cache->setContent(db()->fetchAll("
 		SELECT `id`, `text`, `time`, `report_id`, `status`
 		FROM `znote_changelog`
 		ORDER BY `id` DESC;
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$id = intv($_POST['id'] ?? 0);
 
 	if ($do === 'delete' && $id > 0) {
-		mysql_delete("DELETE FROM `znote_changelog` WHERE `id` = {$id} LIMIT 1;");
+		db()->execute("DELETE FROM `znote_changelog` WHERE `id` = ? LIMIT 1;", [$id]);
 		acp_changelog_rebuild_cache();
 		acp_log('changelog.delete', '#' . $id);
 		acp_flash_success(t('acp.chg.deleted'));
@@ -65,12 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	}
 
 	if ($do === 'update' && $id > 0) {
-		mysql_update("
+		db()->execute("
 			UPDATE `znote_changelog`
-			SET `text` = '" . esc($text) . "'
-			WHERE `id` = {$id}
+			SET `text` = ?
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$text, $id]);
 		acp_changelog_rebuild_cache();
 		acp_log('changelog.update', '#' . $id, ['text' => substr($text, 0, 60)]);
 		acp_flash_success(t('acp.chg.updated'));
@@ -83,10 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$when = time();
 		}
 
-		mysql_insert("
+		db()->execute("
 			INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
-			VALUES ('" . esc($text) . "', {$when}, 0, " . ACP_CHANGELOG_MANUAL_STATUS . ");
-		");
+			VALUES (?, ?, 0, ?);
+		", [$text, $when, ACP_CHANGELOG_MANUAL_STATUS]);
 		acp_changelog_rebuild_cache();
 		acp_log('changelog.create', '', ['text' => substr($text, 0, 60)]);
 		acp_flash_success(t('acp.chg.published'));
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------------------------------------------------------------------------
 // View state
 // ---------------------------------------------------------------------------
-$entries = mysql_select_multi("
+$entries = db()->fetchAll("
 	SELECT `id`, `text`, `time`, `report_id`, `status`
 	FROM `znote_changelog`
 	ORDER BY `id` DESC;

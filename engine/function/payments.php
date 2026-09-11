@@ -8,7 +8,7 @@
  */
 
 function payment_gateway_ensure_schema(): void {
-	mysql_update("
+	db()->execute("
 		CREATE TABLE IF NOT EXISTS `znote_payment_transactions` (
 			`id` bigint NOT NULL AUTO_INCREMENT,
 			`provider` varchar(32) NOT NULL,
@@ -32,7 +32,7 @@ function payment_gateway_ensure_schema(): void {
 		) ENGINE=InnoDB;
 	");
 
-	mysql_update("
+	db()->execute("
 		CREATE TABLE IF NOT EXISTS `znote_payment_events` (
 			`id` bigint NOT NULL AUTO_INCREMENT,
 			`provider` varchar(32) NOT NULL,
@@ -119,81 +119,70 @@ function payment_gateway_create_reference(string $provider): string {
 	return $provider . '_' . bin2hex(random_bytes(16));
 }
 
-function payment_gateway_sql($value): string {
-	return mysql_znote_escape_string((string)($value ?? ''));
-}
-
 function payment_gateway_insert_transaction(string $provider, int $accountId, string $price, string $currency, int $points, bool $testMode): string {
 	$reference = payment_gateway_create_reference($provider);
 	$now = time();
-
-	$p = payment_gateway_sql($provider);
-	$r = payment_gateway_sql($reference);
-	$c = payment_gateway_sql(strtoupper($currency));
-	$priceSql = payment_gateway_sql($price);
 	$test = $testMode ? 1 : 0;
 
-	mysql_insert("
+	db()->execute("
 		INSERT INTO `znote_payment_transactions`
 			(`provider`, `reference`, `account_id`, `price`, `currency`, `points`, `status`, `credited`, `test_mode`, `created_at`, `updated_at`)
 		VALUES
-			('{$p}', '{$r}', {$accountId}, '{$priceSql}', '{$c}', {$points}, 'pending', 0, {$test}, {$now}, {$now});
-	");
+			(?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?);
+	", [$provider, $reference, $accountId, $price, strtoupper($currency), $points, $test, $now, $now]);
 
 	return $reference;
 }
 
 function payment_gateway_update_provider_reference(string $provider, string $reference, string $providerReference, array $payload = []): void {
-	$p = payment_gateway_sql($provider);
-	$r = payment_gateway_sql($reference);
-	$pr = payment_gateway_sql($providerReference);
-	$body = payment_gateway_sql(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+	$body = (string)json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
 	$now = time();
 
-	mysql_update("
+	db()->execute("
 		UPDATE `znote_payment_transactions`
-		SET `provider_reference` = '{$pr}', `payload` = '{$body}', `updated_at` = {$now}
-		WHERE `provider` = '{$p}' AND `reference` = '{$r}' LIMIT 1;
-	");
+		SET `provider_reference` = ?, `payload` = ?, `updated_at` = ?
+		WHERE `provider` = ? AND `reference` = ? LIMIT 1;
+	", [$providerReference, $body, $now, $provider, $reference]);
 }
 
 function payment_gateway_update_status(string $provider, string $reference, string $status, ?string $providerReference = null, array $payload = []): void {
-	$p = payment_gateway_sql($provider);
-	$r = payment_gateway_sql($reference);
-	$s = payment_gateway_sql($status);
 	$now = time();
-	$sets = ["`status` = '{$s}'", "`updated_at` = {$now}"];
+	$sets = ["`status` = ?", "`updated_at` = ?"];
+	$params = [$status, $now];
 
 	if ($providerReference !== null && $providerReference !== '') {
-		$sets[] = "`provider_reference` = '" . payment_gateway_sql($providerReference) . "'";
+		$sets[] = "`provider_reference` = ?";
+		$params[] = $providerReference;
 	}
 	if ($payload) {
-		$sets[] = "`payload` = '" . payment_gateway_sql(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE)) . "'";
+		$sets[] = "`payload` = ?";
+		$params[] = (string)json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
 	}
 
-	mysql_update("
+	$params[] = $provider;
+	$params[] = $reference;
+
+	db()->execute("
 		UPDATE `znote_payment_transactions`
 		SET " . implode(', ', $sets) . "
-		WHERE `provider` = '{$p}' AND `reference` = '{$r}' LIMIT 1;
-	");
+		WHERE `provider` = ? AND `reference` = ? LIMIT 1;
+	", $params);
 }
 
 function payment_gateway_log_event(string $provider, string $eventId, ?string $providerReference, ?string $paymentReference, string $status, string $payload): void {
-	$p = payment_gateway_sql($provider);
-	$e = payment_gateway_sql($eventId !== '' ? $eventId : hash('sha256', $payload));
-	$pr = payment_gateway_sql($providerReference ?? '');
-	$ref = payment_gateway_sql($paymentReference ?? '');
-	$s = payment_gateway_sql($status);
-	$body = payment_gateway_sql(substr($payload, 0, 65000));
+	$eventId = $eventId !== '' ? $eventId : hash('sha256', $payload);
+	$providerReference = ($providerReference !== null && $providerReference !== '') ? $providerReference : null;
+	$paymentReference = ($paymentReference !== null && $paymentReference !== '') ? $paymentReference : null;
+	$body = substr($payload, 0, 65000);
 	$now = time();
 
-	mysql_insert("
+	db()->execute("
 		INSERT INTO `znote_payment_events`
 			(`provider`, `event_id`, `provider_reference`, `payment_reference`, `status`, `payload`, `received_at`)
 		VALUES
-			('{$p}', '{$e}', " . ($pr === '' ? 'NULL' : "'{$pr}'") . ", " . ($ref === '' ? 'NULL' : "'{$ref}'") . ", '{$s}', '{$body}', {$now})
+			(?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE `received_at` = `received_at`;
-	");
+	", [$provider, $eventId, $providerReference, $paymentReference, $status, $body, $now]);
 }
 
 function payment_gateway_http(string $method, string $url, array $headers = [], $body = null): array {
@@ -422,41 +411,35 @@ function payment_gateway_verify_mercadopago_signature(string $dataId, string $re
 }
 
 function payment_gateway_credit_transaction(string $provider, string $reference, string $providerReference, string $expectedStatus, array $payload = []): string {
-	global $connect;
-
-	$p = payment_gateway_sql($provider);
-	$r = payment_gateway_sql($reference);
-	$pr = payment_gateway_sql($providerReference);
 	$now = time();
-	$body = payment_gateway_sql(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE));
+	$body = (string)json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+	$db = db();
 
 	try {
-		mysqli_begin_transaction($connect);
-
-		$result = mysqli_query($connect, "
-			SELECT *
-			FROM `znote_payment_transactions`
-			WHERE `provider` = '{$p}' AND `reference` = '{$r}'
-			LIMIT 1
-			FOR UPDATE;
-		");
-		$tx = $result instanceof mysqli_result ? mysqli_fetch_assoc($result) : false;
-		if ($result instanceof mysqli_result) {
-			mysqli_free_result($result);
+		if (!$db->beginTransaction()) {
+			return 'credit_failed';
 		}
 
+		$tx = $db->fetchOne("
+			SELECT *
+			FROM `znote_payment_transactions`
+			WHERE `provider` = ? AND `reference` = ?
+			LIMIT 1
+			FOR UPDATE;
+		", [$provider, $reference]);
+
 		if (!is_array($tx)) {
-			mysqli_rollback($connect);
+			$db->rollback();
 			return 'missing_transaction';
 		}
 		if ((int)$tx['credited'] === 1) {
-			mysqli_commit($connect);
+			$db->commit();
 			return 'already_credited';
 		}
 		if ($providerReference !== '') {
 			$storedProviderReference = (string)($tx['provider_reference'] ?? '');
 			if ($storedProviderReference !== '' && $storedProviderReference !== $providerReference && $provider === 'stripe') {
-				mysqli_rollback($connect);
+				$db->rollback();
 				return 'provider_reference_mismatch';
 			}
 		}
@@ -464,41 +447,55 @@ function payment_gateway_credit_transaction(string $provider, string $reference,
 		$accountId = (int)$tx['account_id'];
 		$points = (int)$tx['points'];
 		if ($accountId <= 0 || $points <= 0) {
-			mysqli_rollback($connect);
+			$db->rollback();
 			return 'invalid_transaction';
 		}
 		if (!payment_gateway_provider_amount_matches($provider, $tx, $payload)) {
-			mysqli_rollback($connect);
+			$db->rollback();
 			payment_gateway_update_status($provider, $reference, 'amount_mismatch', $providerReference, $payload);
 			return 'amount_mismatch';
 		}
 
-		$account = mysqli_query($connect, "SELECT `id` FROM `znote_accounts` WHERE `account_id` = {$accountId} LIMIT 1 FOR UPDATE;");
-		$accountRow = $account instanceof mysqli_result ? mysqli_fetch_assoc($account) : false;
-		if ($account instanceof mysqli_result) {
-			mysqli_free_result($account);
-		}
+		$accountRow = $db->fetchOne(
+			"SELECT `id` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;",
+			[$accountId]
+		);
 		if (!is_array($accountRow)) {
-			mysqli_query($connect, "INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `points`, `flag`) VALUES ({$accountId}, 0, {$now}, 0, '');");
+			if (!$db->execute(
+				"INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `points`, `flag`) VALUES (?, 0, ?, 0, '');",
+				[$accountId, $now]
+			)) {
+				$db->rollback();
+				return 'credit_failed';
+			}
 		}
 
-		mysqli_query($connect, "UPDATE `znote_accounts` SET `points` = COALESCE(`points`, 0) + {$points} WHERE `account_id` = {$accountId};");
-		mysqli_query($connect, "
+		if (!$db->execute(
+			"UPDATE `znote_accounts` SET `points` = COALESCE(`points`, 0) + ? WHERE `account_id` = ?;",
+			[$points, $accountId]
+		)) {
+			$db->rollback();
+			return 'credit_failed';
+		}
+		if (!$db->execute("
 			UPDATE `znote_payment_transactions`
-			SET `provider_reference` = " . ($pr === '' ? "`provider_reference`" : "'{$pr}'") . ",
-				`status` = '" . payment_gateway_sql($expectedStatus) . "',
+			SET `provider_reference` = COALESCE(NULLIF(?, ''), `provider_reference`),
+				`status` = ?,
 				`credited` = 1,
-				`credited_at` = {$now},
-				`updated_at` = {$now},
-				`payload` = '{$body}'
-			WHERE `id` = " . (int)$tx['id'] . ";
-		");
+				`credited_at` = ?,
+				`updated_at` = ?,
+				`payload` = ?
+			WHERE `id` = ?;
+		", [$providerReference, $expectedStatus, $now, $now, $body, (int)$tx['id']])) {
+			$db->rollback();
+			return 'credit_failed';
+		}
 
-		mysqli_commit($connect);
+		$db->commit();
 		payment_gateway_fire_completed($provider, $reference, $providerReference, $expectedStatus, $accountId, $points, $tx, $payload);
 		return 'credited';
 	} catch (Throwable $e) {
-		mysqli_rollback($connect);
+		$db->rollback();
 		error_log('Payment credit failed: ' . $e->getMessage());
 		return 'credit_failed';
 	}

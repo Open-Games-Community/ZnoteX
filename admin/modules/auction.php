@@ -43,21 +43,22 @@ function acp_duration(int $seconds): string {
 // ---------------------------------------------------------------------------
 // Passive sweep: a bid period that ran out with a bidder on it is a sale.
 // ---------------------------------------------------------------------------
-$expired = mysql_select_multi("
+$expired = db()->fetchAll("
 	SELECT `id`
 	FROM `znote_auction_player`
 	WHERE `sold` = 0
-	  AND `time_end` < {$now}
+	  AND `time_end` < ?
 	  AND `bidder_account_id` > 0;
-");
+", [$now]);
 
 if (is_array($expired) && $expired) {
 	$soldIds = array_map(static fn($a) => (int)$a['id'], $expired);
-	mysql_update("
+	$placeholders = implode(',', array_fill(0, count($soldIds), '?'));
+	db()->execute("
 		UPDATE `znote_auction_player`
 		SET `sold` = 1
-		WHERE `id` IN (" . implode(',', $soldIds) . ");
-	");
+		WHERE `id` IN ({$placeholders});
+	", $soldIds);
 }
 
 // ---------------------------------------------------------------------------
@@ -75,26 +76,26 @@ $characterFields = "
 	`p`.`level`
 ";
 
-$pending = mysql_select_multi("
+$pending = db()->fetchAll("
 	SELECT {$characterFields}
 	FROM `znote_auction_player` `za`
 	INNER JOIN `players` `p` ON `za`.`player_id` = `p`.`id`
-	WHERE `p`.`account_id` = {$storageAccountId}
+	WHERE `p`.`account_id` = ?
 	  AND `za`.`claimed` = 0
 	  AND `za`.`sold` = 1
 	ORDER BY `za`.`time_end` DESC;
-");
+", [$storageAccountId]);
 
-$ongoing = mysql_select_multi("
+$ongoing = db()->fetchAll("
 	SELECT {$characterFields}
 	FROM `znote_auction_player` `za`
 	INNER JOIN `players` `p` ON `za`.`player_id` = `p`.`id`
-	WHERE `p`.`account_id` = {$storageAccountId}
+	WHERE `p`.`account_id` = ?
 	  AND `za`.`sold` = 0
 	ORDER BY `za`.`time_end` DESC;
-");
+", [$storageAccountId]);
 
-$completed = mysql_select_multi("
+$completed = db()->fetchAll("
 	SELECT {$characterFields}
 	FROM `znote_auction_player` `za`
 	INNER JOIN `players` `p` ON `za`.`player_id` = `p`.`id`

@@ -263,7 +263,7 @@ function znote_plugin_install_sql(string $name): string {
 		if ($statement === '') {
 			continue;
 		}
-		if (mysql_insert($statement) === false && mysql_update($statement) === false) {
+		if (!db()->rawExecute($statement)) {
 			$failed[] = substr($statement, 0, 60);
 		}
 	}

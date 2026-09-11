@@ -42,22 +42,22 @@ $response['data']['time'] = getClock(time(), false, true);
 $response['data']['time_formatted'] = getClock(time(), true, true);
 
 // Account count
-$accounts = mysql_select_single("SELECT COUNT(*) AS `count` FROM `accounts`");
+$accounts = db()->fetchOne("SELECT COUNT(*) AS `count` FROM `accounts`");
 $response['data']['accounts'] = (int)($accounts['count'] ?? 0);
 
 // Player count
-$players = mysql_select_single("SELECT COUNT(*) AS `count` FROM `players`");
+$players = db()->fetchOne("SELECT COUNT(*) AS `count` FROM `players`");
 $response['data']['players'] = (int)($players['count'] ?? 0);
 
 // Online players
 if ($config['ServerEngine'] !== 'TFS_10') {
-	$online = mysql_select_single("
+	$online = db()->fetchOne("
 		SELECT COUNT(*) AS `count`, COUNT(DISTINCT `lastip`) AS `unique`
 		FROM `players`
 		WHERE `online` = 1
 	");
 } else {
-	$online = mysql_select_single("
+	$online = db()->fetchOne("
 		SELECT COUNT(o.player_id) AS `count`, COUNT(DISTINCT p.lastip) AS `unique`
 		FROM `players_online` o
 		INNER JOIN `players` p ON o.player_id = p.id

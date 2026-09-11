@@ -178,6 +178,7 @@ function install_connect(?string &$error = null): ?mysqli {
 	}
 
 	$link->set_charset('utf8mb4');
+	$link->query("SET collation_connection = 'utf8mb4_general_ci'");
 
 	return $link;
 }

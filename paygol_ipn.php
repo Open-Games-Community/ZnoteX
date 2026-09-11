@@ -75,35 +75,48 @@ if (!empty($paymentData['resolved'])) {
 
 // Check that this message_id has not already been credited
 if ($message_id !== false) {
-	$duplicate = mysql_select_single("SELECT `id` FROM `znote_paygol` WHERE `message_id`='$message_id' LIMIT 1;");
+	$duplicate = db()->fetchOne("SELECT `id` FROM `znote_paygol` WHERE `message_id` = ? LIMIT 1;", [$message_id]);
 	if ($duplicate !== false) {
 		header("HTTP/1.0 200 OK");
 		die("Error: message_id already processed.");
 	}
 }
 
-// Update logs:
-mysql_insert("INSERT INTO `znote_paygol` VALUES ('', '$custom', '$price', '$new_points', '$message_id', '$service_id', '$shortcode', '$keyword', '$message', '$sender', '$operator', '$country', '$currency')");
-
-// Fetch points
-$account = mysql_select_single("SELECT `points` FROM `znote_accounts` WHERE `account_id`='$custom';");
-
-if (is_array($account)) {
-	// Calculate new points
-	$new_points = (int)$account['points'] + $new_points;
-
-	// Update new points
-	mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
-	if (function_exists('znote_hook')) {
-		znote_hook('payment.completed', array_merge($paymentData, array(
-			'provider' => 'paygol',
-			'reference' => (string)$message_id,
-			'custom' => $custom_raw,
-			'account_id' => (int)$custom,
-			'price' => $paymentData['price'] ?? $price,
-			'currency' => $paymentData['currency'] ?? $currency,
-			'points' => $paymentData['points'] ?? $paygol['points'],
-			'status' => 'completed',
-		)));
+// Re-check for a duplicate and credit inside one locked transaction, so two
+// concurrent notifications for the same message_id cannot both credit points.
+$creditResult = db()->transaction(function ($db) use ($custom, $price, $new_points, $message_id, $service_id, $shortcode, $keyword, $message, $sender, $operator, $country, $currency) {
+	if ($message_id !== false) {
+		$dup = $db->fetchOne("SELECT `id` FROM `znote_paygol` WHERE `message_id` = ? LIMIT 1 FOR UPDATE;", [$message_id]);
+		if ($dup !== false) {
+			return 'duplicate';
+		}
 	}
+
+	$db->execute(
+		"INSERT INTO `znote_paygol` VALUES ('', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		[$custom, $price, $new_points, $message_id, $service_id, $shortcode, $keyword, $message, $sender, $operator, $country, $currency]
+	);
+
+	$account = $db->fetchOne("SELECT `points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;", [$custom]);
+	if (!is_array($account)) {
+		return 'no_account';
+	}
+
+	$creditedPoints = (int)$account['points'] + $new_points;
+	$db->execute("UPDATE `znote_accounts` SET `points` = ? WHERE `account_id` = ?", [$creditedPoints, $custom]);
+
+	return 'credited';
+});
+
+if ($creditResult === 'credited' && function_exists('znote_hook')) {
+	znote_hook('payment.completed', array_merge($paymentData, array(
+		'provider' => 'paygol',
+		'reference' => (string)$message_id,
+		'custom' => $custom_raw,
+		'account_id' => (int)$custom,
+		'price' => $paymentData['price'] ?? $price,
+		'currency' => $paymentData['currency'] ?? $currency,
+		'points' => $paymentData['points'] ?? $paygol['points'],
+		'status' => 'completed',
+	)));
 }

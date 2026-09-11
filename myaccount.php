@@ -5,17 +5,17 @@ theme_open();
 $undelete_id = $_GET['cancel_delete_id'] ?? null;
 if($undelete_id) {
 	$undelete_id = (int)$undelete_id;
-	$undelete_q1 = mysql_select_single("
+	$undelete_q1 = db()->fetchOne("
 		SELECT 
 			`character_name` 
 		FROM `znote_deleted_characters` 
 		WHERE `done` = 0 
-		AND `id` = {$undelete_id} 
-		AND `original_account_id` = {$session_user_id} 
+		AND `id` = ?
+		AND `original_account_id` = ?
 		AND NOW() < `time`
-	");
+	", [$undelete_id, (int)$session_user_id]);
 	if($undelete_q1) {
-		mysql_delete('DELETE FROM `znote_deleted_characters` WHERE `id` = ' . $undelete_id);
+		db()->execute('DELETE FROM `znote_deleted_characters` WHERE `id` = ?', [$undelete_id]);
 		echo t('acc.delete_cancelled', ['name' => $undelete_q1['character_name']]) .'<br/>';
 	}
 }
@@ -33,22 +33,32 @@ if (isset($_GET['authenticate']) && $config['mailserver']['myaccount_verify_emai
 		$akey = (isset($_GET['k']) && (int)$_GET['k'] > 0) ? (int)$_GET['k'] : false;
 		if ($auid !== false && $akey !== false) {
 			// Find a match
-			$user = mysql_select_single("SELECT `id`, `active`, `active_email` FROM `znote_accounts` WHERE `account_id`='{$auid}' AND `activekey`='{$akey}' LIMIT 1;");
+			$user = db()->fetchOne(
+				"SELECT `id`, `active`, `active_email` FROM `znote_accounts` WHERE `account_id` = ? AND `activekey` = ? LIMIT 1;",
+				[$auid, $akey]
+			);
 			if ($user !== false) {
-				$user = (int) $user['id'];
-				$active = (int) $user['active'];
-				$active_email = (int) $user['active_email'];
+				$userId = (int)$user['id'];
+				$active = (int)$user['active'];
+				$active_email = (int)$user['active_email'];
 				$verify_points = ($active_email == 0 && $config['mailserver']['verify_email_points'] > 0)
-					? ", `points` = `points` + {$config['mailserver']['verify_email_points']}"
-					: '';
+					? (int)$config['mailserver']['verify_email_points']
+					: 0;
 				// Enable the account to login
 				if ($active == 0 || $active_email == 0) {
 					$new_activeKey = rand(100000000, 999999999);
-					mysql_update("UPDATE `znote_accounts` SET `active`='1', `active_email`='1', `activekey`='{$new_activeKey}' {$verify_points} WHERE `id`= {$user} LIMIT 1;");
+					db()->execute(
+						"UPDATE `znote_accounts`
+						SET `active` = 1, `active_email` = 1, `activekey` = ?, `points` = `points` + ?
+						WHERE `id` = ?
+						LIMIT 1;",
+						[$new_activeKey, $verify_points, $userId]
+					);
 				}
 				echo '<h1>'. t('common.congrats') .'</h1> <p>'. t('acc.email_verified') .'</p>';
-				if ($verify_points !== '') echo "<p>As thanks for having a verified email, you have received <a href='/shop.php'>{$config['mailserver']['verify_email_points']} shop points</a>!</p>";
+				if ($verify_points > 0) echo "<p>As thanks for having a verified email, you have received <a href='/shop.php'>{$verify_points} shop points</a>!</p>";
 				$user_znote_data['active_email'] = 1;
+				$user_znote_data['points'] = (int)$user_znote_data['points'] + $verify_points;
 			} else {
 				echo '<h1>'. t('acc.auth_failed'). '</h1> <p>Either the activation link is wrong, or your account is already activated.</p>';
 			}
@@ -57,7 +67,10 @@ if (isset($_GET['authenticate']) && $config['mailserver']['myaccount_verify_emai
 		}
 	} else { // We need to send email verification
 		$verify_account_id = (int)$session_user_id;
-		$user = mysql_select_single("SELECT `id`, `activekey`, `active_email` FROM `znote_accounts` WHERE `account_id`='{$verify_account_id}' LIMIT 1;");
+		$user = db()->fetchOne(
+			"SELECT `id`, `activekey`, `active_email` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1;",
+			[$verify_account_id]
+		);
 		if ($user !== false) {
 			$thisurl = config('site_url') . "/myaccount.php";
 			$thisurl .= "?authenticate&u=".$verify_account_id."&k=".$user['activekey'];
@@ -135,8 +148,14 @@ if (!empty($_POST['selected_character'])) {
 				$oldname = $char_name;
 				$newname = isset($_POST['newName']) ? getValue($_POST['newName'] ?? null) : '';
 
-				$player = false;
-				$player = mysql_select_single("SELECT `id`, `account_id` FROM `players` WHERE `name` = '$oldname'");
+				$player = db()->fetchOne("SELECT `id`, `account_id` FROM `players` WHERE `name` = ? LIMIT 1;", [$oldname]);
+				if ($player === false) {
+					$errors[] = t('acc.sync_failed');
+					echo '<font color="red"><b>';
+					echo output_errors($errors);
+					echo '</b></font>';
+					break;
+				}
 				$player['online'] = (user_is_online_10($player['id'])) ? 1 : 0;
 
 				// Check if user is online
@@ -146,13 +165,16 @@ if (!empty($_POST['selected_character'])) {
 
 				// Check if player has bough ticket
 				$accountId = $player['account_id'];
-				$order = mysql_select_single("SELECT `id`, `account_id` FROM `znote_shop_orders` WHERE `type`='4' AND `account_id` = '$accountId' LIMIT 1;");
+				$order = db()->fetchOne(
+					"SELECT `id`, `account_id` FROM `znote_shop_orders` WHERE `type` = 4 AND `account_id` = ? LIMIT 1;",
+					[(int)$accountId]
+				);
 				if ($order === false) {
 					$errors[] = t('acc.no_name_tickets');
 				}
 
 				// Check if player and account matches
-				if ($session_user_id != $accountId || $session_user_id != $order['account_id']) {
+				if ($order !== false && ($session_user_id != $accountId || $session_user_id != $order['account_id'])) {
 					if (empty($errors)) {
 						$errors[] = t('acc.sync_failed');
 					}
@@ -186,11 +208,25 @@ if (!empty($_POST['selected_character'])) {
 				}
 
 				if (!empty($newname) && empty($errors)) {
-					echo t('acc.name_changed', ['name' => $newname]);
-					mysql_update("UPDATE `players` SET `name`='$newname' WHERE `id`='".$player['id']."' LIMIT 1;");
-					mysql_delete("DELETE FROM `znote_shop_orders` WHERE `id`='".$order['id']."' LIMIT 1;");
+					$db = db();
+					if (!$db->beginTransaction()) {
+						$errors[] = t('acc.sync_failed');
+					} else {
+						$ok = $db->execute("UPDATE `players` SET `name` = ? WHERE `id` = ? LIMIT 1;", [$newname, (int)$player['id']]);
+						$ok = $ok && $db->execute("DELETE FROM `znote_shop_orders` WHERE `id` = ? LIMIT 1;", [(int)$order['id']]);
 
-				} else if (!empty($errors)) {
+						if ($ok) {
+							$db->commit();
+							echo t('acc.name_changed', ['name' => $newname]);
+						} else {
+							$db->rollback();
+							$errors[] = t('acc.sync_failed');
+						}
+					}
+
+				}
+
+				if (!empty($errors)) {
 					echo '<font color="red"><b>';
 					echo output_errors($errors);
 					echo '</b></font>';
@@ -212,7 +248,8 @@ if (!empty($_POST['selected_character'])) {
 
 						// Fetch character tickets
 						$tickets = shop_account_gender_tickets($account_id);
-						if ($tickets !== false || $config['free_sex_change'] == true) {
+						$tickets = is_array($tickets) ? $tickets : array();
+						if (!empty($tickets) || $config['free_sex_change'] == true) {
 							// They are allowed to change gender
 							$last = false;
 							$infinite = false;
@@ -220,16 +257,16 @@ if (!empty($_POST['selected_character'])) {
 							// Do we have any infinite tickets?
 							foreach ($tickets as $ticket) {
 								if ($ticket['count'] == 0) $infinite = true;
-								else if ($ticket > 0 && $infinite === false) $tks += (int)$ticket['count'];
+								else if ((int)$ticket['count'] > 0 && $infinite === false) $tks += (int)$ticket['count'];
 							}
 							if ($infinite === true) $tks = 0;
-							$dbid = (int)$tickets[0]['id'];
+							$dbid = isset($tickets[0]['id']) ? (int)$tickets[0]['id'] : 0;
 							// If they dont have unlimited tickets, remove a count from their ticket.
-							if ($tickets[0]['count'] > 1) { // Decrease count
+							if ($dbid > 0 && $tickets[0]['count'] > 1) { // Decrease count
 								$tks--;
 								$tkr = ((int)$tickets[0]['count'] - 1);
 								shop_update_row_count($dbid, $tkr);
-							} else if ($tickets[0]['count'] == 1) { // '. t('common.delete'). ' record
+							} else if ($dbid > 0 && $tickets[0]['count'] == 1) { // '. t('common.delete'). ' record
 								shop_delete_row_order($dbid);
 								$tks--;
 							}
@@ -288,7 +325,7 @@ if ($render_page) {
 				echo '<b>CAUTION!</b> Your character with name <b>' . $delete['character_name'] . ' will be deleted on ' . $delete['time'] . '</b>. <a href="myaccount.php?cancel_delete_id=' . $delete['id'] . '">'. t('acc.cancel_op'). '</a><br/>';
 			else {
 				user_delete_character(user_character_id($delete['character_name']));
-				mysql_update('UPDATE `znote_deleted_characters` SET `done` = 1 WHERE `id` = '. $delete['id']. '');
+				db()->execute('UPDATE `znote_deleted_characters` SET `done` = 1 WHERE `id` = ?', [(int)$delete['id']]);
 				echo '<b>'. t('common.character'). ' ' . $delete['character_name'] . ' has been deleted</b>. This operation was requested by owner of this account.';
 				$char_count--;
 			}
@@ -314,8 +351,8 @@ if ($render_page) {
 		</p>
 		<?php
 		if ($config['twoFactorAuthenticator']) {
-			$query = mysql_select_single("SELECT `secret` FROM `accounts` WHERE `id`='".(int)$session_user_id."' LIMIT 1;");
-			$status = ($query['secret'] === NULL) ? false : true;
+			$query = db()->fetchOne("SELECT `secret` FROM `accounts` WHERE `id` = ? LIMIT 1;", [(int)$session_user_id]);
+			$status = (is_array($query) && $query['secret'] !== NULL);
 			?><p><?= t('acc.security_2fa') ?> <a href="twofa.php"><?php echo ($status) ? 'Enabled' : 'Disabled'; ?></a></p><?php
 		}
 		?>

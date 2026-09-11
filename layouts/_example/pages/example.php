@@ -19,14 +19,14 @@
 <p>
 	Write plain HTML. You have the whole engine available if you want it:
 	<code>$config</code>, <code>user_logged_in()</code>,
-	<code>mysql_select_multi()</code>, and every function in
+	<code>db()->fetchAll($sql, $params)</code>, and every function in
 	<code>engine/function/</code>.
 </p>
 
 <h2>Example: pull something out of the database</h2>
 
 <?php
-$players = mysql_select_multi("
+$players = db()->fetchAll("
 	SELECT `name`, `level`, `vocation`
 	FROM `players`
 	ORDER BY `level` DESC

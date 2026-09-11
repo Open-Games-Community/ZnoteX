@@ -10,15 +10,15 @@ if ($config['ServerEngine'] !== 'TFS_10') {
 } else {
 	// If user wishes to disable Two-Factor Authentication
 	if (isset($_GET['disable'])) {
-		mysql_update("UPDATE `accounts` SET `secret`=NULL WHERE `id`='".(int)$session_user_id."' LIMIT 1;");
-		mysql_update("UPDATE `znote_accounts` SET `secret`=NULL WHERE `account_id`='".(int)$session_user_id."' LIMIT 1;");
+		db()->execute("UPDATE `accounts` SET `secret` = NULL WHERE `id` = ? LIMIT 1;", [(int)$session_user_id]);
+		db()->execute("UPDATE `znote_accounts` SET `secret` = NULL WHERE `account_id` = ? LIMIT 1;", [(int)$session_user_id]);
 	}
 
 	// General init
 	require_once("engine/function/rfc6238.php");
 
 	// Fetch the secret data from accounts and znote_accounts table
-	$query = mysql_select_single("SELECT `a`.`secret` AS `secret`, `za`.`secret` AS `znote_secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id` WHERE `a`.`id`='".(int)$session_user_id."' LIMIT 1;");
+	$query = db()->fetchOne("SELECT `a`.`secret` AS `secret`, `za`.`secret` AS `znote_secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id` WHERE `a`.`id` = ? LIMIT 1;", [(int)$session_user_id]);
 
 	// If secret column returns NULL on the regular accounts table, then it means the system is not active.
 	$status = ($query['secret'] === NULL) ? false : true;
@@ -27,7 +27,7 @@ if ($config['ServerEngine'] !== 'TFS_10') {
 	if ($query['znote_secret'] === NULL) {
 		$scrtString = ($query['secret'] === NULL) ? generateRandomString(16) : $query['secret'];
 		// Add secret to znote_accounts table
-		mysql_update("UPDATE `znote_accounts` SET `secret`= '$scrtString' WHERE `account_id`='$session_user_id';");
+		db()->execute("UPDATE `znote_accounts` SET `secret` = ? WHERE `account_id` = ?;", [$scrtString, (int)$session_user_id]);
 		$query['znote_secret'] = $scrtString;
 	}
 	// HTML rendering

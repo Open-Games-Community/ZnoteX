@@ -35,42 +35,48 @@ $action = trim((string)($_GET['action'] ?? ''));
 $page   = max(1, intv($_GET['page'] ?? 1));
 $perPage = 40;
 
-$where = array();
+$where  = array();
+$params = array();
 if ($hasTable) {
 	if ($days !== 'all') {
-		$since   = time() - ((int)$days * 86400);
-		$where[] = "`created` >= {$since}";
+		$where[]  = "`created` >= ?";
+		$params[] = time() - ((int)$days * 86400);
 	}
 	if ($q !== '') {
-		$qEsc    = esc($q);
-		$where[] = "(`target` LIKE '%{$qEsc}%' OR `admin_name` LIKE '%{$qEsc}%' OR `action` LIKE '%{$qEsc}%' OR `details` LIKE '%{$qEsc}%')";
+		$like     = '%' . $q . '%';
+		$where[]  = "(`target` LIKE ? OR `admin_name` LIKE ? OR `action` LIKE ? OR `details` LIKE ?)";
+		$params[] = $like;
+		$params[] = $like;
+		$params[] = $like;
+		$params[] = $like;
 	}
 	if ($action !== '') {
-		$where[] = "`action` = '" . esc($action) . "'";
+		$where[]  = "`action` = ?";
+		$params[] = $action;
 	}
 }
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-$total      = $hasTable ? acp_count("SELECT COUNT(*) AS `c` FROM `znote_admin_log` {$whereSql};") : 0;
+$total      = $hasTable ? acp_count("SELECT COUNT(*) AS `c` FROM `znote_admin_log` {$whereSql};", $params) : 0;
 $totalPages = max(1, (int)ceil($total / $perPage));
 $page       = min($page, $totalPages);
 $offset     = ($page - 1) * $perPage;
 
 $rows = array();
 if ($hasTable) {
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `id`, `admin_id`, `admin_name`, `action`, `target`, `details`, `ip`, `created`
 		FROM `znote_admin_log`
 		{$whereSql}
 		ORDER BY `id` DESC
 		LIMIT {$offset}, {$perPage};
-	");
+	", $params);
 	$rows = is_array($rows) ? $rows : array();
 }
 
 $actionOptions = array();
 if ($hasTable) {
-	$actionRows = mysql_select_multi("SELECT DISTINCT `action` FROM `znote_admin_log` ORDER BY `action` ASC;");
+	$actionRows = db()->fetchAll("SELECT DISTINCT `action` FROM `znote_admin_log` ORDER BY `action` ASC;");
 	if (is_array($actionRows)) {
 		foreach ($actionRows as $row) {
 			$actionOptions[] = (string)$row['action'];
@@ -78,9 +84,9 @@ if ($hasTable) {
 	}
 }
 
-$eventsToday = $hasTable ? acp_count("SELECT COUNT(*) AS `c` FROM `znote_admin_log` WHERE `created` >= " . (time() - 86400) . ";") : 0;
-$eventsAll   = $hasTable ? acp_count("SELECT COUNT(*) AS `c` FROM `znote_admin_log`;") : 0;
-$adminsActive = $hasTable ? acp_count("SELECT COUNT(DISTINCT `admin_id`) AS `c` FROM `znote_admin_log` WHERE `created` >= " . (time() - 30 * 86400) . ";") : 0;
+$eventsToday  = $hasTable ? acp_count("SELECT COUNT(*) AS `c` FROM `znote_admin_log` WHERE `created` >= ?;", [time() - 86400]) : 0;
+$eventsAll    = $hasTable ? acp_count("SELECT COUNT(*) AS `c` FROM `znote_admin_log`;") : 0;
+$adminsActive = $hasTable ? acp_count("SELECT COUNT(DISTINCT `admin_id`) AS `c` FROM `znote_admin_log` WHERE `created` >= ?;", [time() - 30 * 86400]) : 0;
 
 function acp_log_query(array $overrides = array()): array {
 	global $q, $action, $days;

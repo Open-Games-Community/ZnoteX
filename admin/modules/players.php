@@ -19,14 +19,14 @@ $enc = 100;
 $legacyEngines = ['TFS_02', 'TFS_10', 'OTHIRE'];
 
 function acp_players_table_exists(string $table): bool {
-	return mysql_select_single("SHOW TABLES LIKE '" . esc($table) . "';") !== false;
+	return db()->fetchOne("SHOW TABLES LIKE ?;", [$table]) !== false;
 }
 
 function acp_players_column_exists(string $table, string $column): bool {
-	return mysql_select_single("
+	return db()->fetchOne("
 		SHOW COLUMNS FROM `" . esc($table) . "`
-		LIKE '" . esc($column) . "';
-	") !== false;
+		LIKE ?;
+	", [$column]) !== false;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -109,12 +109,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$problems = [];
 
 		$onlineSelect = acp_players_column_exists('players', 'online') ? ', `online`' : '';
-		$character = $currentName !== '' ? mysql_select_single("
+		$character = $currentName !== '' ? db()->fetchOne("
 			SELECT `id`, `name`{$onlineSelect}
 			FROM `players`
-			WHERE `name` = '" . esc($currentName) . "'
+			WHERE `name` = ?
 			LIMIT 1;
-		") : false;
+		", [$currentName]) : false;
 
 		if (!is_array($character)) {
 			$problems[] = t('acp.plr.err_current_not_exist');
@@ -152,12 +152,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		if (!$problems && is_array($character)) {
 			$characterId = (int)$character['id'];
-			$duplicate = mysql_select_single("
+			$duplicate = db()->fetchOne("
 				SELECT `id` FROM `players`
-				WHERE `name` = '" . esc((string)$newName) . "'
-				AND `id` <> {$characterId}
+				WHERE `name` = ?
+				AND `id` <> ?
 				LIMIT 1;
-			");
+			", [(string)$newName, $characterId]);
 			if (is_array($duplicate)) {
 				$problems[] = t('acp.plr.err_name_taken');
 			}
@@ -175,25 +175,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			acp_redirect('players');
 		}
 
-		if (!mysql_update("
+		$db = db();
+		if (!$db->beginTransaction()) {
+			acp_flash_error(t('acp.plr.err_rename_failed'));
+			acp_redirect('players');
+		}
+
+		if (!$db->execute("
 			UPDATE `players`
-			SET `name` = '" . esc((string)$newName) . "'
-			WHERE `id` = {$characterId}
+			SET `name` = ?
+			WHERE `id` = ?
 			LIMIT 1;
-		")) {
+		", [(string)$newName, $characterId])) {
+			$db->rollback();
 			acp_flash_error(t('acp.plr.err_rename_failed'));
 			acp_redirect('players');
 		}
 
 		foreach (['znote_forum_threads', 'znote_forum_posts'] as $forumTable) {
 			if (acp_players_table_exists($forumTable)) {
-				mysql_update("
+				if (!$db->execute("
 					UPDATE `{$forumTable}`
-					SET `player_name` = '" . esc((string)$newName) . "'
-					WHERE `player_id` = {$characterId};
-				");
+					SET `player_name` = ?
+					WHERE `player_id` = ?;
+				", [(string)$newName, $characterId])) {
+					$db->rollback();
+					acp_flash_error(t('acp.plr.err_rename_failed'));
+					acp_redirect('players');
+				}
 			}
 		}
+
+		$db->commit();
 
 		znote_hook('character.renamed', [
 			'player_id' => $characterId,
@@ -210,29 +223,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$char   = trim((string)$_POST['points_char']);
 		$points = intv($_POST['points_value']);
 
-		$acc = mysql_select_single("
+		$acc = db()->fetchOne("
 			SELECT `account_id` FROM `players`
-			WHERE `name` = '" . esc($char) . "'
+			WHERE `name` = ?
 			LIMIT 1;
-		");
+		", [$char]);
 
 		if (is_array($acc)) {
 			$accountId = (int)$acc['account_id'];
 
-			$znote = mysql_select_single("
+			$znote = db()->fetchOne("
 				SELECT `points` FROM `znote_accounts`
-				WHERE `account_id` = {$accountId}
+				WHERE `account_id` = ?
 				LIMIT 1;
-			");
+			", [$accountId]);
 
 			if (is_array($znote)) {
 				$newPoints = intv($znote['points']) + $points;
 
-				mysql_update("
+				db()->execute("
 					UPDATE `znote_accounts`
-					SET `points` = {$newPoints}
-					WHERE `account_id` = {$accountId};
-				");
+					SET `points` = ?
+					WHERE `account_id` = ?;
+				", [$newPoints, $accountId]);
 
 				acp_log('player.give_points', $char, ['points' => $points, 'new_balance' => $newPoints]);
 				acp_flash_success(t('acp.plr.points_given', [
@@ -310,7 +323,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if ($set === null) {
 				acp_flash_error(t('acp.plr.err_unknown_destination'));
 			} else {
-				mysql_update("UPDATE `players` SET {$set} {$where};");
+				if ($from === 'only') {
+					db()->execute("UPDATE `players` SET {$set} WHERE `name` = ?;", [$target]);
+				} else {
+					db()->execute("UPDATE `players` SET {$set};");
+				}
 				acp_log('player.teleport', $from === 'only' ? $target : 'ALL', ['destination' => $to]);
 				acp_flash_success($from === 'only'
 					? t('acp.plr.tp_one_done')

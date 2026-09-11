@@ -5,10 +5,10 @@
 $response['version']['module'] = 1;
 
 /* Do PHP logic, you got access to:
-	-Znote AAC sql functions:
-		:mysql_select_single("QUERY");
-		:mysql_select_multi("QUERY");
-		:mysql_update("QUERY"), mysql_insert("QUERY"), mysql_delete("QUERY")
+	-Znote AAC sql functions (prepared, use ? placeholders):
+		:db()->fetchOne($sql, $params), db()->fetchAll($sql, $params)
+		:db()->execute($sql, $params) for INSERT/UPDATE/DELETE
+		:db()->transaction(function ($db) { ... }) for several writes, all or nothing
 
 	-Config values
 		:etc $config['vocations']
@@ -17,7 +17,7 @@ $response['version']['module'] = 1;
 		:Sample:
 		$cache = new Cache('engine/cache/api/ApiModuleName');
 		if ($cache->hasExpired()) {
-			$players = mysql_select_multi("SELECT `name`, `level`, `experience` FROM `players` ORDER BY `experience` DESC LIMIT 5;");
+			$players = db()->fetchAll("SELECT `name`, `level`, `experience` FROM `players` ORDER BY `experience` DESC LIMIT 5;");
 
 			$cache->setContent($players);
 			$cache->save();

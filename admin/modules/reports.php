@@ -51,12 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		acp_redirect('reports');
 	}
 
-	mysql_update("
+	db()->execute("
 		UPDATE `znote_player_reports`
-		SET `status` = {$status}
-		WHERE `id` = {$reportId}
+		SET `status` = ?
+		WHERE `id` = ?
 		LIMIT 1;
-	");
+	", [$status, $reportId]);
 	acp_log('reports.status', '#' . $reportId, ['status' => $statusTypes[$status]]);
 	acp_flash_success(t('acp.rep.set_to', ['id' => $reportId, 'status' => '<strong>' . h($statusTypes[$status]) . '</strong>']));
 
@@ -68,30 +68,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if ($changelogReportId > 0 && $changelogValue === '2' && $changelogText !== '') {
 		$now = time();
 
-		$existing = mysql_select_single("
+		$existing = db()->fetchOne("
 			SELECT `id` FROM `znote_changelog`
-			WHERE `report_id` = {$changelogReportId}
+			WHERE `report_id` = ?
 			LIMIT 1;
-		");
+		", [$changelogReportId]);
 
 		if (is_array($existing)) {
-			mysql_update("
+			db()->execute("
 				UPDATE `znote_changelog`
-				SET `text` = '" . esc($changelogText) . "', `time` = {$now}
-				WHERE `id` = " . (int)$existing['id'] . "
+				SET `text` = ?, `time` = ?
+				WHERE `id` = ?
 				LIMIT 1;
-			");
+			", [$changelogText, $now, (int)$existing['id']]);
 			acp_flash_info(t('acp.rep.changelog_updated'));
 		} else {
-			mysql_insert("
+			db()->execute("
 				INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
-				VALUES ('" . esc($changelogText) . "', {$now}, {$changelogReportId}, {$status});
-			");
+				VALUES (?, ?, ?, ?);
+			", [$changelogText, $now, $changelogReportId, $status]);
 			acp_flash_info(t('acp.rep.changelog_created'));
 		}
 
 		$cache = new Cache('engine/cache/changelog');
-		$cache->setContent(mysql_select_multi("
+		$cache->setContent(db()->fetchAll("
 			SELECT `id`, `text`, `time`, `report_id`, `status`
 			FROM `znote_changelog`
 			ORDER BY `id` DESC;
@@ -101,37 +101,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	// ------------------------------------------------------- Reward points
 	if ($price > 0 && $playerName !== '') {
-		$account = mysql_select_single("
+		$account = db()->fetchOne("
 			SELECT `a`.`id`, `a`.`email`
 			FROM `accounts` `a`
 			INNER JOIN `players` `p` ON `p`.`account_id` = `a`.`id`
-			WHERE `p`.`name` = '" . esc($playerName) . "'
+			WHERE `p`.`name` = ?
 			LIMIT 1;
-		");
+		", [$playerName]);
 
 		if (is_array($account)) {
 			$accountId = (int)$account['id'];
 
-			mysql_insert("
-				INSERT INTO `znote_paypal`
-				VALUES ('', {$reportId},
-					'report@admin." . esc((string)($user_data['name'] ?? '')) . " to " . esc((string)$account['email']) . "',
-					{$accountId}, 0, {$price});
-			");
+			$rewarded = db()->transaction(function ($db) use ($reportId, $accountId, $price, $account, $user_data) {
+				$balance = $db->fetchOne(
+					"SELECT `points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;",
+					[$accountId]
+				);
+				if (!is_array($balance)) {
+					return false;
+				}
 
-			$balance = mysql_select_single("
-				SELECT `points` FROM `znote_accounts`
-				WHERE `account_id` = {$accountId}
-				LIMIT 1;
-			");
+				$db->execute(
+					"INSERT INTO `znote_paypal` VALUES ('', ?, ?, ?, 0, ?);",
+					[
+						$reportId,
+						'report@admin' . (string)($user_data['name'] ?? '') . ' to ' . (string)$account['email'],
+						$accountId,
+						$price,
+					]
+				);
 
-			if (is_array($balance)) {
 				$newPoints = ((int)$balance['points']) + $price;
-				mysql_update("
-					UPDATE `znote_accounts`
-					SET `points` = {$newPoints}
-					WHERE `account_id` = {$accountId};
-				");
+				$db->execute(
+					"UPDATE `znote_accounts` SET `points` = ? WHERE `account_id` = ?;",
+					[$newPoints, $accountId]
+				);
+
+				return true;
+			});
+
+			if ($rewarded) {
 				acp_log('reports.reward', $playerName, ['points' => $price, 'report_id' => $reportId]);
 				acp_flash_success(t('acp.rep.points_received', ['name' => h($playerName), 'price' => (int)$price]));
 			} else {
@@ -148,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------------------------------------------------------------------------
 // Load and group
 // ---------------------------------------------------------------------------
-$rows = mysql_select_multi("
+$rows = db()->fetchAll("
 	SELECT `id`, `name`, `posx`, `posy`, `posz`, `report_description`, `date`, `status`
 	FROM `znote_player_reports`
 	ORDER BY `id` DESC;

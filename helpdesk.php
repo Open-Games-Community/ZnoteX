@@ -15,11 +15,11 @@ if ($view !== false) {
 			'created' =>	time(),
 		);
 		$fields = '`'. implode('`, `', array_keys($query)) .'`';
-		$data = '\''. implode('\', \'', $query) .'\'';
-		mysql_insert("INSERT INTO `znote_tickets_replies` ($fields) VALUES ($data)");
-		mysql_update("UPDATE `znote_tickets` SET `status`='Player-Reply' WHERE `id`='$view' LIMIT 1;");
+		$placeholders = implode(', ', array_fill(0, count($query), '?'));
+		db()->execute("INSERT INTO `znote_tickets_replies` ($fields) VALUES ($placeholders)", array_values($query));
+		db()->execute("UPDATE `znote_tickets` SET `status` = 'Player-Reply' WHERE `id` = ? LIMIT 1;", [$view]);
 	}
-	$ticketData = mysql_select_single("SELECT * FROM znote_tickets WHERE id='$view' LIMIT 1;");
+	$ticketData = db()->fetchOne("SELECT * FROM znote_tickets WHERE id = ? LIMIT 1;", [$view]);
 
 	if(!$ticketData || $ticketData['owner'] != $session_user_id) {
 		echo t('helpdesk.no_access');
@@ -53,7 +53,7 @@ if ($view !== false) {
 		</tr>
 	</table>
 	<?php
-	$replies = mysql_select_multi("SELECT * FROM znote_tickets_replies WHERE tid='$view' ORDER BY `created`;");
+	$replies = db()->fetchAll("SELECT * FROM znote_tickets_replies WHERE tid = ? ORDER BY `created`;", [$view]);
 	if ($replies !== false) {
 		foreach($replies as $reply) {
 			?>
@@ -91,7 +91,7 @@ if ($view !== false) {
 	<?php
 } else {
 
-	$account = mysql_select_single("SELECT name,email FROM accounts WHERE id = $session_user_id");
+	$account = db()->fetchOne("SELECT name,email FROM accounts WHERE id = ?", [$session_user_id]);
 	if (!is_array($account)) $account = array();
 	$account += array('name' => '', 'email' => '');
 	if (!empty($_POST)) {
@@ -123,7 +123,7 @@ if ($view !== false) {
 	?>
 	<h1><?= t('helpdesk.latest') ?></h1>
 	<?php
-	$tickets = mysql_select_multi("SELECT id,subject,creation,status FROM znote_tickets WHERE owner=$session_user_id ORDER BY creation DESC");
+	$tickets = db()->fetchAll("SELECT id,subject,creation,status FROM znote_tickets WHERE owner = ? ORDER BY creation DESC", [$session_user_id]);
 	if ($tickets !== false) {
 		?>
 		<table>
@@ -171,8 +171,8 @@ if ($view !== false) {
 			);
 
 			$fields = '`'. implode('`, `', array_keys($query)) .'`';
-			$data = '\''. implode('\', \'', $query) .'\'';
-			mysql_insert("INSERT INTO `znote_tickets` ($fields) VALUES ($data)");
+			$placeholders = implode(', ', array_fill(0, count($query), '?'));
+			db()->execute("INSERT INTO `znote_tickets` ($fields) VALUES ($placeholders)", array_values($query));
 
 			header('Location: helpdesk.php?success');
 			exit();

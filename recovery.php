@@ -27,16 +27,33 @@ if ($config['mailserver']['accountRecovery']) {
 				} else {
 					// TFS 0.3/4
 					if (config('salt') === true) {
-						$saltdata = mysql_select_single("SELECT `salt` FROM `accounts` WHERE `email`='$email' LIMIT 1;");
+						$saltdata = db()->fetchOne(
+							"SELECT `salt` FROM `accounts` WHERE `email` = ? LIMIT 1;",
+							[$email]
+						);
 						if ($saltdata !== false) $salt .= $saltdata['salt'];
 					}
 					$password = sha1($salt.$password);
 				}
 
 				if ($config['ServerEngine'] != 'OTHIRE')
-					$user = mysql_select_single("SELECT `p`.`id` AS `player_id`, `a`.`name` FROM `players` `p` INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id` WHERE `p`.`name` = '$character' AND `a`.`email` = '$email' AND `a`.`password` = '$password' LIMIT 1;");
+					$user = db()->fetchOne(
+						"SELECT `p`.`id` AS `player_id`, `a`.`name`
+						FROM `players` `p`
+						INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id`
+						WHERE `p`.`name` = ? AND `a`.`email` = ? AND `a`.`password` = ?
+						LIMIT 1;",
+						[$character, $email, $password]
+					);
 				else
-					$user = mysql_select_single("SELECT `p`.`id` AS `player_id`, `a`.`id` FROM `players` `p` INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id` WHERE `p`.`name` = '$character' AND `a`.`email` = '$email' AND `a`.`password` = '$password' LIMIT 1;");
+					$user = db()->fetchOne(
+						"SELECT `p`.`id` AS `player_id`, `a`.`id` AS `name`
+						FROM `players` `p`
+						INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id`
+						WHERE `p`.`name` = ? AND `a`.`email` = ? AND `a`.`password` = ?
+						LIMIT 1;",
+						[$character, $email, $password]
+					);
 
 				if ($user !== false) {
 					// Found user
@@ -72,21 +89,41 @@ if ($config['mailserver']['accountRecovery']) {
 				} else {
 					// TFS 0.3/4
 					if (config('salt') === true) {
-						$saltdata = mysql_select_single("SELECT `salt` FROM `accounts` WHERE `email`='$email' LIMIT 1;");
+						$saltdata = db()->fetchOne(
+							"SELECT `salt` FROM `accounts` WHERE `email` = ? LIMIT 1;",
+							[$email]
+						);
 						if ($saltdata !== false) $salt .= $saltdata['salt'];
 					}
 					$password = sha1($salt.$newpass);
 				}
 
 				if ($config['ServerEngine'] != 'OTHIRE')
-					$user = mysql_select_single("SELECT `p`.`id` AS `player_id`, `a`.`name`, `a`.`id` AS `account_id` FROM `players` `p` INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id` WHERE `p`.`name` = '$character' AND `a`.`email` = '$email' AND `a`.`name` = '$username' LIMIT 1;");
+					$user = db()->fetchOne(
+						"SELECT `p`.`id` AS `player_id`, `a`.`name`, `a`.`id` AS `account_id`
+						FROM `players` `p`
+						INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id`
+						WHERE `p`.`name` = ? AND `a`.`email` = ? AND `a`.`name` = ?
+						LIMIT 1;",
+						[$character, $email, $username]
+					);
 				else
-					$user = mysql_select_single("SELECT `p`.`id` AS `player_id`, `a`.`id` AS `account_id` FROM `players` `p` INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id` WHERE `p`.`name` = '$character' AND `a`.`email` = '$email' AND `a`.`id` = '$username' LIMIT 1;");
+					$user = db()->fetchOne(
+						"SELECT `p`.`id` AS `player_id`, `a`.`id` AS `account_id`, `a`.`id` AS `name`
+						FROM `players` `p`
+						INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id`
+						WHERE `p`.`name` = ? AND `a`.`email` = ? AND `a`.`id` = ?
+						LIMIT 1;",
+						[$character, $email, $username]
+					);
 
 				if ($user !== false) {
 					// Found user
 					// Give him the new password
-					mysql_update("UPDATE `accounts` SET `password`='$password' WHERE `id`='".$user['account_id']."' LIMIT 1;");
+					db()->execute(
+						"UPDATE `accounts` SET `password` = ? WHERE `id` = ? LIMIT 1;",
+						[$password, (int)$user['account_id']]
+					);
 					// Send him a mail with the new password
 					$mailer = new Mail($config['mailserver']);
 					$title = "$_SERVER[HTTP_HOST]: Your new password";
@@ -110,7 +147,14 @@ if ($config['mailserver']['accountRecovery']) {
 				}
 			} else { // Token
 				$password = sha1($password);
-				$user = mysql_select_single("SELECT `a`.`id`, `a`.`name`, `za`.`activekey` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id` WHERE `a`.`name`='{$username}' AND `a`.`password`='{$password}' AND `a`.`email`='{$email}' LIMIT 1;");
+				$user = db()->fetchOne(
+					"SELECT `a`.`id`, `a`.`name`, `za`.`activekey`
+					FROM `accounts` AS `a`
+					INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id`
+					WHERE `a`.`name` = ? AND `a`.`password` = ? AND `a`.`email` = ?
+					LIMIT 1;",
+					[$username, $password, $email]
+				);
 				if ($user !== false) {
 					// Found user
 					$recoverylink = $config['site_url'] . '/recovery.php?a='.$user['id'].'&k='.$user['activekey'];
@@ -146,10 +190,17 @@ if ($config['mailserver']['accountRecovery']) {
 
 		// '. t('recovery.remove_2fa'). '
 		if ($a !== false && $k !== false && !engineIsCanary()) {
-			$account = mysql_select_single("SELECT `a`.`id`, `a`.`secret`, `za`.`secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id`=`za`.`account_id` WHERE `a`.`id`='$a' AND `za`.`activekey`='$k' LIMIT 1;");
+			$account = db()->fetchOne(
+				"SELECT `a`.`id`, `a`.`secret`, `za`.`secret`
+				FROM `accounts` AS `a`
+				INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id`
+				WHERE `a`.`id` = ? AND `za`.`activekey` = ?
+				LIMIT 1;",
+				[$a, $k]
+			);
 			if ($account !== false) {
-				mysql_update("UPDATE `accounts` SET `secret`=NULL WHERE `id`='$a' LIMIT 1;");
-				mysql_update("UPDATE `znote_accounts` SET `secret`=NULL WHERE `account_id`='$a' LIMIT 1;");
+				db()->execute("UPDATE `accounts` SET `secret` = NULL WHERE `id` = ? LIMIT 1;", [$a]);
+				db()->execute("UPDATE `znote_accounts` SET `secret` = NULL WHERE `account_id` = ? LIMIT 1;", [$a]);
 				?>
 				<h1><?= t('recovery.2fa_disabled') ?></h1>
 				<p>You may now login with just your username and password.</p>

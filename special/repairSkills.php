@@ -13,27 +13,31 @@ $Splayers = 0;
 $Salready = 0;
 $Sfixed = 0;
 
-$players = mysql_select_multi("SELECT `id` FROM `players`;");
+$players = db()->fetchAll("SELECT `id` FROM `players`;");
 if ($players !== false) {
 	$Splayers = count($players);
 	foreach ($players as $char) {
 
 		// Check if player have skills
-		$skills = mysql_select_single("SELECT `value` FROM `player_skills` WHERE `player_id`='". $char['id'] ."' AND `skillid`='2' LIMIT 1;");
+		$skills = db()->fetchOne("SELECT `value` FROM `player_skills` WHERE `player_id` = ? AND `skillid` = 2 LIMIT 1;", [$char['id']]);
 
 		// If he dont have any skills
 		if ($skills === false) {
 			$Sfixed++;
 
 			// Loop through every skill id and give him default skills.
-			$query = "INSERT INTO `player_skills` (`player_id`, `skillid`, `value`, `count`) VALUES ";
-
+			$rows = array();
+			$params = array();
 			for ($i = 0; $i < 7; $i++) {
-				if ($i != 6) $query .= "('". $char['id'] ."', '$i', '10', '0'), ";
-				else $query .= "('". $char['id'] ."', '$i', '10', '0');";
+				$rows[] = '(?, ?, 10, 0)';
+				$params[] = $char['id'];
+				$params[] = $i;
 			}
 
-			mysql_insert($query);
+			db()->execute(
+				"INSERT INTO `player_skills` (`player_id`, `skillid`, `value`, `count`) VALUES " . implode(', ', $rows) . ";",
+				$params
+			);
 		} else $Salready++;
 	}
 	?>

@@ -1,5 +1,7 @@
 -- Start of Znote AAC database schema
 
+SET NAMES utf8mb4 COLLATE utf8mb4_general_ci;
+
 SET @znote_version = '2.0.0';
 
 CREATE TABLE IF NOT EXISTS `znote` (
@@ -8,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `znote` (
   `installed` int NOT NULL,
   `cached` int DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_accounts` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -23,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `znote_accounts` (
   `flag` varchar(20) NOT NULL,
   `secret` char(16) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_news` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -32,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `znote_news` (
   `date` int NOT NULL,
   `pid` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_images` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -44,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `znote_images` (
   `delhash` varchar(30) NOT NULL,
   `account_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_paypal` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -54,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `znote_paypal` (
   `price` int NOT NULL,
   `points` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_paygol` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -71,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `znote_paygol` (
   `country` varchar(255) NOT NULL,
   `currency` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_pagseguro` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `znote_pagseguro` (
   `completed` tinyint NOT NULL,
   PRIMARY KEY (`id`),
   KEY `transaction` (`transaction`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_pagseguro_notifications` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -91,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `znote_pagseguro_notifications` (
   `details` text NOT NULL,
   `receive_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_payment_transactions` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -113,7 +115,7 @@ CREATE TABLE IF NOT EXISTS `znote_payment_transactions` (
   UNIQUE KEY `provider_reference_internal` (`provider`, `reference`),
   KEY `provider_reference_external` (`provider`, `provider_reference`),
   KEY `account_status` (`account_id`, `status`, `created_at`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_payment_events` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -127,7 +129,7 @@ CREATE TABLE IF NOT EXISTS `znote_payment_events` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `provider_event` (`provider`, `event_id`),
   KEY `payment_reference` (`provider`, `payment_reference`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_players` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -136,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `znote_players` (
   `hide_char` tinyint NOT NULL,
   `comment` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_player_reports` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -148,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `znote_player_reports` (
   `date` int NOT NULL,
   `status` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_changelog` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -157,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `znote_changelog` (
   `report_id` int NOT NULL,
   `status` tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_shop` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -167,7 +169,7 @@ CREATE TABLE IF NOT EXISTS `znote_shop` (
   `description` varchar(255) NOT NULL,
   `points` int NOT NULL DEFAULT '10',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_shop_offers` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -183,7 +185,7 @@ CREATE TABLE IF NOT EXISTS `znote_shop_offers` (
   `updated_at` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `active_sort` (`active`, `sort_order`, `id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_shop_logs` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -195,7 +197,7 @@ CREATE TABLE IF NOT EXISTS `znote_shop_logs` (
   `points` int NOT NULL,
   `time` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_shop_orders` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -205,7 +207,7 @@ CREATE TABLE IF NOT EXISTS `znote_shop_orders` (
   `count` int NOT NULL,
   `time` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Audit trail of mutating actions taken from the admin panel: bans, skill
 -- edits, points, settings changes, plugin lifecycle, etc. Written by
@@ -223,14 +225,14 @@ CREATE TABLE IF NOT EXISTS `znote_admin_log` (
   KEY `admin_created` (`admin_id`, `created`),
   KEY `action_created` (`action`, `created`),
   KEY `created` (`created`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Key/value settings written from the admin panel (active layout, etc).
 CREATE TABLE IF NOT EXISTS `znote_config` (
   `key` varchar(64) NOT NULL,
   `value` text NOT NULL,
   PRIMARY KEY (`key`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Navigation entries, managed from Admin Panel > Menus.
 -- A theme declares the locations it renders (see layouts/README.md); entries
@@ -248,7 +250,7 @@ CREATE TABLE IF NOT EXISTS `znote_menu` (
   `active` tinyint NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `loc_sort` (`location`, `active`, `sort_order`, `id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Database-backed pages, used by importers and editable site content.
 CREATE TABLE IF NOT EXISTS `znote_pages` (
@@ -263,7 +265,7 @@ CREATE TABLE IF NOT EXISTS `znote_pages` (
   `active` tinyint NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Keeps legacy imports idempotent and stores source ids for follow-up imports.
 CREATE TABLE IF NOT EXISTS `znote_convert_map` (
@@ -276,7 +278,7 @@ CREATE TABLE IF NOT EXISTS `znote_convert_map` (
   `created` int NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `source_row` (`source`, `source_table`, `source_id`, `target_table`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Raw archive of legacy AAC tables, including custom columns ZnoteX does not
 -- understand yet. This keeps migrations lossless.
@@ -289,7 +291,7 @@ CREATE TABLE IF NOT EXISTS `znote_legacy_tables` (
   `captured` int NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `source_table` (`source`, `table_name`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_legacy_rows` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -301,14 +303,14 @@ CREATE TABLE IF NOT EXISTS `znote_legacy_rows` (
   PRIMARY KEY (`id`),
   KEY `source_table` (`source`, `table_name`),
   KEY `source_pk` (`source`, `table_name`, `source_pk`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_visitors` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ip` bigint NOT NULL,
   `value` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_visitors_details` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -317,7 +319,7 @@ CREATE TABLE IF NOT EXISTS `znote_visitors_details` (
   `type` tinyint NOT NULL,
   `account_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Forum 1/3 (boards)
 CREATE TABLE IF NOT EXISTS `znote_forum` (
@@ -328,7 +330,7 @@ CREATE TABLE IF NOT EXISTS `znote_forum` (
   `hidden` tinyint NOT NULL,
   `guild_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Forum 2/3 (threads)
 CREATE TABLE IF NOT EXISTS `znote_forum_threads` (
@@ -344,7 +346,7 @@ CREATE TABLE IF NOT EXISTS `znote_forum_threads` (
   `hidden` tinyint NOT NULL,
   `closed` tinyint NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Forum 3/3 (posts)
 CREATE TABLE IF NOT EXISTS `znote_forum_posts` (
@@ -356,7 +358,7 @@ CREATE TABLE IF NOT EXISTS `znote_forum_posts` (
   `created` int NOT NULL,
   `updated` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Pending characters for deletion
 CREATE TABLE IF NOT EXISTS `znote_deleted_characters` (
@@ -366,41 +368,41 @@ CREATE TABLE IF NOT EXISTS `znote_deleted_characters` (
   `time` datetime NOT NULL,
   `done` tinyint NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_guild_wars` (
   `id` int NOT NULL AUTO_INCREMENT,
   `limit` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Helpdesk system
 CREATE TABLE IF NOT EXISTS `znote_tickets` (
   `id` int NOT NULL AUTO_INCREMENT,
   `owner` int NOT NULL,
-  `username` varchar(32) CHARACTER SET latin1 NOT NULL,
-  `subject` text CHARACTER SET latin1 NOT NULL,
-  `message` text CHARACTER SET latin1 NOT NULL,
+  `username` varchar(32) NOT NULL,
+  `subject` text NOT NULL,
+  `message` text NOT NULL,
   `ip` bigint NOT NULL,
   `creation` int NOT NULL,
-  `status` varchar(20) CHARACTER SET latin1 NOT NULL,
+  `status` varchar(20) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_tickets_replies` (
   `id` int NOT NULL AUTO_INCREMENT,
   `tid` int NOT NULL,
-  `username` varchar(32) CHARACTER SET latin1 NOT NULL,
-  `message` text CHARACTER SET latin1 NOT NULL,
+  `username` varchar(32) NOT NULL,
+  `message` text NOT NULL,
   `created` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE IF NOT EXISTS `znote_global_storage` (
   `key` varchar(32) NOT NULL,
   `value` TEXT NOT NULL,
   UNIQUE (`key`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Character auction system
 CREATE TABLE IF NOT EXISTS `znote_auction_player` (
@@ -416,7 +418,7 @@ CREATE TABLE IF NOT EXISTS `znote_auction_player` (
   `sold` tinyint NOT NULL,
   `claimed` tinyint NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Populate basic info
 INSERT INTO `znote` (`version`, `installed`) VALUES

@@ -29,7 +29,7 @@
 		$connectedIp = $_SERVER['REMOTE_ADDR'];
 		$details = getValue($details);
 		$details .= '\nConnection from IP: '. $connectedIp;
-		mysql_insert('INSERT INTO `znote_pagseguro_notifications` VALUES (null, \'' . getValue($code) . '\', \'' . $details . '\', CURRENT_TIMESTAMP)');
+		db()->execute('INSERT INTO `znote_pagseguro_notifications` VALUES (null, ?, ?, CURRENT_TIMESTAMP)', [getValue($code), $details]);
 	}
 
 	function VerifyPagseguroIPN($code) {
@@ -89,13 +89,13 @@
 	report($notificationCode, $rawPayment);
 
 	// Updating Payment Status
-	mysql_update('UPDATE `znote_pagseguro` SET `payment_status` = ' . $paymentStatus . ' WHERE `transaction` = \'' . $paymentCode . '\' ');
+	db()->execute('UPDATE `znote_pagseguro` SET `payment_status` = ? WHERE `transaction` = ?', [$paymentStatus, $paymentCode]);
 
 	// Check that the payment_status is Completed
 	if ($paymentStatus == 3) {
 
 		// Check that transaction has not been previously processed
-		$transaction = mysql_select_single('SELECT `transaction`, `completed` FROM `znote_pagseguro` WHERE `transaction`= \'' . $paymentCode .'\'');
+		$transaction = db()->fetchOne('SELECT `transaction`, `completed` FROM `znote_pagseguro` WHERE `transaction` = ?', [$paymentCode]);
 		$status = true;
 		$customRaw = (string)$payment->reference;
 		$custom = (int)$customRaw;
@@ -128,17 +128,30 @@
 		if ($custom <= 0) $status = false;
 
 		if ($status) {
-			// transaction log
-			mysql_update('UPDATE `znote_pagseguro` SET `completed` = 1 WHERE `transaction` = \'' . $paymentCode . '\'');
+			$paidPoints = (int)($paymentData['points'] ?? $item->quantity);
 
-			// Process payment
-			$data = mysql_select_single("SELECT `points` AS `old_points` FROM `znote_accounts` WHERE `account_id`='$custom';");
+			// Re-check completion status and credit inside one locked transaction,
+			// so two concurrent notifications for the same transaction cannot both credit points.
+			$creditResult = db()->transaction(function ($db) use ($paymentCode, $custom, $paidPoints) {
+				$row = $db->fetchOne('SELECT `completed` FROM `znote_pagseguro` WHERE `transaction` = ? LIMIT 1 FOR UPDATE;', [$paymentCode]);
+				if (!is_array($row) || (int)$row['completed'] === 1) {
+					return 'duplicate';
+				}
 
-			// Give points to user
-			if (is_array($data)) {
-				$paidPoints = (int)($paymentData['points'] ?? $item->quantity);
+				$db->execute('UPDATE `znote_pagseguro` SET `completed` = 1 WHERE `transaction` = ?', [$paymentCode]);
+
+				$data = $db->fetchOne("SELECT `points` AS `old_points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;", [$custom]);
+				if (!is_array($data)) {
+					return 'no_account';
+				}
+
 				$new_points = (int)$data['old_points'] + $paidPoints;
-				mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+				$db->execute("UPDATE `znote_accounts` SET `points` = ? WHERE `account_id` = ?", [$new_points, $custom]);
+
+				return 'credited';
+			});
+
+			if ($creditResult === 'credited') {
 				if (function_exists('znote_hook')) {
 					znote_hook('payment.completed', array_merge($paymentData, array(
 						'provider' => 'pagseguro',
@@ -151,11 +164,11 @@
 						'status' => 'completed',
 					)));
 				}
-			} else {
+			} elseif ($creditResult === 'no_account') {
 				report($notificationCode, 'No znote_accounts row for account_id ' . $custom);
 			}
 		}
 	} else if ($paymentStatus == 7) {
-		mysql_update('UPDATE `znote_pagseguro` SET `completed` = 1 WHERE `transaction` = \'' . $paymentCode . '\' ');
+		db()->execute('UPDATE `znote_pagseguro` SET `completed` = 1 WHERE `transaction` = ?', [$paymentCode]);
 	}
 ?>

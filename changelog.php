@@ -15,7 +15,7 @@ $changelogs = $cache->load();
 // The cache is written by the admin panel. If it has never been built - a
 // fresh install, or someone cleared engine/cache/ - fall back to the table.
 if ($changelogs === false || $changelogs === null) {
-	$changelogs = mysql_select_multi("
+	$changelogs = db()->fetchAll("
 		SELECT `id`, `text`, `time`, `report_id`, `status`
 		FROM `znote_changelog`
 		ORDER BY `id` DESC;

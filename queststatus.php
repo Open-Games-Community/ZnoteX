@@ -47,10 +47,10 @@ function queststatus_progress($min, $max) {
 	</tr>
 	<?php foreach ($quests as $key => $quest):
 		if (!is_array($quest)) {
-			$query = mysql_select_single("SELECT `value` FROM `player_storage` WHERE `key`='" . (int)$quest . "' AND `player_id`='" . (int)$user_id . "' AND `value`='1' LIMIT 1;");
+			$query = db()->fetchOne("SELECT `value` FROM `player_storage` WHERE `key` = ? AND `player_id` = ? AND `value` = 1 LIMIT 1;", [(int)$quest, (int)$user_id]);
 			$quest = ($query !== false) ? $completed : $notstarted;
 		} else {
-			$query = mysql_select_single("SELECT `value` FROM `player_storage` WHERE `key`='" . (int)$quest[0] . "' AND `player_id`='" . (int)$user_id . "' AND `value`>'0' LIMIT 1;");
+			$query = db()->fetchOne("SELECT `value` FROM `player_storage` WHERE `key` = ? AND `player_id` = ? AND `value` > 0 LIMIT 1;", [(int)$quest[0], (int)$user_id]);
 			if (!$query) $quest = $notstarted;
 			elseif ($query['value'] >= $quest[1]) $quest = $completed;
 			else $quest = queststatus_progress($query['value'], $quest[1]);

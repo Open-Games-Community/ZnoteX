@@ -12,7 +12,7 @@
 		<?php
 		$cache = new Cache('engine/cache/characterNames');
 		if ($cache->hasExpired()) {
-			$names_sql = mysql_select_multi('SELECT `name` FROM `players` ORDER BY `name` ASC;');
+			$names_sql = db()->fetchAll('SELECT `name` FROM `players` ORDER BY `name` ASC;');
 			$names = array();
 			if ($names_sql !== false): foreach ($names_sql as $name) {
 				$names[] = $name['name'];

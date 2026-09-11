@@ -262,15 +262,18 @@ class Player {
 		}
 
 		// Value logic
+		$params = [];
 		if (is_int($name_id)) {
 			$name_id = (int)$name_id;
-			$where = "`id` = '{$name_id}'";
+			$where = "`id` = ?";
+			$params[] = $name_id;
 		} else {
 			$name_id = getValue($name_id);
 			if ($name_id === false) {
 				return false;
 			}
-			$where = "`name` = '{$name_id}'";
+			$where = "`name` = ?";
+			$params[] = $name_id;
 		}
 
 		$query = "SELECT {$field_elements} FROM `{$table}` WHERE {$where} LIMIT 1;";
@@ -278,7 +281,7 @@ class Player {
 		// Log query to player object
 		$this->_querylog[] = $query;
 		// Fetch from players table
-		$data = mysql_select_single($query);
+		$data = db()->fetchOne($query, $params);
 		if ($data === false) {
 			return false;
 		}
@@ -287,16 +290,25 @@ class Player {
 
 		// Fetch from znote_players table if neccesary
 		if (!empty($znote_fields)) {
-			// Loop through every field and generate the sql string
-			for ($i = 0; $i < count($znote_fields); $i++) {
-				if ($i === 0) $field_elements = "`". getValue($znote_fields[$i]) ."`";
-				else $field_elements .= ", `". getValue($znote_fields[$i]) ."`";
+			// Only allow known znote_players columns - the caller-supplied
+			// field list is not otherwise validated before reaching here.
+			$znoteAllowed = array_keys($this->_znotedata);
+			$safeZnoteFields = [];
+			foreach ($znote_fields as $zf) {
+				if (in_array($zf, $znoteAllowed, true)) {
+					$safeZnoteFields[] = "`{$zf}`";
+				}
 			}
 
-			$query = "SELECT {$field_elements} FROM `{$znote_table}` WHERE `player_id`='".$data['id']."' LIMIT 1;";
-			$this->_querylog[] = $query;
-			$zdata = mysql_select_single($query);
-			foreach ($zdata as $field => $value) $data[$field] = $value;
+			if (!empty($safeZnoteFields)) {
+				$field_elements = implode(', ', $safeZnoteFields);
+				$query = "SELECT {$field_elements} FROM `{$znote_table}` WHERE `player_id` = ? LIMIT 1;";
+				$this->_querylog[] = $query;
+				$zdata = db()->fetchOne($query, [$data['id']]);
+				if (is_array($zdata)) {
+					foreach ($zdata as $field => $value) $data[$field] = $value;
+				}
+			}
 		}
 		return $data;
 	}
@@ -337,8 +349,8 @@ class Player {
 		}
 
 		// Check name exists
-		$exist = mysql_select_single(
-			"SELECT `id` FROM `players` WHERE `name`='{$name}' LIMIT 1;"
+		$exist = db()->fetchOne(
+			"SELECT `id` FROM `players` WHERE `name` = ? LIMIT 1;", [$name]
 		);
 		if ($exist !== false) {
 			$this->_errors[] = "Character name already exists.";
@@ -395,18 +407,20 @@ class Player {
 		);
 
 		// INSERT PLAYER
-		mysql_insert(
+		db()->execute(
 			"INSERT INTO `players`
 			(`name`,`account_id`,`vocation`,`town_id`,`sex`,`lastip`,`created`,`looktype`)
 			VALUES
-			('{$character_data['name']}',
-			'{$character_data['account_id']}',
-			'{$character_data['vocation']}',
-			'{$character_data['town_id']}',
-			'{$character_data['sex']}',
-			" . sqlIpWrite($character_data['lastip']) . ",
-			'{$character_data['created']}',
-			'{$character_data['looktype']}')"
+			(?, ?, ?, ?, ?, " . sqlIpWrite($character_data['lastip']) . ", ?, ?)",
+			[
+				$character_data['name'],
+				$character_data['account_id'],
+				$character_data['vocation'],
+				$character_data['town_id'],
+				$character_data['sex'],
+				$character_data['created'],
+				$character_data['looktype'],
+			]
 		);
 		return true;
 	}

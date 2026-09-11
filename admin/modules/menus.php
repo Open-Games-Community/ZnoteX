@@ -42,39 +42,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	}
 
 	if ($do === 'delete' && $id > 0) {
-		$entry = mysql_select_single("SELECT `parent_id`, `label` FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
+		$entry = db()->fetchOne("SELECT `parent_id`, `label` FROM `znote_menu` WHERE `id` = ? LIMIT 1;", [$id]);
 		if (is_array($entry) && (int)$entry['parent_id'] === 0) {
-			mysql_delete("DELETE FROM `znote_menu` WHERE `id` = {$id} OR `parent_id` = {$id};");
+			db()->execute("DELETE FROM `znote_menu` WHERE `id` = ? OR `parent_id` = ?;", [$id, $id]);
 			acp_log('menu.delete_category', (string)$entry['label']);
 			acp_flash_success(t('acp.menu.category_deleted'));
 			acp_redirect('menus', array('loc' => $loc));
 		}
-		mysql_delete("DELETE FROM `znote_menu` WHERE `id` = {$id} LIMIT 1;");
+		db()->execute("DELETE FROM `znote_menu` WHERE `id` = ? LIMIT 1;", [$id]);
 		acp_log('menu.delete', is_array($entry) ? (string)$entry['label'] : ('#' . $id));
 		acp_flash_success(t('acp.menu.deleted'));
 		acp_redirect('menus', array('loc' => $loc));
 	}
 
 	if ($do === 'toggle' && $id > 0) {
-		mysql_update("UPDATE `znote_menu` SET `active` = CASE WHEN `active` = 1 THEN 0 ELSE 1 END WHERE `id` = {$id} LIMIT 1;");
+		db()->execute("UPDATE `znote_menu` SET `active` = CASE WHEN `active` = 1 THEN 0 ELSE 1 END WHERE `id` = ? LIMIT 1;", [$id]);
 		acp_redirect('menus', array('loc' => $loc));
 	}
 
 	if ($do === 'move' && $id > 0) {
-		$item = mysql_select_single("
+		$item = db()->fetchOne("
 			SELECT `id`, `parent_id`, `location`
 			FROM `znote_menu`
-			WHERE `id` = {$id}
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$id]);
 		if (is_array($item)) {
-			$siblings = mysql_select_multi("
+			$siblings = db()->fetchAll("
 				SELECT `id`
 				FROM `znote_menu`
-				WHERE `location` = '" . esc((string)$item['location']) . "'
-				  AND `parent_id` = " . (int)$item['parent_id'] . "
+				WHERE `location` = ?
+				  AND `parent_id` = ?
 				ORDER BY `sort_order` ASC, `id` ASC;
-			");
+			", [(string)$item['location'], (int)$item['parent_id']]);
 			if (is_array($siblings)) {
 				$ids  = array_map('intval', array_column($siblings, 'id'));
 				$pos  = array_search($id, $ids, true);
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					$ids[$pos]  = $ids[$swap];
 					$ids[$swap] = $id;
 					foreach ($ids as $index => $rowId) {
-						mysql_update("UPDATE `znote_menu` SET `sort_order` = " . (($index + 1) * 10) . " WHERE `id` = {$rowId} LIMIT 1;");
+						db()->execute("UPDATE `znote_menu` SET `sort_order` = ? WHERE `id` = ? LIMIT 1;", [($index + 1) * 10, $rowId]);
 					}
 				}
 			}
@@ -100,12 +100,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$visibility = (string)($_POST['visibility'] ?? 'all');
 		$parent     = intv($_POST['parent_id'] ?? 0);
 		$order      = intv($_POST['sort_order'] ?? 0);
-		$existing   = $id > 0 ? mysql_select_single("
+		$existing   = $id > 0 ? db()->fetchOne("
 			SELECT `id`, `parent_id`, `location`
 			FROM `znote_menu`
-			WHERE `id` = {$id}
+			WHERE `id` = ?
 			LIMIT 1;
-		") : false;
+		", [$id]) : false;
 		$editingCategory = is_array($existing) && (int)$existing['parent_id'] === 0;
 
 		if (!isset(acp_menu_visibility()[$visibility])) {
@@ -132,34 +132,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($editingCategory) {
 			$parent = 0;
 		} elseif ($parent > 0) {
-			$category = $parent > 0 ? mysql_select_single("
+			$category = $parent > 0 ? db()->fetchOne("
 				SELECT `id`
 				FROM `znote_menu`
-				WHERE `id` = {$parent}
-				AND `location` = '" . esc($loc) . "'
+				WHERE `id` = ?
+				AND `location` = ?
 				AND `parent_id` = 0
 				LIMIT 1;
-			") : false;
+			", [$parent, $loc]) : false;
 			if (!is_array($category)) {
 				acp_flash_error(t('acp.menu.choose_category'));
 				acp_redirect('menus', array('loc' => $loc));
 			}
 		}
 
-		$fields = "`label` = '" . esc($label) . "',
-			`url` = '" . esc($url) . "',
-			`icon` = '" . esc($icon) . "',
-			`target` = '" . esc($target) . "',
-			`visibility` = '" . esc($visibility) . "',
-			`parent_id` = {$parent},
-			`sort_order` = {$order}";
+		$fieldsSql = "`label` = ?, `url` = ?, `icon` = ?, `target` = ?, `visibility` = ?, `parent_id` = ?, `sort_order` = ?";
+		$fieldsParams = [$label, $url, $icon, $target, $visibility, $parent, $order];
 
 		if ($id > 0) {
-			mysql_update("UPDATE `znote_menu` SET {$fields} WHERE `id` = {$id} LIMIT 1;");
+			db()->execute("UPDATE `znote_menu` SET {$fieldsSql} WHERE `id` = ? LIMIT 1;", [...$fieldsParams, $id]);
 			acp_log('menu.update', $label, ['url' => $url, 'location' => $loc]);
 			acp_flash_success(t('acp.menu.updated'));
 		} else {
-			mysql_insert("INSERT INTO `znote_menu` SET `location` = '" . esc($loc) . "', `active` = 1, {$fields};");
+			db()->execute("INSERT INTO `znote_menu` SET `location` = ?, `active` = 1, {$fieldsSql};", [$loc, ...$fieldsParams]);
 			acp_log('menu.create', $label, ['url' => $url, 'location' => $loc]);
 			acp_flash_success(t('acp.menu.added'));
 		}
@@ -174,12 +169,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------------------------------------------------------------------------
 // Load
 // ---------------------------------------------------------------------------
-$entries = $hasTable ? mysql_select_multi("
+$entries = $hasTable ? db()->fetchAll("
 	SELECT `id`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`, `sort_order`, `active`
 	FROM `znote_menu`
-	WHERE `location` = '" . esc($location) . "'
+	WHERE `location` = ?
 	ORDER BY `sort_order` ASC, `id` ASC;
-") : false;
+", [$location]) : false;
 $entries = is_array($entries) ? $entries : array();
 
 $editing = null;

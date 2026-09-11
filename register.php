@@ -107,14 +107,14 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 	$auid = (isset($_GET['u']) && (int)$_GET['u'] > 0) ? (int)$_GET['u'] : false;
 	$akey = (isset($_GET['k']) && (int)$_GET['k'] > 0) ? (int)$_GET['k'] : false;
 	// Find a match
-	$user = mysql_select_single("SELECT `id`, `active`, `active_email` FROM `znote_accounts` WHERE `account_id`='$auid' AND `activekey`='$akey' LIMIT 1;");
+	$user = db()->fetchOne("SELECT `id`, `active`, `active_email` FROM `znote_accounts` WHERE `account_id` = ? AND `activekey` = ? LIMIT 1;", [$auid, $akey]);
 	if ($user !== false) {
-		$user = (int) $user['id'];
+		$userId = (int) $user['id'];
 		$active = (int) $user['active'];
 		$active_email = (int) $user['active_email'];
 		// Enable the account to login
 		if ($active == 0 || $active_email == 0) {
-			mysql_update("UPDATE `znote_accounts` SET `active`='1', `active_email`='1' WHERE `id`= $user LIMIT 1;");
+			db()->execute("UPDATE `znote_accounts` SET `active` = '1', `active_email` = '1' WHERE `id` = ? LIMIT 1;", [$userId]);
 		}
 		echo '<h1>'. t('common.congrats') .'</h1> <p>'. t('reg.created') .'</p>';
 	} else {
