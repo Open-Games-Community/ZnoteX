@@ -50,7 +50,7 @@ function acp_error_log_tail(string $file, int $lines): array {
 }
 
 function acp_error_log_severity(string $line): string {
-	if (preg_match('/\b(Fatal error|SQL ERROR|Uncaught|Parse error)\b/i', $line)) {
+	if (preg_match('/\b(Fatal error|SQL ERROR|Uncaught|Parse error|ZnoteX DB)\b/i', $line)) {
 		return 'red';
 	}
 	if (preg_match('/\b(Warning|Deprecated)\b/i', $line)) {

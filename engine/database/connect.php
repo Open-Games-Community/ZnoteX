@@ -16,6 +16,59 @@ if (!function_exists('elapsedTime')) {
 }
 
 if (!function_exists('znote_database_wait_screen')) {
+	function znote_database_error_reference(): string {
+		try {
+			return strtoupper(bin2hex(random_bytes(6)));
+		} catch (Throwable $e) {
+			return strtoupper(substr(hash('sha256', microtime(true) . '|' . mt_rand()), 0, 12));
+		}
+	}
+
+	function znote_database_request_context(): string {
+		if (PHP_SAPI === 'cli') {
+			return 'cli';
+		}
+
+		$method = (string)($_SERVER['REQUEST_METHOD'] ?? 'GET');
+		$uri = (string)($_SERVER['REQUEST_URI'] ?? '');
+		$ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+
+		return trim($method . ' ' . $uri . ($ip !== '' ? ' ip=' . $ip : ''));
+	}
+
+	function znote_database_sql_preview(?string $sql): string {
+		if ($sql === null || $sql === '') {
+			return '';
+		}
+
+		$preview = preg_replace('/\s+/', ' ', trim($sql)) ?? '';
+		if (strlen($preview) > 900) {
+			$preview = substr($preview, 0, 900) . '...';
+		}
+
+		return $preview;
+	}
+
+	function znote_database_log_error(string $type, string $message, ?string $sql = null, int|string $code = 0): string {
+		$reference = znote_database_error_reference();
+		$parts = array(
+			'[ZnoteX DB]',
+			'ref=' . $reference,
+			'type=' . $type,
+			'code=' . (string)$code,
+			'context=' . znote_database_request_context(),
+			'message=' . preg_replace('/\s+/', ' ', trim($message)),
+		);
+
+		$preview = znote_database_sql_preview($sql);
+		if ($preview !== '') {
+			$parts[] = 'sql=' . $preview;
+		}
+
+		error_log(implode(' | ', $parts));
+		return $reference;
+	}
+
 	function znote_database_wait_screen(int $errorCode, string $errorMessage): void {
 		global $config;
 
@@ -23,15 +76,7 @@ if (!function_exists('znote_database_wait_screen')) {
 			die("Failed to connect to MySQL: (" . $errorCode . ") " . $errorMessage . PHP_EOL);
 		}
 
-		try {
-			$reference = strtoupper(bin2hex(random_bytes(6)));
-		} catch (Throwable $e) {
-			$reference = strtoupper(substr(hash('sha256', microtime(true) . '|' . $errorCode), 0, 12));
-		}
-		error_log(
-			'Database connection failed [' . $reference . ']: MySQL ' .
-			$errorCode . ': ' . $errorMessage
-		);
+		$reference = znote_database_log_error('connection', $errorMessage, null, $errorCode);
 
 		if (!headers_sent()) {
 			http_response_code(503);
@@ -301,7 +346,7 @@ class ZnoteDatabase {
 			return $result;
 		} catch (Throwable $e) {
 			$this->connection->rollback();
-			error_log('SQL TRANSACTION ERROR: ' . $e->getMessage());
+			znote_database_log_error('transaction', $e->getMessage(), null, (int)$e->getCode());
 			return false;
 		}
 	}
@@ -371,7 +416,7 @@ class ZnoteDatabase {
 
 			return $result;
 		} catch (mysqli_sql_exception $e) {
-			error_log('SQL ERROR: ' . $e->getMessage() . ' | Query: ' . $sql);
+			znote_database_log_error('prepared-query', $e->getMessage(), $sql, (int)$e->getCode());
 			return false;
 		}
 	}
@@ -382,7 +427,7 @@ class ZnoteDatabase {
 		try {
 			return $this->connection->query($sql);
 		} catch (mysqli_sql_exception $e) {
-			error_log('SQL ERROR: ' . $e->getMessage() . ' | Query: ' . $sql);
+			znote_database_log_error('raw-query', $e->getMessage(), $sql, (int)$e->getCode());
 			return false;
 		}
 	}
