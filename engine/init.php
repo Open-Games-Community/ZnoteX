@@ -79,6 +79,7 @@ require_once 'function/mail.php';
 require_once 'function/token.php';
 require_once 'function/itemparser/itemlistparser.php';
 require_once 'function/settings.php';
+require_once 'function/migrations.php';
 require_once 'function/adminlog.php';
 require_once 'function/theme.php';
 require_once 'function/menus.php';
