@@ -19,14 +19,16 @@ $enc = 100;
 $legacyEngines = ['TFS_02', 'TFS_10', 'OTHIRE'];
 
 function acp_players_table_exists(string $table): bool {
-	return db()->fetchOne("SHOW TABLES LIKE ?;", [$table]) !== false;
+	$escaped = db()->connection()->real_escape_string($table);
+	return db()->rawFetchOne("SHOW TABLES LIKE '{$escaped}';") !== false;
 }
 
 function acp_players_column_exists(string $table, string $column): bool {
-	return db()->fetchOne("
+	$escaped = db()->connection()->real_escape_string($column);
+	return db()->rawFetchOne("
 		SHOW COLUMNS FROM `" . esc($table) . "`
-		LIKE ?;
-	", [$column]) !== false;
+		LIKE '{$escaped}';
+	") !== false;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

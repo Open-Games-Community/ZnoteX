@@ -21,13 +21,14 @@ function acp_convert_identifier(string $name): string {
 }
 
 function acp_convert_table_exists(string $table): bool {
-	return db()->fetchOne('SHOW TABLES LIKE ?;', [$table]) !== false;
+	$escaped = db()->connection()->real_escape_string($table);
+	return db()->rawFetchOne("SHOW TABLES LIKE '{$escaped}';") !== false;
 }
 
 function acp_convert_column_exists(string $table, string $column): bool {
-	return db()->fetchOne(
-		'SHOW COLUMNS FROM `' . acp_convert_identifier($table) . '` LIKE ?;',
-		[$column]
+	$escaped = db()->connection()->real_escape_string($column);
+	return db()->rawFetchOne(
+		'SHOW COLUMNS FROM `' . acp_convert_identifier($table) . "` LIKE '{$escaped}';"
 	) !== false;
 }
 

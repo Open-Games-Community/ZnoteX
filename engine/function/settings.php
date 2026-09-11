@@ -24,7 +24,9 @@ function znote_table_exists(string $table): bool {
 		return $known[$table];
 	}
 
-	return $known[$table] = (db()->fetchAll("SHOW TABLES LIKE ?;", [$table]) !== false);
+	$db = db();
+	$escaped = $db->connection()->real_escape_string($table);
+	return $known[$table] = ($db->rawFetchAll("SHOW TABLES LIKE '{$escaped}';") !== false);
 }
 
 function znote_column_exists(string $table, string $column): bool {
@@ -44,7 +46,8 @@ function znote_column_exists(string $table, string $column): bool {
 		return $known[$cacheKey] = false;
 	}
 
-	return $known[$cacheKey] = (db()->fetchOne("SHOW COLUMNS FROM `{$table}` LIKE ?;", [$column]) !== false);
+	$escaped = db()->connection()->real_escape_string($column);
+	return $known[$cacheKey] = (db()->rawFetchOne("SHOW COLUMNS FROM `{$table}` LIKE '{$escaped}';") !== false);
 }
 
 function znote_settings_all(bool $refresh = false): array {
