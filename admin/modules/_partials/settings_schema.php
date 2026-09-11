@@ -553,6 +553,83 @@ return array(
 			),
 		),
 
+		t_default('acp.sec.Security headers', 'Security headers') => array(
+			'security.headers_enabled' => array(
+				'label' => t_default('acp.set.security.headers_enabled.label', 'Send HTTP security headers'),
+				'type'  => 'bool',
+				'default' => true,
+				'help'  => t_default('acp.set.security.headers_enabled.help', 'Adds browser hardening headers on public and admin pages.'),
+			),
+			'security.content_type_options' => array(
+				'label' => t_default('acp.set.security.content_type_options.label', 'Block MIME sniffing'),
+				'type'  => 'bool',
+				'default' => true,
+				'help'  => t_default('acp.set.security.content_type_options.help', 'Sends X-Content-Type-Options: nosniff.'),
+			),
+			'security.frame_options' => array(
+				'label'   => t_default('acp.set.security.frame_options.label', 'Frame policy'),
+				'type'    => 'select',
+				'default' => 'SAMEORIGIN',
+				'options' => array(
+					'SAMEORIGIN' => 'SAMEORIGIN',
+					'DENY'       => 'DENY',
+					''           => t_default('acp.opt.disabled', 'Disabled'),
+				),
+				'help'  => t_default('acp.set.security.frame_options.help', 'Controls whether the site can be embedded in an iframe. SAMEORIGIN is the safest default for admin pages.'),
+			),
+			'security.referrer_policy' => array(
+				'label'   => t_default('acp.set.security.referrer_policy.label', 'Referrer policy'),
+				'type'    => 'select',
+				'default' => 'strict-origin-when-cross-origin',
+				'options' => array(
+					'strict-origin-when-cross-origin' => 'strict-origin-when-cross-origin',
+					'no-referrer'                     => 'no-referrer',
+					'same-origin'                     => 'same-origin',
+					'origin-when-cross-origin'        => 'origin-when-cross-origin',
+					'strict-origin'                   => 'strict-origin',
+					'unsafe-url'                      => 'unsafe-url',
+					''                                => t_default('acp.opt.disabled', 'Disabled'),
+				),
+				'help'  => t_default('acp.set.security.referrer_policy.help', 'Limits how much URL information is sent to external sites.'),
+			),
+			'security.permissions_policy' => array(
+				'label' => t_default('acp.set.security.permissions_policy.label', 'Permissions policy'),
+				'type'  => 'textarea',
+				'default' => 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+				'help'  => t_default('acp.set.security.permissions_policy.help', 'Example: camera=(), microphone=(), geolocation=(). Empty disables this header.'),
+			),
+			'security.content_security_policy' => array(
+				'label' => t_default('acp.set.security.content_security_policy.label', 'Content Security Policy'),
+				'type'  => 'textarea',
+				'default' => "frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+				'help'  => t_default('acp.set.security.content_security_policy.help', 'Default protects framing and plugins without blocking existing theme scripts. Empty disables this header.'),
+			),
+			'security.cross_domain_policy' => array(
+				'label' => t_default('acp.set.security.cross_domain_policy.label', 'Block Adobe cross-domain policies'),
+				'type'  => 'bool',
+				'default' => true,
+				'help'  => t_default('acp.set.security.cross_domain_policy.help', 'Sends X-Permitted-Cross-Domain-Policies: none.'),
+			),
+			'security.hsts' => array(
+				'label' => t_default('acp.set.security.hsts.label', 'Force HTTPS with HSTS'),
+				'type'  => 'bool',
+				'default' => false,
+				'help'  => t_default('acp.set.security.hsts.help', 'Enable only when the public domain is permanently available over HTTPS. Browsers remember this choice.'),
+			),
+			'security.hsts_max_age' => array(
+				'label' => t_default('acp.set.security.hsts_max_age.label', 'HSTS max age'),
+				'type'  => 'int',
+				'default' => 31536000,
+				'help'  => t_default('acp.set.security.hsts_max_age.help', 'Seconds. 31536000 = one year.'),
+			),
+			'security.hsts_include_subdomains' => array(
+				'label' => t_default('acp.set.security.hsts_include_subdomains.label', 'HSTS include subdomains'),
+				'type'  => 'bool',
+				'default' => false,
+				'help'  => t_default('acp.set.security.hsts_include_subdomains.help', 'Only enable if every subdomain also supports HTTPS.'),
+			),
+		),
+
 		t_default('acp.sec.Cache', 'Cache') => array(
 			'cache.lifespan' => array(
 				'label' => t_default('acp.set.cache.lifespan.label', 'Cache lifetime (seconds)'),

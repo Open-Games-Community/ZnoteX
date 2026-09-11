@@ -92,6 +92,7 @@ require_once 'function/payments.php';
 
 // Settings saved from the admin panel override the values in config.php.
 znote_apply_settings();
+znote_security_boot((array)($config['security'] ?? array()));
 
 // Local item-image passthrough: when $config['shop']['imageServer'] points at a
 // disk folder, serve <folder>/<id>.<png|gif|jpg|...> straight from PHP. Placed

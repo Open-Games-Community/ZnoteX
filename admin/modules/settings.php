@@ -148,7 +148,7 @@ $hasTable = znote_table_exists('znote_config');
 				<div class="acp-card-body">
 					<?php foreach ($fields as $key => $field):
 						$stored  = setting('config:' . $key, null);
-						$fromFile = znote_config_path($config, $key, '');
+						$fromFile = znote_config_path($config, $key, $field['default'] ?? '');
 						if (is_bool($fromFile)) {
 							$fromFile = $fromFile ? '1' : '0';
 						} elseif (is_array($fromFile)) {
