@@ -1,299 +1,318 @@
 [
-  {
-    "key": "shop_coupons",
-    "name": "Shop Coupons",
-    "version": "1.0.2",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Redeemable codes that credit shop points. Adds a public redeem page, an admin module to create and track codes, and its own table. Written as the reference example of a ZnoteX plugin.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "Added a redemption log to the admin module: who redeemed which code and when.",
-      "Coupon create and delete now show in Admin Panel > Logs."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.zip",
-    "url": "https://opengamescommunity.com/resources/plugin-shop-coupons.1030/"
-  },
-  {
-    "key": "referral_system",
-    "name": "Referral System",
-    "version": "1.0.2",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Account referral codes with registration tracking, automatic points and premium rewards, My Account injection and an admin overview.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "My Account injection now works with themes that nest the account heading (e.g. Eclipse).",
-      "Admin settings for referrer/new account points and premium days.",
-      "Referral ledger with basic same-IP abuse protection."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.zip",
-    "url": "https://opengamescommunity.com/resources/referral.1031/"
-  },
-  {
-    "key": "account_security",
-    "name": "Account Security",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Account security adds a box on My Account page with the current IP adress, recent activity, 2FA Status.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/account_security.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/account_security.zip",
-    "url": "https://opengamescommunity.com/resources/account-security.1032/"
-  },
-  {
-    "key": "daily_rewards",
-    "name": "Daily Rewards",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Daily Reward reseted each monday, claim rewards (premium points, premium days, item id / count )",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/daily_rewards.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/daily_rewards.zip",
-    "url": "https://opengamescommunity.com/resources/daily-rewards.1033/"
-  },
-  {
-    "key": "loyalty_shop",
-    "name": "Loyalty Shop",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Loyalty Shop, Progress bar advancing by tiers giving discounts on shop & purchases.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loyalty_shop.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loyalty_shop.zip",
-    "url": "https://opengamescommunity.com/resources/loyalty-shop.1034/"
-  },
-  {
-    "key": "guild_recruitment",
-    "name": "Guild Recruitment",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Guild Recruitment enables a box above guilds with posts for guild leaders a recruitment message with an apply button.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.zip",
-    "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
-  },
-  {
-    "key": "battle_pass",
-    "name": "Battlepass",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Battlepass plugin, make missions each day and claim rewards.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.zip",
-    "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
-  },
-  {
-    "key": "purchase_history",
-    "name": "Purchase History",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Purchase History added on a new box inside My Account after character section.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/purchase_history.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/purchase_history.zip",
-    "url": "https://opengamescommunity.com/resources/purchase-history.1037/"
-  },
-  {
-    "key": "starter_pack",
-    "name": "Starter Pack",
-    "version": "1.0.2",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "Update Image Path selection, requires last update ZnoteX."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.zip",
-    "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
-  },
-  {
-    "key": "boosted_creatures",
-    "name": "Boosted Creatures",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Show Boosted Creatures at right/left floating box on website.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/boosted_creatures.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/boosted_creatures.zip",
-    "url": "https://opengamescommunity.com/resources/boosted-creatures.1039/"
-  },
-  {
-    "key": "wheel_of_fortune",
-    "name": "Wheel of Fortune",
-    "version": "1.1.2",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "Update icons."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.zip",
-    "url": "https://opengamescommunity.com/resources/wheel-of-fortune.1040/"
-  },
-  {
-    "key": "bounty_board",
-    "name": "Bounty Board",
-    "version": "1.1.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Bounty Board appearing under Community Menu, each player can post up to 3 bounty with premium points, first to reach will earn reward (automatic).",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/bounty_board.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/bounty_board.zip",
-    "url": "https://opengamescommunity.com/resources/bounty-board.1041/"
-  },
-  {
-    "key": "custom_leaderboards",
-    "name": "Custom Leaderboards",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Show Multiples Custom Leaderboards, simple highscores with prizes or custom rankings of a system with storage key per week, per month per season or from all of time.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/custom_leaderboards.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/custom_leaderboards.zip",
-    "url": "https://opengamescommunity.com/resources/custom-leaderboard.1042/"
-  },
-  {
-    "key": "forum_avatars",
-    "name": "Forum Avatars",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Show a custom avatar (image upload, max 2MB), outfit or a basic icon on forum.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/forum_avatars.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/forum_avatars.zip",
-    "url": "https://opengamescommunity.com/resources/forum-avatars.1043/"
-  },
-  {
-    "key": "pvp_ranked",
-    "name": "PvP Ranked",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "PvP Ranked Leaderboard, with prizes per ranking up to 10 rankings. Points required per rank, Soft Reset, Seasonal.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/pvp_ranked.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/pvp_ranked.zip",
-    "url": "https://opengamescommunity.com/resources/pvp-ranked.1044/"
-  },
-  {
-    "key": "loot_search",
-    "name": "Loot Search",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Loot Search by monster name or boss or item name, see resistances, def, hp, experience, bestiary, occurence and loot percentages.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.zip",
-    "url": "https://opengamescommunity.com/resources/loot-search.1045/"
-  },
-  {
-    "key": "patron_names",
-    "name": "Loot Search",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Allows to customize player names as premium or vip (storage key) with animation & color.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.zip",
-    "url": "https://opengamescommunity.com/resources/patron-names.1047/"
-  },
-  {
-    "key": "calendar",
-    "name": "Calendar",
-    "version": "1.0.2",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Calendar: Add a Double EXP, Loot, Spawn or A Storage Key event on a selected day, download the script related to your server.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "Update: Remove page if plugin disabled."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.zip",
-    "url": "https://opengamescommunity.com/resources/calendar.1048/"
-  },
-  {
-    "key": "streamers",
-    "name": "Streamers",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Show Streamers from Kick, Twich or Youtube on home page, select the position of the box and edit colors, you need use your Key.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.zip",
-    "url": "https://opengamescommunity.com/resources/patron-names.1047/"
-  },
-  {
-    "key": "server_statistics",
-    "name": "Server Statistics",
-    "version": "1.0.1",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Show Server Statistics under community menu.",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.zip",
-    "url": "https://opengamescommunity.com/resources/server-statistics.1053/"
-  },
-  {
-    "key": "server_goals",
-    "name": "Server Statistics",
-    "version": "1.0.0",
-    "author": "Alex - opengamescommunity.com",
-    "description": "Server Goals, ex: Kill 100.000 Demons from X to X time, setting a global game storage (ex: double exp, double spawn... or anything else)",
-    "update": [
-      "Migrated SQL to prepared statements (db()).",
-      "First Release."
-    ],
-    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_goals.png",
-    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_goals.zip",
-    "url": "https://opengamescommunity.com/resources/server-goals.1054/"
-  }
+    {
+        "key": "shop_coupons",
+        "name": "Shop Coupons",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Redeemable codes that credit shop points. Adds a public redeem page, an admin module to create and track codes, and its own table. Written as the reference example of a ZnoteX plugin.",
+        "update": [
+            "Migrated SQL to prepared statements (db()).",
+            "Added a redemption log to the admin module: who redeemed which code and when.",
+            "Coupon create and delete now show in Admin Panel > Logs."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/shop_coupons.zip",
+        "url": "https://opengamescommunity.com/resources/plugin-shop-coupons.1030/"
+    },
+    {
+        "key": "referral_system",
+        "name": "Referral System",
+        "version": "1.0.3",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Account referral codes with registration tracking, automatic points and premium rewards, My Account injection and an admin overview.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "My Account injection now works with themes that nest the account heading (e.g. Eclipse).",
+            "Admin settings for referrer/new account points and premium days.",
+            "Referral ledger with basic same-IP abuse protection."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/referral_system.zip",
+        "url": "https://opengamescommunity.com/resources/referral.1031/"
+    },
+    {
+        "key": "account_security",
+        "name": "Account Security",
+        "version": "1.2.1",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Account security adds a box on My Account page with the current IP adress, recent activity, 2FA Status.",
+        "update": [
+            "Fixed IPv6/IP display and event separator encoding.",
+            "Added web session tracking with user-controlled session revocation.",
+            "Added account security event logs.",
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/account_security.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/account_security.zip",
+        "url": "https://opengamescommunity.com/resources/account-security.1032/"
+    },
+    {
+        "key": "daily_rewards",
+        "name": "Daily Rewards",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Daily Reward reseted each monday, claim rewards (premium points, premium days, item id / count )",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/daily_rewards.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/daily_rewards.zip",
+        "url": "https://opengamescommunity.com/resources/daily-rewards.1033/"
+    },
+    {
+        "key": "loyalty_shop",
+        "name": "Loyalty Shop",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Loyalty Shop, Progress bar advancing by tiers giving discounts on shop & purchases.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loyalty_shop.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loyalty_shop.zip",
+        "url": "https://opengamescommunity.com/resources/loyalty-shop.1034/"
+    },
+    {
+        "key": "guild_recruitment",
+        "name": "Guild Recruitment",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Guild Recruitment enables a box above guilds with posts for guild leaders a recruitment message with an apply button.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/guild_recruitment.zip",
+        "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
+    },
+    {
+        "key": "battle_pass",
+        "name": "Battlepass",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Battlepass plugin, make missions each day and claim rewards.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/battle_pass.zip",
+        "url": "https://opengamescommunity.com/resources/guild-recruitment.1036/"
+    },
+    {
+        "key": "purchase_history",
+        "name": "Purchase History",
+        "version": "1.0.1",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Purchase History added on a new box inside My Account after character section.",
+        "update": [
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/purchase_history.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/purchase_history.zip",
+        "url": "https://opengamescommunity.com/resources/purchase-history.1037/"
+    },
+    {
+        "key": "starter_pack",
+        "name": "Starter Pack",
+        "version": "1.0.3",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "Update Image Path selection, requires last update ZnoteX."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.zip",
+        "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
+    },
+    {
+        "key": "boosted_creatures",
+        "name": "Boosted Creatures",
+        "version": "1.0.1",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Show Boosted Creatures at right/left floating box on website.",
+        "update": [
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/boosted_creatures.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/boosted_creatures.zip",
+        "url": "https://opengamescommunity.com/resources/boosted-creatures.1039/"
+    },
+    {
+        "key": "wheel_of_fortune",
+        "name": "Wheel of Fortune",
+        "version": "1.1.3",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "Update icons."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.zip",
+        "url": "https://opengamescommunity.com/resources/wheel-of-fortune.1040/"
+    },
+    {
+        "key": "bounty_board",
+        "name": "Bounty Board",
+        "version": "1.1.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Bounty Board appearing under Community Menu, each player can post up to 3 bounty with premium points, first to reach will earn reward (automatic).",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/bounty_board.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/bounty_board.zip",
+        "url": "https://opengamescommunity.com/resources/bounty-board.1041/"
+    },
+    {
+        "key": "custom_leaderboards",
+        "name": "Custom Leaderboards",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Show Multiples Custom Leaderboards, simple highscores with prizes or custom rankings of a system with storage key per week, per month per season or from all of time.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/custom_leaderboards.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/custom_leaderboards.zip",
+        "url": "https://opengamescommunity.com/resources/custom-leaderboard.1042/"
+    },
+    {
+        "key": "forum_avatars",
+        "name": "Forum Avatars",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Show a custom avatar (image upload, max 2MB), outfit or a basic icon on forum.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/forum_avatars.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/forum_avatars.zip",
+        "url": "https://opengamescommunity.com/resources/forum-avatars.1043/"
+    },
+    {
+        "key": "pvp_ranked",
+        "name": "PvP Ranked",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "PvP Ranked Leaderboard, with prizes per ranking up to 10 rankings. Points required per rank, Soft Reset, Seasonal.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/pvp_ranked.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/pvp_ranked.zip",
+        "url": "https://opengamescommunity.com/resources/pvp-ranked.1044/"
+    },
+    {
+        "key": "loot_search",
+        "name": "Loot Search",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Loot Search by monster name or boss or item name, see resistances, def, hp, experience, bestiary, occurence and loot percentages.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/loot_search.zip",
+        "url": "https://opengamescommunity.com/resources/loot-search.1045/"
+    },
+    {
+        "key": "patron_names",
+        "name": "Loot Search",
+        "version": "1.0.1",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Allows to customize player names as premium or vip (storage key) with animation & color.",
+        "update": [
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/patron_names.zip",
+        "url": "https://opengamescommunity.com/resources/patron-names.1047/"
+    },
+    {
+        "key": "calendar",
+        "name": "Calendar",
+        "version": "1.0.3",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Calendar: Add a Double EXP, Loot, Spawn or A Storage Key event on a selected day, download the script related to your server.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "Update: Remove page if plugin disabled."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/calendar.zip",
+        "url": "https://opengamescommunity.com/resources/calendar.1048/"
+    },
+    {
+        "key": "streamers",
+        "name": "Streamers",
+        "version": "1.0.2",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Show Streamers from Kick, Twich or Youtube on home page, select the position of the box and edit colors, you need use your Key.",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/streamers.zip",
+        "url": "https://opengamescommunity.com/resources/patron-names.1047/"
+    },
+    {
+        "key": "server_statistics",
+        "name": "Server Statistics",
+        "version": "1.0.1",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Show Server Statistics under community menu.",
+        "update": [
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_statistics.zip",
+        "url": "https://opengamescommunity.com/resources/server-statistics.1053/"
+    },
+    {
+        "key": "server_goals",
+        "name": "Server Statistics",
+        "version": "1.0.1",
+        "author": "Alex - opengamescommunity.com",
+        "description": "Server Goals, ex: Kill 100.000 Demons from X to X time, setting a global game storage (ex: double exp, double spawn... or anything else)",
+        "update": [
+            "Updated plugin install SQL from utf8 to utf8mb4.",
+            "Migrated SQL to prepared statements (db()).",
+            "First Release."
+        ],
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_goals.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/server_goals.zip",
+        "url": "https://opengamescommunity.com/resources/server-goals.1054/"
+    }
 ]
