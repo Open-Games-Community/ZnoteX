@@ -12,7 +12,7 @@ $loggedin = user_logged_in();
 
 function shop_db_offer_columns(): array {
 	$columns = array();
-	$rows = mysql_select_multi("SHOW COLUMNS FROM `znote_shop_offers`;");
+	$rows = db()->fetchAll("SHOW COLUMNS FROM `znote_shop_offers`;");
 
 	if (is_array($rows)) {
 		foreach ($rows as $row) {
@@ -32,7 +32,7 @@ function shop_load_db_offers(): array {
 		? "ORDER BY `sort_order` ASC, `id` ASC"
 		: "ORDER BY `id` ASC";
 
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `id`, `type`, `itemid`, `count`, `description`, `points`
 		FROM `znote_shop_offers`
 		{$where}
@@ -69,7 +69,6 @@ $shop_list = shop_load_db_offers();
 if ($loggedin === true) {
 	if (!empty($_POST['buy']) && isset($_SESSION['shop_session']) && $_SESSION['shop_session'] == ($_POST['session'] ?? null)) {
 		$time = time();
-		$player_points = (int)$user_znote_data['points'];
 		$cid = (int)$user_data['id'];
 		// Sanitizing post, setting default buy value
 		$buy = false;
@@ -91,65 +90,90 @@ if ($loggedin === true) {
 			'offer'      => $buy,
 		)));
 
-		// Verify that user can afford this offer.
-		if ($player_points >= $buy['points']) {
-			$data = mysql_select_single("SELECT `points` FROM `znote_accounts` WHERE `account_id`='$cid';");
-			if (!$data) die("0: Account is not converted to work with Znote AAC");
-			$old_points = $data['points'];
-			if ((int)$old_points != (int)$player_points) die("1: Failed to equalize your points.");
-			// Remove points if they can afford
-			// Give points to user
-			$expense_points = $buy['points'];
-			$new_points = $old_points - $expense_points;
-			$update_account = mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$cid'");
+		// If this is an outfit offer, convert array into an integer.
+		if ($buy['type'] == 5) {
+			if (is_array($buy['itemid'])) {
+				if (COUNT($buy['itemid']) == 2) $buy['itemid'] = ($buy['itemid'][0] * 1000) + $buy['itemid'][1];
+				else $buy['itemid'] = $buy['itemid'][0];
+			}
+		}
 
-			$data = mysql_select_single("SELECT `points` FROM `znote_accounts` WHERE `account_id`='$cid';");
-			$verify = $data['points'];
-			if ((int)$old_points == (int)$verify) die("2: Failed to equalize your points.". var_dump((int)$old_points, (int)$verify, $new_points, $expense_points));
+		$db = db();
+		if (!$db->beginTransaction()) {
+			die("Failed to start shop transaction.");
+		}
 
-			// If this is an outfit offer, convert array into an integer.
-			if ($buy['type'] == 5) {
-				if (is_array($buy['itemid'])) {
-					if (COUNT($buy['itemid']) == 2) $buy['itemid'] = ($buy['itemid'][0] * 1000) + $buy['itemid'][1];
-					else $buy['itemid'] = $buy['itemid'][0];
-				}
+		$data = $db->fetchOne("SELECT `points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;", [$cid]);
+		if (!$data) {
+			$db->rollback();
+			die("0: Account is not converted to work with Znote AAC");
+		}
+
+		$old_points = (int)$data['points'];
+		if ($old_points < $buy['points']) {
+			$db->rollback();
+			echo '<font color="red" size="4">You need more points, this offer cost '.$buy['points'].' points.</font>';
+		} else {
+			$expense_points = (int)$buy['points'];
+			$orderReady = true;
+
+			if (!$db->execute(
+				"UPDATE `znote_accounts` SET `points` = `points` - ? WHERE `account_id` = ? AND `points` >= ?;",
+				[$expense_points, $cid, $expense_points]
+			)) {
+				$orderReady = false;
 			}
 
 			// Do the magic (insert into db, or change sex etc)
 			// If type is 2 or 3
-			if ($buy['type'] == 2) {
+			if ($orderReady && $buy['type'] == 2) {
 				// Add premium days to account
-				user_account_add_premdays($cid, $buy['count']);
-				echo '<font color="green" size="4">You now have '.$buy['count'].' additional days of premium membership.</font>';
-			} else if ($buy['type'] == 3) {
-				// Character Gender
-				mysql_insert("INSERT INTO `znote_shop_orders` (`account_id`, `type`, `itemid`, `count`, `time`) VALUES ('$cid', '". $buy['type'] ."', '". $buy['itemid'] ."', '". $buy['count'] ."', '$time')");
-				echo '<font color="green" size="4">'. t('shop.gender_unlocked') .'</font>';
-			} else if ($buy['type'] == 4) {
-				// Character Name
-				mysql_insert("INSERT INTO `znote_shop_orders` (`account_id`, `type`, `itemid`, `count`, `time`) VALUES ('$cid', '". $buy['type'] ."', '". $buy['itemid'] ."', '". $buy['count'] ."', '$time')");
-				echo '<font color="green" size="4">'. t('shop.name_unlocked') .'</font>';
-			} else {
-				mysql_insert("INSERT INTO `znote_shop_orders` (`account_id`, `type`, `itemid`, `count`, `time`) VALUES ('$cid', '". $buy['type'] ."', '". $buy['itemid'] ."', '". $buy['count'] ."', '$time')");
-				echo '<font color="green" size="4">Your order is ready to be delivered. Write this command in-game to get it: [!shop].<br>Make sure you are in depot and can carry it before executing the command!</font>';
+				$orderReady = user_account_add_premdays($cid, $buy['count']);
+				$successMessage = '<font color="green" size="4">You now have '.$buy['count'].' additional days of premium membership.</font>';
+			} else if ($orderReady) {
+				$orderReady = $db->execute(
+					"INSERT INTO `znote_shop_orders` (`account_id`, `type`, `itemid`, `count`, `time`) VALUES (?, ?, ?, ?, ?);",
+					[$cid, (int)$buy['type'], (int)$buy['itemid'], (int)$buy['count'], $time]
+				);
+
+				if ($buy['type'] == 3) {
+					$successMessage = '<font color="green" size="4">'. t('shop.gender_unlocked') .'</font>';
+				} else if ($buy['type'] == 4) {
+					$successMessage = '<font color="green" size="4">'. t('shop.name_unlocked') .'</font>';
+				} else {
+					$successMessage = '<font color="green" size="4">Your order is ready to be delivered. Write this command in-game to get it: [!shop].<br>Make sure you are in depot and can carry it before executing the command!</font>';
+				}
 			}
 
-			// No matter which type, we will always log it.
-			mysql_insert("INSERT INTO `znote_shop_logs` (`account_id`, `player_id`, `type`, `itemid`, `count`, `points`, `time`) VALUES ('$cid', '0', '". $buy['type'] ."', '". $buy['itemid'] ."', '". $buy['count'] ."', '". $buy['points'] ."', '$time')");
+			if ($orderReady) {
+				$orderReady = $db->execute(
+					"INSERT INTO `znote_shop_logs` (`account_id`, `player_id`, `type`, `itemid`, `count`, `points`, `time`) VALUES (?, 0, ?, ?, ?, ?, ?);",
+					[$cid, (int)$buy['type'], (int)$buy['itemid'], (int)$buy['count'], (int)$buy['points'], $time]
+				);
+			}
 
-	// Plugins can react to a purchase - a coupon ledger, a Discord message,
-	// a loyalty counter. They cannot change what was bought; this is a
-	// notification, fired after the points have already been taken.
-			znote_hook('shop.purchased', array(
-				'account_id' => $cid,
-				'offer_id'   => $post,
-				'type'       => $buy['type'],
-				'itemid'     => $buy['itemid'],
-				'count'      => $buy['count'],
-				'points'     => $buy['points'],
-			));
+			if ($orderReady) {
+				$db->commit();
+				$user_znote_data['points'] = $old_points - $expense_points;
+				echo $successMessage;
 
-		} else echo '<font color="red" size="4">You need more points, this offer cost '.$buy['points'].' points.</font>';
+				// Plugins can react to a purchase - a coupon ledger, a Discord message,
+				// a loyalty counter. They cannot change what was bought; this is a
+				// notification, fired after the points have already been taken.
+				znote_hook('shop.purchased', array(
+					'account_id' => $cid,
+					'offer_id'   => $post,
+					'type'       => $buy['type'],
+					'itemid'     => $buy['itemid'],
+					'count'      => $buy['count'],
+					'points'     => $buy['points'],
+				));
+				$buy['points'] = 0;
+			} else {
+				$db->rollback();
+				echo '<font color="red" size="4">Shop purchase failed. Please try again or contact staff.</font>';
+			}
+		}
 		//var_dump($buy);
 		//echo '<font color="red" size="4">'. $_POST['buy'] .'</font>';
 	}

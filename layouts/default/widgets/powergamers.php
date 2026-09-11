@@ -7,7 +7,7 @@
 			<?php
 			$cache = new Cache('engine/cache/widget_powergamers');
 			if ($cache->hasExpired()) {
-				$players = mysql_select_multi("
+				$players = db()->fetchAll("
 					SELECT
 					    `h`.`player_id`,
 					    `p`.`name`,

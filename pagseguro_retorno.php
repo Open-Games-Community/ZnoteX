@@ -63,7 +63,7 @@
 		$connectedIp = $_SERVER['REMOTE_ADDR'];
 		$details = getValue($details);
 		$details .= '\nConnection from IP: '. $connectedIp;
-		mysql_insert('INSERT INTO `znote_pagseguro_notifications` VALUES (null, \'' . getValue($code) . '\', \'' . $details . '\', CURRENT_TIMESTAMP)');
+		db()->execute('INSERT INTO `znote_pagseguro_notifications` VALUES (null, ?, ?, CURRENT_TIMESTAMP)', [getValue($code), $details]);
 	}
 
 	function VerifyPagseguroIPN($code) {
@@ -107,6 +107,9 @@
 	$item = $transaction->items->item[0];
 	$points = $item->quantity;
 	$price = $points * ($pagseguro['price'] / 100);
-	mysql_insert('INSERT INTO `znote_pagseguro` VALUES (null, \'' . sanitize($transaction->code) . '\', ' . $custom . ', \'' . $price . '\', \'' . $points . '\', ' . $transactionStatus . ', ' . $completed . ')');
+	db()->execute(
+		'INSERT INTO `znote_pagseguro` VALUES (null, ?, ?, ?, ?, ?, ?)',
+		[sanitize((string)$transaction->code), $custom, $price, $points, $transactionStatus, $completed]
+	);
 
 	header('Location: shop.php?callback=processing');

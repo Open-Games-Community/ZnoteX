@@ -70,11 +70,11 @@ $houses = array();
 
 if ($cache->hasExpired()) {
 
-	$houses = mysql_select_multi("
-		SELECT 
-			`id`, `owner`, `paid`, `warnings`, `name`, `rent`, `town_id`, 
-			`size`, `beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . " 
-		FROM `houses` 
+	$houses = db()->fetchAll("
+		SELECT
+			`id`, `owner`, `paid`, `warnings`, `name`, `rent`, `town_id`,
+			`size`, `beds`, " . houseSelect(array('bid','bid_end','last_bid','highest_bidder')) . "
+		FROM `houses`
 		ORDER BY {$order} {$type};
 	");
 
@@ -84,11 +84,11 @@ if ($cache->hasExpired()) {
 
 		foreach ($houses as $h)
 			if ($h['owner'] > 0)
-				$playerlist[] = $h['owner'];
+				$playerlist[] = (int)$h['owner'];
 
 		if (!empty($playerlist)) {
-			$ids = join(',', $playerlist);
-			$tmpPlayers = mysql_select_multi("SELECT `id`, `name` FROM players WHERE `id` IN ($ids);");
+			$placeholders = implode(',', array_fill(0, count($playerlist), '?'));
+			$tmpPlayers = db()->fetchAll("SELECT `id`, `name` FROM players WHERE `id` IN ($placeholders);", $playerlist);
 
 			// Sort $tmpPlayers by player id
 			$tmpById = array();

@@ -68,7 +68,7 @@ $query_CTE = "
 ";
 $cache = new Cache('engine/cache/page_powergamers');
 if ($cache->hasExpired()) {
-	$players = mysql_select_multi($query_CTE."
+	$players = db()->fetchAll($query_CTE."
 		SELECT
 			`p`.`name`,
 			IFNULL(`p`.`experience`, 0) - CASE WHEN `h7b`.`experience` IS NULL 
@@ -108,7 +108,7 @@ if ($cache->hasExpired()) {
 	$players = $cache->load();
 }
 
-$dates = mysql_select_single("
+$dates = db()->fetchOne("
 	SELECT
 	    FROM_UNIXTIME(UNIX_TIMESTAMP() - 7 * 24 * 60 * 60, '%d %b') AS `d7ago`,
 	    FROM_UNIXTIME(UNIX_TIMESTAMP() - 6 * 24 * 60 * 60, '%d %b') AS `d6ago`,

@@ -2,7 +2,7 @@
 
 $time = time();
 if (!isset($version)) {
-	$version = '2.0.0';
+	$version = '2.0.1';
 }
 
 if (!isset($GLOBALS['__znote_start_time'])) {
@@ -23,6 +23,16 @@ if (!function_exists('znote_database_wait_screen')) {
 			die("Failed to connect to MySQL: (" . $errorCode . ") " . $errorMessage . PHP_EOL);
 		}
 
+		try {
+			$reference = strtoupper(bin2hex(random_bytes(6)));
+		} catch (Throwable $e) {
+			$reference = strtoupper(substr(hash('sha256', microtime(true) . '|' . $errorCode), 0, 12));
+		}
+		error_log(
+			'Database connection failed [' . $reference . ']: MySQL ' .
+			$errorCode . ': ' . $errorMessage
+		);
+
 		if (!headers_sent()) {
 			http_response_code(503);
 			header('Retry-After: 5');
@@ -30,8 +40,11 @@ if (!function_exists('znote_database_wait_screen')) {
 		}
 
 		$siteTitle = htmlspecialchars((string)($config['site_title'] ?? 'ZnoteX'), ENT_QUOTES, 'UTF-8');
-		$safeCode = htmlspecialchars((string)$errorCode, ENT_QUOTES, 'UTF-8');
-		$safeMessage = htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8');
+		$safeReference = htmlspecialchars($reference, ENT_QUOTES, 'UTF-8');
+		$showDetails = !empty($config['security']['show_database_errors']);
+		$safeDetails = $showDetails
+			? htmlspecialchars('MySQL ' . $errorCode . ': ' . $errorMessage, ENT_QUOTES, 'UTF-8')
+			: '';
 		?>
 <!DOCTYPE html>
 <html lang="en">
@@ -185,7 +198,10 @@ if (!function_exists('znote_database_wait_screen')) {
 		<h1><?= $siteTitle ?></h1>
 		<p>The database connection is not ready yet.</p>
 		<div class="db-status"><span class="db-pulse" aria-hidden="true"></span>Retrying automatically in 5 seconds</div>
-		<div class="db-details">MySQL <?= $safeCode ?>: <?= $safeMessage ?></div>
+		<div class="db-details">
+			Reference: <?= $safeReference ?>
+			<?php if ($safeDetails !== ''): ?><br><?= $safeDetails ?><?php endif; ?>
+		</div>
 	</main>
 </body>
 </html>
@@ -203,6 +219,11 @@ try {
 		$config['sqlPassword'],
 		$config['sqlDatabase']
 	);
+	// Use the full UTF-8 character set for every request. This keeps accents,
+	// supplementary characters and emoji consistent regardless of the server's
+	// global MySQL/MariaDB defaults.
+	$connect->set_charset('utf8mb4');
+	$connect->query("SET collation_connection = 'utf8mb4_general_ci'");
 } catch (mysqli_sql_exception $e) {
 	znote_database_wait_screen($e->getCode(), $e->getMessage());
 }
@@ -218,85 +239,225 @@ if (!isset($accQueriesData)) {
 	$accQueriesData = [];
 }
 
+class ZnoteDatabase {
+	private mysqli $connection;
+
+	public function __construct(mysqli $connection) {
+		$this->connection = $connection;
+	}
+
+	public function connection(): mysqli {
+		return $this->connection;
+	}
+
+	public function fetchOne(string $sql, array $params = []): array|false {
+		$rows = $this->fetchAll($sql, $params);
+		return ($rows !== false && isset($rows[0])) ? $rows[0] : false;
+	}
+
+	public function fetchAll(string $sql, array $params = []): array|false {
+		$result = $this->query($sql, $params);
+		if (!($result instanceof mysqli_result)) {
+			return false;
+		}
+
+		$rows = [];
+		while ($row = $result->fetch_assoc()) {
+			$rows[] = $row;
+		}
+		$result->free();
+
+		return $rows ?: false;
+	}
+
+	public function execute(string $sql, array $params = []): bool {
+		$result = $this->query($sql, $params);
+		if ($result instanceof mysqli_result) {
+			$result->free();
+		}
+
+		return $result !== false;
+	}
+
+	public function insertId(): int|string {
+		return $this->connection->insert_id;
+	}
+
+	public function affectedRows(): int|string {
+		return $this->connection->affected_rows;
+	}
+
+	public function transaction(callable $callback): mixed {
+		try {
+			$this->connection->begin_transaction();
+			$result = $callback($this);
+
+			if ($result === false) {
+				$this->connection->rollback();
+				return false;
+			}
+
+			$this->connection->commit();
+			return $result;
+		} catch (Throwable $e) {
+			$this->connection->rollback();
+			error_log('SQL TRANSACTION ERROR: ' . $e->getMessage());
+			return false;
+		}
+	}
+
+	public function beginTransaction(): bool {
+		return $this->connection->begin_transaction();
+	}
+
+	public function commit(): bool {
+		return $this->connection->commit();
+	}
+
+	public function rollback(): bool {
+		return $this->connection->rollback();
+	}
+
+	public function rawFetchOne(string $sql): array|false {
+		$result = $this->rawQuery($sql);
+		if (!($result instanceof mysqli_result)) {
+			return false;
+		}
+
+		$row = $result->fetch_assoc();
+		$result->free();
+
+		return $row ?: false;
+	}
+
+	public function rawFetchAll(string $sql): array|false {
+		$result = $this->rawQuery($sql);
+		if (!($result instanceof mysqli_result)) {
+			return false;
+		}
+
+		$rows = [];
+		while ($row = $result->fetch_assoc()) {
+			$rows[] = $row;
+		}
+		$result->free();
+
+		return $rows ?: false;
+	}
+
+	public function rawExecute(string $sql): bool {
+		$result = $this->rawQuery($sql);
+		if ($result instanceof mysqli_result) {
+			$result->free();
+		}
+
+		return $result !== false;
+	}
+
+	private function query(string $sql, array $params = []): mysqli_result|bool {
+		$this->logQuery($sql, $params);
+
+		try {
+			if ($params === []) {
+				return $this->connection->query($sql);
+			}
+
+			$stmt = $this->connection->prepare($sql);
+			$this->bindParams($stmt, $params);
+			$stmt->execute();
+
+			$result = $this->statementResult($stmt);
+			$stmt->close();
+
+			return $result;
+		} catch (mysqli_sql_exception $e) {
+			error_log('SQL ERROR: ' . $e->getMessage() . ' | Query: ' . $sql);
+			return false;
+		}
+	}
+
+	private function rawQuery(string $sql): mysqli_result|bool {
+		$this->logQuery($sql);
+
+		try {
+			return $this->connection->query($sql);
+		} catch (mysqli_sql_exception $e) {
+			error_log('SQL ERROR: ' . $e->getMessage() . ' | Query: ' . $sql);
+			return false;
+		}
+	}
+
+	private function logQuery(string $sql, array $params = []): void {
+		global $aacQueries, $accQueriesData;
+
+		$aacQueries++;
+		$accQueriesData[] = '[' . elapsedTime() . '] ' . $sql . ($params === [] ? '' : ' [prepared params: ' . count($params) . ']');
+	}
+
+	private function bindParams(mysqli_stmt $stmt, array $params): void {
+		$types = '';
+		$values = [];
+
+		foreach ($params as $param) {
+			if (is_int($param) || is_bool($param)) {
+				$types .= 'i';
+				$values[] = (int)$param;
+			} elseif (is_float($param)) {
+				$types .= 'd';
+				$values[] = $param;
+			} else {
+				$types .= 's';
+				$values[] = $param;
+			}
+		}
+
+		if ($types === '') {
+			return;
+		}
+
+		$refs = [];
+		foreach ($values as $key => &$value) {
+			$refs[$key] = &$value;
+		}
+
+		$stmt->bind_param($types, ...$refs);
+	}
+
+	private function statementResult(mysqli_stmt $stmt): mysqli_result|bool {
+		$result = $stmt->get_result();
+		if ($result instanceof mysqli_result) {
+			return $result;
+		}
+
+		return true;
+	}
+}
+
+function db(): ZnoteDatabase {
+	global $znoteDatabase, $connect;
+
+	if (!isset($znoteDatabase)) {
+		$znoteDatabase = new ZnoteDatabase($connect);
+	}
+
+	return $znoteDatabase;
+}
+
 function mysql_znote_escape_string($escapestr): string {
 	global $connect;
 	return mysqli_real_escape_string($connect, (string)($escapestr ?? ''));
 }
 
 function mysql_select_single(string $query): array|false {
-	global $connect, $aacQueries, $accQueriesData;
-
-	$aacQueries++;
-	$accQueriesData[] = "[" . elapsedTime() . "] " . $query;
-
-	try {
-		$result = mysqli_query($connect, $query);
-	} catch (mysqli_sql_exception $e) {
-		error_log("SQL ERROR (select_single): " . $e->getMessage() . " | Query: " . $query);
-		return false;
-	}
-
-	if (!($result instanceof mysqli_result)) {
-		error_log("SQL ERROR (select_single): " . mysqli_error($connect) . " | Query: " . $query);
-		return false;
-	}
-
-	$row = mysqli_fetch_assoc($result);
-	mysqli_free_result($result);
-
-	return $row ?: false;
+	return db()->rawFetchOne($query);
 }
 
 function mysql_select_multi(string $query): array|false {
-	global $connect, $aacQueries, $accQueriesData;
-
-	$aacQueries++;
-	$accQueriesData[] = "[" . elapsedTime() . "] " . $query;
-
-	try {
-		$result = mysqli_query($connect, $query);
-	} catch (mysqli_sql_exception $e) {
-		error_log("SQL ERROR (select_multi): " . $e->getMessage() . " | Query: " . $query);
-		return false;
-	}
-
-	if (!($result instanceof mysqli_result)) {
-		error_log("SQL ERROR (select_multi): " . mysqli_error($connect) . " | Query: " . $query);
-		return false;
-	}
-
-	$array = [];
-	while ($row = mysqli_fetch_assoc($result)) {
-		$array[] = $row;
-	}
-	mysqli_free_result($result);
-
-	return $array ?: false;
+	return db()->rawFetchAll($query);
 }
 
 function voidQuery(string $query): bool {
-	global $connect, $aacQueries, $accQueriesData;
-
-	$aacQueries++;
-	$accQueriesData[] = "[" . elapsedTime() . "] " . $query;
-
-	try {
-		$result = mysqli_query($connect, $query);
-	} catch (mysqli_sql_exception $e) {
-		error_log("SQL ERROR (voidQuery): " . $e->getMessage() . " | Query: " . $query);
-		return false;
-	}
-
-	if ($result === false) {
-		error_log("SQL ERROR (voidQuery): " . mysqli_error($connect) . " | Query: " . $query);
-		return false;
-	}
-
-	if ($result instanceof mysqli_result) {
-		mysqli_free_result($result);
-	}
-
-	return true;
+	return db()->rawExecute($query);
 }
 
 function mysql_update(string $query): bool { return voidQuery($query); }

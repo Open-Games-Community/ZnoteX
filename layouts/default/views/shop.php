@@ -6,15 +6,7 @@ if ($shop['enabled']) {
 <h1><?= t('shop.offers') ?></h1>
 <?php
 if ($loggedin === true) {
-	if (!empty($_POST['buy']) && isset($_SESSION['shop_session']) && $_SESSION['shop_session'] == ($_POST['session'] ?? null)) {
-		if ($user_znote_data['points'] >= $buy['points']) {
-			?><td><?= t('shop.you_have') ?> <?php echo (int)($user_znote_data['points'] - $buy['points']); ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
-		} else {
-			?><td><?= t('shop.you_have') ?> <?php echo $user_znote_data['points']; ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
-		}
-	} else {
-		?><td><?= t('shop.you_have') ?> <?php echo $user_znote_data['points']; ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
-	}
+	?><td><?= t('shop.you_have') ?> <?php echo (int)$user_znote_data['points']; ?> <?= t('common.points') ?>. (<a href="buypoints.php"><?= t('shop.buy_points') ?></a>).</td><?php
 	if ($config['shop_auction']['characterAuction']) {
 		?>
 		<p><?= t('shop.chars_hint') ?> <a href="auctionChar.php"><?= t('auction.title') ?></a></p>

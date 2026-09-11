@@ -43,40 +43,40 @@ $collecting = !empty($config['log_ip']);
 
 $totalRows   = acp_count("SELECT COUNT(*) AS `c` FROM `znote_visitors_details`;");
 $uniqueAll   = acp_count("SELECT COUNT(DISTINCT `ip`) AS `c` FROM `znote_visitors_details`;");
-$rowsPeriod  = acp_count("SELECT COUNT(*) AS `c` FROM `znote_visitors_details` WHERE `time` >= {$since};");
-$uniquePeriod= acp_count("SELECT COUNT(DISTINCT `ip`) AS `c` FROM `znote_visitors_details` WHERE `time` >= {$since};");
+$rowsPeriod  = acp_count("SELECT COUNT(*) AS `c` FROM `znote_visitors_details` WHERE `time` >= ?;", [$since]);
+$uniquePeriod= acp_count("SELECT COUNT(DISTINCT `ip`) AS `c` FROM `znote_visitors_details` WHERE `time` >= ?;", [$since]);
 
 // Visits per day
-$perDay = mysql_select_multi("
+$perDay = db()->fetchAll("
 	SELECT FROM_UNIXTIME(`time`, '%Y-%m-%d') AS `day`,
 	       COUNT(*) AS `hits`,
 	       COUNT(DISTINCT `ip`) AS `uniques`
 	FROM `znote_visitors_details`
-	WHERE `time` >= {$since}
+	WHERE `time` >= ?
 	GROUP BY `day`
 	ORDER BY `day` DESC;
-");
+", [$since]);
 $perDay = is_array($perDay) ? $perDay : array();
 
 // Breakdown by what people did
-$byType = mysql_select_multi("
+$byType = db()->fetchAll("
 	SELECT `type`, COUNT(*) AS `hits`
 	FROM `znote_visitors_details`
-	WHERE `time` >= {$since}
+	WHERE `time` >= ?
 	GROUP BY `type`
 	ORDER BY `hits` DESC;
-");
+", [$since]);
 $byType = is_array($byType) ? $byType : array();
 
 // Busiest addresses
-$topIps = mysql_select_multi("
+$topIps = db()->fetchAll("
 	SELECT `ip`, COUNT(*) AS `hits`, MAX(`time`) AS `last`, MAX(`account_id`) AS `account_id`
 	FROM `znote_visitors_details`
-	WHERE `time` >= {$since}
+	WHERE `time` >= ?
 	GROUP BY `ip`
 	ORDER BY `hits` DESC
 	LIMIT 15;
-");
+", [$since]);
 $topIps = is_array($topIps) ? $topIps : array();
 
 $peak = 0;

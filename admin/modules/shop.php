@@ -14,7 +14,7 @@ if (!defined('ACP_ROOT')) {
 
 $items = getItemList();
 
-mysql_update("
+db()->execute("
 	CREATE TABLE IF NOT EXISTS `znote_shop_offers` (
 		`id` int NOT NULL AUTO_INCREMENT,
 		`type` int NOT NULL,
@@ -34,7 +34,7 @@ mysql_update("
 
 function acp_shop_offer_columns(): array {
 	$columns = [];
-	$rows = mysql_select_multi("SHOW COLUMNS FROM `znote_shop_offers`;");
+	$rows = db()->fetchAll("SHOW COLUMNS FROM `znote_shop_offers`;");
 
 	if (is_array($rows)) {
 		foreach ($rows as $row) {
@@ -51,21 +51,21 @@ function acp_shop_ensure_offer_schema(): void {
 	$columns = acp_shop_offer_columns();
 
 	if (empty($columns['active'])) {
-		mysql_update("ALTER TABLE `znote_shop_offers` ADD `active` tinyint NOT NULL DEFAULT '1' AFTER `points`;");
+		db()->execute("ALTER TABLE `znote_shop_offers` ADD `active` tinyint NOT NULL DEFAULT '1' AFTER `points`;");
 		$columns['active'] = true;
 	}
 	if (empty($columns['sort_order'])) {
-		mysql_update("ALTER TABLE `znote_shop_offers` ADD `sort_order` int NOT NULL DEFAULT '0' AFTER `active`;");
+		db()->execute("ALTER TABLE `znote_shop_offers` ADD `sort_order` int NOT NULL DEFAULT '0' AFTER `active`;");
 		$columns['sort_order'] = true;
 	}
 	if (empty($columns['updated_at'])) {
-		mysql_update("ALTER TABLE `znote_shop_offers` ADD `updated_at` int DEFAULT NULL AFTER `created_at`;");
+		db()->execute("ALTER TABLE `znote_shop_offers` ADD `updated_at` int DEFAULT NULL AFTER `created_at`;");
 		$columns['updated_at'] = true;
 	}
 
-	$indexes = mysql_select_multi("SHOW INDEX FROM `znote_shop_offers` WHERE `Key_name` = 'active_sort';");
+	$indexes = db()->fetchAll("SHOW INDEX FROM `znote_shop_offers` WHERE `Key_name` = 'active_sort';");
 	if (empty($indexes) && !empty($columns['active']) && !empty($columns['sort_order'])) {
-		mysql_update("ALTER TABLE `znote_shop_offers` ADD KEY `active_sort` (`active`, `sort_order`, `id`);");
+		db()->execute("ALTER TABLE `znote_shop_offers` ADD KEY `active_sort` (`active`, `sort_order`, `id`);");
 	}
 }
 
@@ -101,8 +101,20 @@ function acp_shop_offer_type_label(int $type): string {
 	return $types[$type] ?? t('acp.shp.type_custom');
 }
 
+function acp_shop_public_asset_url(string $url): string {
+	if ($url === '' || preg_match('~^(https?:)?//~i', $url) || $url[0] === '/') {
+		return $url;
+	}
+
+	return acp_site($url);
+}
+
 function acp_shop_item_image_url(int $itemId): string {
 	global $config;
+
+	if (function_exists('znote_item_image_url')) {
+		return acp_shop_public_asset_url(znote_item_image_url($itemId));
+	}
 
 	$server = trim((string)($config['shop']['imageServer'] ?? ''), '/');
 	$typeExt = trim((string)($config['shop']['imageType'] ?? 'gif'), '.');
@@ -119,7 +131,7 @@ function acp_shop_item_image_url(int $itemId): string {
 		return 'http://' . $server . '/' . $itemId . '.' . $typeExt;
 	}
 
-	return acp_site($server . '/' . $itemId . '.' . $typeExt);
+	return acp_shop_public_asset_url($server . '/' . $itemId . '.' . $typeExt);
 }
 
 function acp_shop_outfit_server_url(): string {
@@ -206,12 +218,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		if ($type <= 0 || $description === '' || $points <= 0 || $itemId === false) {
 			acp_flash_error(t('acp.shp.missing_fields'));
 		} else {
-			$created = mysql_insert("
+			$created = db()->execute("
 				INSERT INTO `znote_shop_offers`
 					(`type`, `itemid`, `count`, `description`, `points`, `active`, `sort_order`, `created_by`, `created_at`, `updated_at`)
 				VALUES
-					({$type}, {$itemId}, {$count}, '" . esc($description) . "', {$points}, 1, {$sortOrder}, " . (int)$user_data['id'] . ", {$now}, {$now});
-			");
+					(?, ?, ?, ?, ?, 1, ?, ?, ?, ?);
+			", [$type, $itemId, $count, $description, $points, $sortOrder, (int)$user_data['id'], $now, $now]);
 			if ($created) {
 				acp_log('shop.offer_add', $description, ['type' => $type, 'points' => $points]);
 				acp_flash_success(t('acp.shp.offer_added'));
@@ -224,13 +236,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	if ($shopAction === 'toggle') {
 		$id = intv($_POST['id'] ?? 0);
-		$updated = mysql_update("
+		$updated = db()->execute("
 			UPDATE `znote_shop_offers`
 			SET `active` = CASE WHEN `active` = 1 THEN 0 ELSE 1 END,
-				`updated_at` = {$now}
-			WHERE `id` = {$id}
+				`updated_at` = ?
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$now, $id]);
 		if ($updated) { acp_log('shop.offer_toggle', '#' . $id); }
 		$updated ? acp_flash_success(t('acp.shp.status_updated')) : acp_flash_error(t('acp.shp.status_failed'));
 		acp_redirect('shop');
@@ -238,14 +250,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	if ($shopAction === 'delete') {
 		$id = intv($_POST['id'] ?? 0);
-		$deleted = mysql_delete("DELETE FROM `znote_shop_offers` WHERE `id` = {$id} LIMIT 1;");
+		$deleted = db()->execute("DELETE FROM `znote_shop_offers` WHERE `id` = ? LIMIT 1;", [$id]);
 		if ($deleted) { acp_log('shop.offer_delete', '#' . $id); }
 		$deleted ? acp_flash_success(t('acp.shp.removed')) : acp_flash_error(t('acp.shp.remove_failed'));
 		acp_redirect('shop');
 	}
 }
 
-$offers = mysql_select_multi("SELECT * FROM `znote_shop_offers` ORDER BY `active` DESC, `sort_order` ASC, `id` ASC;");
+$offers = db()->fetchAll("SELECT * FROM `znote_shop_offers` ORDER BY `active` DESC, `sort_order` ASC, `id` ASC;");
 $offers = is_array($offers) ? $offers : [];
 $activeOffers = 0;
 $hiddenOffers = 0;

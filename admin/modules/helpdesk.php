@@ -24,17 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 		$replyText = sanitize((string)$_POST['reply_text']);
 		$username  = sanitize((string)($_POST['username'] ?? 'ADMIN'));
 
-		mysql_insert("
+		db()->execute("
 			INSERT INTO `znote_tickets_replies` (`tid`, `username`, `message`, `created`)
-			VALUES ({$view}, '" . esc($username) . "', '" . esc($replyText) . "', " . time() . ");
-		");
+			VALUES (?, ?, ?, ?);
+		", [$view, $username, $replyText, time()]);
 
-		mysql_update("
+		db()->execute("
 			UPDATE `znote_tickets`
 			SET `status` = 'Staff-Reply'
-			WHERE `id` = {$view}
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$view]);
 
 		acp_log('helpdesk.reply', '#' . $view);
 		acp_flash_success(t('acp.hd.reply_posted'));
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 
 	// ---------------------------------------------------------- Close ticket
 	if (!empty($_POST['admin_ticket_close']) && $ticketId > 0) {
-		mysql_update("UPDATE `znote_tickets` SET `status` = 'CLOSED' WHERE `id` = {$ticketId} LIMIT 1;");
+		db()->execute("UPDATE `znote_tickets` SET `status` = 'CLOSED' WHERE `id` = ? LIMIT 1;", [$ticketId]);
 		acp_log('helpdesk.close', '#' . $ticketId);
 		acp_flash_success(t('acp.hd.closed'));
 		acp_redirect('helpdesk', ['view' => $view]);
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 
 	// ----------------------------------------------------------- Open ticket
 	if (!empty($_POST['admin_ticket_open']) && $ticketId > 0) {
-		mysql_update("UPDATE `znote_tickets` SET `status` = 'Open' WHERE `id` = {$ticketId} LIMIT 1;");
+		db()->execute("UPDATE `znote_tickets` SET `status` = 'Open' WHERE `id` = ? LIMIT 1;", [$ticketId]);
 		acp_log('helpdesk.reopen', '#' . $ticketId);
 		acp_flash_success(t('acp.hd.reopened'));
 		acp_redirect('helpdesk', ['view' => $view]);
@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view > 0) {
 
 	// --------------------------------------------------------- Delete ticket
 	if (!empty($_POST['admin_ticket_delete']) && $ticketId > 0) {
-		mysql_delete("DELETE FROM `znote_tickets` WHERE `id` = {$ticketId} LIMIT 1;");
-		mysql_delete("DELETE FROM `znote_tickets_replies` WHERE `tid` = {$ticketId};");
+		db()->execute("DELETE FROM `znote_tickets` WHERE `id` = ? LIMIT 1;", [$ticketId]);
+		db()->execute("DELETE FROM `znote_tickets_replies` WHERE `tid` = ?;", [$ticketId]);
 		acp_log('helpdesk.delete', '#' . $ticketId);
 		acp_flash_success(t('acp.hd.deleted', ['id' => $ticketId]));
 		acp_redirect('helpdesk');
@@ -82,7 +82,7 @@ function acp_ticket_tone(string $status): string {
 
 <?php if ($view > 0):
 
-	$ticket = mysql_select_single("SELECT * FROM `znote_tickets` WHERE `id` = {$view} LIMIT 1;");
+	$ticket = db()->fetchOne("SELECT * FROM `znote_tickets` WHERE `id` = ? LIMIT 1;", [$view]);
 
 	if (!is_array($ticket)):
 		?>
@@ -100,11 +100,11 @@ function acp_ticket_tone(string $status): string {
 		$status   = (string)($ticket['status'] ?? '');
 		$isClosed = (strtoupper($status) === 'CLOSED');
 
-		$replies = mysql_select_multi("
+		$replies = db()->fetchAll("
 			SELECT * FROM `znote_tickets_replies`
-			WHERE `tid` = {$view}
+			WHERE `tid` = ?
 			ORDER BY `created` ASC;
-		");
+		", [$view]);
 		?>
 
 		<div class="acp-toolbar">
@@ -191,7 +191,7 @@ function acp_ticket_tone(string $status): string {
 
 <?php else:
 
-	$tickets = mysql_select_multi("
+	$tickets = db()->fetchAll("
 		SELECT `id`, `subject`, `username`, `creation`, `status`
 		FROM `znote_tickets`
 		ORDER BY `creation` DESC;

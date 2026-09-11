@@ -35,7 +35,7 @@ if ($isModern) {
 
 	// Characters are shown rather than the account name: that is what other
 	// players recognise, and one account may have several.
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT {$accNameCol} AS `account_name`,
 		       `b`.`reason`, `b`.`banned_at`, `b`.`expires_at`,
 		       (SELECT `name` FROM `players` WHERE `account_id` = `b`.`account_id` ORDER BY `level` DESC LIMIT 1) AS `character_name`
@@ -57,7 +57,7 @@ if ($isModern) {
 		}
 	}
 
-	$locks = mysql_select_multi("
+	$locks = db()->fetchAll("
 		SELECT `p`.`name`, `n`.`reason`, `n`.`namelocked_at`
 		FROM `player_namelocks` `n`
 		INNER JOIN `players` `p` ON `p`.`id` = `n`.`player_id`
@@ -74,15 +74,15 @@ if ($isModern) {
 		}
 	}
 
-	$ipBanCount = (int)(mysql_select_single("
+	$ipBanCount = (int)(db()->fetchOne("
 		SELECT COUNT(*) AS `c` FROM `ip_bans`
-		WHERE `expires_at` <= 0 OR `expires_at` > {$now};
-	")['c'] ?? 0);
+		WHERE `expires_at` <= 0 OR `expires_at` > ?;
+	", [$now])['c'] ?? 0);
 
 } elseif (in_array($engine, array('TFS_02', 'TFS_03', 'OTHIRE'), true)) {
 
 	// One table, a type column: 1 = IP, 2 = namelock, 3 = account, 5 = deletion.
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `type`, `value`, `param`, `expires`, `added`, `comment`, `reason_id`
 		FROM `bans`
 		WHERE `active` = 1 OR `active` IS NULL
@@ -102,10 +102,10 @@ if ($isModern) {
 			// value is a player id for namelocks, an account id for bans.
 			$name = '';
 			if ($type === 2) {
-				$player = mysql_select_single("SELECT `name` FROM `players` WHERE `id` = " . (int)$row['value'] . " LIMIT 1;");
+				$player = db()->fetchOne("SELECT `name` FROM `players` WHERE `id` = ? LIMIT 1;", [(int)$row['value']]);
 				$name   = is_array($player) ? (string)$player['name'] : '';
 			} else {
-				$player = mysql_select_single("SELECT `name` FROM `players` WHERE `account_id` = " . (int)$row['value'] . " ORDER BY `level` DESC LIMIT 1;");
+				$player = db()->fetchOne("SELECT `name` FROM `players` WHERE `account_id` = ? ORDER BY `level` DESC LIMIT 1;", [(int)$row['value']]);
 				$name   = is_array($player) ? (string)$player['name'] : '';
 			}
 

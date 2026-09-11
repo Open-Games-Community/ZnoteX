@@ -24,7 +24,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 
 		if ($config['Ach']) {
 			$user_id = (int) $user_id;
-			$achievementPoints = mysql_select_single("SELECT SUM(`value`) AS `sum` FROM `player_storage` WHERE `key` LIKE '30___' AND `player_id`={$user_id} LIMIT 1");
+			$achievementPoints = db()->fetchOne("SELECT SUM(`value`) AS `sum` FROM `player_storage` WHERE `key` LIKE '30___' AND `player_id` = ? LIMIT 1", [$user_id]);
 		}
 
 		$profile_znote_data = user_znote_character_data($user_id, 'created', 'hide_char', 'comment');
@@ -37,25 +37,25 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 
 		$position = '';
 		if ($profile_data['group_id'] > 1) {
-			$position_data = mysql_select_single("
+			$position_data = db()->fetchOne("
 				SELECT `a`.`type`
 				FROM `players` AS `p`
 				INNER JOIN `accounts` AS `a`
 					ON `p`.`account_id` = `a`.`id`
 				WHERE
 					`a`.`type` > 1
-					AND `p`.`id` = '{$user_id}'
-			");
+					AND `p`.`id` = ?
+			", [$user_id]);
 			$position_type = ($position_data !== false) ? $position_data['type'] : null;
 			$position = (isset($config['ingame_positions'][$position_type])) ? $config['ingame_positions'][$position_type] : 'Unknown';
 		}
 
-		$deletion_time = mysql_select_single("SELECT `time` FROM `znote_deleted_characters` WHERE `character_name`='{$name}' AND `done` = '0' LIMIT 1;");
-		$houses = mysql_select_multi("
+		$deletion_time = db()->fetchOne("SELECT `time` FROM `znote_deleted_characters` WHERE `character_name` = ? AND `done` = '0' LIMIT 1;", [$name]);
+		$houses = db()->fetchAll("
 			SELECT `id`, `owner`, `name`, `town_id` AS `town_id`
 			FROM `houses`
-			WHERE `owner` = {$user_id};
-		");
+			WHERE `owner` = ?;
+		", [$user_id]);
 		?>
 
 		<!-- PROFILE MARKUP HERE-->
@@ -63,16 +63,16 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 						// Item image server
 						$imageServer = $config['shop']['imageServer'];
 						$imageType = $config['shop']['imageType'];
-						$PEQ = mysql_select_multi("
+						$PEQ = db()->fetchAll("
 							SELECT
 								`player_id`,
 								`pid`,
 								`itemtype`,
 								`count`
 							FROM `player_items`
-							WHERE `player_id`={$user_id}
-							AND `pid`<'11'
-						");
+							WHERE `player_id` = ?
+							AND `pid` < '11'
+						", [$user_id]);
 
 						$soulStamina = " `soul`, `stamina`,";
 						if ($config['client'] < 780) {
@@ -95,10 +95,10 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 								`skill_shielding`,
 								`skill_fishing`
 							FROM `players`
-							WHERE `id`={$user_id}
+							WHERE `id` = ?
 							LIMIT 1;
 						";
-						$playerstats = mysql_select_single($player_query);
+						$playerstats = db()->fetchOne($player_query, [$user_id]);
 
 						$player_experience_raw = (int)$playerstats['experience'];
 						$profile_flag = '';
@@ -598,12 +598,12 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 
 		<!-- Achievements start -->
 		<?php if ($config['Ach']):
-			$achievements = mysql_select_multi("
+			$achievements = db()->fetchAll("
 				SELECT `player_id`, `value`, `key`
 				FROM `player_storage`
-				WHERE `player_id`='$user_id'
+				WHERE `player_id` = ?
 				AND `key` LIKE '30___';
-			");
+			", [$user_id]);
 			$c_achs = $config['achievements'];
 			$toggle = array(
 				'show' => '<a href="#show">Show</a>',
@@ -669,7 +669,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 			</thead>
 			<tbody>
 				<?php
-				$deaths = mysql_select_multi("
+				$deaths = db()->fetchAll("
 					SELECT
 						`player_id`,
 						`time`,
@@ -681,10 +681,10 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 						`unjustified`,
 						`mostdamage_unjustified`
 					FROM `player_deaths`
-					WHERE `player_id`=$user_id
+					WHERE `player_id` = ?
 					ORDER BY `time` DESC
 					LIMIT 10;
-				");
+				", [$user_id]);
 
 				if ($deaths) {
 					foreach ($deaths as $d) {
@@ -738,11 +738,11 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		$firstrun = 1;
 
 		if ($config['EnableQuests'] == true) {
-			$sqlquests = mysql_select_multi("
+			$sqlquests = db()->fetchAll("
 				SELECT `player_id`, `key`, `value`
 				FROM player_storage
-				WHERE `player_id` = {$user_id}
-			");
+				WHERE `player_id` = ?
+			", [$user_id]);
 			if (isset($config['quests']) && !empty($config['quests'])) {
 				foreach ($config['quests'] as $cquest) {
 					$totalquests = $totalquests + 1;
@@ -794,7 +794,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		<!-- CHARACTER LIST -->
 		<?php
 		// Load other visible characters
-		$otherChars = mysql_select_multi("
+		$otherChars = db()->fetchAll("
 			SELECT
 				`p`.`id`,
 				`p`.`name`,
@@ -810,12 +810,12 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 			LEFT JOIN `znote_players` as `z2`
 				ON `o`.`id` = `z2`.`player_id`
 			LEFT JOIN `players_online` as `l` ON `p`.`id` = `l`.`player_id`
-			WHERE `o`.`id` = {$user_id}
+			WHERE `o`.`id` = ?
 			AND `p`.`id` != `o`.`id`
 			AND `z`.`hide_char` = 0
 			AND `z2`.`hide_char` = 0
 			ORDER BY `p`.`experience` DESC;
-		");
+		", [$user_id]);
 
 		// Render table if there are any characters to show
 		if ($otherChars !== false) {

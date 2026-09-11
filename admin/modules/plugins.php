@@ -26,6 +26,18 @@ if (!defined('ACP_ROOT')) {
 	die('Direct access denied.');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_plugin_repository_cache'])) {
+	if (plugin_repository_clear_cache()) {
+		acp_flash_success(t('acp.plgbr.cache_deleted'));
+	} else {
+		acp_flash_error(t('acp.plgbr.cache_delete_failed', [
+			'path' => '<code>' . h(plugin_repository_cache_path()) . '</code>',
+		]));
+	}
+
+	acp_redirect('plugins', array('tab' => 'browse', 'refresh' => 1));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repo_install'])) {
 
 	$key       = znote_plugin_sanitize((string)$_POST['repo_install']);
@@ -55,6 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['repo_install'])) {
 }
 
 if (($_GET['tab'] ?? '') === 'browse') {
+	// "Refresh catalogue" also wipes the local caches - a stale cache is what
+	// usually keeps a just-installed or updated plugin from showing correctly.
+	if (isset($_GET['refresh']) && function_exists('znote_cache_flush')) {
+		znote_cache_flush();
+	}
 	include ACP_ROOT . '/modules/_partials/plugins_browse.php';
 	return;
 }

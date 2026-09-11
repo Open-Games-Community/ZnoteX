@@ -19,12 +19,14 @@
  * 3. Write your logic and markup below. Available to you already:
  *
  *      $config, $user_data, $session_user_id, $version   from engine/init.php
- *      h(), intv(), esc()                                escaping helpers
+ *      h(), intv()                                       escaping helpers
  *      acp_url(), acp_site(), acp_redirect()             links and redirects
  *      acp_csrf_field()                                  CSRF token input
  *      acp_flash_success/error/info()                    messages across redirects
  *      acp_card_open/close(), acp_empty(), acp_stat()    layout blocks
- *      mysql_select_single/multi(), mysql_insert/update/delete()
+ *      db()->fetchOne/fetchAll($sql, $params)            prepared SELECT, use ? placeholders
+ *      db()->execute($sql, $params)                      prepared INSERT/UPDATE/DELETE
+ *      db()->transaction(function ($db) { ... })         several writes, all or nothing
  *
  * Notes:
  *   - The working directory is the project root, so 'engine/cache/x' and

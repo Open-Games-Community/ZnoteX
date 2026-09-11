@@ -25,13 +25,13 @@ $file = ($pluginName !== '')
 
 if ($file === null) {
 	if ($pluginName === '' && $requested !== '' && function_exists('znote_table_exists') && znote_table_exists('znote_pages')) {
-		$dbPage = mysql_select_single("
+		$dbPage = db()->fetchOne("
 			SELECT `slug`, `title`, `body`, `access`
 			FROM `znote_pages`
-			WHERE `slug` = '" . mysql_znote_escape_string($requested) . "'
+			WHERE `slug` = ?
 			AND `active` = 1
 			LIMIT 1;
-		");
+		", [$requested]);
 
 		if (is_array($dbPage)) {
 			if ((int)$dbPage['access'] > 0) {

@@ -125,14 +125,14 @@ Function PlayerHaveAccess($yourChars, $playerName){
 
 // Start page init
 $admin = is_admin($user_data);
-if ($admin) $yourChars = mysql_select_multi("SELECT `id`, `name`, `group_id` FROM `players` WHERE `level`>='1' AND `account_id`='". $user_data['id'] ."';");
-else $yourChars = mysql_select_multi("SELECT `id`, `name`, `group_id` FROM `players` WHERE `level`>='". $config['forum']['level'] ."' AND `account_id`='". $user_data['id'] ."';");
+if ($admin) $yourChars = db()->fetchAll("SELECT `id`, `name`, `group_id` FROM `players` WHERE `level` >= 1 AND `account_id` = ?;", [$user_data['id']]);
+else $yourChars = db()->fetchAll("SELECT `id`, `name`, `group_id` FROM `players` WHERE `level` >= ? AND `account_id` = ?;", [(int)$config['forum']['level'], $user_data['id']]);
 if (!$yourChars) $yourChars = array();
 $charCount = count($yourChars);
 $yourAccess = accountAccess($user_data['id'], $config['ServerEngine']);
 if ($admin) {
 	if (!empty($_POST)) {
-		$guilds = mysql_select_multi("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
+		$guilds = db()->fetchAll("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
 		$guilds[] = array('id' => '0', 'name' => 'No guild');
 	}
 	$yourAccess = 100;
@@ -173,16 +173,16 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		$admin_thread_id = (int)$admin_thread_id;
 		$access = false;
 		if (!$admin) {
-			$thread = mysql_select_single("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id`='$admin_thread_id';");
-			$forum = mysql_select_single("SELECT `guild_id` FROM `znote_forum` WHERE `id`='". $thread['forum_id'] ."';");
+			$thread = db()->fetchOne("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id` = ?;", [$admin_thread_id]);
+			$forum = db()->fetchOne("SELECT `guild_id` FROM `znote_forum` WHERE `id` = ?;", [$thread['forum_id']]);
 			foreach($charData as $char) if ($char['guild'] == $forum['guild_id'] && $char['guild_rank'] == 3) $access = true;
 		} else $access = true;
 
 		if ($access) {
 			// Delete all associated posts
-			mysql_delete("DELETE FROM `znote_forum_posts` WHERE `thread_id`='$admin_thread_id';");
+			db()->execute("DELETE FROM `znote_forum_posts` WHERE `thread_id` = ?;", [$admin_thread_id]);
 			// Delete thread itself
-			mysql_delete("DELETE FROM `znote_forum_threads` WHERE `id`='$admin_thread_id' LIMIT 1;");
+			db()->execute("DELETE FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
 			echo '<h1>'. t('forum.thread_deleted'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied'). '</font></b></p>';
 	}
@@ -192,13 +192,12 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		$admin_thread_id = (int)$admin_thread_id;
 		$access = false;
 		if (!$admin) {
-			$thread = mysql_select_single("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id`='$admin_thread_id';");
-			$forum = mysql_select_single("SELECT `guild_id` FROM `znote_forum` WHERE `id`='". $thread['forum_id'] ."';");
+			$thread = db()->fetchOne("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id` = ?;", [$admin_thread_id]);
+			$forum = db()->fetchOne("SELECT `guild_id` FROM `znote_forum` WHERE `id` = ?;", [$thread['forum_id']]);
 			foreach($charData as $char) if ($char['guild'] == $forum['guild_id'] && $char['guild_rank'] == 3) $access = true;
 		} else $access = true;
 		if ($access) {
-			mysql_update("UPDATE `znote_forum_threads` SET `closed`='1' WHERE `id`='$admin_thread_id' LIMIT 1;");
-			//die("UPDATE `znote_forum_threads` SET `closed`='1' WHERE `id`='$admin_thread_id' LIMIT 1;");
+			db()->execute("UPDATE `znote_forum_threads` SET `closed` = 1 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
 			echo '<h1>'. t('forum.thread_closed'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied'). '</font></b></p>';
 	}
@@ -208,12 +207,12 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		$admin_thread_id = (int)$admin_thread_id;
 		$access = false;
 		if (!$admin) {
-			$thread = mysql_select_single("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id`='$admin_thread_id';");
-			$forum = mysql_select_single("SELECT `guild_id` FROM `znote_forum` WHERE `id`='". $thread['forum_id'] ."';");
+			$thread = db()->fetchOne("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id` = ?;", [$admin_thread_id]);
+			$forum = db()->fetchOne("SELECT `guild_id` FROM `znote_forum` WHERE `id` = ?;", [$thread['forum_id']]);
 			foreach($charData as $char) if ($char['guild'] == $forum['guild_id'] && $char['guild_rank'] == 3) $access = true;
 		} else $access = true;
 		if ($access) {
-			mysql_update("UPDATE `znote_forum_threads` SET `closed`='0' WHERE `id`='$admin_thread_id' LIMIT 1;");
+			db()->execute("UPDATE `znote_forum_threads` SET `closed` = 0 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
 			echo '<h1>'. t('forum.thread_opened'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
@@ -223,12 +222,12 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		$admin_thread_id = (int)$admin_thread_id;
 		$access = false;
 		if (!$admin) {
-			$thread = mysql_select_single("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id`='$admin_thread_id';");
-			$forum = mysql_select_single("SELECT `guild_id` FROM `znote_forum` WHERE `id`='". $thread['forum_id'] ."';");
+			$thread = db()->fetchOne("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id` = ?;", [$admin_thread_id]);
+			$forum = db()->fetchOne("SELECT `guild_id` FROM `znote_forum` WHERE `id` = ?;", [$thread['forum_id']]);
 			foreach($charData as $char) if ($char['guild'] == $forum['guild_id'] && $char['guild_rank'] == 3) $access = true;
 		} else $access = true;
 		if ($access) {
-			mysql_update("UPDATE `znote_forum_threads` SET `sticky`='1' WHERE `id`='$admin_thread_id' LIMIT 1;");
+			db()->execute("UPDATE `znote_forum_threads` SET `sticky` = 1 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
 			echo '<h1>'. t('forum.thread_stuck2'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
@@ -238,12 +237,12 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		$admin_thread_id = (int)$admin_thread_id;
 		$access = false;
 		if (!$admin) {
-			$thread = mysql_select_single("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id`='$admin_thread_id';");
-			$forum = mysql_select_single("SELECT `guild_id` FROM `znote_forum` WHERE `id`='". $thread['forum_id'] ."';");
+			$thread = db()->fetchOne("SELECT `forum_id` FROM `znote_forum_threads` WHERE `id` = ?;", [$admin_thread_id]);
+			$forum = db()->fetchOne("SELECT `guild_id` FROM `znote_forum` WHERE `id` = ?;", [$thread['forum_id']]);
 			foreach($charData as $char) if ($char['guild'] == $forum['guild_id'] && $char['guild_rank'] == 3) $access = true;
 		} else $access = true;
 		if ($access) {
-			mysql_update("UPDATE `znote_forum_threads` SET `sticky`='0' WHERE `id`='$admin_thread_id' LIMIT 1;");
+			db()->execute("UPDATE `znote_forum_threads` SET `sticky` = 0 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
 			echo '<h1>'. t('forum.thread_unstuck2'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
@@ -287,12 +286,14 @@ if ($admin && !empty($_POST)) {
 	if ($admin_board_create_name !== false) {
 
 		// Insert data
-		mysql_insert("INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`)
-			VALUES ('$admin_board_create_name',
-				'$admin_board_create_access',
-				'$admin_board_create_closed',
-				'$admin_board_create_hidden',
-				'$admin_board_create_guild_id');");
+		db()->execute("INSERT INTO `znote_forum` (`name`, `access`, `closed`, `hidden`, `guild_id`)
+			VALUES (?, ?, ?, ?, ?);", [
+				$admin_board_create_name,
+				$admin_board_create_access,
+				$admin_board_create_closed,
+				$admin_board_create_hidden,
+				$admin_board_create_guild_id,
+			]);
 		echo '<h1>'. t('forum.board_created'). '</h1>';
 	}
 
@@ -302,13 +303,20 @@ if ($admin && !empty($_POST)) {
 		$admin_category_id = (int)$admin_category_id;
 
 		// Update the category
-		mysql_update("UPDATE `znote_forum` SET
-			`name`='$admin_category_name',
-			`access`='$admin_category_access',
-			`closed`='$admin_category_closed',
-			`hidden`='$admin_category_hidden',
-			`guild_id`='$admin_category_guild_id'
-			WHERE `id`='$admin_category_id' LIMIT 1;");
+		db()->execute("UPDATE `znote_forum` SET
+			`name` = ?,
+			`access` = ?,
+			`closed` = ?,
+			`hidden` = ?,
+			`guild_id` = ?
+			WHERE `id` = ? LIMIT 1;", [
+				$admin_category_name,
+				$admin_category_access,
+				$admin_category_closed,
+				$admin_category_hidden,
+				$admin_category_guild_id,
+				$admin_category_id,
+			]);
 		echo '<h1>'. t('forum.board_updated'). '</h1>';
 	}
 
@@ -316,8 +324,8 @@ if ($admin && !empty($_POST)) {
 	// edit category
 	if ($admin_category_edit !== false) {
 		$admin_category_id = (int)$admin_category_id;
-		$category = mysql_select_single("SELECT `id`, `name`, `access`, `closed`, `hidden`, `guild_id`
-			FROM `znote_forum` WHERE `id`='$admin_category_id' LIMIT 1;");
+		$category = db()->fetchOne("SELECT `id`, `name`, `access`, `closed`, `hidden`, `guild_id`
+			FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$admin_category_id]);
 		if ($category !== false) {
 			?>
 			<form action="" method="post">
@@ -393,16 +401,16 @@ if ($admin && !empty($_POST)) {
 		$admin_category_id = (int)$admin_category_id;
 
 		// find all threads in category
-		$threads = mysql_select_multi("SELECT `id` FROM `znote_forum_threads` WHERE `forum_id`='$admin_category_id';");
+		$threads = db()->fetchAll("SELECT `id` FROM `znote_forum_threads` WHERE `forum_id` = ?;", [$admin_category_id]);
 
 		// Then loop through all threads, and delete all associated posts:
 		foreach($threads as $thread) {
-			mysql_delete("DELETE FROM `znote_forum_posts` WHERE `thread_id`='". $thread['id'] ."';");
+			db()->execute("DELETE FROM `znote_forum_posts` WHERE `thread_id` = ?;", [$thread['id']]);
 		}
 		// Then delete all threads
-		mysql_delete("DELETE FROM `znote_forum_threads` WHERE `forum_id`='$admin_category_id';");
+		db()->execute("DELETE FROM `znote_forum_threads` WHERE `forum_id` = ?;", [$admin_category_id]);
 		// Then delete the category
-		mysql_delete("DELETE FROM `znote_forum` WHERE `id`='$admin_category_id' LIMIT 1;");
+		db()->execute("DELETE FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$admin_category_id]);
 		echo '<h1>Board, associated threads and all their associated posts deleted.</h1>';
 	}
 
@@ -411,7 +419,7 @@ if ($admin && !empty($_POST)) {
 		$admin_post_id = (int)$admin_post_id;
 
 		// Delete the post
-		mysql_delete("DELETE FROM `znote_forum_posts` WHERE `id`='$admin_post_id' LIMIT 1;");
+		db()->execute("DELETE FROM `znote_forum_posts` WHERE `id` = ? LIMIT 1;", [$admin_post_id]);
 		echo '<h1>'. t('forum.post_deleted'). '</h1>';
 	}
 }
@@ -476,15 +484,15 @@ if (!empty($_GET)) {
 		if ($user_znote_data['cooldown'] < time()) {
 			user_update_znote_account(array('cooldown'=>(time() + $config['forum']['cooldownPost'])));
 
-			$thread = mysql_select_single("SELECT `closed` FROM `znote_forum_threads` WHERE `id`='$reply_thread' LIMIT 1;");
+			$thread = db()->fetchOne("SELECT `closed` FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$reply_thread]);
 
 			if (!is_array($thread) || !isset($charData[$reply_cid])) $access = false;
 			else if ($thread['closed'] == 1 && $admin === false) $access = false;
 			else $access = true;
 
 			if ($access) {
-				mysql_insert("INSERT INTO `znote_forum_posts` (`thread_id`, `player_id`, `player_name`, `text`, `created`, `updated`) VALUES ('$reply_thread', '$reply_cid', '". $charData[$reply_cid]['name'] ."', '$reply_text', '". time() ."', '". time() ."');");
-				if ($config['forum']['newPostsBumpThreads']) mysql_update("UPDATE `znote_forum_threads` SET `updated`='". time() ."' WHERE `id`='$reply_thread';");
+				db()->execute("INSERT INTO `znote_forum_posts` (`thread_id`, `player_id`, `player_name`, `text`, `created`, `updated`) VALUES (?, ?, ?, ?, ?, ?);", [$reply_thread, $reply_cid, $charData[$reply_cid]['name'], $reply_text, time(), time()]);
+				if ($config['forum']['newPostsBumpThreads']) db()->execute("UPDATE `znote_forum_threads` SET `updated` = ? WHERE `id` = ?;", [time(), $reply_thread]);
 			} else echo '<p><b><font color="red">You don\'t have permission to post on this thread. [Thread: Closed]</font></b></p>';
 		} else {
 			?>
@@ -499,7 +507,7 @@ if (!empty($_GET)) {
 		if ($user_znote_data['cooldown'] < time()) {
 			user_update_znote_account(array('cooldown'=>(time() + $config['forum']['cooldownCreate'])));
 
-			$category = mysql_select_single("SELECT `access`, `closed`, `guild_id` FROM `znote_forum` WHERE `id`='$create_thread_category' LIMIT 1;");
+			$category = db()->fetchOne("SELECT `access`, `closed`, `guild_id` FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$create_thread_category]);
 			if ($category !== false) {
 				$access = true;
 				if (!$admin) {
@@ -515,17 +523,17 @@ if (!empty($_GET)) {
 				}
 
 				if ($access) {
-					mysql_insert("INSERT INTO `znote_forum_threads`
+					db()->execute("INSERT INTO `znote_forum_threads`
 						(`forum_id`, `player_id`, `player_name`, `title`, `text`, `created`, `updated`, `sticky`, `hidden`, `closed`)
-						VALUES (
-							'$create_thread_category',
-							'$create_thread_cid',
-							'". $charData[$create_thread_cid]['name'] ."',
-							'$create_thread_title',
-							'$create_thread_text',
-							'". time() ."',
-							'". time() ."',
-							'0', '0', '0');");
+						VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0);", [
+							$create_thread_category,
+							$create_thread_cid,
+							$charData[$create_thread_cid]['name'],
+							$create_thread_title,
+							$create_thread_text,
+							time(),
+							time(),
+						]);
 					SendGet(array('cat'=>$create_thread_category), 'forum.php');
 				} else echo '<p><b><font color="red">'. t('forum.perm_thread'). '</font></b></p>';
 			} else echo t('forum.cat_missing');
@@ -540,9 +548,9 @@ if (!empty($_GET)) {
 	// When you ARE updating post
 	if ($update_post_id !== false && $update_post_text !== false) {
 		// Fetch the post data
-		$post = mysql_select_single("SELECT `id`, `player_name`, `text`, `thread_id` FROM `znote_forum_posts` WHERE `id`='$update_post_id' LIMIT 1;");
+		$post = db()->fetchOne("SELECT `id`, `player_name`, `text`, `thread_id` FROM `znote_forum_posts` WHERE `id` = ? LIMIT 1;", [$update_post_id]);
 		if (!is_array($post)) $post = array('id' => 0, 'player_name' => '', 'text' => '', 'thread_id' => 0);
-		$thread = mysql_select_single("SELECT `closed` FROM `znote_forum_threads` WHERE `id`='". $post['thread_id'] ."' LIMIT 1;");
+		$thread = db()->fetchOne("SELECT `closed` FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$post['thread_id']]);
 
 		// Verify access
 		$access = PlayerHaveAccess($yourChars, $post['player_name']);
@@ -551,7 +559,7 @@ if (!empty($_GET)) {
 		//if ($thread === false) $access = false;
 
 		if ($access) {
-			mysql_update("UPDATE `znote_forum_posts` SET `text`='$update_post_text', `updated`='". time() ."' WHERE `id`='$update_post_id';");
+			db()->execute("UPDATE `znote_forum_posts` SET `text` = ?, `updated` = ? WHERE `id` = ?;", [$update_post_text, time(), $update_post_id]);
 			echo '<h1>post has been updated.</h1>';
 		} else echo "<p class='znf-alert'>" . t('forum.edit_post_denied') . "</p>";
 	}
@@ -560,7 +568,7 @@ if (!empty($_GET)) {
 	// When you ARE updating thread
 	if ($update_thread_id !== false && $update_thread_title !== false && $update_thread_text !== false) {
 		// Fetch the thread data
-		$thread = mysql_select_single("SELECT `id`, `player_name`, `title`, `text`, `closed` FROM `znote_forum_threads` WHERE `id`='$update_thread_id' LIMIT 1;");
+		$thread = db()->fetchOne("SELECT `id`, `player_name`, `title`, `text`, `closed` FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$update_thread_id]);
 		if (!is_array($thread)) $thread = array('id' => 0, 'player_name' => '', 'title' => '', 'text' => '', 'closed' => 0);
 
 		// Verify access
@@ -569,7 +577,7 @@ if (!empty($_GET)) {
 		if ($admin) $access = true;
 
 		if ($access) {
-			mysql_update("UPDATE `znote_forum_threads` SET `title`='$update_thread_title', `text`='$update_thread_text' WHERE `id`='$update_thread_id';");
+			db()->execute("UPDATE `znote_forum_threads` SET `title` = ?, `text` = ? WHERE `id` = ?;", [$update_thread_title, $update_thread_text, $update_thread_id]);
 			echo '<h1>'. t('forum.thread_updated'). '</h1>';
 		} else echo "<p class='znf-alert'>" . t('forum.edit_thread_denied') . "</p>";
 	}
@@ -578,9 +586,9 @@ if (!empty($_GET)) {
 	// When you want to edit a post
 	if ($edit_post_id !== false && $edit_post !== false) {
 		// Fetch the post data
-		$post = mysql_select_single("SELECT `id`, `thread_id`, `text`, `player_name` FROM `znote_forum_posts` WHERE `id`='$edit_post_id' LIMIT 1;");
+		$post = db()->fetchOne("SELECT `id`, `thread_id`, `text`, `player_name` FROM `znote_forum_posts` WHERE `id` = ? LIMIT 1;", [$edit_post_id]);
 		if (!is_array($post)) $post = array('id' => 0, 'thread_id' => 0, 'text' => '', 'player_name' => '');
-		$thread = mysql_select_single("SELECT `closed` FROM `znote_forum_threads` WHERE `id`='". $post['thread_id'] ."' LIMIT 1;");
+		$thread = db()->fetchOne("SELECT `closed` FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$post['thread_id']]);
 		if (!is_array($thread)) $thread = array('closed' => 0);
 		// Verify access
 		$access = PlayerHaveAccess($yourChars, $post['player_name']);
@@ -603,7 +611,7 @@ if (!empty($_GET)) {
 	// When you want to edit a thread
 	if ($edit_thread_id !== false && $edit_thread !== false) {
 		// Fetch the thread data
-		$thread = mysql_select_single("SELECT `id`, `title`, `text`, `player_name`, `closed` FROM `znote_forum_threads` WHERE `id`='$edit_thread_id' LIMIT 1;");
+		$thread = db()->fetchOne("SELECT `id`, `title`, `text`, `player_name`, `closed` FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$edit_thread_id]);
 
 		$access = PlayerHaveAccess($yourChars, $thread['player_name']);
 		if ($thread['closed'] == 1) $access = false;
@@ -626,11 +634,11 @@ if (!empty($_GET)) {
 	// When you want to view a thread
 	if ($getThread !== false) {
 		$getThread = (int)$getThread;
-		$threadData = mysql_select_single("SELECT `id`, `forum_id`, `player_id`, `player_name`, `title`, `text`, `created`, `updated`, `sticky`, `hidden`, `closed` FROM `znote_forum_threads` WHERE `id`='$getThread' LIMIT 1;");
+		$threadData = db()->fetchOne("SELECT `id`, `forum_id`, `player_id`, `player_name`, `title`, `text`, `created`, `updated`, `sticky`, `hidden`, `closed` FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$getThread]);
 
 		if ($threadData !== false) {
 
-			$category = mysql_select_single("SELECT `hidden`, `access`, `guild_id` FROM `znote_forum` WHERE `id`='". $threadData['forum_id'] ."' LIMIT 1;");
+			$category = db()->fetchOne("SELECT `hidden`, `access`, `guild_id` FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$threadData['forum_id']]);
 			if ($category === false) die("Thread category does not exist.");
 
 			$access = true;
@@ -648,7 +656,7 @@ if (!empty($_GET)) {
 
 
 			if ($access) {
-				$threadPlayer = ($config['forum']['outfit_avatars'] || $config['forum']['player_position']) ? mysql_select_single("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id`='".$threadData['player_id']."';") : false;
+				$threadPlayer = ($config['forum']['outfit_avatars'] || $config['forum']['player_position']) ? db()->fetchOne("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id` = ?;", [$threadData['player_id']]) : false;
 				?>
 				<nav class="znf-crumbs"><a href="forum.php">Forum</a> <span>/</span> <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></nav>
 				<h1 id="ThreadTitle" class="znf-title"><?php echo "<a href='?forum=". $getForum ."&cat=". $getCat ."&thread=". $threadData['id'] ."'>". $threadData['title'] ."</a>"; ?></h1>
@@ -718,7 +726,7 @@ if (!empty($_GET)) {
 				?>
 				<?php
 				// Display replies... (copy table above and edit each post)
-				$posts = mysql_select_multi("SELECT `id`, `player_id`, `player_name`, `text`, `created`, `updated` FROM `znote_forum_posts` WHERE `thread_id`='". $threadData['id'] ."' ORDER BY `created`;");
+				$posts = db()->fetchAll("SELECT `id`, `player_id`, `player_name`, `text`, `created`, `updated` FROM `znote_forum_posts` WHERE `thread_id` = ? ORDER BY `created`;", [$threadData['id']]);
 				if ($posts !== false) {
 					// Load extra data (like outfit avatars?)
 					$players = array();
@@ -730,7 +738,9 @@ if (!empty($_GET)) {
 							if (!isset($players[$post['player_id']]))
 								$players[$post['player_id']] = array();
 
-						$sql_players = mysql_select_multi("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id` IN (".implode(',', array_keys($players)).");");
+						$playerIds = array_keys($players);
+						$playerIdPlaceholders = implode(',', array_fill(0, count($playerIds), '?'));
+						$sql_players = db()->fetchAll("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id` IN ({$playerIdPlaceholders});", $playerIds);
 
 						foreach ($sql_players as $player)
 							$players[$player['id']] = $player;
@@ -824,7 +834,7 @@ if (!empty($_GET)) {
 	// When you want to create a new thread
 	if ($new_thread_category !== false && $new_thread_cid !== false) {
 		// Verify we got access to this category
-		$category = mysql_select_single("SELECT `access`, `closed`, `guild_id` FROM `znote_forum` WHERE `id`='$new_thread_category' LIMIT 1;");
+		$category = db()->fetchOne("SELECT `access`, `closed`, `guild_id` FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$new_thread_category]);
 		if ($category !== false) {
 			$access = true;
 			if (!$admin) {
@@ -871,7 +881,7 @@ if (!empty($_GET)) {
 		$getCat = (int)$getCat;
 
 		// Fetch category rules
-		$category = mysql_select_single("SELECT `name`, `access`, `closed`, `hidden`, `guild_id` FROM `znote_forum` WHERE `id`='$getCat' AND `access`<='$yourAccess' LIMIT 1;");
+		$category = db()->fetchOne("SELECT `name`, `access`, `closed`, `hidden`, `guild_id` FROM `znote_forum` WHERE `id` = ? AND `access` <= ? LIMIT 1;", [$getCat, $yourAccess]);
 
 		if ($category !== false && $category['guild_id'] > 0 && !$admin) {
 			$access = false;
@@ -880,27 +890,27 @@ if (!empty($_GET)) {
 		}
 
 		if ($category !== false) {
-			// TODO : Verify guild access
-			//foreach($charData)
 			$getCatInt = (int)$getCat;
 			echo '<nav class="znf-crumbs"><a href="forum.php">' . t('forum.boards') . '</a> <span>/</span> ' . znote_forum_e($category['name']) . '</nav>';
 			echo '<div class="znf-bhead"><h1 class="znf-h1">' . znote_forum_e($category['name']) . '</h1></div>';
 
-			$threads = mysql_select_multi(
+			$threads = db()->fetchAll(
 				"SELECT `t`.`id`, `t`.`player_name`, `t`.`title`, `t`.`sticky`, `t`.`closed`, `t`.`created`, `t`.`updated`, "
 				. "COUNT(`p`.`id`) AS `reply_count`, COALESCE(MAX(`p`.`created`), 0) AS `last_reply_at` "
 				. "FROM `znote_forum_threads` `t` LEFT JOIN `znote_forum_posts` `p` ON `p`.`thread_id` = `t`.`id` "
-				. "WHERE `t`.`forum_id` = '{$getCatInt}' "
+				. "WHERE `t`.`forum_id` = ? "
 				. "GROUP BY `t`.`id`, `t`.`player_name`, `t`.`title`, `t`.`sticky`, `t`.`closed`, `t`.`created`, `t`.`updated` "
-				. "ORDER BY `t`.`sticky` DESC, `t`.`updated` DESC;"
+				. "ORDER BY `t`.`sticky` DESC, `t`.`updated` DESC;",
+				[$getCatInt]
 			);
 
 			$lastReplyBy = array();
-			$lrRows = mysql_select_multi(
+			$lrRows = db()->fetchAll(
 				"SELECT `x`.`thread_id`, `x`.`player_name` FROM `znote_forum_posts` `x` JOIN ("
 				. "SELECT `p2`.`thread_id`, MAX(`p2`.`created`) AS `mc` FROM `znote_forum_posts` `p2` "
-				. "JOIN `znote_forum_threads` `t2` ON `t2`.`id` = `p2`.`thread_id` WHERE `t2`.`forum_id` = '{$getCatInt}' "
-				. "GROUP BY `p2`.`thread_id`) `y` ON `y`.`thread_id` = `x`.`thread_id` AND `y`.`mc` = `x`.`created`;"
+				. "JOIN `znote_forum_threads` `t2` ON `t2`.`id` = `p2`.`thread_id` WHERE `t2`.`forum_id` = ? "
+				. "GROUP BY `p2`.`thread_id`) `y` ON `y`.`thread_id` = `x`.`thread_id` AND `y`.`mc` = `x`.`created`;",
+				[$getCatInt]
 			);
 			foreach ((array)$lrRows as $row) if (!isset($lastReplyBy[$row['thread_id']])) $lastReplyBy[$row['thread_id']] = $row['player_name'];
 
@@ -961,17 +971,24 @@ if (!empty($_GET)) {
 
 	//////////////////////
 	// No category specified, show list of available categories
-	$boardWhere = $admin ? '' : " WHERE `f`.`access` <= '" . (int)$yourAccess . "'";
-	$categories = mysql_select_multi(
+	$boardWhereParams = [];
+	if ($admin) {
+		$boardWhere = '';
+	} else {
+		$boardWhere = " WHERE `f`.`access` <= ?";
+		$boardWhereParams[] = (int)$yourAccess;
+	}
+	$categories = db()->fetchAll(
 		"SELECT `f`.`id`, `f`.`name`, `f`.`access`, `f`.`closed`, `f`.`hidden`, `f`.`guild_id`, "
 		. "COUNT(`t`.`id`) AS `thread_count`, COALESCE(MAX(`t`.`updated`), 0) AS `last_time` "
 		. "FROM `znote_forum` `f` LEFT JOIN `znote_forum_threads` `t` ON `t`.`forum_id` = `f`.`id`"
 		. $boardWhere
-		. " GROUP BY `f`.`id`, `f`.`name`, `f`.`access`, `f`.`closed`, `f`.`hidden`, `f`.`guild_id` ORDER BY `f`.`name`;"
+		. " GROUP BY `f`.`id`, `f`.`name`, `f`.`access`, `f`.`closed`, `f`.`hidden`, `f`.`guild_id` ORDER BY `f`.`name`;",
+		$boardWhereParams
 	);
 
 	$lastThreads = array();
-	$ltRows = mysql_select_multi(
+	$ltRows = db()->fetchAll(
 		"SELECT `x`.`forum_id`, `x`.`player_name`, `x`.`title`, `x`.`id` FROM `znote_forum_threads` `x` "
 		. "JOIN (SELECT `forum_id`, MAX(`updated`) AS `mu` FROM `znote_forum_threads` GROUP BY `forum_id`) `y` "
 		. "ON `y`.`forum_id` = `x`.`forum_id` AND `y`.`mu` = `x`.`updated`;"
@@ -981,7 +998,7 @@ if (!empty($_GET)) {
 	$guild = false;
 	foreach ($charData as $char) if ($char['guild'] > 0) $guild = true;
 	if (!isset($guilds)) {
-		$guilds = mysql_select_multi("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
+		$guilds = db()->fetchAll("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
 		$guilds[] = array('id' => '0', 'name' => 'No guild');
 	}
 	$guildName = array();

@@ -114,3 +114,31 @@ class Cache
         return (json_last_error() === JSON_ERROR_NONE) ? $json : $content;
     }
 }
+
+/**
+ * Wipe every on-disk Cache file plus the APCu store so the next read rebuilds
+ * from source.
+ *
+ * Used by the admin "Refresh catalogue" action on the Plugins and Layout pages:
+ * refreshing only the remote catalogue is not enough when a stale cache is
+ * still hiding a freshly installed or updated plugin/theme, its options or its
+ * locale strings. Everything cleared here is rebuilt lazily on the next request.
+ *
+ * @return int number of cache files removed
+ */
+function znote_cache_flush(): int
+{
+    $removed = 0;
+
+    foreach (glob('engine/cache/*' . Cache::EXT) ?: array() as $file) {
+        if (is_file($file) && @unlink($file)) {
+            $removed++;
+        }
+    }
+
+    if (function_exists('apcu_clear_cache')) {
+        @apcu_clear_cache();
+    }
+
+    return $removed;
+}

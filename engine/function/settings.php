@@ -24,9 +24,9 @@ function znote_table_exists(string $table): bool {
 		return $known[$table];
 	}
 
-	$safe = mysql_znote_escape_string($table);
-
-	return $known[$table] = (mysql_select_multi("SHOW TABLES LIKE '{$safe}';") !== false);
+	$db = db();
+	$escaped = $db->connection()->real_escape_string($table);
+	return $known[$table] = ($db->rawFetchAll("SHOW TABLES LIKE '{$escaped}';") !== false);
 }
 
 function znote_column_exists(string $table, string $column): bool {
@@ -42,10 +42,12 @@ function znote_column_exists(string $table, string $column): bool {
 		return $known[$cacheKey] = false;
 	}
 
-	$safeTable  = mysql_znote_escape_string($table);
-	$safeColumn = mysql_znote_escape_string($column);
+	if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+		return $known[$cacheKey] = false;
+	}
 
-	return $known[$cacheKey] = (mysql_select_single("SHOW COLUMNS FROM `{$safeTable}` LIKE '{$safeColumn}';") !== false);
+	$escaped = db()->connection()->real_escape_string($column);
+	return $known[$cacheKey] = (db()->rawFetchOne("SHOW COLUMNS FROM `{$table}` LIKE '{$escaped}';") !== false);
 }
 
 function znote_settings_all(bool $refresh = false): array {
@@ -57,7 +59,7 @@ function znote_settings_all(bool $refresh = false): array {
 
 	$settings = array();
 
-	$rows = mysql_select_multi("SELECT `key`, `value` FROM `znote_config`;");
+	$rows = db()->fetchAll("SELECT `key`, `value` FROM `znote_config`;");
 	if (is_array($rows)) {
 		foreach ($rows as $row) {
 			$settings[(string)$row['key']] = (string)$row['value'];
@@ -75,14 +77,11 @@ function setting(string $key, ?string $default = null): ?string {
 }
 
 function setting_set(string $key, string $value): bool {
-	$k = mysql_znote_escape_string($key);
-	$v = mysql_znote_escape_string($value);
-
-	$ok = mysql_insert("
+	$ok = db()->execute("
 		INSERT INTO `znote_config` (`key`, `value`)
-		VALUES ('{$k}', '{$v}')
-		ON DUPLICATE KEY UPDATE `value` = '{$v}';
-	");
+		VALUES (?, ?)
+		ON DUPLICATE KEY UPDATE `value` = VALUES(`value`);
+	", [$key, $value]);
 
 	if ($ok !== false) {
 		znote_settings_all(true); // drop the in-memory copy

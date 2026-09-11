@@ -21,7 +21,7 @@ if ($otservers_eu_voting['enabled']) {
 				if ($result['voted'] === true) {
 					$points = $otservers_eu_voting['points'];
 					$pointsText = $points === '1' ? 'point' : 'points';
-					mysql_update("UPDATE `znote_accounts` SET `points` = `points` + '$points' WHERE `account_id`=" . $user_data['id']);
+					db()->execute("UPDATE `znote_accounts` SET `points` = `points` + ? WHERE `account_id` = ?", [(int)$points, (int)$user_data['id']]);
 					echo "<p>Thank you for voting! You have been rewarded with $points $pointsText!</p>";
 				} else {
 					echo '<p>'. t('voting.not_voted'). '</p>';

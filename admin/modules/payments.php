@@ -95,7 +95,7 @@ ksort($tiers, SORT_NUMERIC);
 $perCurrency = (int)znote_config_path($config, 'paypal.points_per_currency', 0);
 $currency    = (string)znote_config_path($config, 'paypal.currency', '');
 $modernPayments = znote_table_exists('znote_payment_transactions')
-	? mysql_select_multi("
+	? db()->fetchAll("
 		SELECT `provider`, `reference`, `provider_reference`, `account_id`, `price`, `currency`, `points`, `status`, `credited`, `test_mode`, `created_at`, `credited_at`
 		FROM `znote_payment_transactions`
 		ORDER BY `id` DESC

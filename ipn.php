@@ -125,7 +125,7 @@ $custom_raw       = (string)($_POST['custom'] ?? '');
 $custom           = (int)$custom_raw;
 
 $connectedIp = $_SERVER['REMOTE_ADDR'];
-mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '0', 'Connection from IP: $connectedIp', '0', '0', '0')");
+db()->execute("INSERT INTO `znote_paypal` VALUES ('0', '0', ?, '0', '0', '0')", ["Connection from IP: $connectedIp"]);
 
 $status = VerifyPaypalIPN();
 if ($status) {
@@ -134,7 +134,7 @@ if ($status) {
 
 
 		// Check that txn_id has not been previously processed
-		$txn_id_check = mysql_select_single("SELECT `txn_id` FROM `znote_paypal` WHERE `txn_id`='$txn_id'");
+		$txn_id_check = db()->fetchOne("SELECT `txn_id` FROM `znote_paypal` WHERE `txn_id` = ?", [$txn_id]);
 		if ($txn_id_check === false) {
 			// Check that receiver_email is your Primary PayPal email
 			if ($receiver_email == $paypal['email']) {
@@ -177,16 +177,28 @@ if ($status) {
 
 				// Verify that the user havent messed around with POST data
 				if ($status) {
-					// transaction log
-					mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '$txn_id', '$payer_email', '$custom', '".$paidMoney."', '".$paidPoints."')");
+					// Re-check for a duplicate and credit inside one locked transaction,
+					// so two concurrent IPN deliveries for the same txn_id cannot both credit points.
+					$creditResult = db()->transaction(function ($db) use ($txn_id, $payer_email, $custom, $paidMoney, $paidPoints) {
+						$dup = $db->fetchOne("SELECT `txn_id` FROM `znote_paypal` WHERE `txn_id` = ? LIMIT 1 FOR UPDATE;", [$txn_id]);
+						if ($dup !== false) {
+							return 'duplicate';
+						}
 
-					// Process payment
-					$data = mysql_select_single("SELECT `points` AS `old_points` FROM `znote_accounts` WHERE `account_id`='$custom';");
+						$db->execute("INSERT INTO `znote_paypal` VALUES ('0', ?, ?, ?, ?, ?)", [$txn_id, $payer_email, $custom, $paidMoney, $paidPoints]);
 
-					// Give points to user
-					if (is_array($data)) {
+						$data = $db->fetchOne("SELECT `points` AS `old_points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;", [$custom]);
+						if (!is_array($data)) {
+							return 'no_account';
+						}
+
 						$new_points = (int)$data['old_points'] + $paidPoints;
-						mysql_update("UPDATE `znote_accounts` SET `points`='$new_points' WHERE `account_id`='$custom'");
+						$db->execute("UPDATE `znote_accounts` SET `points` = ? WHERE `account_id` = ?", [$new_points, $custom]);
+
+						return 'credited';
+					});
+
+					if ($creditResult === 'credited') {
 						if (function_exists('znote_hook')) {
 							znote_hook('payment.completed', array_merge($payment, array(
 								'provider' => 'paypal',
@@ -199,18 +211,18 @@ if ($status) {
 								'status' => 'Completed',
 							)));
 						}
-					} else {
-						mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '$txn_id', 'ERROR: No znote_accounts row for account_id $custom', '0', '0', '0')");
+					} elseif ($creditResult === 'no_account') {
+						db()->execute("INSERT INTO `znote_paypal` VALUES ('0', ?, ?, '0', '0', '0')", [$txn_id, "ERROR: No znote_accounts row for account_id $custom"]);
 					}
 				}
 			}  else {
 				$pmail = $paypal['email'];
-				mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '$txn_id', 'ERROR: Wrong mail. Received: $receiver_email, configured: $pmail', '0', '0', '0')");
+				db()->execute("INSERT INTO `znote_paypal` VALUES ('0', ?, ?, '0', '0', '0')", [$txn_id, "ERROR: Wrong mail. Received: $receiver_email, configured: $pmail"]);
 			}
 		}
 	}
 } else {
 	// Something is wrong
-	mysql_insert("INSERT INTO `znote_paypal` VALUES ('0', '$txn_id', 'ERROR: Invalid data. $postdata', '0', '0', '0')");
+	db()->execute("INSERT INTO `znote_paypal` VALUES ('0', ?, ?, '0', '0', '0')", [$txn_id, "ERROR: Invalid data. $postdata"]);
 }
 ?>

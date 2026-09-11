@@ -409,6 +409,25 @@
 	// Session prefix, if you are hosting multiple sites, make the session name different to avoid conflict.
 	$config['session_prefix'] = 'znote_';
 
+	$config['session'] = array(
+		'cookie_secure' => null, // If you use Cloudflare or reverse proxy that listen http with apache use true here
+		'cookie_samesite' => 'Lax',
+		'cookie_path' => '/',
+		'cookie_domain' => '',
+		'cookie_lifetime' => 0,
+	);
+
+	// Runtime and browser hardening. Keep HSTS disabled until the public domain
+	// is permanently available over HTTPS; browsers remember that choice.
+	$config['security'] = array(
+		'display_errors' => false,
+		'show_database_errors' => false,
+		'headers_enabled' => true,
+		'hsts' => false,
+		'hsts_max_age' => 31536000,
+		'hsts_include_subdomains' => false,
+	);
+
 	// TFS 1.x powergamers and top online
 	// Before enabling powergamers, make sure that you have added Lua files and added the SQL columns to your server db.
 	// files can be found at Lua folder.

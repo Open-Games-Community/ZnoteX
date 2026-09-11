@@ -42,13 +42,13 @@ function theme_menu_items(string $location): array {
 		return $cache[$location];
 	}
 
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `id`, `parent_id`, `label`, `url`, `icon`, `target`, `visibility`
 		FROM `znote_menu`
-		WHERE `location` = '" . mysql_znote_escape_string($location) . "'
+		WHERE `location` = ?
 		  AND `active` = 1
 		ORDER BY `sort_order` ASC, `id` ASC;
-	");
+	", [$location]);
 
 	if (!is_array($rows)) {
 		// No table yet (migration not run) or nothing defined: the theme falls
@@ -113,6 +113,17 @@ function menu_url_available(string $url): bool {
 
 	$path = parse_url($url, PHP_URL_PATH);
 	$page = strtolower(basename($path !== null && $path !== false ? $path : $url));
+
+	// A plugin page (page.php?plugin=X): gone from the menu the moment the
+	// plugin is disabled or uninstalled, without the plugin having to run.
+	if ($page === 'page.php' && function_exists('setting')) {
+		parse_str((string)(parse_url($url, PHP_URL_QUERY) ?: ''), $mq);
+		$mp = isset($mq['plugin']) ? preg_replace('/[^a-z0-9_-]/i', '', (string)$mq['plugin']) : '';
+		if ($mp !== '') {
+			return setting('plugin:' . $mp . ':enabled', '0') === '1'
+				&& (string)setting('plugin:' . $mp . ':version', '') !== '';
+		}
+	}
 
 	switch ($page) {
 		case 'shop.php':
@@ -248,6 +259,6 @@ function theme_menu_locations(?string $theme = null): array {
  * A theme can use it to decide between the managed menu and its own fallback.
  */
 function theme_menu_available(): bool {
-	$row = mysql_select_single("SELECT `id` FROM `znote_menu` LIMIT 1;");
+	$row = db()->fetchOne("SELECT `id` FROM `znote_menu` LIMIT 1;");
 	return is_array($row) && $row;
 }

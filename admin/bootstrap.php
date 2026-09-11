@@ -311,8 +311,8 @@ function acp_badge(string $key): ?int {
 	return $count > 0 ? $count : null;
 }
 
-function acp_count(string $sql): int {
-	$row = mysql_select_single($sql);
+function acp_count(string $sql, array $params = []): int {
+	$row = db()->fetchOne($sql, $params);
 	return is_array($row) && $row ? (int)reset($row) : 0;
 }
 
@@ -335,11 +335,11 @@ function acp_badge_feedback(): int {
 	}
 
 	$new = 0;
-	$threads = mysql_select_multi("SELECT `id`, `player_id` FROM `znote_forum_threads` WHERE `forum_id`='4' AND `closed`='0';");
+	$threads = db()->fetchAll("SELECT `id`, `player_id` FROM `znote_forum_threads` WHERE `forum_id` = 4 AND `closed` = 0;");
 
 	if (is_array($threads)) {
 		$staffIds = [];
-		$staffs = mysql_select_multi("SELECT `id` FROM `players` WHERE `group_id` > '1';");
+		$staffs = db()->fetchAll("SELECT `id` FROM `players` WHERE `group_id` > 1;");
 		if (is_array($staffs)) {
 			foreach ($staffs as $staff) {
 				$staffIds[(int)$staff['id']] = true;
@@ -348,7 +348,7 @@ function acp_badge_feedback(): int {
 
 		foreach ($threads as $thread) {
 			$answered = false;
-			$posts = mysql_select_multi("SELECT `id`, `player_id` FROM `znote_forum_posts` WHERE `thread_id`='" . (int)$thread['id'] . "';");
+			$posts = db()->fetchAll("SELECT `id`, `player_id` FROM `znote_forum_posts` WHERE `thread_id` = ?;", [(int)$thread['id']]);
 
 			if (is_array($posts)) {
 				foreach ($posts as $post) {

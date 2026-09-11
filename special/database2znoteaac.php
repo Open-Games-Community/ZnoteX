@@ -17,7 +17,7 @@ require '../engine/function/users.php';
 
 	// install functions
 	function fetch_all_accounts() {
-		$results = mysql_select_multi("SELECT `id` FROM `accounts`");
+		$results = db()->fetchAll("SELECT `id` FROM `accounts`");
 		$accounts = array();
 		foreach ($results as $row) {
 			$accounts[] = $row['id'];
@@ -26,17 +26,17 @@ require '../engine/function/users.php';
 	}
 
 	function user_count_znote_accounts() {
-		$data = mysql_select_single("SELECT COUNT(`account_id`) AS `count` from `znote_accounts`;");
+		$data = db()->fetchOne("SELECT COUNT(`account_id`) AS `count` from `znote_accounts`;");
 		return ($data !== false) ? $data['count'] : 0;
 	}
 
 	function user_character_is_compatible($pid) {
-		$data = mysql_select_single("SELECT COUNT(`player_id`) AS `count` from `znote_players` WHERE `player_id` = '$pid';");
+		$data = db()->fetchOne("SELECT COUNT(`player_id`) AS `count` from `znote_players` WHERE `player_id` = ?;", [$pid]);
 		return ($data !== false) ? $data['count'] : 0;
 	}
 
 	function fetch_znote_accounts() {
-		$results = mysql_select_multi("SELECT `account_id` FROM `znote_accounts`");
+		$results = db()->fetchAll("SELECT `account_id` FROM `znote_accounts`");
 		$accounts = array();
 		foreach ($results as $row) {
 			$accounts[] = $row['account_id'];
@@ -94,7 +94,7 @@ require '../engine/function/users.php';
 		foreach ($old_accounts as $old) {
 
 			// Make acc data compatible:
-			mysql_insert("INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`) VALUES ('$old', '0', '$time', '')");
+			db()->execute("INSERT INTO `znote_accounts` (`account_id`, `ip`, `created`, `flag`) VALUES (?, 0, ?, '')", [$old, $time]);
 			$updated_acc += 1;
 
 			// Fetch unsalted password
@@ -114,7 +114,7 @@ require '../engine/function/users.php';
 				if ($config['ServerEngine'] == 'TFS_03' && $config['salt'] === true) $p_pass = sha1($password['salt'].$p_pass);
 
 				// Update their password so they are sha1 encrypted
-				mysql_update("UPDATE `accounts` SET `password`='$p_pass' WHERE `id`='$old';");
+				db()->execute("UPDATE `accounts` SET `password` = ? WHERE `id` = ?;", [$p_pass, $old]);
 				$updated_pass += 1;
 			}
 
@@ -136,7 +136,7 @@ require '../engine/function/users.php';
 					if (user_character_is_compatible($c['id']) == 0) {
 						// Then lets make it compatible:
 						$cid =  $c['id'];
-						mysql_insert("INSERT INTO `znote_players` (`player_id`, `created`, `hide_char`, `comment`) VALUES ('$cid', '$time', '0', '')");
+						db()->execute("INSERT INTO `znote_players` (`player_id`, `created`, `hide_char`, `comment`) VALUES (?, ?, 0, '')", [$cid, $time]);
 						$updated_char += 1;
 
 					}

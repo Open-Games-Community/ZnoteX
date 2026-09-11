@@ -53,60 +53,72 @@ if (isset($_POST['pid']) && intv($_POST['pid']) > 0) {
 		$fish   = intv($_POST['fish']   ?? 0);
 		$magic  = intv($_POST['magic']  ?? 0);
 
-		if (!$isTfs10) {
-			// TFS 0.x keeps skills in their own table.
-			mysql_update("UPDATE `player_skills` SET `value`={$fist}   WHERE `player_id`={$pid} AND `skillid`=0 LIMIT 1;");
-			mysql_update("UPDATE `player_skills` SET `value`={$club}   WHERE `player_id`={$pid} AND `skillid`=1 LIMIT 1;");
-			mysql_update("UPDATE `player_skills` SET `value`={$sword}  WHERE `player_id`={$pid} AND `skillid`=2 LIMIT 1;");
-			mysql_update("UPDATE `player_skills` SET `value`={$axe}    WHERE `player_id`={$pid} AND `skillid`=3 LIMIT 1;");
-			mysql_update("UPDATE `player_skills` SET `value`={$dist}   WHERE `player_id`={$pid} AND `skillid`=4 LIMIT 1;");
-			mysql_update("UPDATE `player_skills` SET `value`={$shield} WHERE `player_id`={$pid} AND `skillid`=5 LIMIT 1;");
-			mysql_update("UPDATE `player_skills` SET `value`={$fish}   WHERE `player_id`={$pid} AND `skillid`=6 LIMIT 1;");
-
-			mysql_update("
-				UPDATE `players`
-				SET `maglevel`={$magic},
-					`vocation`={$vocation},
-					`level`={$level},
-					`experience`=" . level_to_experience($level) . ",
-					`health`={$newHp},
-					`healthmax`={$newHp},
-					`mana`={$newMp},
-					`manamax`={$newMp},
-					`cap`={$newCap}
-				WHERE `id`={$pid}
-				LIMIT 1;
-			");
-		} else {
-			mysql_update("
-				UPDATE `players`
-				SET `vocation`={$vocation},
-					`level`={$level},
-					`experience`=" . level_to_experience($level) . ",
-					`health`={$newHp},
-					`healthmax`={$newHp},
-					`mana`={$newMp},
-					`manamax`={$newMp},
-					`cap`={$newCap},
-					`skill_fist`={$fist},
-					`skill_club`={$club},
-					`skill_sword`={$sword},
-					`skill_axe`={$axe},
-					`skill_dist`={$dist},
-					`skill_shielding`={$shield},
-					`skill_fishing`={$fish},
-					`maglevel`={$magic}
-				WHERE `id`={$pid}
-				LIMIT 1;
-			");
+		$db = db();
+		if (!$db->beginTransaction()) {
+			acp_flash_error('Could not start the database transaction.');
+			acp_redirect('skills', $backToName !== '' ? ['name' => $backToName] : []);
 		}
 
-		acp_log('player.update_skills', $backToName, [
-			'level' => $level, 'vocation' => $vocation, 'magic' => $magic,
-			'fist' => $fist, 'club' => $club, 'sword' => $sword, 'axe' => $axe,
-			'dist' => $dist, 'shield' => $shield, 'fish' => $fish,
-		]);
-		acp_flash_success(t('acp.skl.updated'));
+		$ok = true;
+		if (!$isTfs10) {
+			// TFS 0.x keeps skills in their own table.
+			foreach ([0 => $fist, 1 => $club, 2 => $sword, 3 => $axe, 4 => $dist, 5 => $shield, 6 => $fish] as $skillId => $skillValue) {
+				$ok = $ok && $db->execute(
+					"UPDATE `player_skills` SET `value` = ? WHERE `player_id` = ? AND `skillid` = ? LIMIT 1;",
+					[$skillValue, $pid, $skillId]
+				);
+			}
+
+			$ok = $ok && $db->execute("
+				UPDATE `players`
+				SET `maglevel` = ?,
+					`vocation` = ?,
+					`level` = ?,
+					`experience` = ?,
+					`health` = ?,
+					`healthmax` = ?,
+					`mana` = ?,
+					`manamax` = ?,
+					`cap` = ?
+				WHERE `id` = ?
+				LIMIT 1;
+			", [$magic, $vocation, $level, level_to_experience($level), $newHp, $newHp, $newMp, $newMp, $newCap, $pid]);
+		} else {
+			$ok = $db->execute("
+				UPDATE `players`
+				SET `vocation` = ?,
+					`level` = ?,
+					`experience` = ?,
+					`health` = ?,
+					`healthmax` = ?,
+					`mana` = ?,
+					`manamax` = ?,
+					`cap` = ?,
+					`skill_fist` = ?,
+					`skill_club` = ?,
+					`skill_sword` = ?,
+					`skill_axe` = ?,
+					`skill_dist` = ?,
+					`skill_shielding` = ?,
+					`skill_fishing` = ?,
+					`maglevel` = ?
+				WHERE `id` = ?
+				LIMIT 1;
+			", [$vocation, $level, level_to_experience($level), $newHp, $newHp, $newMp, $newMp, $newCap, $fist, $club, $sword, $axe, $dist, $shield, $fish, $magic, $pid]);
+		}
+
+		if ($ok) {
+			$db->commit();
+			acp_log('player.update_skills', $backToName, [
+				'level' => $level, 'vocation' => $vocation, 'magic' => $magic,
+				'fist' => $fist, 'club' => $club, 'sword' => $sword, 'axe' => $axe,
+				'dist' => $dist, 'shield' => $shield, 'fish' => $fish,
+			]);
+			acp_flash_success(t('acp.skl.updated'));
+		} else {
+			$db->rollback();
+			acp_flash_error('Could not update character skills.');
+		}
 	}
 
 	acp_redirect('skills', $backToName !== '' ? ['name' => $backToName] : []);
@@ -128,23 +140,22 @@ if ($name !== '') {
 	$pid = (int)user_character_id($name);
 
 	if (!$isTfs10) {
-		$rows = mysql_select_multi("
+		$rows = db()->fetchAll("
 			SELECT `value` FROM `player_skills`
-			WHERE `player_id`={$pid}
+			WHERE `player_id` = ?
 			ORDER BY `skillid` ASC
 			LIMIT 7;
-		");
+		", [$pid]);
 
-		// mysql_select_multi() returns false when the character has no skill
-		// rows yet - appending to that was a PHP 8.1 deprecation.
+		// The character can exist without skill rows yet.
 		$skills = is_array($rows) ? $rows : [];
 
-		$player = mysql_select_single("
+		$player = db()->fetchOne("
 			SELECT `maglevel`, `level`, `vocation`
 			FROM `players`
-			WHERE `id`={$pid}
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$pid]);
 		if (!is_array($player)) {
 			$player = ['maglevel' => 0, 'level' => 0, 'vocation' => 0];
 		}
@@ -158,14 +169,14 @@ if ($name !== '') {
 		$skills[] = ['value' => $player['level']];
 		$skills[] = ['value' => $player['vocation']];
 	} else {
-		$p = mysql_select_single("
+		$p = db()->fetchOne("
 			SELECT `skill_fist`, `skill_club`, `skill_sword`, `skill_axe`,
 				   `skill_dist`, `skill_shielding`, `skill_fishing`,
 				   `maglevel`, `level`, `vocation`
 			FROM `players`
-			WHERE `id`={$pid}
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$pid]);
 		if (!is_array($p)) {
 			$p = [];
 		}

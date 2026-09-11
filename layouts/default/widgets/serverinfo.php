@@ -1,7 +1,7 @@
 <?php
 $cache = new Cache('engine/cache/asideServerInfo');
 if ($cache->hasExpired()) {
-	$asideServerInfo = mysql_select_single("
+	$asideServerInfo = db()->fetchOne("
 		SELECT 
 			(SELECT COUNT(`id`) FROM `accounts`) as `accounts`,
 			(SELECT COUNT(`id`) FROM `players`) as `players`,

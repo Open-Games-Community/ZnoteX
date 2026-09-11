@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$id = intv($_POST['id'] ?? 0);
 
 	if ($do === 'delete' && $id > 0) {
-		mysql_delete("DELETE FROM `znote_news` WHERE `id` = {$id} LIMIT 1;");
+		db()->execute("DELETE FROM `znote_news` WHERE `id` = ? LIMIT 1;", [$id]);
 		acp_news_rebuild_cache();
 		acp_log('news.delete', '#' . $id);
 		acp_flash_success(t('acp.news.deleted'));
@@ -40,10 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$text   = (string)($_POST['text'] ?? '');
 
 		if ($charId > 0 && $title !== '' && trim($text) !== '') {
-			mysql_insert("
+			db()->execute("
 				INSERT INTO `znote_news` (`title`, `text`, `date`, `pid`)
-				VALUES ('" . esc($title) . "', '" . esc($text) . "', " . time() . ", {$charId});
-			");
+				VALUES (?, ?, ?, ?);
+			", [$title, $text, time(), $charId]);
 			acp_news_rebuild_cache();
 			acp_log('news.create', $title);
 			acp_flash_success(t('acp.news.published'));
@@ -58,12 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$title = trim((string)($_POST['title'] ?? ''));
 		$text  = (string)($_POST['text'] ?? '');
 
-		mysql_update("
+		db()->execute("
 			UPDATE `znote_news`
-			SET `title` = '" . esc($title) . "', `text` = '" . esc($text) . "'
-			WHERE `id` = {$id}
+			SET `title` = ?, `text` = ?
+			WHERE `id` = ?
 			LIMIT 1;
-		");
+		", [$title, $text, $id]);
 		acp_news_rebuild_cache();
 		acp_log('news.update', $title !== '' ? $title : ('#' . $id));
 		acp_flash_success(t('acp.news.updated'));

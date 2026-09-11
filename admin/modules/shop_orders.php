@@ -14,8 +14,8 @@ if (!defined('ACP_ROOT')) {
 
 $items = getItemList();
 
-$pending = mysql_select_multi("SELECT * FROM `znote_shop_orders` ORDER BY `id` DESC;");
-$history = mysql_select_multi("SELECT * FROM `znote_shop_logs` ORDER BY `id` DESC;");
+$pending = db()->fetchAll("SELECT * FROM `znote_shop_orders` ORDER BY `id` DESC;");
+$history = db()->fetchAll("SELECT * FROM `znote_shop_logs` ORDER BY `id` DESC;");
 
 $pending = is_array($pending) ? $pending : [];
 $history = is_array($history) ? $history : [];
@@ -45,12 +45,14 @@ $accountNames = [];
 if ($accountIds) {
 	$isOthire = ($config['ServerEngine'] === 'OTHIRE');
 	$nameColumn = $isOthire ? '`id`' : '`name`';
+	$ids = array_map('intval', array_keys($accountIds));
+	$placeholders = implode(',', array_fill(0, count($ids), '?'));
 
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `id`, {$nameColumn} AS `account_name`
 		FROM `accounts`
-		WHERE `id` IN (" . implode(',', array_map('intval', array_keys($accountIds))) . ");
-	");
+		WHERE `id` IN ({$placeholders});
+	", $ids);
 
 	if (is_array($rows)) {
 		foreach ($rows as $row) {

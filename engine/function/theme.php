@@ -355,6 +355,20 @@ function theme_repository_config(): array {
 	);
 }
 
+function theme_repository_cache_path(): string {
+	return 'engine/cache/layout_repository' . Cache::EXT;
+}
+
+function theme_repository_clear_cache(): bool {
+	$file = theme_repository_cache_path();
+
+	if (!is_file($file)) {
+		return true;
+	}
+
+	return @unlink($file);
+}
+
 /** True when a URL is https and points at a host on the allow list. */
 function theme_repository_url_allowed(string $url): bool {
 	$cfg   = theme_repository_config();
@@ -391,7 +405,7 @@ function theme_repository_get(string $url, ?string $toFile = null, ?string &$err
 	curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.0'));
+	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.1'));
 
 	// The CA bundle shipped with ZnoteX, so this works on Windows too.
 	$ca = znote_cainfo();

@@ -7,11 +7,11 @@
 			<?php
 			$cache = new Cache('engine/cache/topPlayer');
 			if ($cache->hasExpired()) {
-				$players = mysql_select_multi("
-					SELECT `name`, `level`, `experience` 
-					FROM `players` WHERE `group_id` < {$config['highscore']['ignoreGroupId']} 
+				$players = db()->fetchAll("
+					SELECT `name`, `level`, `experience`
+					FROM `players` WHERE `group_id` < ?
 					ORDER BY `level` DESC, `experience` DESC LIMIT 5;
-				");
+				", [$config['highscore']['ignoreGroupId']]);
 
 				$cache->setContent($players);
 				$cache->save();

@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 
 		// Record the version, which the schema's own INSERT may have skipped.
-		@$link->query("UPDATE `znote` SET `version` = '2.0.0'");
+		@$link->query("UPDATE `znote` SET `version` = '2.0.1'");
 
 		$tablesNow = 0;
 		$result = @$link->query("SHOW TABLES LIKE 'znote%'");

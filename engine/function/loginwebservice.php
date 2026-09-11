@@ -74,7 +74,7 @@ function lws_gameserver(): array {
 
 	$gameserver += array('ip' => '127.0.0.1', 'port' => 7172, 'name' => 'ZnoteX');
 
-	$rows = mysql_select_multi("
+	$rows = db()->fetchAll("
 		SELECT `key`, `value`
 		FROM `znote_global_storage`
 		WHERE `key` IN('SERVER_NAME', 'IP', 'GAME_PORT')
@@ -109,7 +109,7 @@ function lws_pvptype(): int {
 
 function lws_boosted(int $tier): array {
 	$creature = znote_table_exists('boosted_creature')
-		? mysql_select_single("SELECT `raceid` FROM `boosted_creature` LIMIT 1;")
+		? db()->fetchOne("SELECT `raceid` FROM `boosted_creature` LIMIT 1;")
 		: false;
 
 	$creatureRace = ($creature !== false) ? (int)$creature['raceid'] : 0;
@@ -119,7 +119,7 @@ function lws_boosted(int $tier): array {
 	}
 
 	$boss = znote_table_exists('boosted_boss')
-		? mysql_select_single("SELECT `raceid` FROM `boosted_boss` LIMIT 1;")
+		? db()->fetchOne("SELECT `raceid` FROM `boosted_boss` LIMIT 1;")
 		: false;
 
 	return array(
@@ -202,17 +202,17 @@ function lws_register_session(int $accountId, string $sessionKey): void {
 		$ttl = 86400;
 	}
 
-	$id      = mysql_znote_escape_string(hash('sha256', $sessionKey));
+	$id      = hash('sha256', $sessionKey);
 	$now     = time();
 	$expires = $now + $ttl;
 
-	mysql_insert("
+	db()->execute("
 		INSERT INTO `account_sessions` (`id`, `account_id`, `expires`)
-		VALUES ('{$id}', '{$accountId}', '{$expires}')
-		ON DUPLICATE KEY UPDATE `account_id` = '{$accountId}', `expires` = '{$expires}';
-	");
+		VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE `account_id` = VALUES(`account_id`), `expires` = VALUES(`expires`);
+	", [$id, $accountId, $expires]);
 
-	mysql_delete("DELETE FROM `account_sessions` WHERE `expires` < '{$now}';");
+	db()->execute("DELETE FROM `account_sessions` WHERE `expires` < ?;", [$now]);
 }
 
 function lws_premium(array $account): array {
@@ -252,12 +252,12 @@ function lws_handle_login($client, int $tier): void {
 
 	if ($email !== false) {
 		$fields .= ', `name`';
-		$account = mysql_select_single("SELECT {$fields} FROM `accounts` WHERE `email`='{$email}' AND `password`='{$password}' LIMIT 1;");
+		$account = db()->fetchOne("SELECT {$fields} FROM `accounts` WHERE `email` = ? AND `password` = ? LIMIT 1;", [$email, $password]);
 		if ($account !== false) {
 			$username = $account['name'];
 		}
 	} elseif ($username !== false) {
-		$account = mysql_select_single("SELECT {$fields} FROM `accounts` WHERE `name`='{$username}' AND `password`='{$password}' LIMIT 1;");
+		$account = db()->fetchOne("SELECT {$fields} FROM `accounts` WHERE `name` = ? AND `password` = ? LIMIT 1;", [$username, $password]);
 	}
 
 	if ($account === false) {
@@ -278,7 +278,7 @@ function lws_handle_login($client, int $tier): void {
 	}
 
 	$columns = '`' . implode('`, `', lws_player_columns($tier)) . '`';
-	$players = mysql_select_multi("SELECT {$columns} FROM `players` WHERE `account_id`='" . (int)$account['id'] . "' AND `deletion` = 0;");
+	$players = db()->fetchAll("SELECT {$columns} FROM `players` WHERE `account_id` = ? AND `deletion` = 0;", [(int)$account['id']]);
 
 	if ($players === false) {
 		lws_error('Character list is empty.');

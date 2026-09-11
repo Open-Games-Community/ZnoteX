@@ -263,7 +263,7 @@ function znote_plugin_install_sql(string $name): string {
 		if ($statement === '') {
 			continue;
 		}
-		if (mysql_insert($statement) === false && mysql_update($statement) === false) {
+		if (!db()->rawExecute($statement)) {
 			$failed[] = substr($statement, 0, 60);
 		}
 	}
@@ -369,6 +369,20 @@ function plugin_repository_config(): array {
 	);
 }
 
+function plugin_repository_cache_path(): string {
+	return 'engine/cache/plugin_repository' . Cache::EXT;
+}
+
+function plugin_repository_clear_cache(): bool {
+	$file = plugin_repository_cache_path();
+
+	if (!is_file($file)) {
+		return true;
+	}
+
+	return @unlink($file);
+}
+
 function plugin_repository_url_allowed(string $url): bool {
 	$cfg   = plugin_repository_config();
 	$parts = parse_url($url);
@@ -400,7 +414,7 @@ function plugin_repository_get(string $url, ?string $toFile = null, ?string &$er
 	curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.0'));
+	curl_setopt($ch, CURLOPT_USERAGENT, 'ZnoteX/' . ($GLOBALS['version'] ?? '2.0.1'));
 
 	$ca = function_exists('znote_cainfo') ? znote_cainfo() : '';
 	if ($ca !== '') {

@@ -34,12 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	if ($do === 'points') {
 		$delta = intv($_POST['points'] ?? 0);
 
-		$row = mysql_select_single("SELECT `points` FROM `znote_accounts` WHERE `account_id` = {$id} LIMIT 1;");
+		$row = db()->fetchOne("SELECT `points` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1;", [$id]);
 		if (!is_array($row)) {
 			acp_flash_error(t('acp.acc.no_row'));
 		} else {
 			$new = max(0, (int)$row['points'] + $delta);
-			mysql_update("UPDATE `znote_accounts` SET `points` = {$new} WHERE `account_id` = {$id};");
+			db()->execute("UPDATE `znote_accounts` SET `points` = ? WHERE `account_id` = ?;", [$new, $id]);
 			acp_log('account.points', '#' . $id, ['delta' => $delta, 'new_balance' => $new]);
 			acp_flash_success(t('acp.acc.points_applied', ['delta' => ($delta >= 0 ? '+' : '') . $delta, 'new' => $new]));
 		}
@@ -53,35 +53,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ---------------------------------------------------------------------------
 $account = null;
 if ($accountId > 0) {
-	$account = mysql_select_single("
+	$account = db()->fetchOne("
 		SELECT `a`.`id`, {$accNameCol} AS `account_name`, `a`.`email`,
 		       `za`.`points`, `za`.`created`, `za`.`ip`, `za`.`flag`, `za`.`active_email`
 		FROM `accounts` `a`
 		LEFT JOIN `znote_accounts` `za` ON `za`.`account_id` = `a`.`id`
-		WHERE `a`.`id` = {$accountId}
+		WHERE `a`.`id` = ?
 		LIMIT 1;
-	");
+	", [$accountId]);
 
 	if (!is_array($account)) {
 		acp_flash_error(t('acp.acc.no_account', ['id' => $accountId]));
 		acp_redirect('accounts');
 	}
 
-	$characters = mysql_select_multi("
+	$characters = db()->fetchAll("
 		SELECT `id`, `name`, `level`, `vocation`, `group_id`
 		FROM `players`
-		WHERE `account_id` = {$accountId}
+		WHERE `account_id` = ?
 		ORDER BY `level` DESC;
-	");
+	", [$accountId]);
 	$characters = is_array($characters) ? $characters : array();
 
-	$purchases = mysql_select_multi("
+	$purchases = db()->fetchAll("
 		SELECT `type`, `itemid`, `count`, `points`, `time`
 		FROM `znote_shop_logs`
-		WHERE `account_id` = {$accountId}
+		WHERE `account_id` = ?
 		ORDER BY `id` DESC
 		LIMIT 10;
-	");
+	", [$accountId]);
 	$purchases = is_array($purchases) ? $purchases : array();
 }
 
@@ -91,15 +91,20 @@ if ($accountId > 0) {
 $results = array();
 if ($account === null) {
 	$where = '';
+	$params = [];
 	if ($search !== '') {
-		$safe  = esc($search);
+		$like = '%' . $search . '%';
 		// Match the account name, its e-mail, or a character on it.
-		$where = "WHERE " . ($isOthire ? "`a`.`id` = '" . (int)$search . "'" : "`a`.`name` LIKE '%{$safe}%'")
-			. " OR `a`.`email` LIKE '%{$safe}%'
-			   OR `a`.`id` IN (SELECT `account_id` FROM `players` WHERE `name` LIKE '%{$safe}%')";
+		if ($isOthire) {
+			$where = "WHERE `a`.`id` = ? OR `a`.`email` LIKE ? OR `a`.`id` IN (SELECT `account_id` FROM `players` WHERE `name` LIKE ?)";
+			$params = [(int)$search, $like, $like];
+		} else {
+			$where = "WHERE `a`.`name` LIKE ? OR `a`.`email` LIKE ? OR `a`.`id` IN (SELECT `account_id` FROM `players` WHERE `name` LIKE ?)";
+			$params = [$like, $like, $like];
+		}
 	}
 
-	$results = mysql_select_multi("
+	$results = db()->fetchAll("
 		SELECT `a`.`id`, {$accNameCol} AS `account_name`, `a`.`email`,
 		       `za`.`points`, `za`.`created`,
 		       (SELECT COUNT(*) FROM `players` `p` WHERE `p`.`account_id` = `a`.`id`) AS `characters`
@@ -108,7 +113,7 @@ if ($account === null) {
 		{$where}
 		ORDER BY `a`.`id` DESC
 		LIMIT 50;
-	");
+	", $params);
 	$results = is_array($results) ? $results : array();
 }
 ?>

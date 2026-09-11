@@ -10,17 +10,18 @@ $l_start = $GLOBALS['__znote_start_time'];
 $start = $GLOBALS['__znote_start_time'];
 
 $time = time();
-$version = '2.0.0';
+$version = '2.0.1';
 
 $aacQueries = 0;
 $accQueriesData = array();
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
 ob_start();
-
 require_once 'config.php';
+require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/security.php';
+znote_session_start((array)($config['session'] ?? array()));
+znote_security_boot((array)($config['security'] ?? array()));
+
 $sessionPrefix = $config['session_prefix'];
 
 if ($config['paypal']['enabled'] || $config['use_captcha']) {
@@ -198,7 +199,7 @@ if ($config['log_ip']) {
 		$timef = $time - $flush;
 		if (getCache() < $timef) {
 			$timef = $time - $visitor_config['time_period'];
-			mysql_delete("DELETE FROM znote_visitors_details WHERE time <= '$timef'");
+			db()->execute("DELETE FROM znote_visitors_details WHERE time <= ?", [$timef]);
 			setCache($time);
 		}
 	}

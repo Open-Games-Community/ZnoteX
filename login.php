@@ -39,7 +39,10 @@ if (empty($_POST) === false) {
 			// Check if user have access to login
 			$status = false;
 			if ($config['mailserver']['register']) {
-				$authenticate = mysql_select_single("SELECT `id` FROM `znote_accounts` WHERE `account_id`='$login' AND `active`='1' LIMIT 1;");
+				$authenticate = db()->fetchOne(
+					"SELECT `id` FROM `znote_accounts` WHERE `account_id` = ? AND `active` = 1 LIMIT 1;",
+					[(int)$login]
+				);
 				if ($authenticate !== false) {
 					$status = true;
 				} else {
@@ -56,10 +59,21 @@ if (empty($_POST) === false) {
 					$authcode = (isset($_POST['authcode'])) ? getValue($_POST['authcode'] ?? null) : false;
 
 					// Load secret values from db
-					$query = mysql_select_single("SELECT `a`.`secret` AS `secret`, `za`.`secret` AS `znote_secret` FROM `accounts` AS `a` INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id` WHERE `a`.`id`='".(int)$login."' LIMIT 1;");
+					$query = db()->fetchOne(
+						"SELECT `a`.`secret` AS `secret`, `za`.`secret` AS `znote_secret`
+						FROM `accounts` AS `a`
+						INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id`
+						WHERE `a`.`id` = ?
+						LIMIT 1;",
+						[(int)$login]
+					);
+
+					if ($query === false) {
+						$errors[] = t('login.failed_title');
+						$status = false;
 
 					// If account table HAS a secret, we need to validate it
-					if ($query['secret'] !== NULL) {
+					} else if ($query['secret'] !== NULL) {
 
 						// Validate the secret first to make sure all is good.
 						if (TokenAuth6238::verify($query['secret'], $authcode) !== true) {
@@ -76,7 +90,10 @@ if (empty($_POST) === false) {
 							// Validate the secret first to make sure all is good.
 							if (TokenAuth6238::verify($query['znote_secret'], $authcode)) {
 								// Success, enable the 2FA system
-								mysql_update("UPDATE `accounts` SET `secret`= '".$query['znote_secret']."' WHERE `id`='$login';");
+								db()->execute(
+									"UPDATE `accounts` SET `secret` = ? WHERE `id` = ?;",
+									[$query['znote_secret'], (int)$login]
+								);
 							} else {
 								$errors[] = t('login.2fa_activate_failed');
 								$errors[] = t('login.2fa_wrong');
@@ -88,7 +105,15 @@ if (empty($_POST) === false) {
 				} // End tfs 1.0+ with 2FA auth
 
 				if ($status) {
+					if (!znote_session_regenerate()) {
+						$errors[] = t('login.failed_title');
+						$status = false;
+					}
+				}
+
+				if ($status) {
 					setSession('user_id', $login);
+					Token::generate();
 
 					// if IP is not set (etc acc created before Znote AAC was in use)
 					$znote_data = user_znote_account_data($login, 'ip');

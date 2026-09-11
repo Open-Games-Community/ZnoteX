@@ -32,11 +32,11 @@ function hours_and_minutes($value, $color = 1)
 			return '<font color="green">'.$hours.'h '.$minutes.'m</font>';
 }
 if(empty($type))
-	$znotePlayers = mysql_select_multi('SELECT * FROM `znote_players` AS `z` JOIN `players` AS `p` WHERE `p`.`id`=`z`.`player_id` and `p`.`group_id` < 3 ORDER BY `onlinetimetoday` DESC LIMIT '.$limit);
+	$znotePlayers = db()->fetchAll('SELECT * FROM `znote_players` AS `z` JOIN `players` AS `p` WHERE `p`.`id`=`z`.`player_id` and `p`.`group_id` < 3 ORDER BY `onlinetimetoday` DESC LIMIT ?', [(int)$limit]);
 elseif($type == "sum")
-	$znotePlayers = mysql_select_multi('SELECT * FROM `znote_players` AS `z` JOIN `players` AS `p` WHERE `p`.`id`=`z`.`player_id` and `p`.`group_id` < 3 ORDER BY `z`.`onlinetimeall` DESC LIMIT '. $limit);
+	$znotePlayers = db()->fetchAll('SELECT * FROM `znote_players` AS `z` JOIN `players` AS `p` WHERE `p`.`id`=`z`.`player_id` and `p`.`group_id` < 3 ORDER BY `z`.`onlinetimeall` DESC LIMIT ?', [(int)$limit]);
 elseif($type >= 1 && $type <= 4)
-	$znotePlayers = mysql_select_multi('SELECT * FROM `znote_players` AS `z` JOIN `players` AS `p` WHERE `p`.`id`=`z`.`player_id` and `p`.`group_id` < 3 ORDER BY `onlinetime' . (int) $type . '` DESC LIMIT '.$limit);
+	$znotePlayers = db()->fetchAll('SELECT * FROM `znote_players` AS `z` JOIN `players` AS `p` WHERE `p`.`id`=`z`.`player_id` and `p`.`group_id` < 3 ORDER BY `onlinetime' . (int) $type . '` DESC LIMIT ?', [(int)$limit]);
 
 view('toponline');
 
