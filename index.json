@@ -139,10 +139,11 @@
   {
     "key": "bloodfang",
     "name": "Bloodfang",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Alex - opengamescommunity.com",
     "description": "Bloodfang theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update CSS responsive on menu.",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
