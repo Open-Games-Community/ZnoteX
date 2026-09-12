@@ -203,19 +203,20 @@ dropped.
 
 ### Upgrading
 
-Replace everything **except** `config.local.php`, `layouts/`, `plugins/` and `engine/cache/`.
-Then apply any new file in `SQL/migrations/`, and check **Admin Panel → Plugins** in case a
-plugin has an update waiting.
+Use **Admin Panel → Update** (see below) — it handles this automatically. If you would rather
+do it by hand, replace everything **except** `config.local.php`, `layouts/`, `plugins/` and
+`engine/cache/`, apply any new file in `SQL/migrations/`, and check **Admin Panel → Plugins** in
+case a plugin has an update waiting.
 
 ---
-## Update ZnoteX 
+## Update ZnoteX
 
-- To update ZnoteX to latest version without installing again the motor, drag and drop all files except:
-
-- install/
-- config.php
-
-Then process migrations from SQL/migrations if needed.
+**Admin Panel → Update** checks, verifies and installs new ZnoteX releases directly from
+GitHub — no re-running the installer, no manually copying files. It downloads the release,
+checks its digital signature and per-file checksums, runs a pre-installation check (PHP version,
+extensions, disk space, writable paths, local modifications), backs up every file it is about to
+touch, then installs. If anything goes wrong afterwards, **Restore latest file backup** puts the
+previous version straight back.
 
 ---
 ## Features
