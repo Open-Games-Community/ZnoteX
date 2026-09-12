@@ -22,39 +22,37 @@ if ($config['mailserver']['accountRecovery']) {
 			if (!$username) {
 				// Recover username
 				$salt = '';
-				if ($config['ServerEngine'] != 'TFS_03') {
-					// TFS 0.2 and 1.0
-					$password = sha1($password);
-				} else {
-					// TFS 0.3/4
-					if (config('salt') === true) {
-						$saltdata = db()->fetchOne(
-							"SELECT `salt` FROM `accounts` WHERE `email` = ? LIMIT 1;",
-							[$email]
-						);
-						if ($saltdata !== false) $salt .= $saltdata['salt'];
-					}
-					$password = sha1($salt.$password);
+				if ($config['ServerEngine'] == 'TFS_03' && config('salt') === true) {
+					$saltdata = db()->fetchOne(
+						"SELECT `salt` FROM `accounts` WHERE `email` = ? LIMIT 1;",
+						[$email]
+					);
+					if ($saltdata !== false) $salt .= $saltdata['salt'];
 				}
 
 				if ($config['ServerEngine'] != 'OTHIRE')
-					$user = db()->fetchOne(
-						"SELECT `p`.`id` AS `player_id`, `a`.`name`
+					$candidate = db()->fetchOne(
+						"SELECT `p`.`id` AS `player_id`, `a`.`id` AS `account_id`, `a`.`name`, `a`.`password`
 						FROM `players` `p`
 						INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id`
-						WHERE `p`.`name` = ? AND `a`.`email` = ? AND `a`.`password` = ?
+						WHERE `p`.`name` = ? AND `a`.`email` = ?
 						LIMIT 1;",
-						[$character, $email, $password]
+						[$character, $email]
 					);
 				else
-					$user = db()->fetchOne(
-						"SELECT `p`.`id` AS `player_id`, `a`.`id` AS `name`
+					$candidate = db()->fetchOne(
+						"SELECT `p`.`id` AS `player_id`, `a`.`id` AS `account_id`, `a`.`id` AS `name`, `a`.`password`
 						FROM `players` `p`
 						INNER JOIN `accounts` `a` ON `p`.`account_id` = `a`.`id`
-						WHERE `p`.`name` = ? AND `a`.`email` = ? AND `a`.`password` = ?
+						WHERE `p`.`name` = ? AND `a`.`email` = ?
 						LIMIT 1;",
-						[$character, $email, $password]
+						[$character, $email]
 					);
+
+				$user = false;
+				if ($candidate !== false && user_verify_login_password((int)$candidate['account_id'], (string)$password, (string)$candidate['password'], $salt)) {
+					$user = $candidate;
+				}
 
 				if ($user !== false) {
 					// Found user
@@ -125,6 +123,7 @@ if ($config['mailserver']['accountRecovery']) {
 						"UPDATE `accounts` SET `password` = ? WHERE `id` = ? LIMIT 1;",
 						[$password, (int)$user['account_id']]
 					);
+					user_set_website_password_hash((int)$user['account_id'], (string)$newpass);
 					// Send him a mail with the new password
 					$mailer = new Mail($config['mailserver']);
 					$title = "$_SERVER[HTTP_HOST]: Your new password";
@@ -147,15 +146,18 @@ if ($config['mailserver']['accountRecovery']) {
 					<?php
 				}
 			} else { // Token
-				$password = sha1($password);
-				$user = db()->fetchOne(
-					"SELECT `a`.`id`, `a`.`name`, `za`.`activekey`
+				$candidate = db()->fetchOne(
+					"SELECT `a`.`id`, `a`.`name`, `a`.`password`, `za`.`activekey`
 					FROM `accounts` AS `a`
 					INNER JOIN `znote_accounts` AS `za` ON `a`.`id` = `za`.`account_id`
-					WHERE `a`.`name` = ? AND `a`.`password` = ? AND `a`.`email` = ?
+					WHERE `a`.`name` = ? AND `a`.`email` = ?
 					LIMIT 1;",
-					[$username, $password, $email]
+					[$username, $email]
 				);
+				$user = false;
+				if ($candidate !== false && user_verify_login_password((int)$candidate['id'], (string)$password, (string)$candidate['password'])) {
+					$user = $candidate;
+				}
 				if ($user !== false) {
 					// Found user
 					$recoverylink = $config['site_url'] . '/recovery.php?a='.$user['id'].'&k='.$user['activekey'];
