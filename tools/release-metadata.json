@@ -1,0 +1,26 @@
+{
+  "version": "2.0.3",
+  "channel": "stable",
+  "title": "ZnoteX 2.0.3",
+  "summary": "Admin permissions, payments hardening, self-updates and developer tooling.",
+  "description": "This release adds role-based admin permissions with audit logging, hardens purchases and payment webhooks, replaces jQuery with vanilla JS, modernizes website password verification without touching game authentication, adds a configurable cache, a signed self-update system with automatic backup and rollback, Composer autoloading, PHPStan static analysis, and a stable API contract for plugins and themes.",
+  "highlights": [
+    "Role-based admin permissions with audit logging for sensitive actions.",
+    "Purchases, payment webhooks and payment history are hardened against abuse.",
+    "Website password verification was modernized without touching game authentication.",
+    "jQuery was replaced with vanilla JS across the admin panel and public pages.",
+    "A configurable cache backend can be chosen from the admin panel.",
+    "Core updates can be checked, verified and installed directly from GitHub, with automatic backup and one-click rollback.",
+    "Plugins and themes declare their ZnoteX, PHP and API compatibility through a stable extension API.",
+    "CSRF protection was added to public forms.",
+    "SCEditor was enhanced with a Quote button and draft autosave."
+  ],
+  "warnings": [
+    "Back up the website and database independently before every production update."
+  ],
+  "requirements": {
+    "php": ">=8.1",
+    "extensions": ["curl", "json", "openssl", "zip"]
+  },
+  "migrations": []
+}

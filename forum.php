@@ -1,4 +1,6 @@
-<?php require_once 'engine/init.php'; theme_open();
+<?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
+theme_open();
 protect_page();
 error_reporting(E_ALL ^ E_NOTICE);
 if (!$config['forum']['enabled']) admin_only($user_data);
@@ -183,6 +185,7 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 			db()->execute("DELETE FROM `znote_forum_posts` WHERE `thread_id` = ?;", [$admin_thread_id]);
 			// Delete thread itself
 			db()->execute("DELETE FROM `znote_forum_threads` WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
+			acp_log('forum.thread_delete', '#' . $admin_thread_id, ['scope' => $admin ? 'owner' : 'guild_leader']);
 			echo '<h1>'. t('forum.thread_deleted'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied'). '</font></b></p>';
 	}
@@ -198,6 +201,7 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_threads` SET `closed` = 1 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
+			acp_log('forum.thread_close', '#' . $admin_thread_id, ['scope' => $admin ? 'owner' : 'guild_leader']);
 			echo '<h1>'. t('forum.thread_closed'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied'). '</font></b></p>';
 	}
@@ -213,6 +217,7 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_threads` SET `closed` = 0 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
+			acp_log('forum.thread_open', '#' . $admin_thread_id, ['scope' => $admin ? 'owner' : 'guild_leader']);
 			echo '<h1>'. t('forum.thread_opened'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
@@ -228,6 +233,7 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_threads` SET `sticky` = 1 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
+			acp_log('forum.thread_sticky', '#' . $admin_thread_id, ['scope' => $admin ? 'owner' : 'guild_leader']);
 			echo '<h1>'. t('forum.thread_stuck2'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
@@ -243,6 +249,7 @@ if ($admin && !empty($_POST) || $leader && !empty($_POST)) {
 		} else $access = true;
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_threads` SET `sticky` = 0 WHERE `id` = ? LIMIT 1;", [$admin_thread_id]);
+			acp_log('forum.thread_unsticky', '#' . $admin_thread_id, ['scope' => $admin ? 'owner' : 'guild_leader']);
 			echo '<h1>'. t('forum.thread_unstuck2'). '</h1>';
 		} else echo '<p><b><font color="red">'. t('forum.perm_denied2') .'</font></b></p>';
 	}
@@ -294,6 +301,7 @@ if ($admin && !empty($_POST)) {
 				$admin_board_create_hidden,
 				$admin_board_create_guild_id,
 			]);
+		acp_log('forum.board_create', (string)$admin_board_create_name, ['access' => $admin_board_create_access, 'guild_id' => $admin_board_create_guild_id]);
 		echo '<h1>'. t('forum.board_created'). '</h1>';
 	}
 
@@ -317,6 +325,7 @@ if ($admin && !empty($_POST)) {
 				$admin_category_guild_id,
 				$admin_category_id,
 			]);
+		acp_log('forum.board_update', '#' . $admin_category_id, ['access' => $admin_category_access, 'guild_id' => $admin_category_guild_id]);
 		echo '<h1>'. t('forum.board_updated'). '</h1>';
 	}
 
@@ -411,6 +420,7 @@ if ($admin && !empty($_POST)) {
 		db()->execute("DELETE FROM `znote_forum_threads` WHERE `forum_id` = ?;", [$admin_category_id]);
 		// Then delete the category
 		db()->execute("DELETE FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$admin_category_id]);
+		acp_log('forum.board_delete', '#' . $admin_category_id);
 		echo '<h1>Board, associated threads and all their associated posts deleted.</h1>';
 	}
 
@@ -420,6 +430,7 @@ if ($admin && !empty($_POST)) {
 
 		// Delete the post
 		db()->execute("DELETE FROM `znote_forum_posts` WHERE `id` = ? LIMIT 1;", [$admin_post_id]);
+		acp_log('forum.post_delete', '#' . $admin_post_id);
 		echo '<h1>'. t('forum.post_deleted'). '</h1>';
 	}
 }
@@ -560,6 +571,7 @@ if (!empty($_GET)) {
 
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_posts` SET `text` = ?, `updated` = ? WHERE `id` = ?;", [$update_post_text, time(), $update_post_id]);
+			if ($admin) acp_log('forum.post_update', '#' . (int)$update_post_id);
 			echo '<h1>post has been updated.</h1>';
 		} else echo "<p class='znf-alert'>" . t('forum.edit_post_denied') . "</p>";
 	}
@@ -578,6 +590,7 @@ if (!empty($_GET)) {
 
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_threads` SET `title` = ?, `text` = ? WHERE `id` = ?;", [$update_thread_title, $update_thread_text, $update_thread_id]);
+			if ($admin) acp_log('forum.thread_update', '#' . (int)$update_thread_id, ['title' => (string)$update_thread_title]);
 			echo '<h1>'. t('forum.thread_updated'). '</h1>';
 		} else echo "<p class='znf-alert'>" . t('forum.edit_thread_denied') . "</p>";
 	}
@@ -673,6 +686,12 @@ if (!empty($_GET)) {
 					<div class="znf-post__body">
 						<div class="znf-post__meta"><span class="znf-tag znf-tag--sticky"><?= t('forum.op_tag') ?></span> <?php echo getClock($threadData['created'], true); ?></div>
 						<div class="znf-post__text"><?php echo znote_bbcode($threadData['text']); ?></div>
+						<?php if ($charCount > 0 && ($threadData['closed'] == 0 || $yourAccess > 3)): ?>
+						<div class="znf-post__actions">
+							<button type="button" class="btn btn-info znf-quote-btn" data-author="<?php echo htmlspecialchars($threadData['player_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= t('forum.quote') ?></button>
+						</div>
+						<?php endif; ?>
+						<template class="znf-quote-source"><?php echo htmlspecialchars($threadData['text'], ENT_QUOTES, 'UTF-8'); ?></template>
 					</div>
 				</article>
 				<?php
@@ -764,6 +783,11 @@ if (!empty($_GET)) {
 								<div class="znf-post__text"><?php echo znote_bbcode($post['text']); ?></div>
 								<div class="znf-post__actions">
 						<?php
+						if ($charCount > 0 && ($threadData['closed'] == 0 || $yourAccess > 3)) {
+							?>
+							<button type="button" class="btn btn-info znf-quote-btn" data-author="<?php echo htmlspecialchars($post['player_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= t('forum.quote') ?></button>
+							<?php
+						}
 						if (PlayerHaveAccess($yourChars, $post['player_name']) || $admin) {
 							if ($admin) {
 								?>
@@ -784,6 +808,7 @@ if (!empty($_GET)) {
 						}
 						?>
 								</div>
+								<template class="znf-quote-source"><?php echo htmlspecialchars($post['text'], ENT_QUOTES, 'UTF-8'); ?></template>
 							</div>
 						</article>
 						<?php

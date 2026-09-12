@@ -32,6 +32,37 @@ function acp_url(string $module = 'dashboard', array $params = []): string {
 	return 'index.php?' . http_build_query(array_merge(['p' => $module], $params));
 }
 
+function acp_module_roles(string $module): array {
+	$map = array(
+		'dashboard'   => array('auditor', 'content', 'moderator', 'support', 'economy', 'ops'),
+		'search'      => array('auditor', 'content', 'moderator', 'support', 'economy', 'ops'),
+		'adminlog'    => array('auditor'),
+		'visitors'    => array('auditor'),
+		'news'        => array('content'),
+		'changelog'   => array('content'),
+		'menus'       => array('content'),
+		'landing'     => array('content'),
+		'gallery'     => array('moderator', 'support'),
+		'reports'     => array('moderator', 'support'),
+		'helpdesk'    => array('support'),
+		'feedback'    => array('support'),
+		'accounts'    => array('economy'),
+		'auction'     => array('economy'),
+		'shop'        => array('economy'),
+		'shop_orders' => array('economy'),
+		'serverinfo'  => array('ops'),
+		'minimap'     => array('ops'),
+	);
+	return $map[$module] ?? array();
+}
+
+function acp_can_module(string $module, ?array $account = null): bool {
+	$account = $account ?? ($GLOBALS['user_data'] ?? null);
+	$roles = admin_roles($account);
+	if (in_array('owner', $roles, true)) return true;
+	return array_intersect($roles, acp_module_roles($module)) !== array();
+}
+
 function acp_editor_assets(): void {
 	static $loaded = false;
 	if ($loaded) return;
@@ -88,11 +119,24 @@ const ACP_GROUP_ORDER = [
 	'Economy'     => 50,
 	'Support'     => 60,
 	'Settings'    => 70,
+	'Update'      => 80,
 ];
 
 function acp_parse_module_header(string $file): array {
 	$head = (string)file_get_contents($file, false, null, 0, 1500);
 	$meta = [];
+	$manifestFile = substr($file, 0, -4) . '.json';
+
+	if (is_file($manifestFile)) {
+		$manifest = json_decode((string)file_get_contents($manifestFile), true);
+		if (is_array($manifest)) {
+			foreach ($manifest as $key => $value) {
+				if (is_string($key) && (is_string($value) || is_numeric($value) || is_bool($value))) {
+					$meta[strtolower($key)] = $value;
+				}
+			}
+		}
+	}
 
 	if (preg_match('~/\*\*(.*?)\*/~s', $head, $block)) {
 		foreach (preg_split('~\R~', $block[1]) as $line) {
@@ -172,7 +216,7 @@ function acp_modules(): array {
 function acp_nav_groups(): array {
 	$groups = [];
 	foreach (acp_modules() as $key => $module) {
-		if (!empty($module['hidden'])) {
+		if (!empty($module['hidden']) || !acp_can_module($key)) {
 			continue;
 		}
 		$groups[$module['group']][$key] = $module;
@@ -188,19 +232,13 @@ function acp_nav_groups(): array {
  * The schemas are read from _partials/, which only return arrays - including
  * the module itself would run its POST handling and print its page.
  */
-function acp_search_index(): array {
-	static $index = null;
-	if ($index !== null) {
-		return $index;
-	}
-
-	$index = [];
-
+function acp_search_index_modules(): array {
+	$entries = [];
 	foreach (acp_modules() as $key => $module) {
-		if (!empty($module['hidden'])) {
+		if (!empty($module['hidden']) || !acp_can_module($key)) {
 			continue;
 		}
-		$index[] = [
+		$entries[] = [
 			'kind'    => 'page',
 			'title'   => $module['title'],
 			'context' => $module['group'],
@@ -210,12 +248,16 @@ function acp_search_index(): array {
 			'haystack' => strtolower($key . ' ' . $module['title'] . ' ' . $module['group'] . ' ' . $module['description']),
 		];
 	}
+	return $entries;
+}
 
+function acp_search_index_settings(): array {
+	$entries = [];
 	$settings = ACP_ROOT . '/modules/_partials/settings_schema.php';
-	if (is_file($settings)) {
+	if (acp_can_module('settings') && is_file($settings)) {
 		foreach ((array)require $settings as $section => $fields) {
 			foreach ((array)$fields as $key => $field) {
-				$index[] = [
+				$entries[] = [
 					'kind'    => 'setting',
 					'title'   => $field['label'] ?? $key,
 					'context' => 'Settings &rsaquo; ' . $section,
@@ -227,12 +269,16 @@ function acp_search_index(): array {
 			}
 		}
 	}
+	return $entries;
+}
 
+function acp_search_index_payments(): array {
+	$entries = [];
 	$payments = ACP_ROOT . '/modules/_partials/payments_schema.php';
-	if (is_file($payments)) {
+	if (acp_can_module('payments') && is_file($payments)) {
 		foreach ((array)require $payments as $groupName => $group) {
 			foreach ((array)($group['fields'] ?? []) as $key => $field) {
-				$index[] = [
+				$entries[] = [
 					'kind'    => 'setting',
 					'title'   => $field['label'] ?? $key,
 					'context' => 'Payments &rsaquo; ' . $groupName,
@@ -244,11 +290,15 @@ function acp_search_index(): array {
 			}
 		}
 	}
+	return $entries;
+}
 
-	if (function_exists('theme_list') && function_exists('theme_options')) {
+function acp_search_index_layouts(): array {
+	$entries = [];
+	if (acp_can_module('layouts') && function_exists('theme_list') && function_exists('theme_options')) {
 		foreach (theme_list() as $themeKey => $theme) {
 			foreach (theme_options($themeKey) as $optKey => $opt) {
-				$index[] = [
+				$entries[] = [
 					'kind'    => 'setting',
 					'title'   => $opt['label'] ?? $optKey,
 					'context' => 'Layout &rsaquo; ' . ($theme['name'] ?? $themeKey) . ' options',
@@ -260,6 +310,21 @@ function acp_search_index(): array {
 			}
 		}
 	}
+	return $entries;
+}
+
+function acp_search_index(): array {
+	static $index = null;
+	if ($index !== null) {
+		return $index;
+	}
+
+	$index = array_merge(
+		acp_search_index_modules(),
+		acp_search_index_settings(),
+		acp_search_index_payments(),
+		acp_search_index_layouts()
+	);
 
 	return $index;
 }

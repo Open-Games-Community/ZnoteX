@@ -45,9 +45,20 @@ The folder name is the plugin's identity: lowercase letters, digits, `-` and
   "author": "You",
   "description": "One or two sentences shown in the admin panel.",
   "url": "https://example.com",
-  "requires": "2.0.0"
+  "requires": {
+    "znotex": ">=2.0.0 <3.0.0",
+    "php": ">=8.1",
+    "api": "^1.0",
+    "extensions": ["json"]
+  }
 }
 ```
+
+The plugin version is independent from theme and ZnoteX versions. The
+`requires` object declares which host environment the plugin supports.
+ZnoteX refuses to install, enable or load an incompatible plugin. The legacy
+string form, such as `"requires": "2.0.0"`, remains supported and means
+ZnoteX 2.0.0 or newer.
 
 ---
 
@@ -63,6 +74,26 @@ database and the settings are up. So:
 
 A `plugin.php` that throws is skipped and logged. One broken plugin does not
 take the site down.
+
+### Stable extension API
+
+```php
+$api = znote_plugin_api('my_plugin');
+
+$api->on('shop.purchased', function (array $data): void {
+});
+
+$value = $api->setting('enabled', '1');
+$cache = $api->cache('catalogue', 300);
+$url = $api->url('shop');
+$asset = $api->asset('style.css');
+$db = $api->database();
+```
+
+The API also exposes `config()`, `setSetting()`, `dispatch()`,
+`filter()`, `collect()`, `allows()`, `apiVersion()` and
+`znoteVersion()`. Plugin settings and cache keys are automatically isolated
+under the plugin name.
 
 ---
 

@@ -2,6 +2,11 @@
   "name": "Default",
   "author": "Blackwolf (Snavy) - converted by Znote",
   "version": "2.0.0",
+  "requires": {
+    "znotex": ">=2.0.0 <3.0.0",
+    "php": ">=8.1",
+    "api": "^1.0"
+  },
   "description": "The classic Znote AAC layout. Also the fallback: any file a theme leaves out is taken from here.",
   "url": "https://otland.net/members/snavy.155163/",
   "menus": {

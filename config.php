@@ -77,6 +77,13 @@
 		'secondaccountName',
 	);
 
+	// Optional least-privilege access to the admin panel. Existing entries in
+	// page_admin_access remain owners with unrestricted access. Keys are account
+	// names (or account IDs on OTHIRE); values may contain: auditor, content,
+	// moderator, support, economy and ops. Example:
+	// $config['page_admin_roles']['Helper'] = array('moderator', 'support');
+	$config['page_admin_roles'] = array();
+
 	// Outfit images.
 	$config['show_outfits'] = array(
 		'shop' => true,
@@ -423,6 +430,12 @@
 		'display_errors' => false,
 		'show_database_errors' => false,
 		'headers_enabled' => true,
+		'content_type_options' => true,
+		'frame_options' => 'SAMEORIGIN',
+		'referrer_policy' => 'strict-origin-when-cross-origin',
+		'permissions_policy' => 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+		'content_security_policy' => "frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+		'cross_domain_policy' => true,
 		'hsts' => false,
 		'hsts_max_age' => 31536000,
 		'hsts_include_subdomains' => false,

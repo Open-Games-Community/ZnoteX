@@ -19,6 +19,23 @@ the root `.php` files, or `config.php`.
 That is the whole install. Your theme appears in the panel the moment the folder
 exists; there is no registry to edit.
 
+Declare compatibility independently from the theme's own version:
+
+```json
+{
+  "name": "My Theme",
+  "version": "1.0.0",
+  "requires": {
+    "znotex": ">=2.0.0 <3.0.0",
+    "php": ">=8.1",
+    "api": "^1.0"
+  }
+}
+```
+
+An incompatible theme remains installed and visible in the panel, but ZnoteX
+will not activate it. The theme version does not need to match a plugin version.
+
 ---
 
 ## What a theme folder can contain
@@ -102,6 +119,10 @@ Everything else is yours to move, delete or rewrite.
 | `theme_shell('wide')` | render this page in `shells/wide.php` instead |
 | `$config` | everything from `config.php` |
 | `user_logged_in()`, `is_admin($user_data)` | session state |
+
+For stable access to configuration, settings, cache, database and hooks, use
+`$api = znote_theme_api()`. The same object exposes `asset()`,
+`themeOption()`, `apiVersion()` and `znoteVersion()`.
 
 Write your menu directly in the shell if you prefer — `theme_menu()` exists only
 if you want it. Nothing is imposed.

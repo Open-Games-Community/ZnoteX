@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/extensions.php';
+
 /**
  * Plugins.
  *
@@ -134,7 +136,7 @@ function znote_plugin_manifest(string $name): array {
 		'author'      => '',
 		'description' => '',
 		'url'         => '',
-		'requires'    => '',
+		'requires'    => array(),
 	);
 
 	$file = ZNOTE_PLUGIN_DIR . '/' . $name . '/plugin.json';
@@ -168,6 +170,10 @@ function znote_plugins(bool $refresh = false): array {
 		$manifest['installed_version'] = znote_plugin_installed_version($name);
 		$manifest['installed'] = ($manifest['installed_version'] !== '');
 		$manifest['update']    = znote_plugin_update_available($name, (string)$manifest['version']);
+		$compatibility = znote_extension_compatibility($manifest);
+		$manifest['compatible'] = $compatibility['compatible'];
+		$manifest['compatibility_errors'] = $compatibility['errors'];
+		$manifest['requirements'] = $compatibility['requires'];
 		$manifest['page_list'] = array_map(
 			static fn(string $f): string => basename($f, '.php'),
 			glob($dir . '/pages/*.php') ?: array()
@@ -219,6 +225,11 @@ function znote_plugin_update_available(string $name, string $folderVersion): boo
  */
 function znote_plugin_install(string $name): string {
 	$manifest = znote_plugin_manifest($name);
+	$compatibility = znote_extension_compatibility($manifest);
+	if (!$compatibility['compatible']) {
+		return implode(' ', $compatibility['errors']);
+	}
+
 	$error    = znote_plugin_install_sql($name);
 
 	if ($error !== '') {
@@ -239,6 +250,13 @@ function znote_plugin_uninstall(string $name): void {
 }
 
 function znote_plugin_set_enabled(string $name, bool $enabled): bool {
+	if ($enabled) {
+		$compatibility = znote_extension_compatibility(znote_plugin_manifest($name));
+		if (!$compatibility['compatible']) {
+			return false;
+		}
+	}
+
 	return setting_set('plugin:' . $name . ':enabled', $enabled ? '1' : '0');
 }
 
@@ -286,7 +304,7 @@ function znote_plugins_load(): void {
 	foreach (znote_plugins() as $name => $plugin) {
 		// Enabled is not enough: a plugin that was never installed has no
 		// tables, and loading it would only produce SQL errors on every page.
-		if (!$plugin['enabled'] || !$plugin['installed']) {
+		if (!$plugin['enabled'] || !$plugin['installed'] || !$plugin['compatible']) {
 			continue;
 		}
 
@@ -307,7 +325,11 @@ function znote_plugins_load(): void {
 
 /** Installed and enabled. What every entry point actually checks. */
 function znote_plugin_active(string $name): bool {
-	return znote_plugin_enabled($name) && znote_plugin_installed_version($name) !== '';
+	if (!znote_plugin_enabled($name) || znote_plugin_installed_version($name) === '') {
+		return false;
+	}
+
+	return znote_extension_compatibility(znote_plugin_manifest($name))['compatible'];
 }
 
 /** Admin modules contributed by active plugins, as key => file path. */
@@ -315,7 +337,7 @@ function znote_plugin_admin_modules(): array {
 	$modules = array();
 
 	foreach (znote_plugins() as $name => $plugin) {
-		if (!$plugin['enabled'] || !$plugin['installed']) {
+		if (!$plugin['enabled'] || !$plugin['installed'] || !$plugin['compatible']) {
 			continue;
 		}
 
@@ -353,7 +375,9 @@ function znote_plugin_url(string $plugin, string $page): string {
 
 /** URL of a file in a plugin's assets/ folder. */
 function znote_plugin_asset(string $plugin, string $file): string {
-	return 'plugins/' . znote_plugin_sanitize($plugin) . '/assets/' . ltrim($file, '/');
+	$plugin = znote_plugin_sanitize($plugin);
+	$file = znote_extension_relative_path($file);
+	return $plugin !== '' && $file !== '' ? 'plugins/' . $plugin . '/assets/' . znote_extension_url_path($file) : '';
 }
 
 function plugin_repository_config(): array {
@@ -524,6 +548,7 @@ function plugin_repository_list(bool $refresh = false): array {
 			'name'        => (string)($entry['name'] ?? ucfirst($key)),
 			'author'      => (string)($entry['author'] ?? ''),
 			'version'     => (string)($entry['version'] ?? ''),
+			'requires'    => $entry['requires'] ?? array(),
 			'description' => (string)($entry['description'] ?? ''),
 			'changelog'   => $changelog,
 			'url'         => (string)($entry['url'] ?? ''),

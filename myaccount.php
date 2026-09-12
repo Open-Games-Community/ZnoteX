@@ -443,14 +443,22 @@ if ($render_page) {
 			}
 		}
 	</script>
-	<script src="engine/js/jquery-1.10.2.min.js" type="text/javascript"></script>
 	<script>
-		$(document).ready(function(){
-			$("#submit_button").click(function(e){
-				if ($("#action").find(":selected").attr('class') == "needconfirmation") {
-					var r = confirm("Do you really want to DELETE character: "+$('#selected_character').find(":selected").text()+"?")
-					if (r == false) {
-						e.preventDefault();
+		document.addEventListener('DOMContentLoaded', function () {
+			var submitButton = document.getElementById('submit_button');
+			var actionSelect = document.getElementById('action');
+			var characterSelect = document.getElementById('selected_character');
+			if (!submitButton || !actionSelect || !characterSelect) {
+				return;
+			}
+
+			submitButton.addEventListener('click', function (event) {
+				var selectedAction = actionSelect.options[actionSelect.selectedIndex];
+				if (selectedAction && selectedAction.classList.contains('needconfirmation')) {
+					var selectedCharacter = characterSelect.options[characterSelect.selectedIndex];
+					var name = selectedCharacter ? selectedCharacter.text : '';
+					if (!confirm('Do you really want to DELETE character: ' + name + '?')) {
+						event.preventDefault();
 					}
 				}
 			});

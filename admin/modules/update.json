@@ -1,0 +1,7 @@
+{
+  "title": "Update",
+  "icon": "fa-cloud-download",
+  "group": "Update",
+  "order": 10,
+  "description": "Check, validate, install and roll back ZnoteX core releases."
+}

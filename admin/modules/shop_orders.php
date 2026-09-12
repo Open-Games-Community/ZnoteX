@@ -14,8 +14,16 @@ if (!defined('ACP_ROOT')) {
 
 $items = getItemList();
 
-$pending = db()->fetchAll("SELECT * FROM `znote_shop_orders` ORDER BY `id` DESC;");
-$history = db()->fetchAll("SELECT * FROM `znote_shop_logs` ORDER BY `id` DESC;");
+$historyPage = max(1, intv($_GET['page'] ?? 1));
+$historyPerPage = 50;
+$pendingTotal = acp_count("SELECT COUNT(*) AS `c` FROM `znote_shop_orders`;");
+$historyTotal = acp_count("SELECT COUNT(*) AS `c` FROM `znote_shop_logs`;");
+$historyPages = max(1, (int)ceil($historyTotal / $historyPerPage));
+$historyPage = min($historyPage, $historyPages);
+$historyOffset = ($historyPage - 1) * $historyPerPage;
+
+$pending = db()->fetchAll("SELECT * FROM `znote_shop_orders` ORDER BY `id` DESC LIMIT 100;");
+$history = db()->fetchAll("SELECT * FROM `znote_shop_logs` ORDER BY `id` DESC LIMIT {$historyOffset}, {$historyPerPage};");
 
 $pending = is_array($pending) ? $pending : [];
 $history = is_array($history) ? $history : [];
@@ -67,16 +75,13 @@ function acp_shop_orders_account(int $id, array $names): string {
 		: '<span class="is-muted">' . t('acp.sord.deleted_account', ['id' => $id]) . '</span>';
 }
 
-$historyPoints = 0;
-foreach ($history as $order) {
-	$historyPoints += intv($order['points'] ?? 0);
-}
+$historyPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote_shop_logs`;");
 ?>
 
 <div class="acp-stats">
 	<?php
-	acp_stat(t('acp.sord.stat_pending'), count($pending), 'fa-hourglass-half', null, 'amber');
-	acp_stat(t('acp.sord.stat_completed'), count($history), 'fa-check-circle', null, 'green');
+	acp_stat(t('acp.sord.stat_pending'), $pendingTotal, 'fa-hourglass-half', null, 'amber');
+	acp_stat(t('acp.sord.stat_completed'), $historyTotal, 'fa-check-circle', null, 'green');
 	acp_stat(t('acp.sord.stat_points'), $historyPoints, 'fa-diamond', null, 'purple');
 	acp_stat(t('acp.sord.stat_manage'), t('acp.sord.open'), 'fa-tags', acp_url('shop'), 'blue');
 	?>
@@ -176,6 +181,15 @@ foreach ($history as $order) {
 			</div>
 		<?php else: ?>
 			<?php acp_empty(t('acp.sord.history_empty'), 'fa-shopping-cart'); ?>
+		<?php endif; ?>
+		<?php if ($historyPages > 1): ?>
+			<div class="acp-toolbar">
+				<span class="is-muted"><?= $historyPage ?> / <?= $historyPages ?></span>
+				<div class="acp-actions is-tight">
+					<?php if ($historyPage > 1): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['page' => $historyPage - 1])) ?>"><?= t('common.previous') ?></a><?php endif; ?>
+					<?php if ($historyPage < $historyPages): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['page' => $historyPage + 1])) ?>"><?= t('common.next') ?></a><?php endif; ?>
+				</div>
+			</div>
 		<?php endif; ?>
 	</div>
 </section>

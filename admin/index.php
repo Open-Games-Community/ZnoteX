@@ -13,7 +13,9 @@ if (user_logged_in() !== true) {
 	header('Location: ../protected.php');
 	exit;
 }
-if (!is_admin($user_data ?? null)) {
+
+if (!has_admin_panel_access($user_data ?? null)) {
+	acp_log('access.panel_denied', (string)($_GET['p'] ?? 'dashboard'));
 	header('Location: ../myaccount.php');
 	exit;
 }
@@ -30,6 +32,12 @@ if (!isset($acp_modules[$acp_page])) {
 }
 
 $acp_module = $acp_modules[$acp_page] ?? null;
+
+if ($acp_module !== null && !acp_can_module($acp_page)) {
+	acp_log('access.module_denied', $acp_page, ['roles' => admin_roles($user_data)]);
+	http_response_code(403);
+	die('You do not have permission to access this admin module.');
+}
 
 // A nav entry that points somewhere else on the site is a link, not a page.
 if ($acp_module !== null && !empty($acp_module['url'])) {
@@ -48,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !acp_verify_csrf()) {
+	acp_log('security.csrf_rejected', $acp_page);
 	http_response_code(400);
 	die('Invalid CSRF token. Reload the page and try again.');
 }

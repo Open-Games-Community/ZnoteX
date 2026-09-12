@@ -1,5 +1,11 @@
 <?php
 
+$shopSession = '';
+if ($loggedin === true) {
+	$shopSession = bin2hex(random_bytes(32));
+	$_SESSION['shop_session'] = $shopSession;
+}
+
 if ($shop['enabled']) {
 ?>
 
@@ -140,7 +146,7 @@ foreach ($shop_list as $key => $offer) {
 				<td>
 					<form action="" method="POST">
 						<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
-						<input type="hidden" name="session" value="<?php echo time(); ?>">
+						<input type="hidden" name="session" value="<?= h($shopSession) ?>">
 						<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 					</form>
 				</td>
@@ -171,7 +177,7 @@ foreach ($shop_list as $key => $offer) {
 			<td>
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
-					<input type="hidden" name="session" value="<?php echo time(); ?>">
+					<input type="hidden" name="session" value="<?= h($shopSession) ?>">
 					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
@@ -211,7 +217,7 @@ foreach ($shop_list as $key => $offer) {
 			<td>
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
-					<input type="hidden" name="session" value="<?php echo time(); ?>">
+					<input type="hidden" name="session" value="<?= h($shopSession) ?>">
 					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
@@ -240,7 +246,7 @@ foreach ($shop_list as $key => $offer) {
 			<td>
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
-					<input type="hidden" name="session" value="<?php echo time(); ?>">
+					<input type="hidden" name="session" value="<?= h($shopSession) ?>">
 					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
@@ -275,7 +281,7 @@ foreach ($shop_list as $key => $offer) {
 			<td>
 				<form action="" method="POST">
 					<input type="hidden" name="buy" value="<?php echo (int)$key; ?>">
-					<input type="hidden" name="session" value="<?php echo time(); ?>">
+					<input type="hidden" name="session" value="<?= h($shopSession) ?>">
 					<input type="submit" value="<?= h(t('shop.purchase')) ?>"  class="needconfirmation" data-item-name="<?php echo $offers['description']; ?>" data-item-cost="<?php echo $offers['points']; ?>">
 				</form>
 			</td>
@@ -286,24 +292,19 @@ foreach ($shop_list as $key => $offer) {
 <?php endif; ?>
 
 <?php if ($shop['enableShopConfirmation']) { ?>
-<script src="https://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
 <script>
-	$(document).ready(function(){
-		$(".needconfirmation").each(function(e){
-			$(this).click(function(e){
-				var itemname = $(this).attr("data-item-name");
-				var itemcost = $(this).attr("data-item-cost");
-				var r = confirm("Do you really want to purchase "+itemname+" for "+itemcost+" points?")
-				if(r == false){
-					e.preventDefault();
+	document.addEventListener('DOMContentLoaded', function () {
+		document.querySelectorAll('.needconfirmation').forEach(function (button) {
+			button.addEventListener('click', function (event) {
+				var itemName = this.getAttribute('data-item-name') || 'this offer';
+				var itemCost = this.getAttribute('data-item-cost') || '0';
+				if (!confirm('Do you really want to purchase ' + itemName + ' for ' + itemCost + ' points?')) {
+					event.preventDefault();
 				}
 			});
 		});
 	});
 </script>
 <?php }
-
-	// Store current timestamp to prevent page-reload from processing old purchase
-	$_SESSION['shop_session'] = time();
 
 } else echo '<h1>'. t('buypoints.disabled') .'</h1><p>'. t('buypoints.disabled_text') .'</p>';

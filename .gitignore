@@ -1,6 +1,8 @@
 *.cache.php
 engine/cache/*
 .idea
+vendor/
+/release/
 # Theme packaging and its output. This belongs on the layouts branch, not here:
 # the code branch stays small, and cloning it does not drag the themes along.
 upload_github/

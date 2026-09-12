@@ -25,32 +25,41 @@
 		?>
 		<script type="text/javascript">
 			window.searchNames = <?php echo json_encode($names); ?>;
-			$(function() {
-				if (window.searchNames.length > 0) {
-					$('#src_name').keyup(function(e) {
-						$('#name_suggestion').html('');
-						var search = $(this).val().toLowerCase();
-						var results = new Array();
-						if (search.length > 0) {
-							var i = 0;
-							for (i; i < window.searchNames.length && results.length < 10; i+=1) {
-								if (window.searchNames[i].toLowerCase().indexOf(search) > -1) {
-									results.push(window.searchNames[i]);
-								}
-							}
-						}
-						if (results.length > 0) {
-							i = 0;
-							var search_html = "";
-							for (i; i < results.length; i+=1) {
-								search_html += '<div class="sname"><a href="characterprofile.php?name='+results[i]+'">'+results[i]+'</a></div>';
-							}
-							$('#name_suggestion').addClass('show').html(search_html);
-						} else {
-							$('#name_suggestion.show').removeClass('show');
-						}
-					});
+			document.addEventListener('DOMContentLoaded', function () {
+				var input = document.getElementById('src_name');
+				var suggestion = document.getElementById('name_suggestion');
+				if (!input || !suggestion || !Array.isArray(window.searchNames) || window.searchNames.length === 0) {
+					return;
 				}
+
+				input.addEventListener('keyup', function () {
+					suggestion.innerHTML = '';
+					var search = input.value.toLowerCase();
+					var results = [];
+
+					if (search.length > 0) {
+						for (var i = 0; i < window.searchNames.length && results.length < 10; i += 1) {
+							if (String(window.searchNames[i]).toLowerCase().indexOf(search) > -1) {
+								results.push(window.searchNames[i]);
+							}
+						}
+					}
+
+					if (results.length > 0) {
+						results.forEach(function (name) {
+							var row = document.createElement('div');
+							var link = document.createElement('a');
+							row.className = 'sname';
+							link.href = 'characterprofile.php?name=' + encodeURIComponent(name);
+							link.textContent = name;
+							row.appendChild(link);
+							suggestion.appendChild(row);
+						});
+						suggestion.classList.add('show');
+					} else {
+						suggestion.classList.remove('show');
+					}
+				});
 			});
 		</script>
 	</div>

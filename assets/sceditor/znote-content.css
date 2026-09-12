@@ -1,18 +1,34 @@
 html, body {
 	margin: 0;
 	padding: 6px 8px;
-	background: transparent;
-	color: #1c1f27;
+	background: var(--znote-editor-bg, transparent);
+	color: var(--znote-editor-color, #dfe4ec);
 	font: 14px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 	word-wrap: break-word;
+	caret-color: var(--znote-editor-color, #dfe4ec);
 }
 
 body { min-height: 100%; }
 
-html[data-acp-theme="dark"], html[data-acp-theme="dark"] body { color: #c8cedb; }
+html[data-znote-editor-scheme="light"], html[data-znote-editor-scheme="light"] body {
+	color: var(--znote-editor-color, #1c1f27);
+}
 
-a { color: #b9762a; }
-html[data-acp-theme="dark"] a { color: #d9a441; }
+html[data-acp-theme="dark"], html[data-acp-theme="dark"] body,
+html[data-znote-editor-scheme="dark"], html[data-znote-editor-scheme="dark"] body {
+	color: var(--znote-editor-color, #c8cedb);
+}
+
+a { color: var(--znote-editor-link, #b9762a); }
+html[data-acp-theme="dark"] a,
+html[data-znote-editor-scheme="dark"] a {
+	color: var(--znote-editor-link, #d9a441);
+}
+
+::selection {
+	background: var(--znote-editor-selection-bg, #0b65c2);
+	color: var(--znote-editor-selection-color, #ffffff);
+}
 
 img {
 	max-width: 100%;

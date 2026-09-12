@@ -20,6 +20,7 @@ if (empty($_POST) === false) {
 	if (!is_array($pass_data)) $pass_data = array('password' => '');
 
 	// .3 compatibility
+	$salt = array('salt' => '');
 	if ($config['ServerEngine'] == 'TFS_03' && $config['salt'] === true) {
 		$salt = user_data($session_user_id, 'salt');
 		if (!is_array($salt)) $salt = array('salt' => '');
@@ -27,7 +28,7 @@ if (empty($_POST) === false) {
 	$current_password = (string)($_POST['current_password'] ?? '');
 	$new_password = (string)($_POST['new_password'] ?? '');
 	$new_password_again = (string)($_POST['new_password_again'] ?? '');
-	if (sha1($current_password) === $pass_data['password'] || $config['ServerEngine'] == 'TFS_03' && $config['salt'] === true && sha1($salt['salt'].$current_password) === $pass_data['password']) {
+	if (user_verify_login_password((int)$session_user_id, $current_password, (string)$pass_data['password'], (string)($salt['salt'] ?? ''))) {
 		if (trim($new_password) !== trim($new_password_again)) {
 			$errors[] = t('changepw.mismatch');
 		} else if (strlen($new_password) < 6) {

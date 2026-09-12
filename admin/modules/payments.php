@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	$saved = 0;
 	$failed = 0;
+	$savedKeys = array();
 
 	if (isset($_POST['pay'])) {
 		foreach (acp_payments_schema() as $group) {
@@ -39,7 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					continue;
 				}
 				$value = acp_payment_cast($field['type'], $_POST['pay'][$key] ?? '');
-				setting_set('config:' . $key, $value) ? $saved++ : $failed++;
+				if (setting_set('config:' . $key, $value)) {
+					$saved++;
+					$savedKeys[] = $key;
+				} else $failed++;
 			}
 		}
 	}
@@ -59,13 +63,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 
 		ksort($tiers, SORT_NUMERIC);
-		setting_set('config:paypal_prices', json_encode($tiers, JSON_FORCE_OBJECT)) ? $saved++ : $failed++;
+		if (setting_set('config:paypal_prices', json_encode($tiers, JSON_FORCE_OBJECT))) {
+			$saved++;
+			$savedKeys[] = 'paypal_prices';
+		} else $failed++;
 	}
 
+	if ($saved > 0) {
+		acp_log('payments.save', '', ['fields' => $savedKeys, 'failed' => $failed]);
+	}
 	if ($failed > 0) {
 		acp_flash_error(t('acp.pay.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_log('payments.save', '', ['fields_saved' => $saved]);
 		acp_flash_success(t('acp.pay.save_success', ['n' => $saved]));
 	}
 
@@ -94,12 +103,28 @@ ksort($tiers, SORT_NUMERIC);
 
 $perCurrency = (int)znote_config_path($config, 'paypal.points_per_currency', 0);
 $currency    = (string)znote_config_path($config, 'paypal.currency', '');
+$paymentPage = max(1, intv($_GET['page'] ?? 1));
+$paymentPerPage = 50;
+$paymentTotal = znote_table_exists('znote_payment_transactions')
+	? acp_count("SELECT COUNT(*) AS `c` FROM `znote_payment_transactions`;")
+	: 0;
+$paymentPages = max(1, (int)ceil($paymentTotal / $paymentPerPage));
+$paymentPage = min($paymentPage, $paymentPages);
+$paymentOffset = ($paymentPage - 1) * $paymentPerPage;
 $modernPayments = znote_table_exists('znote_payment_transactions')
 	? db()->fetchAll("
 		SELECT `provider`, `reference`, `provider_reference`, `account_id`, `price`, `currency`, `points`, `status`, `credited`, `test_mode`, `created_at`, `credited_at`
 		FROM `znote_payment_transactions`
 		ORDER BY `id` DESC
-		LIMIT 10;
+		LIMIT {$paymentOffset}, {$paymentPerPage};
+	")
+	: false;
+$paymentEvents = znote_table_exists('znote_payment_events')
+	? db()->fetchAll("
+		SELECT `provider`, `event_id`, `provider_reference`, `payment_reference`, `status`, `received_at`
+		FROM `znote_payment_events`
+		ORDER BY `id` DESC
+		LIMIT 50;
 	")
 	: false;
 ?>
@@ -247,11 +272,12 @@ $modernPayments = znote_table_exists('znote_payment_transactions')
 		<?php if (is_array($modernPayments) && $modernPayments): ?>
 			<div class="acp-table-wrap">
 				<table class="acp-table">
-					<thead><tr><th>Provider</th><th>Account</th><th>Amount</th><th class="is-num">Points</th><th>Status</th><th>Created</th><th>Credited</th></tr></thead>
+					<thead><tr><th>Provider</th><th>Reference</th><th>Account</th><th>Amount</th><th class="is-num">Points</th><th>Status</th><th>Created</th><th>Credited</th></tr></thead>
 					<tbody>
 						<?php foreach ($modernPayments as $row): ?>
 							<tr>
 								<td><?= h(ucfirst((string)$row['provider'])) ?><?= !empty($row['test_mode']) ? ' <span class="acp-pill acp-pill--grey">test</span>' : '' ?></td>
+								<td><code title="<?= h((string)$row['provider_reference']) ?>"><?= h((string)$row['reference']) ?></code></td>
 								<td class="is-num"><?= (int)$row['account_id'] ?></td>
 								<td><?= h(number_format((float)$row['price'], 2, '.', '')) ?> <?= h($row['currency']) ?></td>
 								<td class="is-num"><?= (int)$row['points'] ?></td>
@@ -265,6 +291,43 @@ $modernPayments = znote_table_exists('znote_payment_transactions')
 			</div>
 		<?php else: ?>
 			<?php acp_empty('No Stripe or Mercado Pago transaction yet.', 'fa-credit-card'); ?>
+		<?php endif; ?>
+		<?php if ($paymentPages > 1): ?>
+			<div class="acp-toolbar">
+				<span class="is-muted"><?= $paymentPage ?> / <?= $paymentPages ?></span>
+				<div class="acp-actions is-tight">
+					<?php if ($paymentPage > 1): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('payments', ['page' => $paymentPage - 1])) ?>"><?= t('common.previous') ?></a><?php endif; ?>
+					<?php if ($paymentPage < $paymentPages): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('payments', ['page' => $paymentPage + 1])) ?>"><?= t('common.next') ?></a><?php endif; ?>
+				</div>
+			</div>
+		<?php endif; ?>
+	</div>
+</section>
+
+<section class="acp-card">
+	<header class="acp-card-head">
+		<h2><i class="fa fa-exchange"></i> Recent webhook events</h2>
+	</header>
+	<div class="acp-card-body is-flush">
+		<?php if (is_array($paymentEvents) && $paymentEvents): ?>
+			<div class="acp-table-wrap">
+				<table class="acp-table">
+					<thead><tr><th>Provider</th><th>Event</th><th>Payment</th><th>Status</th><th>Received</th></tr></thead>
+					<tbody>
+						<?php foreach ($paymentEvents as $event): ?>
+							<tr>
+								<td><?= h(ucfirst((string)$event['provider'])) ?></td>
+								<td><code><?= h((string)$event['event_id']) ?></code></td>
+								<td><code title="<?= h((string)$event['provider_reference']) ?>"><?= h((string)$event['payment_reference']) ?></code></td>
+								<td><?= h((string)$event['status']) ?></td>
+								<td><?= date('Y-m-d H:i', (int)$event['received_at']) ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		<?php else: ?>
+			<?php acp_empty('No webhook event yet.', 'fa-exchange'); ?>
 		<?php endif; ?>
 	</div>
 </section>

@@ -224,7 +224,7 @@ function setPlayerStorage($player_id, $storage, $value) {
 	$player_id = (int)$player_id;
 
 	// If the storage does not exist yet
-	if (getPlayerStorage($storage) === false) {
+	if (getPlayerStorage($player_id, $storage) === false) {
 		db()->execute("INSERT INTO `player_storage` (`player_id`, `key`, `value`) VALUES (?, ?, ?)", [$player_id, $storage, $value]);
 	} else {// If the storage exist
 		db()->execute("UPDATE `player_storage` SET `value` = ? WHERE `key` = ? AND `player_id` = ?", [$value, $storage, $player_id]);
@@ -987,21 +987,49 @@ function user_update_znote_account($update_data) {
 	db()->execute("UPDATE `znote_accounts` SET " . implode(', ', $set) . " WHERE `account_id` = ?;", $params);
 }
 
+function user_password_hash_supported(): bool {
+	return function_exists('znote_column_exists') && znote_column_exists('znote_accounts', 'password_hash');
+}
+
+function user_set_website_password_hash(int $accountId, string $plainPassword): void {
+	if (!user_password_hash_supported()) return;
+	db()->execute("UPDATE `znote_accounts` SET `password_hash` = ? WHERE `account_id` = ?;", [password_hash($plainPassword, PASSWORD_DEFAULT), $accountId]);
+}
+
+function user_verify_login_password(int $accountId, string $plainPassword, string $storedHash, string $salt = ''): bool {
+	if (user_password_hash_supported()) {
+		$row = db()->fetchOne("SELECT `password_hash` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1;", [$accountId]);
+		if (is_array($row) && !empty($row['password_hash'])) {
+			return password_verify($plainPassword, (string)$row['password_hash']);
+		}
+	}
+
+	$legacy = $salt !== '' ? sha1($salt . $plainPassword) : sha1($plainPassword);
+	if (!hash_equals($storedHash, $legacy)) {
+		return false;
+	}
+
+	user_set_website_password_hash($accountId, $plainPassword);
+	return true;
+}
+
 // Change password on account_id (Note: You should verify that he knows the old password before doing this)
 function user_change_password($user_id, $password) {
 	$user_id = (int)$user_id;
-	$password = sha1($password);
+	$plainPassword = (string)$password;
 
-	db()->execute("UPDATE `accounts` SET `password` = ? WHERE `id` = ?;", [$password, $user_id]);
+	db()->execute("UPDATE `accounts` SET `password` = ? WHERE `id` = ?;", [sha1($plainPassword), $user_id]);
+	user_set_website_password_hash($user_id, $plainPassword);
 }
 // .3 compatibility
 function user_change_password03($user_id, $password) {
 	if (config('salt') === true) {
 		$user_id = (int)$user_id;
+		$plainPassword = (string)$password;
 		$salt = user_data($user_id, 'salt');
-		$password = sha1($salt['salt'].$password);
 
-		db()->execute("UPDATE `accounts` SET `password` = ? WHERE `id` = ?;", [$password, $user_id]);
+		db()->execute("UPDATE `accounts` SET `password` = ? WHERE `id` = ?;", [sha1($salt['salt'].$plainPassword), $user_id]);
+		user_set_website_password_hash($user_id, $plainPassword);
 	} else {
 		user_change_password($user_id, $password);
 	}
@@ -1450,13 +1478,10 @@ function user_password_exist($password) {
 
 // Verify that submitted password match stored password in account id
 function user_password_match($password, $account_id) {
-	$password = sha1($password); // No need to sanitize passwords since we encrypt them.
 	$account_id = (int)$account_id;
-	$data = db()->fetchOne(
-		"SELECT `id` FROM `accounts` WHERE `password` = ? AND `id` = ?;",
-		[$password, $account_id]
-	);
-	return ($data !== false) ? true : false;
+	$data = db()->fetchOne("SELECT `password` FROM `accounts` WHERE `id` = ?;", [$account_id]);
+	if ($data === false) return false;
+	return user_verify_login_password($account_id, (string)$password, (string)$data['password']);
 }
 
 // Get user ID from name
@@ -1473,19 +1498,12 @@ function user_id($username) {
 // Get user login ID from username and password
 function user_login_id($username, $password) {
 	$username = (string)$username;
-	$password = sha1($password);
 	if (config('ServerEngine') !== 'OTHIRE')
-		$data = db()->fetchOne(
-			"SELECT `id` FROM `accounts` WHERE `name` = ? AND `password` = ? LIMIT 1;",
-			[$username, $password]
-		);
+		$data = db()->fetchOne("SELECT `id`, `password` FROM `accounts` WHERE `name` = ? LIMIT 1;", [$username]);
 	else
-		$data = db()->fetchOne(
-			"SELECT `id` FROM `accounts` WHERE `id` = ? AND `password` = ? LIMIT 1;",
-			[$username, $password]
-		);
-	if ($data !== false) return $data['id'];
-	else return false;
+		$data = db()->fetchOne("SELECT `id`, `password` FROM `accounts` WHERE `id` = ? LIMIT 1;", [$username]);
+	if ($data === false) return false;
+	return user_verify_login_password((int)$data['id'], (string)$password, (string)$data['password']) ? (int)$data['id'] : false;
 }
 
 // TFS 0.3+ compatibility.
@@ -1499,11 +1517,9 @@ function user_login_id_03($username, $password) {
 				"SELECT `salt`, `id`, `name`, `password` FROM `accounts` WHERE `id` = ?;",
 				[(int)$user_id]
 			);
-			if ($data === false) return false;
-			$salt = $data['salt'];
-			if (!empty($salt)) $password = sha1($salt.$password);
-			else $password = sha1($password);
-			return ($data !== false && $data['name'] == $username && $data['password'] == $password) ? $data['id'] : false;
+			if ($data === false || $data['name'] != $username) return false;
+			$salt = (string)$data['salt'];
+			return user_verify_login_password((int)$data['id'], (string)$password, (string)$data['password'], $salt) ? (int)$data['id'] : false;
 		} else return false;
 	} else return user_login_id($username, $password);
 }
@@ -1533,18 +1549,12 @@ function user_character_hide($username) {
 // Login with a user. (TFS 0.2)
 function user_login($username, $password) {
 	$username = (string)$username;
-	$password = sha1($password);
 	if (config('ServerEngine') !== 'OTHIRE')
-		$data = db()->fetchOne(
-			"SELECT `id` FROM `accounts` WHERE `name` = ? AND `password` = ?;",
-			[$username, $password]
-		);
+		$data = db()->fetchOne("SELECT `id`, `password` FROM `accounts` WHERE `name` = ?;", [$username]);
 	else
-		$data = db()->fetchOne(
-			"SELECT `id` FROM `accounts` WHERE `id` = ? AND `password` = ?;",
-			[$username, $password]
-		);
-	return ($data !== false) ? $data['id'] : false;
+		$data = db()->fetchOne("SELECT `id`, `password` FROM `accounts` WHERE `id` = ?;", [$username]);
+	if ($data === false) return false;
+	return user_verify_login_password((int)$data['id'], (string)$password, (string)$data['password']) ? (int)$data['id'] : false;
 }
 
 // Login a user with TFS 0.3 compatibility
@@ -1555,11 +1565,9 @@ function user_login_03($username, $password) {
 			"SELECT `salt`, `id`, `password`, `name` FROM `accounts` WHERE `name` = ?;",
 			[$username]
 		);
-		if ($data === false) return false;
-		$salt = $data['salt'];
-		if (!empty($salt)) $password = sha1($salt.$password);
-		else $password = sha1($password);
-		return ($data !== false && $data['name'] == $username && $data['password'] == $password) ? $data['id'] : false;
+		if ($data === false || $data['name'] != $username) return false;
+		$salt = (string)$data['salt'];
+		return user_verify_login_password((int)$data['id'], (string)$password, (string)$data['password'], $salt) ? (int)$data['id'] : false;
 	} else return user_login($username, $password);
 }
 

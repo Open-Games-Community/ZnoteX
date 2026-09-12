@@ -682,6 +682,7 @@ return array(
 	'forum.create_thread' => 'Crear tema',
 	'forum.create_thread_new' => 'Crear nuevo tema',
 	'forum.edit_post' => 'Editar mensaje',
+	'forum.quote' => 'Citar',
 	'forum.edit_thread' => 'Editar tema',
 	'forum.create_board' => 'Crear foro:',
 	'forum.board_name' => 'Nombre del foro:',

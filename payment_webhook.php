@@ -16,10 +16,32 @@ require 'engine/function/settings.php';
 znote_apply_settings();
 require 'engine/function/payments.php';
 
-payment_gateway_ensure_schema();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+	http_response_code(405);
+	header('Allow: POST');
+	header('Content-Type: application/json');
+	echo json_encode(['received' => false, 'status' => 'method_not_allowed']);
+	exit;
+}
+
+$contentLength = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+if ($contentLength > 1048576) {
+	http_response_code(413);
+	header('Content-Type: application/json');
+	echo json_encode(['received' => false, 'status' => 'payload_too_large']);
+	exit;
+}
 
 $provider = strtolower(trim((string)($_GET['provider'] ?? $_POST['provider'] ?? '')));
 $payload = file_get_contents('php://input') ?: '';
+if (strlen($payload) > 1048576) {
+	http_response_code(413);
+	header('Content-Type: application/json');
+	echo json_encode(['received' => false, 'status' => 'payload_too_large']);
+	exit;
+}
+
+payment_gateway_ensure_schema();
 
 try {
 	if ($provider === 'stripe') {

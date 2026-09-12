@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (!empty($config['UseChangelogTicker'])) {
 	//////////////////////
 	// Changelog ticker //

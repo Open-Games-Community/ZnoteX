@@ -45,6 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$status     = intv($_POST['status'] ?? 0);
 	$reportId   = intv($_POST['id'] ?? 0);
 	$price      = intv($_POST['price'] ?? 0) + intv($_POST['customPoints'] ?? 0);
+	if ($price > 0 && !is_admin($user_data ?? null)) {
+		$price = 0;
+		acp_log('access.action_denied', 'reports.reward', ['roles' => admin_roles($user_data ?? null)]);
+		acp_flash_error('Only an owner can grant reward points. The report status was still processed.');
+	}
 
 	if ($reportId <= 0 || !isset($statusTypes[$status])) {
 		acp_flash_error(t('acp.rep.invalid'));
@@ -81,12 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				WHERE `id` = ?
 				LIMIT 1;
 			", [$changelogText, $now, (int)$existing['id']]);
+			acp_log('reports.changelog_update', '#' . $changelogReportId, ['changelog_id' => (int)$existing['id']]);
 			acp_flash_info(t('acp.rep.changelog_updated'));
 		} else {
 			db()->execute("
 				INSERT INTO `znote_changelog` (`text`, `time`, `report_id`, `status`)
 				VALUES (?, ?, ?, ?);
 			", [$changelogText, $now, $changelogReportId, $status]);
+			acp_log('reports.changelog_create', '#' . $changelogReportId);
 			acp_flash_info(t('acp.rep.changelog_created'));
 		}
 

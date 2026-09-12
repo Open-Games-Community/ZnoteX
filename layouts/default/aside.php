@@ -17,7 +17,7 @@ if (user_logged_in() === true) {
 
 	widget('myaccount');
 
-	if (isset($user_data) && is_admin($user_data)) {
+	if (isset($user_data) && has_admin_panel_access($user_data)) {
 		widget('admin');
 	}
 

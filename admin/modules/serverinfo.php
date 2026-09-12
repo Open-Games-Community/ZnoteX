@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	if ($do === 'clear') {
 		serverdata_clear($key);
+		acp_log('serverdata.clear', $key);
 		acp_flash_success(t('acp.srv.removed', ['label' => $label, 'page' => $sources[$key]['page']]));
 		acp_redirect('serverinfo');
 	}
@@ -36,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$error = null;
 		if (serverdata_rebuild($key, $error)) {
 			$count = serverdata_count($key, serverdata_load($key));
+			acp_log('serverdata.rebuild', $key, ['records' => $count]);
 			acp_flash_success(t('acp.srv.rebuilt', ['label' => $label, 'count' => number_format($count)]));
 			if ($error !== null) {
 				acp_flash_info($error);
@@ -75,6 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$error = null;
 		if (serverdata_publish_upload($key, (string)$file['tmp_name'], (string)$file['name'], $error)) {
 			$count = serverdata_count($key, serverdata_load($key));
+			acp_log('serverdata.upload', $key, [
+				'file' => basename((string)$file['name']),
+				'records' => $count,
+			]);
 			acp_flash_success(t('acp.srv.uploaded', [
 				'label' => $label,
 				'count' => number_format($count),

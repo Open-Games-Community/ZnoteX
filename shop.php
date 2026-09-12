@@ -1,4 +1,5 @@
 <?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
 theme_open();
 
 if (isset($_GET['callback']) && $_GET['callback'] === 'processing') {
@@ -67,7 +68,10 @@ function shop_load_db_offers(): array {
 $shop_list = shop_load_db_offers();
 
 if ($loggedin === true) {
-	if (!empty($_POST['buy']) && isset($_SESSION['shop_session']) && $_SESSION['shop_session'] == ($_POST['session'] ?? null)) {
+	$postedShopSession = (string)($_POST['session'] ?? '');
+	$storedShopSession = (string)($_SESSION['shop_session'] ?? '');
+	if (!empty($_POST['buy']) && $postedShopSession !== '' && $storedShopSession !== '' && hash_equals($storedShopSession, $postedShopSession)) {
+		unset($_SESSION['shop_session']);
 		$time = time();
 		$cid = (int)$user_data['id'];
 		// Sanitizing post, setting default buy value

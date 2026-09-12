@@ -14,7 +14,18 @@ if ($logged_in === true) {
 	}
 
 	if (isset($_FILES['imagefile']) && !empty($_FILES['imagefile'])) {
-		$image = file_get_contents($_FILES['imagefile']['tmp_name']);
+		$upload = $_FILES['imagefile'];
+		if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+			|| !is_uploaded_file((string)$upload['tmp_name'])
+			|| (int)$upload['size'] > 5 * 1024 * 1024
+			|| !getimagesize($upload['tmp_name'])
+		) {
+			?>
+			<h1><?= t('gallery.failed') ?></h1>
+			<p><?= t('gallery.failed_text') ?></p>
+			<?php
+		} else {
+		$image = file_get_contents($upload['tmp_name']);
 		$imgurClientID = $config['gallery']['Client ID'];
 
 		// Post image to imgur
@@ -24,8 +35,8 @@ if ($logged_in === true) {
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, [
-			"type" => "file", 
-			"name" => $_FILES['imagefile']['name'],
+			"type" => "file",
+			"name" => $upload['name'],
 			"image" => $image
 		]);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -42,6 +53,7 @@ if ($logged_in === true) {
 			// Insert to database
 			$inserted = insertImage((int)$session_user_id, $title, $desc, $image_url, $image_delete);
 			if ($inserted === true) {
+				$safeTitle = h($title);
 				?>
 				<h1><?= t('gallery.posted') ?></h1>
 				<p><?= t('gallery.posted_text') ?></p>
@@ -49,17 +61,17 @@ if ($logged_in === true) {
 				<h2><?= t('gallery.preview') ?></h2>
 				<table>
 					<tr class="yellow">
-						<td><h3><?php echo $title; ?></h3></td>
+						<td><h3><?php echo $safeTitle; ?></h3></td>
 					</tr>
 					<tr>
 						<td>
-							<a href="<?php echo $image_url; ?>" target="_BLANK"><img class="galleryImage" style="max-width: 100%;" src="<?php echo $image_url; ?>" alt="<?php echo $title; ?>"/></a>
+							<a href="<?php echo $image_url; ?>" target="_BLANK"><img class="galleryImage" style="max-width: 100%;" src="<?php echo $image_url; ?>" alt="<?php echo $safeTitle; ?>"/></a>
 						</td>
 					</tr>
 					<tr>
 						<td>
 						<?php
-						$descr = str_replace("\\r", "", $desc);
+						$descr = str_replace("\\r", "", h($desc));
 						$descr = str_replace("\\n", "<br />", $descr);
 						?>
 						<p><?php echo $descr; ?></p>
@@ -79,6 +91,7 @@ if ($logged_in === true) {
 			<h1><?= t('gallery.failed') ?></h1>
 			<p><?= t('gallery.failed_text') ?></p>
 			<?php
+		}
 		}
 	}
 }

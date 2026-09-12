@@ -58,8 +58,8 @@ FROM (
 ) `seed`
 LEFT JOIN `znote_menu` `existing`
   ON `existing`.`location` = `seed`.`location`
+ AND `existing`.`parent_id` = 0
  AND `existing`.`label` = `seed`.`label`
- AND `existing`.`url` = `seed`.`url`
 WHERE `existing`.`id` IS NULL;
 
 -- Nest the sub-entries under their section. Done as a second pass because the

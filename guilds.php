@@ -1,4 +1,5 @@
 <?php require_once 'engine/init.php';
+znote_csrf_protect_public_post();
 if ($config['require_login']['guilds']) protect_page();
 
 // These functions are page-specific and only used in this file. 

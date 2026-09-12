@@ -72,6 +72,13 @@ function acp_setting_cast(array $field, $raw): string {
 	}
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_cache'])) {
+	$removed = znote_cache_flush();
+	acp_log('cache.flush', '', ['entries' => $removed]);
+	acp_flash_success(t_default('acp.settings.cache_cleared', 'Cache cleared: {n} entries removed.', ['n' => $removed]));
+	acp_redirect('settings');
+}
+
 // ---------------------------------------------------------------------------
 // Save
 // ---------------------------------------------------------------------------
@@ -80,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$schema = acp_settings_schema();
 	$saved  = 0;
 	$failed = 0;
+	$savedKeys = array();
 
 	foreach ($schema as $fields) {
 		foreach ($fields as $key => $field) {
@@ -88,19 +96,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if (($field['type'] ?? '') === 'json') {
 				$decoded = json_decode(is_string($raw) ? $raw : '', true);
 				if (!is_array($decoded)) { $failed++; continue; }
-				setting_set('config:' . $key, (string)json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ? $saved++ : $failed++;
+				if (setting_set('config:' . $key, (string)json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))) {
+					$saved++;
+					$savedKeys[] = $key;
+				} else $failed++;
 				continue;
 			}
 
 			$value = acp_setting_cast($field, $raw);
-			setting_set('config:' . $key, $value) ? $saved++ : $failed++;
+			if (setting_set('config:' . $key, $value)) {
+				$saved++;
+				$savedKeys[] = $key;
+			} else $failed++;
 		}
 	}
 
+	if ($saved > 0) {
+		acp_log('settings.save', '', ['fields' => $savedKeys, 'failed' => $failed]);
+	}
 	if ($failed > 0) {
 		acp_flash_error(t('acp.settings.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_log('settings.save', '', ['fields_saved' => $saved]);
 		acp_flash_success(t('acp.settings.save_success', ['n' => $saved]));
 	}
 
@@ -109,6 +125,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $schema   = acp_settings_schema();
 $hasTable = znote_table_exists('znote_config');
+$cacheStats = znote_cache_stats();
+$cacheSize = $cacheStats['bytes'] >= 1048576
+	? number_format($cacheStats['bytes'] / 1048576, 1) . ' MB'
+	: number_format($cacheStats['bytes'] / 1024, 1) . ' KB';
 ?>
 
 <?php if (!$hasTable): ?>
@@ -133,6 +153,40 @@ $hasTable = znote_table_exists('znote_config');
 	</span>
 </div>
 
+<section class="acp-card" style="margin-bottom:20px;">
+	<header class="acp-card-head">
+		<h2><?= h(t_default('acp.settings.cache_status', 'Cache status')) ?></h2>
+		<form method="post" style="margin-left:auto;">
+			<?= acp_csrf_field() ?>
+			<input type="hidden" name="clear_cache" value="1">
+			<button class="acp-btn acp-btn--red acp-btn--sm" type="submit">
+				<i class="fa fa-trash"></i> <?= h(t_default('acp.settings.cache_clear', 'Clear cache')) ?>
+			</button>
+		</form>
+	</header>
+	<div class="acp-card-body">
+		<dl class="acp-dl">
+			<dt><?= h(t_default('acp.settings.cache_driver', 'Active driver')) ?></dt>
+			<dd><span class="acp-pill acp-pill--blue"><?= h($cacheStats['driver']) ?></span></dd>
+			<dt><?= h(t_default('acp.settings.cache_namespace', 'Namespace')) ?></dt>
+			<dd><code><?= h($cacheStats['prefix']) ?></code></dd>
+			<dt><?= h(t_default('acp.settings.cache_files', 'File entries')) ?></dt>
+			<dd><?= number_format($cacheStats['files']) ?> · <?= h($cacheSize) ?></dd>
+			<dt>APCu</dt>
+			<dd>
+				<span class="acp-pill acp-pill--<?= $cacheStats['apcu_available'] ? 'green' : 'grey' ?>">
+					<?= h($cacheStats['apcu_available']
+						? t_default('acp.settings.cache_available', 'Available')
+						: t_default('acp.settings.cache_unavailable', 'Unavailable')) ?>
+				</span>
+				<?php if ($cacheStats['requested_memory'] && !$cacheStats['apcu_available']): ?>
+					<span class="acp-hint"><?= h(t_default('acp.settings.cache_fallback', 'File fallback is active.')) ?></span>
+				<?php endif; ?>
+			</dd>
+		</dl>
+	</div>
+</section>
+
 <form method="post">
 	<?= acp_csrf_field() ?>
 
@@ -148,7 +202,7 @@ $hasTable = znote_table_exists('znote_config');
 				<div class="acp-card-body">
 					<?php foreach ($fields as $key => $field):
 						$stored  = setting('config:' . $key, null);
-						$fromFile = znote_config_path($config, $key, '');
+						$fromFile = znote_config_path($config, $key, $field['default'] ?? '');
 						if (is_bool($fromFile)) {
 							$fromFile = $fromFile ? '1' : '0';
 						} elseif (is_array($fromFile)) {
