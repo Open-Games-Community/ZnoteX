@@ -2,14 +2,14 @@
   {
     "key": "tibiacom_v1",
     "name": "TibiaCOM v1",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "author": "Alex - opengamescommunity.com",
     "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Improved character profile compatibility.",
-      "Added visible profile blocks and separators.",
-      "Fixed responsive skill tiles on narrow layouts."
+      "Added visible profile blocks and separators."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.zip",
     "url": "https://opengamescommunity.com/resources/znotex-tibiacomv1.1024/",
@@ -18,14 +18,14 @@
   {
     "key": "old_school",
     "name": "Old School",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "author": "Hemrenus321",
     "description": "old_school theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Uses the shared modern character profile.",
       "Added parchment-friendly profile blocks and borders.",
-      "Fixed layout override so Name, Level and Equipment display correctly."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/old_school.zip",
     "url": "https://opengamescommunity.com/resources/znotex-old-school.1025/",
@@ -34,10 +34,11 @@
   {
     "key": "time_sand",
     "name": "Time Sand",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "Alex - opengamescommunity.com",
     "description": "Time Sand theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
@@ -48,10 +49,11 @@
   {
     "key": "black_mirror",
     "name": "Black Mirror",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "author": "Alex - opengamescommunity.com",
     "description": "Black Mirror theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "New Black & Gold Theme."
     ],
@@ -62,10 +64,11 @@
   {
     "key": "void",
     "name": "Void",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "author": "Alex - opengamescommunity.com",
     "description": "Void theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
@@ -76,10 +79,11 @@
   {
     "key": "telara",
     "name": "Telara",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Alex - opengamescommunity.com",
     "description": "Telara theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Telara Layout."
     ],
@@ -90,10 +94,11 @@
   {
     "key": "eclipse",
     "name": "Eclipse",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "Alex - opengamescommunity.com",
     "description": "Eclipse theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
@@ -104,10 +109,11 @@
   {
     "key": "brightness",
     "name": "Brightness",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "author": "Alex - opengamescommunity.com",
     "description": "Brightness theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
@@ -118,10 +124,11 @@
   {
     "key": "wildlands",
     "name": "Wildlands",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "Alex - opengamescommunity.com",
     "description": "Wildlands theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
@@ -132,10 +139,11 @@
   {
     "key": "bloodfang",
     "name": "Bloodfang",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "author": "Alex - opengamescommunity.com",
     "description": "Bloodfang theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
