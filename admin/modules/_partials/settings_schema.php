@@ -631,14 +631,22 @@ return array(
 		),
 
 		t_default('acp.sec.Cache', 'Cache') => array(
+			'cache.prefix' => array(
+				'label' => t_default('acp.set.cache.prefix.label', 'Cache namespace'),
+				'type'  => 'text',
+				'help'  => t_default('acp.set.cache.prefix.help', 'Use a unique value for each ZnoteX installation sharing the same APCu server.'),
+			),
 			'cache.lifespan' => array(
 				'label' => t_default('acp.set.cache.lifespan.label', 'Cache lifetime (seconds)'),
 				'type'  => 'int',
+				'min'   => 0,
+				'max'   => 2147483647,
+				'help'  => t_default('acp.set.cache.lifespan.help', '0 keeps entries until they are explicitly cleared.'),
 			),
 			'cache.memory' => array(
 				'label' => t_default('acp.set.cache.memory.label', 'Keep cache in memory (APCu)'),
 				'type'  => 'bool',
-				'help'  => t_default('acp.set.cache.memory.help', 'Needs the APCu extension. With it off, the cache uses files in engine/cache/.'),
+				'help'  => t_default('acp.set.cache.memory.help', 'Uses APCu when available and automatically falls back to files in engine/cache/.'),
 			),
 		),
 

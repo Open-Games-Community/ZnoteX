@@ -72,6 +72,13 @@ function acp_setting_cast(array $field, $raw): string {
 	}
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_cache'])) {
+	$removed = znote_cache_flush();
+	acp_log('cache.flush', '', ['entries' => $removed]);
+	acp_flash_success(t_default('acp.settings.cache_cleared', 'Cache cleared: {n} entries removed.', ['n' => $removed]));
+	acp_redirect('settings');
+}
+
 // ---------------------------------------------------------------------------
 // Save
 // ---------------------------------------------------------------------------
@@ -118,6 +125,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $schema   = acp_settings_schema();
 $hasTable = znote_table_exists('znote_config');
+$cacheStats = znote_cache_stats();
+$cacheSize = $cacheStats['bytes'] >= 1048576
+	? number_format($cacheStats['bytes'] / 1048576, 1) . ' MB'
+	: number_format($cacheStats['bytes'] / 1024, 1) . ' KB';
 ?>
 
 <?php if (!$hasTable): ?>
@@ -141,6 +152,40 @@ $hasTable = znote_table_exists('znote_config');
 		]) ?>
 	</span>
 </div>
+
+<section class="acp-card" style="margin-bottom:20px;">
+	<header class="acp-card-head">
+		<h2><?= h(t_default('acp.settings.cache_status', 'Cache status')) ?></h2>
+		<form method="post" style="margin-left:auto;">
+			<?= acp_csrf_field() ?>
+			<input type="hidden" name="clear_cache" value="1">
+			<button class="acp-btn acp-btn--red acp-btn--sm" type="submit">
+				<i class="fa fa-trash"></i> <?= h(t_default('acp.settings.cache_clear', 'Clear cache')) ?>
+			</button>
+		</form>
+	</header>
+	<div class="acp-card-body">
+		<dl class="acp-dl">
+			<dt><?= h(t_default('acp.settings.cache_driver', 'Active driver')) ?></dt>
+			<dd><span class="acp-pill acp-pill--blue"><?= h($cacheStats['driver']) ?></span></dd>
+			<dt><?= h(t_default('acp.settings.cache_namespace', 'Namespace')) ?></dt>
+			<dd><code><?= h($cacheStats['prefix']) ?></code></dd>
+			<dt><?= h(t_default('acp.settings.cache_files', 'File entries')) ?></dt>
+			<dd><?= number_format($cacheStats['files']) ?> · <?= h($cacheSize) ?></dd>
+			<dt>APCu</dt>
+			<dd>
+				<span class="acp-pill acp-pill--<?= $cacheStats['apcu_available'] ? 'green' : 'grey' ?>">
+					<?= h($cacheStats['apcu_available']
+						? t_default('acp.settings.cache_available', 'Available')
+						: t_default('acp.settings.cache_unavailable', 'Unavailable')) ?>
+				</span>
+				<?php if ($cacheStats['requested_memory'] && !$cacheStats['apcu_available']): ?>
+					<span class="acp-hint"><?= h(t_default('acp.settings.cache_fallback', 'File fallback is active.')) ?></span>
+				<?php endif; ?>
+			</dd>
+		</dl>
+	</div>
+</section>
 
 <form method="post">
 	<?= acp_csrf_field() ?>
