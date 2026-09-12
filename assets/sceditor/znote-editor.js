@@ -39,6 +39,7 @@
 
 			mirrorTheme(box);
 			mirrorColors(box);
+			bindDraft(box);
 
 			var limit = parseInt(box.getAttribute('data-maxlength'), 10);
 			if (!isNaN(limit) && limit > 0) {
@@ -47,6 +48,7 @@
 		});
 
 		bindForms();
+		bindQuoteButtons();
 	}
 
 	/* The editing area is an iframe, so it cannot see the panel's data-acp-theme
@@ -175,7 +177,68 @@
 
 				if (blocked) {
 					event.preventDefault();
+				} else {
+					instanced(form).forEach(clearDraft);
 				}
+			});
+		});
+	}
+
+	function draftKey(box) {
+		return 'znoteEditorDraft:' + location.pathname + location.search + ':' + (box.name || '');
+	}
+
+	function clearDraft(box) {
+		try {
+			localStorage.removeItem(draftKey(box));
+		} catch (e) {}
+	}
+
+	function bindDraft(box) {
+		var key = draftKey(box);
+		var instance = sceditor.instance(box);
+		var saved = null;
+
+		try {
+			saved = localStorage.getItem(key);
+		} catch (e) {}
+
+		if (saved && !box.value) {
+			instance.val(saved);
+		}
+
+		instance.bind('valuechanged', function () {
+			try {
+				var value = instance.val();
+				if (value) {
+					localStorage.setItem(key, value);
+				} else {
+					localStorage.removeItem(key);
+				}
+			} catch (e) {}
+		});
+	}
+
+	function bindQuoteButtons() {
+		Array.prototype.forEach.call(document.querySelectorAll('.znf-quote-btn'), function (btn) {
+			btn.addEventListener('click', function () {
+				var article = btn.closest('article');
+				var target = document.querySelector('.znf-reply textarea.znote-editor');
+				if (!article || !target || typeof sceditor === 'undefined') {
+					return;
+				}
+
+				var source = article.querySelector('.znf-quote-source');
+				var instance = sceditor.instance(target);
+				if (!source || !instance) {
+					return;
+				}
+
+				var author = btn.getAttribute('data-author') || '';
+				var quoted = '[quote=' + author + ']' + source.content.textContent + '[/quote]\n\n';
+				instance.val(quoted + instance.val());
+				instance.focus();
+				target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			});
 		});
 	}

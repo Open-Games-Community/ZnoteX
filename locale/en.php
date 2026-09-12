@@ -686,6 +686,7 @@ return array(
 	'forum.create_thread' => 'Create Thread',
 	'forum.create_thread_new' => 'Create new thread',
 	'forum.edit_post' => 'Edit Post',
+	'forum.quote' => 'Quote',
 	'forum.edit_thread' => 'Edit Thread',
 	'forum.create_board' => 'Create board:',
 	'forum.board_name' => 'Board name:',

@@ -686,6 +686,12 @@ if (!empty($_GET)) {
 					<div class="znf-post__body">
 						<div class="znf-post__meta"><span class="znf-tag znf-tag--sticky"><?= t('forum.op_tag') ?></span> <?php echo getClock($threadData['created'], true); ?></div>
 						<div class="znf-post__text"><?php echo znote_bbcode($threadData['text']); ?></div>
+						<?php if ($charCount > 0 && ($threadData['closed'] == 0 || $yourAccess > 3)): ?>
+						<div class="znf-post__actions">
+							<button type="button" class="btn btn-info znf-quote-btn" data-author="<?php echo htmlspecialchars($threadData['player_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= t('forum.quote') ?></button>
+						</div>
+						<?php endif; ?>
+						<template class="znf-quote-source"><?php echo htmlspecialchars($threadData['text'], ENT_QUOTES, 'UTF-8'); ?></template>
 					</div>
 				</article>
 				<?php
@@ -777,6 +783,11 @@ if (!empty($_GET)) {
 								<div class="znf-post__text"><?php echo znote_bbcode($post['text']); ?></div>
 								<div class="znf-post__actions">
 						<?php
+						if ($charCount > 0 && ($threadData['closed'] == 0 || $yourAccess > 3)) {
+							?>
+							<button type="button" class="btn btn-info znf-quote-btn" data-author="<?php echo htmlspecialchars($post['player_name'], ENT_QUOTES, 'UTF-8'); ?>"><?= t('forum.quote') ?></button>
+							<?php
+						}
 						if (PlayerHaveAccess($yourChars, $post['player_name']) || $admin) {
 							if ($admin) {
 								?>
@@ -797,6 +808,7 @@ if (!empty($_GET)) {
 						}
 						?>
 								</div>
+								<template class="znf-quote-source"><?php echo htmlspecialchars($post['text'], ENT_QUOTES, 'UTF-8'); ?></template>
 							</div>
 						</article>
 						<?php
