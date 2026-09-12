@@ -77,6 +77,13 @@
 		'secondaccountName',
 	);
 
+	// Optional least-privilege access to the admin panel. Existing entries in
+	// page_admin_access remain owners with unrestricted access. Keys are account
+	// names (or account IDs on OTHIRE); values may contain: auditor, content,
+	// moderator, support, economy and ops. Example:
+	// $config['page_admin_roles']['Helper'] = array('moderator', 'support');
+	$config['page_admin_roles'] = array();
+
 	// Outfit images.
 	$config['show_outfits'] = array(
 		'shop' => true,

@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	$saved = 0;
 	$failed = 0;
+	$savedKeys = array();
 
 	if (isset($_POST['pay'])) {
 		foreach (acp_payments_schema() as $group) {
@@ -39,7 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					continue;
 				}
 				$value = acp_payment_cast($field['type'], $_POST['pay'][$key] ?? '');
-				setting_set('config:' . $key, $value) ? $saved++ : $failed++;
+				if (setting_set('config:' . $key, $value)) {
+					$saved++;
+					$savedKeys[] = $key;
+				} else $failed++;
 			}
 		}
 	}
@@ -59,13 +63,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		}
 
 		ksort($tiers, SORT_NUMERIC);
-		setting_set('config:paypal_prices', json_encode($tiers, JSON_FORCE_OBJECT)) ? $saved++ : $failed++;
+		if (setting_set('config:paypal_prices', json_encode($tiers, JSON_FORCE_OBJECT))) {
+			$saved++;
+			$savedKeys[] = 'paypal_prices';
+		} else $failed++;
 	}
 
+	if ($saved > 0) {
+		acp_log('payments.save', '', ['fields' => $savedKeys, 'failed' => $failed]);
+	}
 	if ($failed > 0) {
 		acp_flash_error(t('acp.pay.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_log('payments.save', '', ['fields_saved' => $saved]);
 		acp_flash_success(t('acp.pay.save_success', ['n' => $saved]));
 	}
 

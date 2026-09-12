@@ -14,6 +14,7 @@ if (!defined('ACP_ROOT')) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_layout_repository_cache'])) {
 	if (theme_repository_clear_cache()) {
+		acp_log('layouts.cache_clear');
 		acp_flash_success(t('acp.laybr.cache_deleted'));
 	} else {
 		acp_flash_error(t('acp.laybr.cache_delete_failed', [
@@ -79,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 
 	$saved   = 0;
 	$failed  = 0;
+	$savedKeys = array();
 	$uploads = 0;
 	$errors  = array();
 
@@ -113,7 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 			}
 		}
 
-		setting_set(theme_option_key($target, $key), $value) ? $saved++ : $failed++;
+		if (setting_set(theme_option_key($target, $key), $value)) {
+			$saved++;
+			$savedKeys[] = $key;
+		} else $failed++;
 	}
 
 	foreach ($errors as $message) {
@@ -127,10 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['theme_options'])) {
 		]));
 	}
 
+	if ($saved > 0) {
+		acp_log('layouts.options_save', $target, ['fields' => $savedKeys, 'uploads' => $uploads, 'failed' => $failed]);
+	}
 	if ($failed > 0) {
 		acp_flash_error(t('acp.lay.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_log('layouts.options_save', $target, ['fields_saved' => $saved]);
 		acp_flash_success(t('acp.lay.options_saved', ['theme' => '<strong>' . h($themes[$target]['name']) . '</strong>']));
 	}
 
@@ -205,6 +212,7 @@ if (($_GET['tab'] ?? '') === 'browse') {
 	// from showing correctly.
 	if (isset($_GET['refresh']) && function_exists('znote_cache_flush')) {
 		znote_cache_flush();
+		acp_log('layouts.catalogue_refresh');
 	}
 	include ACP_ROOT . '/modules/_partials/layouts_browse.php';
 	return;

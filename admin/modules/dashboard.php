@@ -69,7 +69,9 @@ $topPoints = db()->fetchAll("
 // the old admin.php did on every visit.
 $znote = user_znote_data('version', 'installed', 'cached');
 if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
+	$oldVersion = (string)($znote['version'] ?? '');
 	db()->execute("UPDATE `znote` SET `version` = ?;", [$version]);
+	acp_log('system.version_sync', $version, ['from' => $oldVersion]);
 	$znote['version'] = $version;
 }
 ?>

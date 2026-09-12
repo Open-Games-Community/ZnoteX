@@ -28,6 +28,7 @@ if (!defined('ACP_ROOT')) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clear_plugin_repository_cache'])) {
 	if (plugin_repository_clear_cache()) {
+		acp_log('plugins.cache_clear');
 		acp_flash_success(t('acp.plgbr.cache_deleted'));
 	} else {
 		acp_flash_error(t('acp.plgbr.cache_delete_failed', [
@@ -71,6 +72,7 @@ if (($_GET['tab'] ?? '') === 'browse') {
 	// usually keeps a just-installed or updated plugin from showing correctly.
 	if (isset($_GET['refresh']) && function_exists('znote_cache_flush')) {
 		znote_cache_flush();
+		acp_log('plugins.catalogue_refresh');
 	}
 	include ACP_ROOT . '/modules/_partials/plugins_browse.php';
 	return;

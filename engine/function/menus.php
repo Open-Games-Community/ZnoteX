@@ -57,7 +57,7 @@ function theme_menu_items(string $location): array {
 	}
 
 	$loggedIn = (function_exists('user_logged_in') && user_logged_in() === true);
-	$isAdmin  = $loggedIn && isset($GLOBALS['user_data']) && is_admin($GLOBALS['user_data']);
+	$isAdmin  = $loggedIn && isset($GLOBALS['user_data']) && has_admin_panel_access($GLOBALS['user_data']);
 
 	$visible = array();
 	foreach ($rows as $row) {

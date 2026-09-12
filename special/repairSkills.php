@@ -8,6 +8,18 @@
 
 protect_page();
 admin_only($user_data);
+znote_csrf_protect_public_post();
+
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+	?>
+	<h1>Repair missing player skills</h1>
+	<p>This operation scans every player and inserts default rows where skills are missing.</p>
+	<form method="post" onsubmit="return confirm('Repair missing skills for every affected player?');">
+		<button type="submit">Run repair</button>
+	</form>
+	<?php
+	exit;
+}
 
 $Splayers = 0;
 $Salready = 0;
@@ -40,6 +52,7 @@ if ($players !== false) {
 			);
 		} else $Salready++;
 	}
+	acp_log('maintenance.repair_skills', 'ALL', ['players' => $Splayers, 'repaired' => $Sfixed]);
 	?>
 	<h1>Script run status:</h1>
 	<p>Players detected: <?php echo $Splayers; ?></p>

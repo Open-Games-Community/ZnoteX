@@ -459,12 +459,41 @@ function admin_only($user_data) {
 	}
 }
 
+function admin_roles($user_data): array {
+	if (!is_array($user_data)) return array();
+
+	$identity = config('ServerEngine') === 'OTHIRE'
+		? ($user_data['id'] ?? null)
+		: ($user_data['name'] ?? null);
+	$owners = (array)config('page_admin_access');
+	if (in_array($identity, $owners)) {
+		return array('owner');
+	}
+
+	$assignments = (array)config('page_admin_roles');
+	$roles = array();
+	foreach ($assignments as $account => $assigned) {
+		if ((string)$account === (string)$identity) {
+			$roles = is_array($assigned) ? $assigned : array($assigned);
+			break;
+		}
+	}
+
+	$allowed = array('owner', 'auditor', 'content', 'moderator', 'support', 'economy', 'ops');
+	return array_values(array_unique(array_intersect(
+		$allowed,
+		array_map(static fn($role) => strtolower(trim((string)$role)), $roles)
+	)));
+}
+
+function has_admin_panel_access($user_data): bool {
+	return admin_roles($user_data) !== array();
+}
+
+// Legacy full-admin checks deliberately remain owner-only. This prevents a
+// scoped ACP role from inheriting unrestricted forum or maintenance powers.
 function is_admin($user_data) {
-	if (!is_array($user_data)) return false;
-	if (config('ServerEngine') === 'OTHIRE')
-		return in_array($user_data['id'] ?? null, config('page_admin_access')) ? true : false;
-	else
-		return in_array($user_data['name'] ?? null, config('page_admin_access')) ? true : false;
+	return in_array('owner', admin_roles($user_data), true);
 }
 
 function array_sanitize(&$item) {

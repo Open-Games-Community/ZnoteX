@@ -64,11 +64,20 @@ $module = 'error_log';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$do = (string) ($_POST['do'] ?? '');
 	if ($do === 'save_path') {
-		setting_set('error_log:path', trim((string) ($_POST['path'] ?? '')));
-		acp_flash_success('Log path saved.');
+		$newPath = trim((string) ($_POST['path'] ?? ''));
+		if (setting_set('error_log:path', $newPath)) {
+			acp_log('error_log.path_save', $newPath);
+			acp_flash_success('Log path saved.');
+		} else {
+			acp_flash_error('The log path could not be saved.');
+		}
 	} elseif ($do === 'reset_path') {
-		setting_set('error_log:path', '');
-		acp_flash_success('Reverted to the auto-detected path.');
+		if (setting_set('error_log:path', '')) {
+			acp_log('error_log.path_reset');
+			acp_flash_success('Reverted to the auto-detected path.');
+		} else {
+			acp_flash_error('The log path could not be reset.');
+		}
 	}
 	acp_redirect($module);
 }

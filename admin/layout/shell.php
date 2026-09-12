@@ -153,6 +153,13 @@ $acp_engine   = serverEngineReal();
 				</div>
 			<?php endforeach; ?>
 
+			<?php if (!acp_log_table_exists()): ?>
+				<div class="acp-flash acp-flash--error">
+					<i class="fa fa-exclamation-triangle"></i>
+					<span>Administrative audit logging is unavailable because <code>znote_admin_log</code> is missing. Sensitive changes will not be traceable until the migration is applied.</span>
+				</div>
+			<?php endif; ?>
+
 			<?= $acp_content ?>
 		</main>
 

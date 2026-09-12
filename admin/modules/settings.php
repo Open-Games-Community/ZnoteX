@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$schema = acp_settings_schema();
 	$saved  = 0;
 	$failed = 0;
+	$savedKeys = array();
 
 	foreach ($schema as $fields) {
 		foreach ($fields as $key => $field) {
@@ -88,19 +89,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			if (($field['type'] ?? '') === 'json') {
 				$decoded = json_decode(is_string($raw) ? $raw : '', true);
 				if (!is_array($decoded)) { $failed++; continue; }
-				setting_set('config:' . $key, (string)json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) ? $saved++ : $failed++;
+				if (setting_set('config:' . $key, (string)json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))) {
+					$saved++;
+					$savedKeys[] = $key;
+				} else $failed++;
 				continue;
 			}
 
 			$value = acp_setting_cast($field, $raw);
-			setting_set('config:' . $key, $value) ? $saved++ : $failed++;
+			if (setting_set('config:' . $key, $value)) {
+				$saved++;
+				$savedKeys[] = $key;
+			} else $failed++;
 		}
 	}
 
+	if ($saved > 0) {
+		acp_log('settings.save', '', ['fields' => $savedKeys, 'failed' => $failed]);
+	}
 	if ($failed > 0) {
 		acp_flash_error(t('acp.settings.save_failed', ['n' => $failed, 'table' => '<code>znote_config</code>']));
 	} else {
-		acp_log('settings.save', '', ['fields_saved' => $saved]);
 		acp_flash_success(t('acp.settings.save_success', ['n' => $saved]));
 	}
 
