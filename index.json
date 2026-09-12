@@ -2,10 +2,11 @@
     {
         "key": "shop_coupons",
         "name": "Shop Coupons",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Redeemable codes that credit shop points. Adds a public redeem page, an admin module to create and track codes, and its own table. Written as the reference example of a ZnoteX plugin.",
         "update": [
+			"Updated Plugin API.",
             "Migrated SQL to prepared statements (db()).",
             "Added a redemption log to the admin module: who redeemed which code and when.",
             "Coupon create and delete now show in Admin Panel > Logs."
@@ -17,10 +18,11 @@
     {
         "key": "referral_system",
         "name": "Referral System",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "author": "Alex - opengamescommunity.com",
         "description": "Account referral codes with registration tracking, automatic points and premium rewards, My Account injection and an admin overview.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "My Account injection now works with themes that nest the account heading (e.g. Eclipse).",
@@ -34,10 +36,11 @@
     {
         "key": "account_security",
         "name": "Account Security",
-        "version": "1.2.1",
+        "version": "1.2.2",
         "author": "Alex - opengamescommunity.com",
         "description": "Account security adds a box on My Account page with the current IP adress, recent activity, 2FA Status.",
         "update": [
+			"Updated Plugin API.",
             "Fixed IPv6/IP display and event separator encoding.",
             "Added web session tracking with user-controlled session revocation.",
             "Added account security event logs.",
@@ -52,10 +55,11 @@
     {
         "key": "daily_rewards",
         "name": "Daily Rewards",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Daily Reward reseted each monday, claim rewards (premium points, premium days, item id / count )",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -67,10 +71,11 @@
     {
         "key": "loyalty_shop",
         "name": "Loyalty Shop",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Loyalty Shop, Progress bar advancing by tiers giving discounts on shop & purchases.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -82,10 +87,11 @@
     {
         "key": "guild_recruitment",
         "name": "Guild Recruitment",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Guild Recruitment enables a box above guilds with posts for guild leaders a recruitment message with an apply button.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -97,10 +103,11 @@
     {
         "key": "battle_pass",
         "name": "Battlepass",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Battlepass plugin, make missions each day and claim rewards.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -112,10 +119,11 @@
     {
         "key": "purchase_history",
         "name": "Purchase History",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "Alex - opengamescommunity.com",
         "description": "Purchase History added on a new box inside My Account after character section.",
         "update": [
+			"Updated Plugin API.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
         ],
@@ -126,10 +134,11 @@
     {
         "key": "starter_pack",
         "name": "Starter Pack",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "author": "Alex - opengamescommunity.com",
         "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "Update Image Path selection, requires last update ZnoteX."
@@ -141,10 +150,11 @@
     {
         "key": "boosted_creatures",
         "name": "Boosted Creatures",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "Alex - opengamescommunity.com",
         "description": "Show Boosted Creatures at right/left floating box on website.",
         "update": [
+			"Updated Plugin API.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
         ],
@@ -155,10 +165,11 @@
     {
         "key": "wheel_of_fortune",
         "name": "Wheel of Fortune",
-        "version": "1.1.3",
+        "version": "1.1.4",
         "author": "Alex - opengamescommunity.com",
         "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "Update icons."
@@ -170,10 +181,11 @@
     {
         "key": "bounty_board",
         "name": "Bounty Board",
-        "version": "1.1.2",
+        "version": "1.1.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Bounty Board appearing under Community Menu, each player can post up to 3 bounty with premium points, first to reach will earn reward (automatic).",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -185,10 +197,11 @@
     {
         "key": "custom_leaderboards",
         "name": "Custom Leaderboards",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Show Multiples Custom Leaderboards, simple highscores with prizes or custom rankings of a system with storage key per week, per month per season or from all of time.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -200,10 +213,11 @@
     {
         "key": "forum_avatars",
         "name": "Forum Avatars",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Show a custom avatar (image upload, max 2MB), outfit or a basic icon on forum.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -215,10 +229,11 @@
     {
         "key": "pvp_ranked",
         "name": "PvP Ranked",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "PvP Ranked Leaderboard, with prizes per ranking up to 10 rankings. Points required per rank, Soft Reset, Seasonal.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -230,10 +245,11 @@
     {
         "key": "loot_search",
         "name": "Loot Search",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Loot Search by monster name or boss or item name, see resistances, def, hp, experience, bestiary, occurence and loot percentages.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -245,10 +261,11 @@
     {
         "key": "patron_names",
         "name": "Loot Search",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "Alex - opengamescommunity.com",
         "description": "Allows to customize player names as premium or vip (storage key) with animation & color.",
         "update": [
+			"Updated Plugin API.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
         ],
@@ -259,10 +276,11 @@
     {
         "key": "calendar",
         "name": "Calendar",
-        "version": "1.0.3",
+        "version": "1.0.4",
         "author": "Alex - opengamescommunity.com",
         "description": "Calendar: Add a Double EXP, Loot, Spawn or A Storage Key event on a selected day, download the script related to your server.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "Update: Remove page if plugin disabled."
@@ -274,10 +292,11 @@
     {
         "key": "streamers",
         "name": "Streamers",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Show Streamers from Kick, Twich or Youtube on home page, select the position of the box and edit colors, you need use your Key.",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
@@ -289,10 +308,11 @@
     {
         "key": "server_statistics",
         "name": "Server Statistics",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "Alex - opengamescommunity.com",
         "description": "Show Server Statistics under community menu.",
         "update": [
+			"Updated Plugin API.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
         ],
@@ -303,10 +323,11 @@
     {
         "key": "server_goals",
         "name": "Server Statistics",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "Alex - opengamescommunity.com",
         "description": "Server Goals, ex: Kill 100.000 Demons from X to X time, setting a global game storage (ex: double exp, double spawn... or anything else)",
         "update": [
+			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
             "First Release."
