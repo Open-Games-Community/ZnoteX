@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/extensions.php';
+
 /**
  * Layout (theme) system.
  *
@@ -59,7 +61,10 @@ function theme_active(): string {
 
 	$name = theme_sanitize((string)(function_exists('setting') ? setting('layout', '') : ''));
 
-	if ($name !== '' && is_dir(theme_root() . '/' . $name)) {
+	if ($name !== ''
+		&& is_dir(theme_root() . '/' . $name)
+		&& znote_extension_compatibility(theme_manifest($name))['compatible']
+	) {
 		$active = $name;
 	} else {
 		$active = ZNOTE_THEME_FALLBACK;
@@ -147,17 +152,21 @@ function theme_file(string $relative): ?string {
  *   <link rel="stylesheet" href="<?= theme_asset('css/style.css') ?>">
  */
 function theme_asset(string $relative): string {
-	$relative = ltrim($relative, '/');
+	$relative = znote_extension_relative_path($relative);
+	if ($relative === '') {
+		return '';
+	}
+	$urlRelative = znote_extension_url_path($relative);
 
 	foreach (theme_chain() as $theme) {
 		if (is_file(theme_root() . '/' . $theme . '/assets/' . $relative)) {
-			return 'layouts/' . $theme . '/assets/' . $relative;
+			return 'layouts/' . $theme . '/assets/' . $urlRelative;
 		}
 	}
 
 	// Return the active theme's path anyway so a missing file is visible as a
 	// 404 in the browser console rather than silently resolving elsewhere.
-	return theme_url() . '/assets/' . $relative;
+	return theme_url() . '/assets/' . $urlRelative;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,6 +190,7 @@ function theme_manifest(string $name): array {
 		'description' => '',
 		'update'      => '',
 		'url'         => '',
+		'requires'    => array(),
 	);
 
 	$file = theme_root() . '/' . $name . '/theme.json';
@@ -196,6 +206,10 @@ function theme_manifest(string $name): array {
 
 	$manifest = array_merge($defaults, $data, array('key' => $name));
 	$manifest['update'] = theme_repository_notes($manifest['update']);
+	$compatibility = znote_extension_compatibility($manifest);
+	$manifest['compatible'] = $compatibility['compatible'];
+	$manifest['compatibility_errors'] = $compatibility['errors'];
+	$manifest['requirements'] = $compatibility['requires'];
 
 	return $cache[$name] = $manifest;
 }
@@ -214,6 +228,10 @@ function theme_list(): array {
 		}
 
 		$manifest = theme_manifest($name);
+		$compatibility = znote_extension_compatibility($manifest);
+		$manifest['compatible'] = $compatibility['compatible'];
+		$manifest['compatibility_errors'] = $compatibility['errors'];
+		$manifest['requirements'] = $compatibility['requires'];
 		$manifest['path']       = $dir;
 		$manifest['is_example'] = ($name[0] === '_');
 		$manifest['screenshot'] = is_file($dir . '/screenshot.png')
@@ -548,6 +566,7 @@ function theme_repository_list(bool $refresh = false): array {
 			'name'        => (string)($entry['name'] ?? ucfirst($key)),
 			'author'      => (string)($entry['author'] ?? ''),
 			'version'     => (string)($entry['version'] ?? ''),
+			'requires'    => $entry['requires'] ?? array(),
 			'description' => (string)($entry['description'] ?? ''),
 			'changelog'   => $changelog,
 			'url'         => (string)($entry['url'] ?? ''),
@@ -682,6 +701,11 @@ function theme_repository_install(string $key, bool $overwrite = false): string 
 	}
 
 	$entry = $catalogue['themes'][$key];
+	$compatibility = znote_extension_compatibility($entry);
+	if (!$compatibility['compatible']) {
+		return implode(' ', $compatibility['errors']);
+	}
+
 	if (!$entry['installable']) {
 		return 'Its download URL is not https, or its host is not on the allow list.';
 	}

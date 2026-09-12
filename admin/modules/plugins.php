@@ -121,9 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			break;
 
 		case 'enable':
-			znote_plugin_set_enabled($name, true);
-			acp_log('plugin.enable', $name);
-			acp_flash_success(t('acp.plg.enabled', ['plugin' => $label]));
+			if (!$plugin['compatible']) {
+				acp_flash_error(h(implode(' ', $plugin['compatibility_errors'])));
+			} elseif (znote_plugin_set_enabled($name, true)) {
+				acp_log('plugin.enable', $name);
+				acp_flash_success(t('acp.plg.enabled', ['plugin' => $label]));
+			} else {
+				acp_flash_error(t_default('acp.plg.enable_failed', 'Could not enable {plugin}.', ['plugin' => h($label)]));
+			}
 			break;
 
 		case 'disable':
@@ -152,7 +157,7 @@ $active    = 0;
 $updatable = 0;
 
 foreach ($plugins as $plugin) {
-	if ($plugin['enabled'] && $plugin['installed']) {
+	if ($plugin['enabled'] && $plugin['installed'] && $plugin['compatible']) {
 		$active++;
 	}
 	if ($plugin['update']) {
@@ -208,7 +213,7 @@ foreach ($plugins as $plugin) {
 				if ($plugin['admin']) { $adds[] = t('acp.plg.admin_page_count', ['n' => $plugin['admin']]); }
 				if ($plugin['sql'])   { $adds[] = t('acp.plg.tables'); }
 
-				$running = $plugin['installed'] && $plugin['enabled'];
+				$running = $plugin['installed'] && $plugin['enabled'] && $plugin['compatible'];
 			?>
 				<tr>
 					<td>
@@ -223,13 +228,20 @@ foreach ($plugins as $plugin) {
 								&middot; <a href="<?= h($plugin['url']) ?>" target="_blank" rel="noopener noreferrer"><?= t('acp.plg.website') ?></a>
 							<?php endif; ?>
 						</span>
+						<?php if (!$plugin['compatible']): ?>
+							<span class="acp-hint" style="display:block;color:var(--acp-red);">
+								<?= h(implode(' ', $plugin['compatibility_errors'])) ?>
+							</span>
+						<?php endif; ?>
 					</td>
 
 					<td><?= $adds ? h(implode(', ', $adds)) : '<span class="acp-hint">' . t('acp.plg.hooks_only') . '</span>' ?></td>
 
 					<td>
 						<?= $plugin['version'] !== '' ? h($plugin['version']) : '&mdash;' ?>
-						<?php if ($plugin['update']): ?>
+						<?php if (!$plugin['compatible']): ?>
+							<span class="acp-pill acp-pill--red"><?= h(t_default('acp.plg.incompatible', 'Incompatible')) ?></span>
+						<?php elseif ($plugin['update']): ?>
 							<span class="acp-hint" style="display:block;"><?= t('acp.plg.installed_label', ['version' => h($plugin['installed_version'])]) ?></span>
 						<?php endif; ?>
 					</td>
@@ -260,7 +272,7 @@ foreach ($plugins as $plugin) {
 								<?= acp_csrf_field() ?>
 								<input type="hidden" name="plugin" value="<?= h($name) ?>">
 								<input type="hidden" name="action" value="install">
-								<button class="acp-btn acp-btn--green acp-btn--sm" type="submit">
+								<button class="acp-btn acp-btn--green acp-btn--sm" type="submit" <?= $plugin['compatible'] ? '' : 'disabled' ?>>
 									<i class="fa fa-download"></i> <?= t('acp.plg.install') ?>
 								</button>
 							</form>
@@ -272,7 +284,7 @@ foreach ($plugins as $plugin) {
 									<?= acp_csrf_field() ?>
 									<input type="hidden" name="plugin" value="<?= h($name) ?>">
 									<input type="hidden" name="action" value="update">
-									<button class="acp-btn acp-btn--amber acp-btn--sm" type="submit">
+									<button class="acp-btn acp-btn--amber acp-btn--sm" type="submit" <?= $plugin['compatible'] ? '' : 'disabled' ?>>
 										<i class="fa fa-arrow-up"></i> <?= t('acp.plg.update_to', ['version' => h($plugin['version'])]) ?>
 									</button>
 								</form>
@@ -282,7 +294,7 @@ foreach ($plugins as $plugin) {
 								<?= acp_csrf_field() ?>
 								<input type="hidden" name="plugin" value="<?= h($name) ?>">
 								<input type="hidden" name="action" value="<?= $plugin['enabled'] ? 'disable' : 'enable' ?>">
-								<button class="acp-btn acp-btn--sm <?= $plugin['enabled'] ? '' : 'acp-btn--green' ?>" type="submit">
+								<button class="acp-btn acp-btn--sm <?= $plugin['enabled'] ? '' : 'acp-btn--green' ?>" type="submit" <?= !$plugin['enabled'] && !$plugin['compatible'] ? 'disabled' : '' ?>>
 									<?= $plugin['enabled'] ? t('acp.plg.disable') : t('acp.plg.enable') ?>
 								</button>
 							</form>

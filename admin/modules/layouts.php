@@ -150,6 +150,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 	if ($requested === '' || !isset($themes[$requested])) {
 		acp_flash_error(t('acp.lay.unknown_theme'));
+	} elseif (!$themes[$requested]['compatible']) {
+		acp_flash_error(h(implode(' ', $themes[$requested]['compatibility_errors'])));
 	} elseif (theme_file_exists_in($requested, 'shells/default.php') === false) {
 		acp_flash_error(t('acp.lay.no_shell', [
 			'theme' => '<strong>' . h($themes[$requested]['name']) . '</strong>',
@@ -336,7 +338,7 @@ $hasTable = znote_table_exists('znote_config');
 <div class="acp-media">
 	<?php foreach ($themes as $key => $theme):
 		$isActive   = ($key === $active);
-		$isUsable   = theme_file_exists_in($key, 'shells/default.php');
+		$isUsable   = theme_file_exists_in($key, 'shells/default.php') && $theme['compatible'];
 		$counts     = acp_theme_counts($key);
 		$views      = $counts['views'];
 		$pages      = $counts['pages'];
@@ -359,6 +361,9 @@ $hasTable = znote_table_exists('znote_config');
 					<?php endif; ?>
 					<?php if (!empty($theme['is_example'])): ?>
 						<span class="acp-pill acp-pill--grey"><?= t('acp.lay.template_pill') ?></span>
+					<?php endif; ?>
+					<?php if (!$theme['compatible']): ?>
+						<span class="acp-pill acp-pill--red"><?= h(t_default('acp.lay.incompatible', 'Incompatible')) ?></span>
 					<?php endif; ?>
 				</h3>
 
@@ -384,7 +389,9 @@ $hasTable = znote_table_exists('znote_config');
 
 				<?php if (!$isUsable): ?>
 					<p class="is-muted" style="font-size:12px;color:var(--acp-red);">
-						<?= t('acp.lay.not_usable', ['file' => '<code>shells/default.php</code>']) ?>
+						<?= $theme['compatible']
+							? t('acp.lay.not_usable', ['file' => '<code>shells/default.php</code>'])
+							: h(implode(' ', $theme['compatibility_errors'])) ?>
 					</p>
 				<?php elseif ($views === 0): ?>
 					<p class="is-muted" style="font-size:12px;">
