@@ -15,6 +15,9 @@ config.php.bak
 # Docker environment
 .env
 
+# PHPUnit's own run-history cache.
+.phpunit.result.cache
+
 # The installer's lock, created when it finishes.
 install/installed.lock
 
