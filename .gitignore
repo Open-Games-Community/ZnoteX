@@ -12,6 +12,9 @@ upload_github/
 config.local.php
 config.php.bak
 
+# Docker environment
+.env
+
 # The installer's lock, created when it finishes.
 install/installed.lock
 

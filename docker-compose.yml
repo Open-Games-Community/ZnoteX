@@ -1,0 +1,72 @@
+services:
+  znotex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${ZNOTEX_HTTP_PORT:-8080}:80"
+    environment:
+      ZNOTE_DB_HOST: db
+      ZNOTE_DB_PORT: 3306
+      ZNOTE_DB_NAME: ${MYSQL_DATABASE:-znotex}
+      ZNOTE_DB_USER: ${MYSQL_USER:-znotex}
+      ZNOTE_DB_PASSWORD: ${MYSQL_PASSWORD:-znotex}
+      ZNOTE_SITE_URL: ${ZNOTE_SITE_URL:-http://localhost:8080}
+      ZNOTE_SITE_TITLE: ${ZNOTE_SITE_TITLE:-ZnoteX}
+      ZNOTE_SERVER_ENGINE: ${ZNOTE_SERVER_ENGINE:-TFS_10}
+      ZNOTE_ADMIN_ACCOUNT: ${ZNOTE_ADMIN_ACCOUNT:-demo}
+    volumes:
+      - znotex_cache:/var/www/html/engine/cache
+      - znotex_theme_img:/var/www/html/engine/img/theme
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-znotex_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-znotex}
+      MYSQL_USER: ${MYSQL_USER:-znotex}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-znotex}
+      ZNOTE_SERVER_ENGINE: ${ZNOTE_SERVER_ENGINE:-TFS_10}
+    volumes:
+      - znotex_db:/var/lib/mysql
+      - ./docker/mysql/00-init.sh:/docker-entrypoint-initdb.d/00-init.sh:ro
+      - ./docker/mysql/schemas:/schemas:ro
+      - ./docker/mysql/demo-data-tfs_10.sql:/demo-data-tfs_10.sql:ro
+      - ./SQL/znote_schema.sql:/znote-schema.sql:ro
+    ports:
+      - "${ZNOTEX_DB_PORT:-3306}:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-znotex_root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-znotex_root}
+    ports:
+      - "${ZNOTEX_PMA_PORT:-8081}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "${ZNOTEX_MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${ZNOTEX_MAILPIT_WEB_PORT:-8025}:8025"
+
+volumes:
+  znotex_db:
+  znotex_cache:
+  znotex_theme_img:

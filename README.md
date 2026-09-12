@@ -83,6 +83,46 @@ or newer (8.3 / 8.4 recommended).
 
 ## Installation
 
+### Docker (fastest way to try it)
+
+```
+git clone https://github.com/Open-Games-Community/ZnoteX.git
+cd ZnoteX
+cp .env.example .env
+docker compose up -d
+```
+
+That's it — open **http://localhost:8080**. The stack brings up:
+
+| Service | What it's for | Default URL |
+| --- | --- | --- |
+| **znotex** | PHP 8.5 + Apache, ZnoteX itself, Composer dependencies already installed | http://localhost:8080 |
+| **db** | MySQL 8.4, pre-loaded with a demo game schema matching `ZNOTE_SERVER_ENGINE` | localhost:3306 |
+| **phpmyadmin** | Browse the database | http://localhost:8081 |
+| **mailpit** | Every outgoing e-mail (registration, recovery, etc.) is caught here instead of actually sending | http://localhost:8025 |
+
+`ZNOTE_SERVER_ENGINE` in `.env` picks which game database gets imported on first boot, matching
+the same six choices the installer offers:
+
+| Value | Engine | Demo accounts/characters? |
+| --- | --- | --- |
+| `TFS_10` (default) | TFS 1.1 - 1.4.2 | Yes - account **`demo`** / password **`demo123`** already has admin panel access, with 3 demo characters |
+| `TFS_16` | TFS 1.6 | Schema only |
+| `CANARY` | Canary / OTServBR-Global | Schema only |
+| `TFS_03` | TFS 0.3.6+ / 0.4 / OTX | Schema only |
+| `TFS_02` | TFS 0.2.13+ | Falls back to the TFS_03 schema - no dedicated 0.2.x schema is bundled |
+| `OTHIRE` | OTHire | Schema only |
+
+Set it in `.env` **before** the first `docker compose up -d` — the schema is only imported once,
+into a fresh database volume. To switch engines afterward, `docker compose down -v` (this wipes
+the database) and start again. `config.local.php` is generated automatically from
+`docker-compose.yml`'s environment values on every container start — edit those instead of the
+file itself. Change ports or credentials in `.env` before the first start if the defaults collide
+with something else on your machine.
+
+This environment is for trying ZnoteX or developing on it — every bundled game schema is a demo,
+not a real Tibia server. Point `ZNOTE_DB_*` at your actual server's database for production use.
+
 ### The installer
 
 Extract ZnoteX into your web directory and open **`/install/`** in a browser. Six steps:
