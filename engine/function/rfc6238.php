@@ -108,7 +108,7 @@ class TokenAuth6238 {
 	 * @return bool True if success, false if failure
 	 */
 	public static function verify($secretkey, $code, $rangein30s = 3) {
-		$key = base32static::decode($secretkey);
+		$key = Base32Static::decode($secretkey);
 		$unixtimestamp = intdiv(time(), 30);
 
 		for($i=-($rangein30s); $i<=$rangein30s; $i++) {
@@ -129,7 +129,7 @@ class TokenAuth6238 {
 
 	public static function getTokenCode($secretkey,$rangein30s = 3) {
 		$result = "";
-		$key = base32static::decode($secretkey);
+		$key = Base32Static::decode($secretkey);
 		$unixtimestamp = intdiv(time(), 30);
 
 		for($i=-($rangein30s); $i<=$rangein30s; $i++) {
@@ -145,7 +145,7 @@ class TokenAuth6238 {
 		$result = "";
 		print "<br/>SecretKey: $secretkey <br/>";
 
-		$key = base32static::decode($secretkey);
+		$key = Base32Static::decode($secretkey);
 		print "Key(base 32 decode): $key <br/>";
 
 		$unixtimestamp = intdiv(time(), 30);

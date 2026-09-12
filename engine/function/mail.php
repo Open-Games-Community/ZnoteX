@@ -12,11 +12,6 @@ class Mail {
 
     public function sendMail(string $to, string $title, string $html, string $accname = ''): bool
     {
-        // Charger PHPMailer UNE FOIS (idéalement via autoload)
-        require_once __DIR__.'/../../PHPMailer/src/Exception.php';
-        require_once __DIR__.'/../../PHPMailer/src/PHPMailer.php';
-        require_once __DIR__.'/../../PHPMailer/src/SMTP.php';
-
         try {
             $mail = new PHPMailer(true);
 

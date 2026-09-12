@@ -5,7 +5,8 @@
     "license": "MIT",
     "homepage": "https://github.com/Open-Games-Community/ZnoteX",
     "require": {
-        "php": ">=8.1"
+        "php": ">=8.1",
+        "phpmailer/phpmailer": "^7.1"
     },
     "autoload": {
         "classmap": [

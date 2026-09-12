@@ -224,7 +224,7 @@ function setPlayerStorage($player_id, $storage, $value) {
 	$player_id = (int)$player_id;
 
 	// If the storage does not exist yet
-	if (getPlayerStorage($storage) === false) {
+	if (getPlayerStorage($player_id, $storage) === false) {
 		db()->execute("INSERT INTO `player_storage` (`player_id`, `key`, `value`) VALUES (?, ?, ?)", [$player_id, $storage, $value]);
 	} else {// If the storage exist
 		db()->execute("UPDATE `player_storage` SET `value` = ? WHERE `key` = ? AND `player_id` = ?", [$value, $storage, $player_id]);
