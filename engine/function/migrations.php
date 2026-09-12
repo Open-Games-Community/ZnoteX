@@ -102,99 +102,145 @@ function znote_migrations_pending(): array {
 	});
 }
 
-function znote_migration_split_sql(string $sql): array {
-	$statements = array();
-	$current = '';
-	$len = strlen($sql);
-	$quote = null;
-	$lineComment = false;
-	$blockComment = false;
+final class ZnoteMigrationSqlSplitter
+{
+	private string $sql;
+	private int $len;
+	private int $i = 0;
+	private string $current = '';
+	private ?string $quote = null;
+	private bool $lineComment = false;
+	private bool $blockComment = false;
+	private array $statements = array();
 
-	for ($i = 0; $i < $len; $i++) {
-		$char = $sql[$i];
-		$next = ($i + 1 < $len) ? $sql[$i + 1] : '';
+	public function __construct(string $sql)
+	{
+		$this->sql = $sql;
+		$this->len = strlen($sql);
+	}
 
-		if ($lineComment) {
-			$current .= $char;
-			if ($char === "\n") {
-				$lineComment = false;
-			}
-			continue;
+	public function split(): array
+	{
+		for ($this->i = 0; $this->i < $this->len; $this->i++) {
+			$this->step();
 		}
+		$this->flush();
 
-		if ($blockComment) {
-			$current .= $char;
-			if ($char === '*' && $next === '/') {
-				$current .= $next;
-				$i++;
-				$blockComment = false;
-			}
-			continue;
+		return $this->statements;
+	}
+
+	private function step(): void
+	{
+		if ($this->lineComment) {
+			$this->stepLineComment();
+			return;
 		}
-
-		if ($quote !== null) {
-			$current .= $char;
-			if (znote_migration_split_sql_is_escape($char, $next)) {
-				$current .= $next;
-				$i++;
-				continue;
-			}
-			if ($char === $quote) {
-				$quote = null;
-			}
-			continue;
+		if ($this->blockComment) {
+			$this->stepBlockComment();
+			return;
 		}
-
-		if (znote_migration_split_sql_starts_line_comment($sql, $i, $len)) {
-			$lineComment = true;
-			$current .= $char;
-			continue;
+		if ($this->quote !== null) {
+			$this->stepQuote();
+			return;
 		}
+		$this->stepDefault();
+	}
 
+	private function char(): string
+	{
+		return $this->sql[$this->i];
+	}
+
+	private function next(): string
+	{
+		return ($this->i + 1 < $this->len) ? $this->sql[$this->i + 1] : '';
+	}
+
+	private function stepLineComment(): void
+	{
+		$char = $this->char();
+		$this->current .= $char;
+		if ($char === "\n") {
+			$this->lineComment = false;
+		}
+	}
+
+	private function stepBlockComment(): void
+	{
+		$char = $this->char();
+		$next = $this->next();
+		$this->current .= $char;
+		if ($char === '*' && $next === '/') {
+			$this->current .= $next;
+			$this->i++;
+			$this->blockComment = false;
+		}
+	}
+
+	private function stepQuote(): void
+	{
+		$char = $this->char();
+		$next = $this->next();
+		$this->current .= $char;
+		if ($char === '\\' && $next !== '') {
+			$this->current .= $next;
+			$this->i++;
+			return;
+		}
+		if ($char === $this->quote) {
+			$this->quote = null;
+		}
+	}
+
+	private function stepDefault(): void
+	{
+		$char = $this->char();
+		$next = $this->next();
+
+		if ($this->startsLineComment()) {
+			$this->lineComment = true;
+			$this->current .= $char;
+			return;
+		}
 		if ($char === '/' && $next === '*') {
-			$blockComment = true;
-			$current .= $char . $next;
-			$i++;
-			continue;
+			$this->blockComment = true;
+			$this->current .= $char . $next;
+			$this->i++;
+			return;
 		}
-
 		if ($char === '\'' || $char === '"' || $char === '`') {
-			$quote = $char;
-			$current .= $char;
-			continue;
+			$this->quote = $char;
+			$this->current .= $char;
+			return;
 		}
-
 		if ($char === ';') {
-			$trimmed = trim($current);
-			if ($trimmed !== '') {
-				$statements[] = $trimmed;
-			}
-			$current = '';
-			continue;
+			$this->flush();
+			return;
 		}
 
-		$current .= $char;
+		$this->current .= $char;
 	}
 
-	$trimmed = trim($current);
-	if ($trimmed !== '') {
-		$statements[] = $trimmed;
+	private function startsLineComment(): bool
+	{
+		$char = $this->char();
+		$next = $this->next();
+		return ($char === '-' && $next === '-' && ($this->i + 2 >= $this->len || preg_match('/\s/', $this->sql[$this->i + 2])))
+			|| $char === '#';
 	}
 
-	return $statements;
+	private function flush(): void
+	{
+		$trimmed = trim($this->current);
+		if ($trimmed !== '') {
+			$this->statements[] = $trimmed;
+		}
+		$this->current = '';
+	}
 }
 
-function znote_migration_split_sql_is_escape(string $char, string $next): bool
-{
-	return $char === '\\' && $next !== '';
-}
-
-function znote_migration_split_sql_starts_line_comment(string $sql, int $i, int $len): bool
-{
-	$char = $sql[$i];
-	$next = ($i + 1 < $len) ? $sql[$i + 1] : '';
-	return ($char === '-' && $next === '-' && ($i + 2 >= $len || preg_match('/\s/', $sql[$i + 2])))
-		|| $char === '#';
+function znote_migration_split_sql(string $sql): array {
+	return (new ZnoteMigrationSqlSplitter($sql))->split();
 }
 
 function znote_migration_run(string $migration): array {
