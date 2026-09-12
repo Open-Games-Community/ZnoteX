@@ -2,10 +2,11 @@
   {
     "key": "tibiacom_v1",
     "name": "TibiaCOM v1",
-    "version": "1.1.6",
+    "version": "1.1.7",
     "author": "Alex - opengamescommunity.com",
     "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Improved character profile compatibility.",
       "Added visible profile blocks and separators.",
       "Fixed responsive skill tiles on narrow layouts."
@@ -17,10 +18,11 @@
   {
     "key": "old_school",
     "name": "Old School",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "author": "Hemrenus321",
     "description": "old_school theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Uses the shared modern character profile.",
       "Added parchment-friendly profile blocks and borders.",
       "Fixed layout override so Name, Level and Equipment display correctly."
@@ -32,10 +34,11 @@
   {
     "key": "time_sand",
     "name": "Time Sand",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Alex - opengamescommunity.com",
     "description": "Time Sand theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/time_sand.zip",
@@ -45,10 +48,11 @@
   {
     "key": "black_mirror",
     "name": "Black Mirror",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "author": "Alex - opengamescommunity.com",
     "description": "Black Mirror theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "New Black & Gold Theme."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/black_mirror.zip",
@@ -58,10 +62,11 @@
   {
     "key": "void",
     "name": "Void",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "author": "Alex - opengamescommunity.com",
     "description": "Void theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/void.zip",
@@ -71,10 +76,11 @@
   {
     "key": "telara",
     "name": "Telara",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "author": "Alex - opengamescommunity.com",
     "description": "Telara theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Telara Layout."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/telara.zip",
@@ -84,10 +90,11 @@
   {
     "key": "eclipse",
     "name": "Eclipse",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Alex - opengamescommunity.com",
     "description": "Eclipse theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/eclipse.zip",
@@ -97,10 +104,11 @@
   {
     "key": "brightness",
     "name": "Brightness",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Brightness theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/brightness.zip",
@@ -110,10 +118,11 @@
   {
     "key": "wildlands",
     "name": "Wildlands",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Alex - opengamescommunity.com",
     "description": "Wildlands theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/wildlands.zip",
@@ -123,10 +132,11 @@
   {
     "key": "bloodfang",
     "name": "Bloodfang",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Bloodfang theme by alexv45 for ZnoteX.",
     "update": [
+	  "Update SQL Statement & Securiy.",
       "Update new image path method."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/bloodfang.zip",
