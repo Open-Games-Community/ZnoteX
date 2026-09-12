@@ -27,7 +27,7 @@ class Base32Static {
 	/**
 	 * Use padding false when encoding for urls
 	 *
-	 * @return base32 encoded string
+	 * @return string base32 encoded string
 	 * @author Bryan Ruiz
 	 **/
 	public static function encode($input, $padding = true) {
