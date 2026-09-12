@@ -1,0 +1,22 @@
+{
+    "name": "open-games-community/znotex",
+    "description": "ZnoteX - a complete website for your Open Tibia server.",
+    "type": "project",
+    "license": "MIT",
+    "homepage": "https://github.com/Open-Games-Community/ZnoteX",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "classmap": [
+            "engine/function/"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.2"
+    }
+}

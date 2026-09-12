@@ -15,6 +15,10 @@ $version = '2.0.1';
 $aacQueries = 0;
 $accQueriesData = array();
 
+if (is_file(__DIR__ . '/../vendor/autoload.php')) {
+	require_once __DIR__ . '/../vendor/autoload.php';
+}
+
 ob_start();
 require_once 'config.php';
 require_once __DIR__ . '/session.php';
