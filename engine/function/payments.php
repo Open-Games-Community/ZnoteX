@@ -124,21 +124,24 @@ function payment_gateway_insert_transaction(string $provider, int $accountId, st
 	$now = time();
 	$test = $testMode ? 1 : 0;
 
-	db()->execute("
+	$inserted = db()->execute("
 		INSERT INTO `znote_payment_transactions`
 			(`provider`, `reference`, `account_id`, `price`, `currency`, `points`, `status`, `credited`, `test_mode`, `created_at`, `updated_at`)
 		VALUES
 			(?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?);
 	", [$provider, $reference, $accountId, $price, strtoupper($currency), $points, $test, $now, $now]);
+	if (!$inserted) {
+		throw new RuntimeException('Payment transaction could not be created.');
+	}
 
 	return $reference;
 }
 
-function payment_gateway_update_provider_reference(string $provider, string $reference, string $providerReference, array $payload = []): void {
+function payment_gateway_update_provider_reference(string $provider, string $reference, string $providerReference, array $payload = []): bool {
 	$body = (string)json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
 	$now = time();
 
-	db()->execute("
+	return db()->execute("
 		UPDATE `znote_payment_transactions`
 		SET `provider_reference` = ?, `payload` = ?, `updated_at` = ?
 		WHERE `provider` = ? AND `reference` = ? LIMIT 1;
@@ -171,6 +174,9 @@ function payment_gateway_update_status(string $provider, string $reference, stri
 
 function payment_gateway_log_event(string $provider, string $eventId, ?string $providerReference, ?string $paymentReference, string $status, string $payload): void {
 	$eventId = $eventId !== '' ? $eventId : hash('sha256', $payload);
+	$eventId = substr($eventId, 0, 128);
+	$providerReference = $providerReference !== null ? substr($providerReference, 0, 128) : null;
+	$paymentReference = $paymentReference !== null ? substr($paymentReference, 0, 128) : null;
 	$providerReference = ($providerReference !== null && $providerReference !== '') ? $providerReference : null;
 	$paymentReference = ($paymentReference !== null && $paymentReference !== '') ? $paymentReference : null;
 	$body = substr($payload, 0, 65000);
@@ -183,6 +189,21 @@ function payment_gateway_log_event(string $provider, string $eventId, ?string $p
 			(?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE `received_at` = `received_at`;
 	", [$provider, $eventId, $providerReference, $paymentReference, $status, $body, $now]);
+}
+
+function payment_gateway_update_event_status(string $provider, string $eventId, string $status, ?string $paymentReference = null): void {
+	$params = [substr($status, 0, 32)];
+	$sets = ['`status` = ?'];
+	if ($paymentReference !== null && $paymentReference !== '') {
+		$sets[] = '`payment_reference` = ?';
+		$params[] = substr($paymentReference, 0, 128);
+	}
+	$params[] = $provider;
+	$params[] = substr($eventId, 0, 128);
+	db()->execute(
+		"UPDATE `znote_payment_events` SET " . implode(', ', $sets) . " WHERE `provider` = ? AND `event_id` = ? LIMIT 1;",
+		$params
+	);
 }
 
 function payment_gateway_http(string $method, string $url, array $headers = [], $body = null): array {
@@ -317,7 +338,9 @@ function payment_gateway_create_checkout(string $provider, int $accountId, $pric
 			throw new RuntimeException('Stripe checkout creation failed.');
 		}
 
-		payment_gateway_update_provider_reference('stripe', $reference, (string)$response['json']['id'], $response['json']);
+		if (!payment_gateway_update_provider_reference('stripe', $reference, (string)$response['json']['id'], $response['json'])) {
+			throw new RuntimeException('Stripe checkout could not be stored.');
+		}
 		return ['url' => (string)$response['json']['url'], 'reference' => $reference];
 	}
 
@@ -354,7 +377,9 @@ function payment_gateway_create_checkout(string $provider, int $accountId, $pric
 		throw new RuntimeException('Mercado Pago checkout creation failed.');
 	}
 
-	payment_gateway_update_provider_reference('mercadopago', $reference, (string)$response['json']['id'], $response['json']);
+	if (!payment_gateway_update_provider_reference('mercadopago', $reference, (string)$response['json']['id'], $response['json'])) {
+		throw new RuntimeException('Mercado Pago checkout could not be stored.');
+	}
 	return ['url' => $url, 'reference' => $reference];
 }
 
@@ -455,6 +480,11 @@ function payment_gateway_credit_transaction(string $provider, string $reference,
 			payment_gateway_update_status($provider, $reference, 'amount_mismatch', $providerReference, $payload);
 			return 'amount_mismatch';
 		}
+		if (!payment_gateway_provider_mode_matches($tx, $payload)) {
+			$db->rollback();
+			payment_gateway_update_status($provider, $reference, 'mode_mismatch', $providerReference, $payload);
+			return 'mode_mismatch';
+		}
 
 		$accountRow = $db->fetchOne(
 			"SELECT `id` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;",
@@ -491,8 +521,15 @@ function payment_gateway_credit_transaction(string $provider, string $reference,
 			return 'credit_failed';
 		}
 
-		$db->commit();
-		payment_gateway_fire_completed($provider, $reference, $providerReference, $expectedStatus, $accountId, $points, $tx, $payload);
+		if (!$db->commit()) {
+			$db->rollback();
+			return 'credit_failed';
+		}
+		try {
+			payment_gateway_fire_completed($provider, $reference, $providerReference, $expectedStatus, $accountId, $points, $tx, $payload);
+		} catch (Throwable $hookError) {
+			error_log('Payment completed hook failed: ' . $hookError->getMessage());
+		}
 		return 'credited';
 	} catch (Throwable $e) {
 		$db->rollback();
@@ -542,6 +579,16 @@ function payment_gateway_provider_amount_matches(string $provider, array $transa
 	return false;
 }
 
+function payment_gateway_provider_mode_matches(array $transaction, array $payload): bool {
+	if (array_key_exists('livemode', $payload)) {
+		return (bool)$payload['livemode'] !== ((int)($transaction['test_mode'] ?? 0) === 1);
+	}
+	if (array_key_exists('live_mode', $payload)) {
+		return (bool)$payload['live_mode'] !== ((int)($transaction['test_mode'] ?? 0) === 1);
+	}
+	return false;
+}
+
 function payment_gateway_handle_stripe_webhook(string $payload): array {
 	$signature = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
 	if (!payment_gateway_verify_stripe_signature($payload, $signature)) {
@@ -562,14 +609,17 @@ function payment_gateway_handle_stripe_webhook(string $payload): array {
 	payment_gateway_log_event('stripe', $eventId, $sessionId, $reference, $type !== '' ? $type : 'received', $payload);
 
 	if (!in_array($type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)) {
+		payment_gateway_update_event_status('stripe', $eventId, 'ignored', $reference);
 		return ['code' => 200, 'status' => 'ignored'];
 	}
 	if ($sessionId === '' || $reference === '') {
+		payment_gateway_update_event_status('stripe', $eventId, 'missing_reference', $reference);
 		return ['code' => 400, 'status' => 'missing_reference'];
 	}
 
 	$response = payment_gateway_stripe_api('GET', '/v1/checkout/sessions/' . rawurlencode($sessionId));
 	if (!$response['ok'] || !is_array($response['json'])) {
+		payment_gateway_update_event_status('stripe', $eventId, 'provider_lookup_failed', $reference);
 		return ['code' => 502, 'status' => 'provider_lookup_failed'];
 	}
 
@@ -577,11 +627,13 @@ function payment_gateway_handle_stripe_webhook(string $payload): array {
 	$verifiedReference = (string)($verified['client_reference_id'] ?? ($verified['metadata']['znote_reference'] ?? ''));
 	if ($verifiedReference !== $reference || ($verified['payment_status'] ?? '') !== 'paid') {
 		payment_gateway_update_status('stripe', $reference, 'not_paid', $sessionId, $verified);
+		payment_gateway_update_event_status('stripe', $eventId, 'not_paid', $reference);
 		return ['code' => 200, 'status' => 'not_paid'];
 	}
 
 	$result = payment_gateway_credit_transaction('stripe', $reference, $sessionId, 'paid', $verified);
-	return ['code' => 200, 'status' => $result];
+	payment_gateway_update_event_status('stripe', $eventId, $result, $reference);
+	return ['code' => $result === 'credit_failed' || $result === 'missing_transaction' ? 500 : 200, 'status' => $result];
 }
 
 function payment_gateway_handle_mercadopago_webhook(string $payload): array {
@@ -603,29 +655,35 @@ function payment_gateway_handle_mercadopago_webhook(string $payload): array {
 	payment_gateway_log_event('mercadopago', $eventId, $dataId, null, $type !== '' ? $type : 'received', $payload);
 
 	if ($dataId === '') {
+		payment_gateway_update_event_status('mercadopago', $eventId, 'missing_payment_id');
 		return ['code' => 400, 'status' => 'missing_payment_id'];
 	}
 	if ($type !== '' && !in_array($type, ['payment', 'payment.updated', 'payment.created'], true)) {
+		payment_gateway_update_event_status('mercadopago', $eventId, 'ignored');
 		return ['code' => 200, 'status' => 'ignored'];
 	}
 
 	$response = payment_gateway_mercadopago_api('GET', '/v1/payments/' . rawurlencode($dataId));
 	if (!$response['ok'] || !is_array($response['json'])) {
+		payment_gateway_update_event_status('mercadopago', $eventId, 'provider_lookup_failed');
 		return ['code' => 502, 'status' => 'provider_lookup_failed'];
 	}
 
 	$payment = $response['json'];
 	$reference = (string)($payment['external_reference'] ?? ($payment['metadata']['znote_reference'] ?? ''));
 	if ($reference === '') {
+		payment_gateway_update_event_status('mercadopago', $eventId, 'missing_reference');
 		return ['code' => 400, 'status' => 'missing_reference'];
 	}
 
 	if (($payment['status'] ?? '') !== 'approved') {
 		payment_gateway_update_status('mercadopago', $reference, (string)($payment['status'] ?? 'not_approved'), $dataId, $payment);
+		payment_gateway_update_event_status('mercadopago', $eventId, 'not_approved', $reference);
 		return ['code' => 200, 'status' => 'not_approved'];
 	}
 
 	$result = payment_gateway_credit_transaction('mercadopago', $reference, $dataId, 'approved', $payment);
-	return ['code' => 200, 'status' => $result];
+	payment_gateway_update_event_status('mercadopago', $eventId, $result, $reference);
+	return ['code' => $result === 'credit_failed' || $result === 'missing_transaction' ? 500 : 200, 'status' => $result];
 }
 ?>
