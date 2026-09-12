@@ -160,26 +160,39 @@ function znote_update_verify_manifest(string $json, string $signature): array
 		return array('ok' => false, 'error' => 'The update manifest is invalid or unsupported.');
 	}
 
-	$version = trim((string)($manifest['version'] ?? ''));
-	$package = $manifest['package'] ?? null;
-	$files = $manifest['files'] ?? null;
-	if (!preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version)
-		|| !is_array($package)
-		|| !preg_match('/^[A-Za-z0-9._-]+\.zip$/', (string)($package['name'] ?? ''))
-		|| !preg_match('/^[a-f0-9]{64}$/', (string)($package['sha256'] ?? ''))
-		|| !is_array($files)
-		|| $files === array()
-	) {
+	if (!znote_update_manifest_shape_valid($manifest)) {
 		return array('ok' => false, 'error' => 'The signed manifest has missing or invalid fields.');
 	}
 
-	foreach ($files as $path => $hash) {
-		if (!is_string($path) || znote_update_path($path) !== $path || !preg_match('/^[a-f0-9]{64}$/', (string)$hash)) {
-			return array('ok' => false, 'error' => 'The signed file list is invalid.');
-		}
+	if (!znote_update_manifest_files_valid($manifest['files'])) {
+		return array('ok' => false, 'error' => 'The signed file list is invalid.');
 	}
 
 	return array('ok' => true, 'manifest' => $manifest);
+}
+
+function znote_update_manifest_shape_valid(array $manifest): bool
+{
+	$version = trim((string)($manifest['version'] ?? ''));
+	$package = $manifest['package'] ?? null;
+	$files = $manifest['files'] ?? null;
+
+	return preg_match('/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/', $version) === 1
+		&& is_array($package)
+		&& preg_match('/^[A-Za-z0-9._-]+\.zip$/', (string)($package['name'] ?? '')) === 1
+		&& preg_match('/^[a-f0-9]{64}$/', (string)($package['sha256'] ?? '')) === 1
+		&& is_array($files)
+		&& $files !== array();
+}
+
+function znote_update_manifest_files_valid(array $files): bool
+{
+	foreach ($files as $path => $hash) {
+		if (!is_string($path) || znote_update_path($path) !== $path || !preg_match('/^[a-f0-9]{64}$/', (string)$hash)) {
+			return false;
+		}
+	}
+	return true;
 }
 
 function znote_update_path(string $path): string
@@ -216,13 +229,43 @@ function znote_update_latest(bool $refresh = false): array
 	}
 
 	$cacheFile = znote_update_storage() . '/latest.json';
-	if (!$refresh && is_file($cacheFile) && filemtime($cacheFile) >= time() - 900) {
-		$cached = json_decode((string)file_get_contents($cacheFile), true);
-		if (is_array($cached)) {
+	if (!$refresh) {
+		$cached = znote_update_latest_cached($cacheFile);
+		if ($cached !== null) {
 			return $cached;
 		}
 	}
 
+	$release = znote_update_fetch_release();
+	if (!$release['ok']) {
+		return $release;
+	}
+
+	$verified = znote_update_fetch_manifest($release['release']);
+	if (!$verified['ok']) {
+		return $verified;
+	}
+
+	$result = znote_update_build_latest_result($release['release'], $verified['manifest']);
+	if (!$result['ok']) {
+		return $result;
+	}
+
+	file_put_contents($cacheFile, json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+	return $result;
+}
+
+function znote_update_latest_cached(string $cacheFile): ?array
+{
+	if (!is_file($cacheFile) || filemtime($cacheFile) < time() - 900) {
+		return null;
+	}
+	$cached = json_decode((string)file_get_contents($cacheFile), true);
+	return is_array($cached) ? $cached : null;
+}
+
+function znote_update_fetch_release(): array
+{
 	$response = znote_update_http(znote_update_api_url());
 	if (!$response['ok']) {
 		return $response;
@@ -231,7 +274,11 @@ function znote_update_latest(bool $refresh = false): array
 	if (!is_array($release) || !empty($release['draft']) || !empty($release['prerelease'])) {
 		return array('ok' => false, 'error' => 'GitHub did not return a stable release.');
 	}
+	return array('ok' => true, 'release' => $release);
+}
 
+function znote_update_fetch_manifest(array $release): array
+{
 	$jsonAsset = znote_update_asset($release, 'update.json');
 	$signatureAsset = znote_update_asset($release, 'update.json.sig');
 	if ($jsonAsset === null || $signatureAsset === null) {
@@ -247,12 +294,11 @@ function znote_update_latest(bool $refresh = false): array
 		return $signatureResponse;
 	}
 
-	$verified = znote_update_verify_manifest($jsonResponse['data'], $signatureResponse['data']);
-	if (!$verified['ok']) {
-		return $verified;
-	}
+	return znote_update_verify_manifest($jsonResponse['data'], $signatureResponse['data']);
+}
 
-	$manifest = $verified['manifest'];
+function znote_update_build_latest_result(array $release, array $manifest): array
+{
 	$tag = ltrim((string)($release['tag_name'] ?? ''), 'vV');
 	if ($tag !== (string)$manifest['version']) {
 		return array('ok' => false, 'error' => 'The GitHub tag does not match the signed version.');
@@ -263,7 +309,7 @@ function znote_update_latest(bool $refresh = false): array
 		return array('ok' => false, 'error' => 'The signed ZIP package is missing from the release.');
 	}
 
-	$result = array(
+	return array(
 		'ok' => true,
 		'available' => version_compare((string)$manifest['version'], znote_update_current_version(), '>'),
 		'current' => znote_update_current_version(),
@@ -271,8 +317,6 @@ function znote_update_latest(bool $refresh = false): array
 		'package_url' => (string)($packageAsset['browser_download_url'] ?? ''),
 		'release_url' => (string)($release['html_url'] ?? ''),
 	);
-	file_put_contents($cacheFile, json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-	return $result;
 }
 
 function znote_update_check(string $label, bool $ok, string $detail): array
@@ -345,27 +389,12 @@ function znote_update_extract(string $zipFile, array $files, string $destination
 		if (str_ends_with(str_replace('\\', '/', $raw), '/')) {
 			continue;
 		}
-		$path = znote_update_path($raw);
-		if ($path === '' || znote_update_protected($path) || !array_key_exists($path, $files) || isset($seen[$path])) {
+		$entry = znote_update_extract_entry($zip, $index, $raw, $files, $seen, $destination);
+		if (!$entry['ok']) {
 			$zip->close();
-			return array('ok' => false, 'error' => 'The ZIP contains an unexpected or protected file: ' . $raw);
+			return $entry;
 		}
-		$contents = $zip->getFromIndex($index);
-		if (!is_string($contents) || hash('sha256', $contents) !== (string)$files[$path]) {
-			$zip->close();
-			return array('ok' => false, 'error' => 'A packaged file failed checksum validation: ' . $path);
-		}
-		$target = $destination . '/' . $path;
-		$directory = dirname($target);
-		if (!is_dir($directory) && !mkdir($directory, 0750, true) && !is_dir($directory)) {
-			$zip->close();
-			return array('ok' => false, 'error' => 'A staging directory cannot be created.');
-		}
-		if (file_put_contents($target, $contents, LOCK_EX) === false) {
-			$zip->close();
-			return array('ok' => false, 'error' => 'A staged file cannot be written: ' . $path);
-		}
-		$seen[$path] = true;
+		$seen[$entry['path']] = true;
 	}
 	$zip->close();
 
@@ -373,6 +402,30 @@ function znote_update_extract(string $zipFile, array $files, string $destination
 		return array('ok' => false, 'error' => 'The ZIP does not contain every signed file.');
 	}
 	return array('ok' => true, 'directory' => $destination);
+}
+
+function znote_update_extract_entry(ZipArchive $zip, int $index, string $raw, array $files, array $seen, string $destination): array
+{
+	$path = znote_update_path($raw);
+	if ($path === '' || znote_update_protected($path) || !array_key_exists($path, $files) || isset($seen[$path])) {
+		return array('ok' => false, 'error' => 'The ZIP contains an unexpected or protected file: ' . $raw);
+	}
+
+	$contents = $zip->getFromIndex($index);
+	if (!is_string($contents) || hash('sha256', $contents) !== (string)$files[$path]) {
+		return array('ok' => false, 'error' => 'A packaged file failed checksum validation: ' . $path);
+	}
+
+	$target = $destination . '/' . $path;
+	$directory = dirname($target);
+	if (!is_dir($directory) && !mkdir($directory, 0750, true) && !is_dir($directory)) {
+		return array('ok' => false, 'error' => 'A staging directory cannot be created.');
+	}
+	if (file_put_contents($target, $contents, LOCK_EX) === false) {
+		return array('ok' => false, 'error' => 'A staged file cannot be written: ' . $path);
+	}
+
+	return array('ok' => true, 'path' => $path);
 }
 
 function znote_update_migration_safe(string $sql): bool
@@ -390,66 +443,59 @@ function znote_update_migration_safe(string $sql): bool
 	return true;
 }
 
-function znote_update_preflight(array $latest): array
+function znote_update_check_version(string $version): array
 {
-	$checks = array();
-	if (empty($latest['ok'])) {
-		return array('ok' => false, 'checks' => array(znote_update_check('Release metadata', false, (string)($latest['error'] ?? 'Unknown error.'))));
-	}
-
-	$manifest = $latest['manifest'];
-	$version = (string)$manifest['version'];
 	$newer = version_compare($version, znote_update_current_version(), '>');
-	$checks[] = znote_update_check('Version', $newer, $newer ? 'Version ' . $version . ' is newer than ' . znote_update_current_version() . '.' : 'No newer stable version is available.');
-	$checks[] = znote_update_check('Digital signature', true, 'update.json has a valid ZnoteX RSA/SHA-256 signature.');
+	return znote_update_check('Version', $newer, $newer ? 'Version ' . $version . ' is newer than ' . znote_update_current_version() . '.' : 'No newer stable version is available.');
+}
 
-	$requires = is_array($manifest['requirements'] ?? null) ? $manifest['requirements'] : array();
+function znote_update_check_php_version(array $requires): array
+{
 	$phpConstraint = (string)($requires['php'] ?? '>=8.1');
 	$phpOk = function_exists('znote_extension_version_matches') && znote_extension_version_matches(PHP_VERSION, $phpConstraint);
-	$checks[] = znote_update_check('PHP version', $phpOk, 'Required ' . $phpConstraint . '; running ' . PHP_VERSION . '.');
+	return znote_update_check('PHP version', $phpOk, 'Required ' . $phpConstraint . '; running ' . PHP_VERSION . '.');
+}
 
+function znote_update_check_extensions(array $requires): array
+{
 	$requiredExtensions = is_array($requires['extensions'] ?? null) ? $requires['extensions'] : array('curl', 'json', 'openssl', 'zip');
+	$checks = array();
 	foreach ($requiredExtensions as $extension) {
 		$name = strtolower(trim((string)$extension));
 		$loaded = $name !== '' && extension_loaded($name);
 		$checks[] = znote_update_check('PHP extension: ' . $name, $loaded, $loaded ? 'Loaded.' : 'Missing from this PHP installation.');
 	}
+	return $checks;
+}
 
-	$storageOk = znote_update_prepare_storage() && is_writable(znote_update_storage());
-	$rootOk = is_writable(znote_update_root());
-	$checks[] = znote_update_check('Update storage', $storageOk, $storageOk ? 'Writable.' : 'engine/update is not writable.');
-	$checks[] = znote_update_check('Website files', $rootOk, $rootOk ? 'The website root is writable.' : 'The website root is not writable by PHP.');
-
+function znote_update_check_disk_space(array $manifest): array
+{
 	$free = @disk_free_space(znote_update_root());
 	$needed = max(52428800, (int)($manifest['package']['size'] ?? 0) * 3);
 	$diskOk = is_float($free) && $free >= $needed;
-	$checks[] = znote_update_check('Disk space', $diskOk, $diskOk ? 'At least ' . number_format($needed / 1048576, 0) . ' MB is available.' : 'At least ' . number_format($needed / 1048576, 0) . ' MB of free space is required.');
+	return znote_update_check('Disk space', $diskOk, $diskOk ? 'At least ' . number_format($needed / 1048576, 0) . ' MB is available.' : 'At least ' . number_format($needed / 1048576, 0) . ' MB of free space is required.');
+}
 
-	$download = $storageOk ? znote_update_download_package($latest) : array('ok' => false, 'error' => 'Storage is unavailable.');
-	$checks[] = znote_update_check('ZIP checksum', !empty($download['ok']), !empty($download['ok']) ? 'The downloaded package matches its signed SHA-256 checksum.' : (string)($download['error'] ?? 'Download failed.'));
-
-	$stage = znote_update_storage() . '/staging/' . preg_replace('/[^0-9A-Za-z._-]/', '-', $version);
-	$extracted = !empty($download['ok']) ? znote_update_extract((string)$download['file'], $manifest['files'], $stage) : array('ok' => false, 'error' => 'The ZIP was not validated.');
-	$checks[] = znote_update_check('Package contents', !empty($extracted['ok']), !empty($extracted['ok']) ? count($manifest['files']) . ' signed files validated; no protected or unexpected file found.' : (string)($extracted['error'] ?? 'Validation failed.'));
-
-	$migrationOk = true;
-	$migrationDetail = 'No database migration is required.';
+function znote_update_check_migrations(array $manifest, string $stage): array
+{
 	$migrations = is_array($manifest['migrations'] ?? null) ? $manifest['migrations'] : array();
-	if ($migrations !== array()) {
-		$migrationDetail = count($migrations) . ' additive migration(s) validated.';
-		foreach ($migrations as $migration) {
-			$path = is_array($migration) ? znote_update_path((string)($migration['file'] ?? '')) : '';
-			$type = is_array($migration) ? (string)($migration['type'] ?? '') : '';
-			$file = $stage . '/' . $path;
-			if ($type !== 'expand' || $path === '' || !is_file($file) || !znote_update_migration_safe((string)file_get_contents($file))) {
-				$migrationOk = false;
-				$migrationDetail = 'A migration is missing, destructive or not marked as expand-only.';
-				break;
-			}
+	if ($migrations === array()) {
+		return znote_update_check('Database migrations', true, 'No database migration is required.');
+	}
+
+	foreach ($migrations as $migration) {
+		$path = is_array($migration) ? znote_update_path((string)($migration['file'] ?? '')) : '';
+		$type = is_array($migration) ? (string)($migration['type'] ?? '') : '';
+		$file = $stage . '/' . $path;
+		if ($type !== 'expand' || $path === '' || !is_file($file) || !znote_update_migration_safe((string)file_get_contents($file))) {
+			return znote_update_check('Database migrations', false, 'A migration is missing, destructive or not marked as expand-only.');
 		}
 	}
-	$checks[] = znote_update_check('Database migrations', $migrationOk, $migrationDetail);
+	return znote_update_check('Database migrations', true, count($migrations) . ' additive migration(s) validated.');
+}
 
+function znote_update_check_local_modifications(): array
+{
 	$conflicts = array();
 	$installedFile = znote_update_storage() . '/installed.json';
 	if (is_file($installedFile)) {
@@ -461,15 +507,54 @@ function znote_update_preflight(array $latest): array
 			}
 		}
 	}
-	$checks[] = znote_update_check('Local modifications', $conflicts === array(), $conflicts === array() ? 'No locally modified managed file will be overwritten.' : 'Modified files would be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)));
+	return znote_update_check('Local modifications', $conflicts === array(), $conflicts === array() ? 'No locally modified managed file will be overwritten.' : 'Modified files would be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)));
+}
 
-	$ok = true;
+function znote_update_checks_pass(array $checks): bool
+{
 	foreach ($checks as $check) {
 		if (!$check['ok']) {
-			$ok = false;
+			return false;
 		}
 	}
-	return array('ok' => $ok, 'checks' => $checks, 'stage' => $stage, 'manifest' => $manifest);
+	return true;
+}
+
+function znote_update_preflight(array $latest): array
+{
+	if (empty($latest['ok'])) {
+		return array('ok' => false, 'checks' => array(znote_update_check('Release metadata', false, (string)($latest['error'] ?? 'Unknown error.'))));
+	}
+
+	$manifest = $latest['manifest'];
+	$version = (string)$manifest['version'];
+	$requires = is_array($manifest['requirements'] ?? null) ? $manifest['requirements'] : array();
+
+	$checks = array();
+	$checks[] = znote_update_check_version($version);
+	$checks[] = znote_update_check('Digital signature', true, 'update.json has a valid ZnoteX RSA/SHA-256 signature.');
+	$checks[] = znote_update_check_php_version($requires);
+	foreach (znote_update_check_extensions($requires) as $check) {
+		$checks[] = $check;
+	}
+
+	$storageOk = znote_update_prepare_storage() && is_writable(znote_update_storage());
+	$rootOk = is_writable(znote_update_root());
+	$checks[] = znote_update_check('Update storage', $storageOk, $storageOk ? 'Writable.' : 'engine/update is not writable.');
+	$checks[] = znote_update_check('Website files', $rootOk, $rootOk ? 'The website root is writable.' : 'The website root is not writable by PHP.');
+	$checks[] = znote_update_check_disk_space($manifest);
+
+	$download = $storageOk ? znote_update_download_package($latest) : array('ok' => false, 'error' => 'Storage is unavailable.');
+	$checks[] = znote_update_check('ZIP checksum', !empty($download['ok']), !empty($download['ok']) ? 'The downloaded package matches its signed SHA-256 checksum.' : (string)($download['error'] ?? 'Download failed.'));
+
+	$stage = znote_update_storage() . '/staging/' . preg_replace('/[^0-9A-Za-z._-]/', '-', $version);
+	$extracted = !empty($download['ok']) ? znote_update_extract((string)$download['file'], $manifest['files'], $stage) : array('ok' => false, 'error' => 'The ZIP was not validated.');
+	$checks[] = znote_update_check('Package contents', !empty($extracted['ok']), !empty($extracted['ok']) ? count($manifest['files']) . ' signed files validated; no protected or unexpected file found.' : (string)($extracted['error'] ?? 'Validation failed.'));
+
+	$checks[] = znote_update_check_migrations($manifest, $stage);
+	$checks[] = znote_update_check_local_modifications();
+
+	return array('ok' => znote_update_checks_pass($checks), 'checks' => $checks, 'stage' => $stage, 'manifest' => $manifest);
 }
 
 function znote_update_backup(array $files, string $version): array

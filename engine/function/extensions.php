@@ -38,59 +38,79 @@ function znote_extension_version_part_matches(string $version, string $constrain
 	}
 
 	if ($constraint[0] === '^') {
-		$minimum = substr($constraint, 1);
-		$segments = array_map('intval', explode('.', $minimum));
-		$major = $segments[0] ?? 0;
-		$minor = $segments[1] ?? 0;
-		$patch = $segments[2] ?? 0;
-		$maximum = $major > 0
-			? ($major + 1) . '.0.0'
-			: ($minor > 0 ? '0.' . ($minor + 1) . '.0' : '0.0.' . ($patch + 1));
-
-		return version_compare($version, $minimum, '>=') && version_compare($version, $maximum, '<');
+		return znote_extension_version_caret_matches($version, $constraint);
 	}
 
 	if ($constraint[0] === '~') {
-		$minimum = substr($constraint, 1);
-		$rawSegments = explode('.', $minimum);
-		$segments = array_map('intval', $rawSegments);
-		$major = $segments[0] ?? 0;
-		$minor = $segments[1] ?? 0;
-		$maximum = count($rawSegments) >= 3
-			? $major . '.' . ($minor + 1) . '.0'
-			: ($major + 1) . '.0.0';
-
-		return version_compare($version, $minimum, '>=') && version_compare($version, $maximum, '<');
+		return znote_extension_version_tilde_matches($version, $constraint);
 	}
 
 	if (str_contains($constraint, '*') || str_contains(strtolower($constraint), 'x')) {
-		$segments = explode('.', str_replace(array('X', 'x'), '*', $constraint));
-		$fixed = array();
-
-		foreach ($segments as $segment) {
-			if ($segment === '*') {
-				break;
-			}
-			$fixed[] = max(0, (int)$segment);
-		}
-
-		if ($fixed === array()) {
-			return true;
-		}
-
-		$minimumParts = array_pad($fixed, 3, 0);
-		$maximumParts = $minimumParts;
-		$index = count($fixed) - 1;
-		$maximumParts[$index]++;
-		for ($i = $index + 1; $i < 3; $i++) {
-			$maximumParts[$i] = 0;
-		}
-
-		$minimum = implode('.', $minimumParts);
-		$maximum = implode('.', $maximumParts);
-		return version_compare($version, $minimum, '>=') && version_compare($version, $maximum, '<');
+		return znote_extension_version_wildcard_matches($version, $constraint);
 	}
 
+	return znote_extension_version_operator_matches($version, $constraint);
+}
+
+function znote_extension_version_caret_matches(string $version, string $constraint): bool
+{
+	$minimum = substr($constraint, 1);
+	$segments = array_map('intval', explode('.', $minimum));
+	$major = $segments[0] ?? 0;
+	$minor = $segments[1] ?? 0;
+	$patch = $segments[2] ?? 0;
+	$maximum = $major > 0
+		? ($major + 1) . '.0.0'
+		: ($minor > 0 ? '0.' . ($minor + 1) . '.0' : '0.0.' . ($patch + 1));
+
+	return version_compare($version, $minimum, '>=') && version_compare($version, $maximum, '<');
+}
+
+function znote_extension_version_tilde_matches(string $version, string $constraint): bool
+{
+	$minimum = substr($constraint, 1);
+	$rawSegments = explode('.', $minimum);
+	$segments = array_map('intval', $rawSegments);
+	$major = $segments[0] ?? 0;
+	$minor = $segments[1] ?? 0;
+	$maximum = count($rawSegments) >= 3
+		? $major . '.' . ($minor + 1) . '.0'
+		: ($major + 1) . '.0.0';
+
+	return version_compare($version, $minimum, '>=') && version_compare($version, $maximum, '<');
+}
+
+function znote_extension_version_wildcard_matches(string $version, string $constraint): bool
+{
+	$segments = explode('.', str_replace(array('X', 'x'), '*', $constraint));
+	$fixed = array();
+
+	foreach ($segments as $segment) {
+		if ($segment === '*') {
+			break;
+		}
+		$fixed[] = max(0, (int)$segment);
+	}
+
+	if ($fixed === array()) {
+		return true;
+	}
+
+	$minimumParts = array_pad($fixed, 3, 0);
+	$maximumParts = $minimumParts;
+	$index = count($fixed) - 1;
+	$maximumParts[$index]++;
+	for ($i = $index + 1; $i < 3; $i++) {
+		$maximumParts[$i] = 0;
+	}
+
+	$minimum = implode('.', $minimumParts);
+	$maximum = implode('.', $maximumParts);
+	return version_compare($version, $minimum, '>=') && version_compare($version, $maximum, '<');
+}
+
+function znote_extension_version_operator_matches(string $version, string $constraint): bool
+{
 	if (!preg_match('/^(>=|<=|>|<|==|=|!=)?(.+)$/', $constraint, $match)) {
 		return false;
 	}

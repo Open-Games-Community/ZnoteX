@@ -435,6 +435,35 @@ function payment_gateway_verify_mercadopago_signature(string $dataId, string $re
 	return hash_equals($expected, $signature);
 }
 
+function payment_gateway_validate_transaction(string $provider, $tx, string $providerReference, array $payload): string {
+	if (!is_array($tx)) {
+		return 'missing_transaction';
+	}
+	if ((int)$tx['credited'] === 1) {
+		return 'already_credited';
+	}
+	if ($providerReference !== '') {
+		$storedProviderReference = (string)($tx['provider_reference'] ?? '');
+		if ($storedProviderReference !== '' && $storedProviderReference !== $providerReference && $provider === 'stripe') {
+			return 'provider_reference_mismatch';
+		}
+	}
+
+	$accountId = (int)$tx['account_id'];
+	$points = (int)$tx['points'];
+	if ($accountId <= 0 || $points <= 0) {
+		return 'invalid_transaction';
+	}
+	if (!payment_gateway_provider_amount_matches($provider, $tx, $payload)) {
+		return 'amount_mismatch';
+	}
+	if (!payment_gateway_provider_mode_matches($tx, $payload)) {
+		return 'mode_mismatch';
+	}
+
+	return 'ok';
+}
+
 function payment_gateway_credit_transaction(string $provider, string $reference, string $providerReference, string $expectedStatus, array $payload = []): string {
 	$now = time();
 	$body = (string)json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -453,38 +482,21 @@ function payment_gateway_credit_transaction(string $provider, string $reference,
 			FOR UPDATE;
 		", [$provider, $reference]);
 
-		if (!is_array($tx)) {
-			$db->rollback();
-			return 'missing_transaction';
-		}
-		if ((int)$tx['credited'] === 1) {
+		$validation = payment_gateway_validate_transaction($provider, $tx, $providerReference, $payload);
+		if ($validation === 'already_credited') {
 			$db->commit();
 			return 'already_credited';
 		}
-		if ($providerReference !== '') {
-			$storedProviderReference = (string)($tx['provider_reference'] ?? '');
-			if ($storedProviderReference !== '' && $storedProviderReference !== $providerReference && $provider === 'stripe') {
-				$db->rollback();
-				return 'provider_reference_mismatch';
+		if ($validation !== 'ok') {
+			$db->rollback();
+			if ($validation === 'amount_mismatch' || $validation === 'mode_mismatch') {
+				payment_gateway_update_status($provider, $reference, $validation, $providerReference, $payload);
 			}
+			return $validation;
 		}
 
 		$accountId = (int)$tx['account_id'];
 		$points = (int)$tx['points'];
-		if ($accountId <= 0 || $points <= 0) {
-			$db->rollback();
-			return 'invalid_transaction';
-		}
-		if (!payment_gateway_provider_amount_matches($provider, $tx, $payload)) {
-			$db->rollback();
-			payment_gateway_update_status($provider, $reference, 'amount_mismatch', $providerReference, $payload);
-			return 'amount_mismatch';
-		}
-		if (!payment_gateway_provider_mode_matches($tx, $payload)) {
-			$db->rollback();
-			payment_gateway_update_status($provider, $reference, 'mode_mismatch', $providerReference, $payload);
-			return 'mode_mismatch';
-		}
 
 		$accountRow = $db->fetchOne(
 			"SELECT `id` FROM `znote_accounts` WHERE `account_id` = ? LIMIT 1 FOR UPDATE;",

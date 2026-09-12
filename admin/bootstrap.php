@@ -232,19 +232,13 @@ function acp_nav_groups(): array {
  * The schemas are read from _partials/, which only return arrays - including
  * the module itself would run its POST handling and print its page.
  */
-function acp_search_index(): array {
-	static $index = null;
-	if ($index !== null) {
-		return $index;
-	}
-
-	$index = [];
-
+function acp_search_index_modules(): array {
+	$entries = [];
 	foreach (acp_modules() as $key => $module) {
 		if (!empty($module['hidden']) || !acp_can_module($key)) {
 			continue;
 		}
-		$index[] = [
+		$entries[] = [
 			'kind'    => 'page',
 			'title'   => $module['title'],
 			'context' => $module['group'],
@@ -254,12 +248,16 @@ function acp_search_index(): array {
 			'haystack' => strtolower($key . ' ' . $module['title'] . ' ' . $module['group'] . ' ' . $module['description']),
 		];
 	}
+	return $entries;
+}
 
+function acp_search_index_settings(): array {
+	$entries = [];
 	$settings = ACP_ROOT . '/modules/_partials/settings_schema.php';
 	if (acp_can_module('settings') && is_file($settings)) {
 		foreach ((array)require $settings as $section => $fields) {
 			foreach ((array)$fields as $key => $field) {
-				$index[] = [
+				$entries[] = [
 					'kind'    => 'setting',
 					'title'   => $field['label'] ?? $key,
 					'context' => 'Settings &rsaquo; ' . $section,
@@ -271,12 +269,16 @@ function acp_search_index(): array {
 			}
 		}
 	}
+	return $entries;
+}
 
+function acp_search_index_payments(): array {
+	$entries = [];
 	$payments = ACP_ROOT . '/modules/_partials/payments_schema.php';
 	if (acp_can_module('payments') && is_file($payments)) {
 		foreach ((array)require $payments as $groupName => $group) {
 			foreach ((array)($group['fields'] ?? []) as $key => $field) {
-				$index[] = [
+				$entries[] = [
 					'kind'    => 'setting',
 					'title'   => $field['label'] ?? $key,
 					'context' => 'Payments &rsaquo; ' . $groupName,
@@ -288,11 +290,15 @@ function acp_search_index(): array {
 			}
 		}
 	}
+	return $entries;
+}
 
+function acp_search_index_layouts(): array {
+	$entries = [];
 	if (acp_can_module('layouts') && function_exists('theme_list') && function_exists('theme_options')) {
 		foreach (theme_list() as $themeKey => $theme) {
 			foreach (theme_options($themeKey) as $optKey => $opt) {
-				$index[] = [
+				$entries[] = [
 					'kind'    => 'setting',
 					'title'   => $opt['label'] ?? $optKey,
 					'context' => 'Layout &rsaquo; ' . ($theme['name'] ?? $themeKey) . ' options',
@@ -304,6 +310,21 @@ function acp_search_index(): array {
 			}
 		}
 	}
+	return $entries;
+}
+
+function acp_search_index(): array {
+	static $index = null;
+	if ($index !== null) {
+		return $index;
+	}
+
+	$index = array_merge(
+		acp_search_index_modules(),
+		acp_search_index_settings(),
+		acp_search_index_payments(),
+		acp_search_index_layouts()
+	);
 
 	return $index;
 }

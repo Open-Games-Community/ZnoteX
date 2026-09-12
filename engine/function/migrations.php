@@ -134,7 +134,7 @@ function znote_migration_split_sql(string $sql): array {
 
 		if ($quote !== null) {
 			$current .= $char;
-			if ($char === '\\' && $next !== '') {
+			if (znote_migration_split_sql_is_escape($char, $next)) {
 				$current .= $next;
 				$i++;
 				continue;
@@ -145,9 +145,7 @@ function znote_migration_split_sql(string $sql): array {
 			continue;
 		}
 
-		if (($char === '-' && $next === '-' && ($i + 2 >= $len || preg_match('/\s/', $sql[$i + 2])))
-			|| $char === '#'
-		) {
+		if (znote_migration_split_sql_starts_line_comment($sql, $i, $len)) {
 			$lineComment = true;
 			$current .= $char;
 			continue;
@@ -184,6 +182,19 @@ function znote_migration_split_sql(string $sql): array {
 	}
 
 	return $statements;
+}
+
+function znote_migration_split_sql_is_escape(string $char, string $next): bool
+{
+	return $char === '\\' && $next !== '';
+}
+
+function znote_migration_split_sql_starts_line_comment(string $sql, int $i, int $len): bool
+{
+	$char = $sql[$i];
+	$next = ($i + 1 < $len) ? $sql[$i + 1] : '';
+	return ($char === '-' && $next === '-' && ($i + 2 >= $len || preg_match('/\s/', $sql[$i + 2])))
+		|| $char === '#';
 }
 
 function znote_migration_run(string $migration): array {
