@@ -10,7 +10,7 @@ $l_start = $GLOBALS['__znote_start_time'];
 $start = $GLOBALS['__znote_start_time'];
 
 $time = time();
-$version = '2.0.1';
+$version = (string)require __DIR__ . '/version.php';
 
 $aacQueries = 0;
 $accQueriesData = array();
@@ -85,6 +85,7 @@ require_once 'function/itemparser/itemlistparser.php';
 require_once 'function/settings.php';
 require_once 'function/migrations.php';
 require_once 'function/adminlog.php';
+require_once 'function/updater.php';
 require_once 'function/theme.php';
 require_once 'function/menus.php';
 require_once 'function/landing.php';
@@ -162,7 +163,8 @@ if (user_logged_in() === true) {
 // browsing a closed site sees it normally and can keep working. Everyone else
 // gets the message and nothing else - no queries, no layout, no theme.
 // ---------------------------------------------------------------------------
-if (!empty($config['maintenance'])) {
+$updateMaintenance = is_file(__DIR__ . '/update/maintenance.lock');
+if (!empty($config['maintenance']) || $updateMaintenance) {
 	$maintenanceAdmin = (user_logged_in() === true) && isset($user_data) && is_admin($user_data);
 
 	// The admin panel is always reachable, otherwise you could lock yourself
@@ -188,7 +190,7 @@ if (!empty($config['maintenance'])) {
 		</style></head><body>
 		<div class="box">
 			<h1><?= htmlspecialchars($config['site_title'], ENT_QUOTES, 'UTF-8') ?></h1>
-			<p><?= nl2br(htmlspecialchars((string)$config['maintenance_message'], ENT_QUOTES, 'UTF-8')) ?></p>
+			<p><?= nl2br(htmlspecialchars($updateMaintenance ? 'ZnoteX is being updated. Please come back shortly.' : (string)$config['maintenance_message'], ENT_QUOTES, 'UTF-8')) ?></p>
 			<p><a href="login.php">Staff login</a></p>
 		</div></body></html><?php
 		exit;

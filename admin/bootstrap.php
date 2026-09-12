@@ -119,11 +119,24 @@ const ACP_GROUP_ORDER = [
 	'Economy'     => 50,
 	'Support'     => 60,
 	'Settings'    => 70,
+	'Update'      => 80,
 ];
 
 function acp_parse_module_header(string $file): array {
 	$head = (string)file_get_contents($file, false, null, 0, 1500);
 	$meta = [];
+	$manifestFile = substr($file, 0, -4) . '.json';
+
+	if (is_file($manifestFile)) {
+		$manifest = json_decode((string)file_get_contents($manifestFile), true);
+		if (is_array($manifest)) {
+			foreach ($manifest as $key => $value) {
+				if (is_string($key) && (is_string($value) || is_numeric($value) || is_bool($value))) {
+					$meta[strtolower($key)] = $value;
+				}
+			}
+		}
+	}
 
 	if (preg_match('~/\*\*(.*?)\*/~s', $head, $block)) {
 		foreach (preg_split('~\R~', $block[1]) as $line) {

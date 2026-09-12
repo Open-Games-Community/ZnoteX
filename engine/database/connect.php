@@ -2,7 +2,7 @@
 
 $time = time();
 if (!isset($version)) {
-	$version = '2.0.1';
+	$version = (string)require dirname(__DIR__) . '/version.php';
 }
 
 if (!isset($GLOBALS['__znote_start_time'])) {
