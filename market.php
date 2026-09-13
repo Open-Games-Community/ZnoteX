@@ -5,23 +5,20 @@ $imageType = $config['shop']['imageType'];
 $items = getItemList();
 $compare = &$_GET['compare'];
 
-// If we failed to load items.xml, a string is returned (not an array)
-// with the attempted loaded file path.
-// So if $items is not an array, send an error message, include the footer and ignore rest of this page.
-if (is_array($items) === false):
-	?>
-	<h1><?= t('market.title') ?></h1>
-	<p><?= t('market.load_failed2') ?></p>
-	<p><?= t('market.tried_file') ?> <?php echo $items; ?></p>
-	<p><?= t('market.fix_path') ?></p>
-	<p><?= t('market.check_permissions') ?></p>
-	<?php
-	theme_close();
-	die();
-endif;
+$marketLoadError = '';
+$marketMode = 'list';
+$offers = array();
+$historyOffers = array();
+$activeSellOffers = array();
+$buylist = false;
+$itemname = '';
 
-// If you are not comparing any items, present the list.
-if (!$compare) {
+// If we failed to load items.xml, a string is returned (not an array) with
+// the attempted loaded file path.
+if (is_array($items) === false) {
+	$marketLoadError = (string)$items;
+} elseif (!$compare) {
+	// If you are not comparing any items, present the list.
 	$cache = new Cache('engine/cache/market');
 	$cache->setExpiration(60);
 	if ($cache->hasExpired()) {
@@ -34,71 +31,9 @@ if (!$compare) {
 	} else {
 		$offers = $cache->load();
 	}
-	?>
-	<h1><?= t('market.title') ?></h1>
-	<p><?= t('market.hint') ?> <a target="_BLANK" href="http://znote.eu/images/depotmarket.jpg"><?= t('market.depot_link_text') ?></a> <br><?= t('market.sell_instructions') ?></p>
-	<form action="" class="market_item_search">
-		<label for="compareSearch"><?= t('market.search') ?></label>
-		<input type="text" id="compareSearch" name="compare">
-		<input type="submit" value="<?= t('common.search') ?>">
-	</form>
-	<h2><?= t('market.wts') ?></h2>
-	<table class="table tbl-hover">
-		<tr class="yellow">
-			<td><?= t('market.item_name') ?></td>
-			<td><?= t('common.item') ?></td>
-			<td><?= t('common.count') ?></td>
-			<td><?= t('market.price_for_1') ?></td>
-			<td><?= t('common.added') ?></td>
-			<td><?= t('common.by') ?></td>
-			<td><?= t('market.compare') ?></td>
-		</tr>
-		<?php
-		foreach (($offers['wts'] ? $offers['wts'] : array()) as $o) {
-		?>
-		<tr>
-			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
-			<td><?php echo $o['amount']; ?></td>
-			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
-			<td><?php echo getClock($o['created'], true, true); ?></td>
-			<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
-			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button><?= t('market.compare') ?></button></a></td>
-		</tr>
-		<?php
-		}
-		?>
-	</table>
-	<h2><?= t('market.wtb') ?></h2>
-	<table class="table tbl-hover">
-		<tr class="yellow">
-			<td><?= t('market.item_name') ?></td>
-			<td><?= t('common.item') ?></td>
-			<td><?= t('common.count') ?></td>
-			<td><?= t('market.price_for_1') ?></td>
-			<td><?= t('common.added') ?></td>
-			<td><?= t('common.by') ?></td>
-			<td><?= t('market.compare') ?></td>
-		</tr>
-		<?php
-		foreach (($offers['wtb'] ? $offers['wtb'] : array()) as $o) {
-		?>
-		<tr>
-			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
-			<td><?php echo $o['amount']; ?></td>
-			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
-			<td><?php echo getClock($o['created'], true, true); ?></td>
-			<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
-			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button><?= t('market.compare') ?></button></a></td>
-		</tr>
-		<?php
-		}
-		?>
-	</table>
-	<?php
 } else {
-	// Else You want to compare price
+	// Else you want to compare price.
+	$marketMode = 'compare';
 	$compare = ((int)$compare > 0) ? (int)$compare : getValue($compare);
 
 	$conditionSql = '`itemtype` = ?';
@@ -119,108 +54,24 @@ if (!$compare) {
 		}
 	}
 
-	// First list active bids
-	if ($conditionSql === false) {
-		$offers = array();
-		$historyOffers = array();
-	} else {
+	// First list active bids.
+	if ($conditionSql !== false) {
 		$offers = db()->fetchAll("SELECT `mo`.`id`, `mo`.`sale`, `mo`.`itemtype` AS `item_id`, `mo`.`amount`, `mo`.`price`, `mo`.`created`, `mo`.`anonymous`, `p`.`name` AS `player_name` FROM `market_offers` AS `mo` INNER JOIN `players` AS `p` ON `mo`.`player_id`=`p`.`id` WHERE `mo`.{$conditionSql} ORDER BY `mo`.`price` ASC;", $conditionParams);
 		$historyOffers = db()->fetchAll("SELECT `id`, `itemtype` AS `item_id`, `amount`, `price`, `inserted`, `expires_at` FROM `market_history` WHERE {$conditionSql} AND `state`='255' ORDER BY `price` ASC;", $conditionParams);
 	}
-	$buylist = false;
 
-	// Markup
 	$itemname = (isset($items[$compare])) ? $items[$compare] : $compare;
-	if (!is_string($compare)) echo "<h1>" . t('market.comparing_item', ['name' => $itemname]) . "</h1>";
-	else echo "<h1>" . t('market.search_result', ['query' => stripslashes($compare)]) . "</h1>";
-	?>
-	<a href="market.php"><button><?= t('market.go_back') ?></button></a>
-	<h2><?= t('market.active') ?></h2>
-	<table class="table tbl-hover">
-		<tr class="yellow">
-			<td><?= t('market.item_name') ?></td>
-			<td><?= t('common.item') ?></td>
-			<td><?= t('common.count') ?></td>
-			<td><?= t('market.price_for_1') ?></td>
-			<td><?= t('common.added') ?></td>
-			<td><?= t('common.by') ?></td>
-		</tr>
-		<?php
-		foreach (($offers ? $offers : array()) as $o) {
-			$wtb = false;
-			if ($o['sale'] == 0) {
-				$wtb = true;
-				if ($buylist === false) $buylist = array();
-				$buylist[] = $o;
-			} else {
-				?>
-				<tr>
-					<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
-					<td><?php echo $o['amount']; ?></td>
-					<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
-					<td><?php echo getClock($o['created'], true, true); ?></td>
-					<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
-				</tr>
-				<?php
-			}
+
+	// Split active offers into sell offers and the want-to-buy list.
+	foreach (($offers ? $offers : array()) as $o) {
+		if ($o['sale'] == 0) {
+			if ($buylist === false) $buylist = array();
+			$buylist[] = $o;
+		} else {
+			$activeSellOffers[] = $o;
 		}
-		?>
-	</table>
-	<?php
-	if ($buylist !== false) {
-		?>
-		<h2><?= t('market.want_to_buy') ?></h2>
-		<table class="table tbl-hover">
-			<tr class="yellow">
-				<td><?= t('market.item_name') ?></td>
-				<td><?= t('common.item') ?></td>
-				<td><?= t('common.count') ?></td>
-				<td><?= t('market.price_for_1') ?></td>
-				<td><?= t('common.added') ?></td>
-				<td><?= t('common.by') ?></td>
-			</tr>
-			<?php
-			foreach ($buylist as $o) {
-				?>
-				<tr>
-					<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
-					<td><?php echo $o['amount']; ?></td>
-					<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
-					<td><?php echo getClock($o['created'], true, true); ?></td>
-					<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
-				</tr>
-				<?php
-			}
-			?>
-		</table>
-		<?php
 	}
-	?>
-	<h2><?= t('market.old') ?></h2>
-	<table class="table tbl-hover">
-		<tr class="yellow">
-			<td><?= t('market.item_name') ?></td>
-			<td><?= t('common.item') ?></td>
-			<td><?= t('common.count') ?></td>
-			<td><?= t('market.price_for_1') ?></td>
-			<td><?= t('market.sold') ?></td>
-		</tr>
-		<?php
-		foreach (($historyOffers ? $historyOffers : array()) as $o) {
-		?>
-		<tr>
-			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
-			<td><?php echo $o['amount']; ?></td>
-			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
-			<td><?php echo getClock($o['inserted'], true, true); ?></td>
-		</tr>
-		<?php
-		}
-		?>
-	</table>
-	<?php
 }
-theme_close(); ?>
+
+view('market');
+theme_close();

@@ -114,14 +114,22 @@ function menu_url_available(string $url): bool {
 	$path = parse_url($url, PHP_URL_PATH);
 	$page = strtolower(basename($path !== null && $path !== false ? $path : $url));
 
-	// A plugin page (page.php?plugin=X): gone from the menu the moment the
-	// plugin is disabled or uninstalled, without the plugin having to run.
-	if ($page === 'page.php' && function_exists('setting')) {
+	if ($page === 'page.php') {
 		parse_str((string)(parse_url($url, PHP_URL_QUERY) ?: ''), $mq);
-		$mp = isset($mq['plugin']) ? preg_replace('/[^a-z0-9_-]/i', '', (string)$mq['plugin']) : '';
-		if ($mp !== '') {
-			return setting('plugin:' . $mp . ':enabled', '0') === '1'
-				&& (string)setting('plugin:' . $mp . ':version', '') !== '';
+
+		if (function_exists('setting')) {
+			$mp = isset($mq['plugin']) ? preg_replace('/[^a-z0-9_-]/i', '', (string)$mq['plugin']) : '';
+			if ($mp !== '') {
+				return setting('plugin:' . $mp . ':enabled', '0') === '1'
+					&& (string)setting('plugin:' . $mp . ':version', '') !== '';
+			}
+		}
+
+		if (function_exists('theme_file')) {
+			$mp = isset($mq['p']) ? preg_replace('/[^a-z0-9_-]/i', '', (string)$mq['p']) : '';
+			if ($mp !== '') {
+				return theme_file('pages/' . $mp . '.php') !== null;
+			}
 		}
 	}
 
@@ -213,6 +221,8 @@ function theme_menu_label(string $label): string {
 		'support' => 'nav.support',
 		'vote for us' => 'nav.vote_for_us',
 		'vote for us!' => 'nav.vote_for_us',
+		'wheel of destiny' => 'tco.nav.wheelofdestiny',
+		'wheel of destiny planner' => 'tco.nav.wheelofdestiny',
 		'who is online' => 'nav.online',
 		'wikipedia' => 'nav.wikipedia',
 		'wiki search' => 'nav.wiki_search',

@@ -10,7 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 if (!Token::isValid($_POST['token'] ?? null)) {
 	http_response_code(400);
 	theme_open();
-	echo '<h1>' . t('payment.invalid_request') . '</h1><p>' . t('payment.retry_hint') . '</p>';
+	$paymentMessage = array('title' => t('payment.invalid_request'), 'text' => t('payment.retry_hint'));
+	view('payment_message');
 	theme_close();
 	exit;
 }
@@ -26,7 +27,8 @@ try {
 	error_log('Payment checkout error: ' . $e->getMessage());
 	http_response_code(400);
 	theme_open();
-	echo '<h1>' . t('payment.unavailable') . '</h1><p>' . t('payment.start_failed') . '</p>';
+	$paymentMessage = array('title' => t('payment.unavailable'), 'text' => t('payment.start_failed'));
+	view('payment_message');
 	theme_close();
 }
 ?>
