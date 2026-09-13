@@ -254,6 +254,7 @@ if ($auction['characterAuction']) {
 					END AS `deposit`,
 					`p`.`vocation`,
 					`p`.`level`,
+					`p`.`sex`,
 					`p`.`balance`,
 					`p`.`lookbody` AS `body`,
 					`p`.`lookfeet` AS `feet`,
@@ -656,7 +657,84 @@ if ($auction['characterAuction']) {
 		", [$auction['storage_account_id'], $this_account_id]);
 		//data_dump($pending, false, "Pending characters:");
 
+		// --- Filters, search and sort -------------------------------------
+		$filterVoc = (isset($_GET['voc']) && (int)$_GET['voc'] > 0) ? (int)$_GET['voc'] : 0;
+		$filterLevelMin = (isset($_GET['level_min']) && (int)$_GET['level_min'] > 0) ? (int)$_GET['level_min'] : 0;
+		$filterLevelMax = (isset($_GET['level_max']) && (int)$_GET['level_max'] > 0) ? (int)$_GET['level_max'] : 0;
+		$search = trim((string)($_GET['q'] ?? ''));
+		$items = getItemList();
+		$sortOptions = array('level_desc', 'level_asc', 'price_desc', 'price_asc', 'ending_soon');
+		$sort = (isset($_GET['sort']) && in_array($_GET['sort'], $sortOptions, true)) ? $_GET['sort'] : 'level_desc';
+		$sortSql = array(
+			'level_desc'   => '`p`.`level` DESC',
+			'level_asc'    => '`p`.`level` ASC',
+			'price_desc'   => '`price` DESC',
+			'price_asc'    => '`price` ASC',
+			'ending_soon'  => '`za`.`time_end` ASC',
+		)[$sort];
+
+		$where = array('`p`.`account_id` = ?', '`za`.`sold` = 0');
+		$params = array($auction['storage_account_id']);
+
+		if ($filterVoc > 0) {
+			$where[] = '`p`.`vocation` = ?';
+			$params[] = $filterVoc;
+		}
+		if ($filterLevelMin > 0) {
+			$where[] = '`p`.`level` >= ?';
+			$params[] = $filterLevelMin;
+		}
+		if ($filterLevelMax > 0) {
+			$where[] = '`p`.`level` <= ?';
+			$params[] = $filterLevelMax;
+		}
+		if ($search !== '') {
+			// Matches either the character name, or an item name resolved to
+			// itemtype ids first ($items is already loaded above for the
+			// item icons below, so this costs no extra file read).
+			$matchingIds = array();
+			$needle = strtolower($search);
+			if (is_array($items)) {
+				foreach ($items as $id => $name) {
+					if (strpos(strtolower($name), $needle) !== false) {
+						$matchingIds[] = (int)$id;
+					}
+				}
+			}
+			if ($matchingIds) {
+				$placeholders = implode(',', array_fill(0, count($matchingIds), '?'));
+				$where[] = '(`p`.`name` LIKE ? OR `za`.`player_id` IN ('
+					. "SELECT `player_id` FROM `player_items` WHERE `itemtype` IN ($placeholders)"
+					. ' UNION '
+					. "SELECT `player_id` FROM `player_depotitems` WHERE `itemtype` IN ($placeholders)"
+					. '))';
+				$params[] = '%' . $search . '%';
+				foreach ($matchingIds as $id) $params[] = $id;
+				foreach ($matchingIds as $id) $params[] = $id;
+			} else {
+				$where[] = '`p`.`name` LIKE ?';
+				$params[] = '%' . $search . '%';
+			}
+		}
+
+		$whereSql = implode(' AND ', $where);
+
+		$auctionPerPage = 15;
+		$page = (isset($_GET['page']) && (int)$_GET['page'] > 0) ? (int)$_GET['page'] : 1;
+
+		$totalRow = db()->fetchOne("
+			SELECT COUNT(*) AS `c`
+			FROM `znote_auction_player` za
+			INNER JOIN `players` p ON `za`.`player_id` = `p`.`id`
+			WHERE {$whereSql};
+		", $params);
+		$total = ($totalRow !== false) ? (int)$totalRow['c'] : 0;
+		$pageCount = max(1, (int)ceil($total / $auctionPerPage));
+		$page = min($page, $pageCount);
+		$offset = ($page - 1) * $auctionPerPage;
+
 		// Show the list
+		$listParams = array_merge(array($step), $params, array($offset, $auctionPerPage));
 		$characters = db()->fetchAll("
 			SELECT
 				`za`.`id` AS `zaid`,
@@ -666,8 +744,10 @@ if ($auction['characterAuction']) {
 				END AS `price`,
 				`za`.`time_begin`,
 				`za`.`time_end`,
+				`p`.`id` AS `player_id`,
 				`p`.`vocation`,
 				`p`.`level`,
+				`p`.`sex`,
 				`p`.`lookbody` AS `body`,
 				`p`.`lookfeet` AS `feet`,
 				`p`.`lookhead` AS `head`,
@@ -677,17 +757,71 @@ if ($auction['characterAuction']) {
 			FROM `znote_auction_player` za
 			INNER JOIN `players` p
 				ON `za`.`player_id` = `p`.`id`
-			WHERE `p`.`account_id` = ?
-			AND `za`.`sold` = 0
-			ORDER BY `p`.`level` desc;
-		", [$step, $auction['storage_account_id']]);
+			WHERE {$whereSql}
+			ORDER BY {$sortSql}
+			LIMIT ?, ?;
+		", $listParams);
 		//data_dump($characters, false, "List characters");
+
+		// --- Highlight items per listed character --------------------------
+		// A handful of "notable" items per card: the equipped weapon/shield
+		// (pid 5/6, TFS equip slots) plus the two largest depot stacks (a
+		// simple proxy for "stacked valuables" like the reference page's
+		// ammo piles). Capped at 4 icons to match the reference layout.
+		$highlightItems = array();
+		if (is_array($characters) && $characters) {
+			$playerIds = array_column($characters, 'player_id');
+			$idPlaceholders = implode(',', array_fill(0, count($playerIds), '?'));
+
+			$equipRows = db()->fetchAll("
+				SELECT `player_id`, `itemtype`, `count`
+				FROM `player_items`
+				WHERE `player_id` IN ($idPlaceholders)
+				AND `pid` IN (5, 6);
+			", $playerIds);
+			if (is_array($equipRows)) {
+				foreach ($equipRows as $row) {
+					$pid = (int)$row['player_id'];
+					if (!isset($highlightItems[$pid])) $highlightItems[$pid] = array();
+					if (count($highlightItems[$pid]) < 4) {
+						$highlightItems[$pid][] = array('itemtype' => (int)$row['itemtype'], 'count' => (int)$row['count']);
+					}
+				}
+			}
+
+			$depotRows = db()->fetchAll("
+				SELECT `player_id`, `itemtype`, SUM(`count`) AS `count`
+				FROM `player_depotitems`
+				WHERE `player_id` IN ($idPlaceholders)
+				GROUP BY `player_id`, `itemtype`
+				ORDER BY `count` DESC;
+			", $playerIds);
+			if (is_array($depotRows)) {
+				foreach ($depotRows as $row) {
+					$pid = (int)$row['player_id'];
+					if (!isset($highlightItems[$pid])) $highlightItems[$pid] = array();
+					if (count($highlightItems[$pid]) < 4) {
+						$highlightItems[$pid][] = array('itemtype' => (int)$row['itemtype'], 'count' => (int)$row['count']);
+					}
+				}
+			}
+		}
 
 		view('auction_list', [
 			'pending' => $pending,
 			'characters' => $characters,
 			'loadOutfits' => $loadOutfits,
 			'is_admin' => $is_admin,
+			'highlightItems' => $highlightItems,
+			'items' => $items,
+			'filterVoc' => $filterVoc,
+			'filterLevelMin' => $filterLevelMin,
+			'filterLevelMax' => $filterLevelMax,
+			'search' => $search,
+			'sort' => $sort,
+			'page' => $page,
+			'pageCount' => $pageCount,
+			'total' => $total,
 		]);
 
 	} elseif ($action === 'create') { // Add player to auction view
