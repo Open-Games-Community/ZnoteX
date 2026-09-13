@@ -21,7 +21,7 @@ if (empty($_POST) === false) {
 
 	// .3 compatibility
 	$salt = array('salt' => '');
-	if ($config['ServerEngine'] == 'TFS_03' && $config['salt'] === true) {
+	if (znote_server_adapter()->normalizedEngine() === 'TFS_03' && $config['salt'] === true) {
 		$salt = user_data($session_user_id, 'salt');
 		if (!is_array($salt)) $salt = array('salt' => '');
 	}
@@ -56,10 +56,10 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 
 } elseif (empty($_POST) === false && empty($errors) === true) {
 
-	if ($config['ServerEngine'] == 'TFS_02' || $config['ServerEngine'] == 'TFS_10' || $config['ServerEngine'] == 'OTHIRE') {
-		user_change_password($session_user_id, $_POST['new_password']);
-	} else if ($config['ServerEngine'] == 'TFS_03') {
+	if (znote_server_adapter()->normalizedEngine() === 'TFS_03') {
 		user_change_password03($session_user_id, $_POST['new_password']);
+	} else {
+		user_change_password($session_user_id, $_POST['new_password']);
 	}
 
 	header('Location: changepassword.php?success');

@@ -13,8 +13,7 @@ if (!defined('ACP_ROOT')) {
 }
 
 // OTHIRE has no accounts.name column - it identifies accounts by number.
-$isOthire   = ($config['ServerEngine'] === 'OTHIRE');
-$accNameCol = $isOthire ? '`a`.`id`' : '`a`.`name`';
+$accNameCol = znote_server_adapter()->accountDisplayColumn();
 
 // ---------------------------------------------------------------------------
 // Counters. acp_count() returns 0 for a table this engine does not have,
@@ -25,9 +24,7 @@ $statPlayers  = acp_count("SELECT COUNT(*) AS `c` FROM `players`;");
 $statGuilds   = acp_count("SELECT COUNT(*) AS `c` FROM `guilds`;");
 $statHouses   = acp_count("SELECT COUNT(*) AS `c` FROM `houses`;");
 
-$statOnline = ($config['ServerEngine'] === 'TFS_10')
-	? acp_count("SELECT COUNT(*) AS `c` FROM `players_online`;")
-	: acp_count("SELECT COUNT(*) AS `c` FROM `players` WHERE `online` > 0;");
+$statOnline = znote_server_adapter()->onlineCount();
 
 $statPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote_accounts`;");
 $statOrders = acp_count("SELECT COUNT(*) AS `c` FROM `znote_shop_orders`;");

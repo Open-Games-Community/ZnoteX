@@ -7,7 +7,7 @@
 	// Optional item browser page.
 	$config['items'] = false;
 
-	// Server engine: TFS_02, TFS_03, OTHIRE, TFS_10, TFS_16 or CANARY.
+	// Server engine: TFS_02, TFS_03, OTHIRE, TFS_10, TFS_16, CANARY or BLACKTEK.
 	$config['ServerEngine'] = 'TFS_10';
 	$config['CustomVersion'] = false;
 
@@ -393,6 +393,16 @@
 
 	// Two-factor authentication requires TFS 1.2+.
 	$config['twoFactorAuthenticator'] = false;
+
+	// Website 2FA v2 - independent of the game engine. Stores everything in
+	// znote_2fa* tables, so it works the same on TFS, Canary, otHire or BlackTek.
+	$config['twoFactorV2'] = array(
+		'enabled' => false,
+		'email_otp_enabled' => true, // Lets a player receive a one-time code by e-mail instead of using an authenticator app. Requires mailserver to be configured.
+		'force_admins' => false, // Accounts with panel access (page_admin_access) must set up 2FA v2 before they can use the account.
+		'recovery_codes_count' => 10,
+		'trusted_device_days' => 30, // "Remember this device" duration. 0 disables the option.
+	);
 
 	function getClock($time = false, $format = false, $adjust = true) {
 		if ($time === false) $time = time();

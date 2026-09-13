@@ -16,7 +16,8 @@ if (!defined('ACP_ROOT')) {
 // original admin.php handler. Kept as-is so behaviour does not change.
 $enc = 100;
 
-$legacyEngines = ['TFS_02', 'TFS_10', 'OTHIRE'];
+// Every engine except TFS_03 uses the plain (unsalted) password change path.
+$isNotTfs03 = (znote_server_adapter()->normalizedEngine() !== 'TFS_03');
 
 function acp_players_table_exists(string $table): bool {
 	$escaped = db()->connection()->real_escape_string($table);
@@ -85,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			// Changing your own password goes through the normal page, so the
 			// session stays consistent.
 			if ($accId !== $session_user_id) {
-				if (in_array($config['ServerEngine'], $legacyEngines, true)) {
+				if ($isNotTfs03) {
 					user_change_password($accId, $_POST['new_pass']);
 				} else {
 					user_change_password03($accId, $_POST['new_pass']);
@@ -271,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$pos  = $_POST['position_type'];
 
 		if (user_character_exist($char) && isset($config['ingame_positions'][$pos])) {
-			if (in_array($config['ServerEngine'], $legacyEngines, true)) {
+			if ($isNotTfs03) {
 				set_ingame_position($char, $pos);
 			} else {
 				set_ingame_position03($char, $pos);

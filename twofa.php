@@ -1,16 +1,19 @@
 <?php require_once 'engine/init.php';
 znote_csrf_protect_public_post();
-if ($config['twoFactorAuthenticator'] === false) die("twoFactorAuthenticator is disabled in config.php");
 protect_page();
 theme_open();
-// '. t('twofa.title'). ' setup page
-if ($config['ServerEngine'] !== 'TFS_10') {
-	?>
-	<h1><?= t('twofa.incompatible') ?></h1>
-	<p><?= t('twofa.incompatible2') ?> <?= t('twofa.title') ?>.<br>
-	TFS 1.2 or higher is required to run two-factor authentication, grab it
-	<a href="https://github.com/otland/forgottenserver/releases" target="_BLANK">here</a>.</p>
-	<?php
+
+$twofa2Enabled = znote2fa_v2_enabled();
+
+if ($config['twoFactorAuthenticator'] === false && !$twofa2Enabled) {
+	die("Two-factor authentication is disabled in config.php");
+}
+
+if ($config['twoFactorAuthenticator'] === false) {
+	// Only 2FA v2 is enabled - skip straight to it, the legacy TFS section below
+	// has nothing to offer here.
+} else if ($config['ServerEngine'] !== 'TFS_10') {
+	view('twofa_legacy_incompatible', ['twofa2Enabled' => $twofa2Enabled]);
 } else {
 	// If user wishes to disable Two-Factor Authentication
 	if (isset($_POST['disable_2fa'])) {
@@ -34,30 +37,67 @@ if ($config['ServerEngine'] !== 'TFS_10') {
 		db()->execute("UPDATE `znote_accounts` SET `secret` = ? WHERE `account_id` = ?;", [$scrtString, (int)$session_user_id]);
 		$query['znote_secret'] = $scrtString;
 	}
-	// HTML rendering
-	?>
-	<h1><?= t('twofa.title') ?></h1>
-	<p><?= t('twofa.security') ?> <b><?php echo ($status) ? 'Enabled' : 'Disabled'; ?></b>.</p>
 
-	<?php if ($status === false): ?>
-		<p><strong>Login with a token generated from this QR code to activate:</strong></p>
-	<?php else: ?>
-		<form method="post" data-confirm="Disable two-factor authentication?">
-			<button type="submit" name="disable_2fa" value="1">Disable <?= t('twofa.title') ?></button>
-		</form>
-	<?php endif; ?>
-
-	<img
-		src="<?php echo TokenAuth6238::getBarCodeUrl($user_data['name'], $_SERVER["HTTP_HOST"], $query['znote_secret'], preg_replace('/\s+/', '', $config['site_title'])); ?>"
-		alt="<?= t('twofa.title') ?> QR code image for this account."
-	/>
-
-	<h2><?= t('twofa.howto') ?></h2>
-	<ol>
-		<li>Download an authenticator app for free on your mobile phone like <strong>Authy</strong> (<a target="_BLANK" href="https://play.google.com/store/apps/details?id=com.authy.authy">Android</a>), (<a target="_BLANK" href="https://itunes.apple.com/us/app/authy/id494168017">iPhone</a>) or <strong><?= t('twofa.google') ?></strong> (<a target="_BLANK" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Android</a>), (<a target="_BLANK" href="https://itunes.apple.com/us/app/google-authenticator/id388497605">iPhone</a>).</li>
-		<li>Scan the QR image with the app on your phone to create a Two-Factor account for this server.</li>
-		<li><a href="logout.php">Logout</a>, then login with username, password and token generated from your phone to enable <?= t('twofa.title') ?>.</li>
-	</ol>
-	<?php
+	view('twofa_legacy', ['status' => $status, 'query' => $query]);
 }
+
+// ---------------------------------------------------------------------------
+// 2FA v2 - independent of the game engine.
+// ---------------------------------------------------------------------------
+if ($twofa2Enabled) {
+
+	$accountId = (int)$session_user_id;
+	$revealedRecoveryCodes = array();
+
+	if (empty($_POST) === false) {
+		if (isset($_POST['tfa2_totp_start'])) {
+			$secret = znote2fa_totp_start($accountId);
+
+		} else if (isset($_POST['tfa2_totp_confirm'])) {
+			$code = getValue($_POST['tfa2_totp_code'] ?? null);
+			if ($code !== false && znote2fa_totp_confirm($accountId, $code)) {
+				$errors[] = t_default('twofa2.totp_confirmed', 'Authenticator app enabled.');
+			} else {
+				$errors[] = t_default('twofa2.totp_confirm_failed', 'That code did not match. Scan the QR code again and try once more.');
+			}
+
+		} else if (isset($_POST['tfa2_totp_disable'])) {
+			znote2fa_totp_disable($accountId);
+
+		} else if (isset($_POST['tfa2_email_toggle'])) {
+			$enableEmailOtp = !empty($_POST['tfa2_email_enabled']);
+			$email = trim((string)($user_data['email'] ?? ''));
+			if ($enableEmailOtp && !znote2fa_v2_config()['email_otp_enabled']) {
+				$errors[] = t_default('twofa2.email_unavailable', 'E-mail codes are disabled by the site administrator.');
+			} else if ($enableEmailOtp && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+				$errors[] = t_default('twofa2.email_invalid', 'Add a valid e-mail address to your account before enabling e-mail codes.');
+			} else {
+				znote2fa_email_otp_set($accountId, $enableEmailOtp);
+			}
+
+		} else if (isset($_POST['tfa2_recovery_generate'])) {
+			$revealedRecoveryCodes = znote2fa_recovery_generate($accountId);
+
+		} else if (isset($_POST['tfa2_device_revoke'])) {
+			znote2fa_trusted_device_revoke($accountId, (int)$_POST['tfa2_device_revoke']);
+
+		} else if (isset($_POST['tfa2_logout_all'])) {
+			znote2fa_logout_all_devices($accountId);
+			$_SESSION['tfa2_sv'] = znote2fa_session_version($accountId); // keep this session, the one that asked, alive
+			znote2fa_trusted_cookie_clear();
+			$errors[] = t_default('twofa2.logged_out_all', 'Every other session and trusted device has been signed out.');
+		}
+	}
+
+	$status = znote2fa_status($accountId);
+	$devices = znote2fa_trusted_devices_list($accountId);
+
+	view('twofa2', [
+		'status' => $status,
+		'devices' => $devices,
+		'revealedRecoveryCodes' => $revealedRecoveryCodes,
+		'accountId' => $accountId,
+	]);
+}
+
 theme_close(); ?>

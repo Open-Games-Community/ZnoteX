@@ -84,7 +84,7 @@ if (isset($_GET['authenticate']) && $config['mailserver']['myaccount_verify_emai
 			$body .= "<p>Thank you for verifying your email and enjoy your stay at {$config['mailserver']['fromName']}.</p>";
 			$body .= "<hr><p>I am an automatic no-reply e-mail. Any emails sent back to me will be ignored.</p>";
 
-			$user_name = ($config['ServerEngine'] !== 'OTHIRE') ? $user_data['name'] : $user_data['id'];
+			$user_name = (znote_server_adapter()->accountIdentityColumn() !== 'id') ? $user_data['name'] : $user_data['id'];
 			//echo "<h1>" . $title . "<h1>" . $body;
 			$mailer->sendMail($user_data['email'], $title, $body, $user_name);
 			?>
@@ -288,27 +288,7 @@ if (!empty($_POST['selected_character'])) {
 				$render_page = false; // Regular "myaccount" page should not render
 				if ((int)user_character_account_id($char_name) === $session_user_id) {
 					$comment_data = user_znote_character_data(user_character_id($char_name), 'comment');
-					?>
-					<!-- Changing comment MARKUP -->
-					<h1><?= t('acc.change_comment_on') ?></h1>
-					<form action="" method="post">
-						<ul>
-							<li>
-								<input name="action" type="hidden" value="update_comment">
-								<input name ="selected_character" type="text" value="<?php echo $char_name; ?>" readonly="readonly">
-							</li>
-							<li>
-								<font class="profile_font" name="profile_font_comment"><?= t('acc.comment') ?></font> <br>
-								<textarea name="comment" cols="70" rows="10"><?php echo $comment_data['comment']; ?></textarea>
-							</li>
-							<?php
-								/* Form file */
-								Token::create();
-							?>
-							<li><input type="submit" value="<?= t('acc.update_comment') ?>"></li>
-						</ul>
-					</form>
-					<?php
+					view('myaccount_edit_comment', ['char_name' => $char_name, 'comment_data' => $comment_data]);
 				}
 				break;
 			//end
@@ -333,137 +313,26 @@ if ($render_page) {
 	}
 
 	?>
-	<div id="myaccount">
-		<h1><?= t('acc.page_title') ?></h1>
-		<p><?= t('acc.welcome') ?> <?php echo $user_data['name']; ?><br>
-			<?php 
-			if ($user_data['premdays'] != 0) echo t('acc.premium_days', ['days' => $user_data['premdays']]); 
-			else echo t('acc.free_account');
+	<?php
+	$char_array = user_character_list($user_data['id']);
 
-			if ($config['mailserver']['myaccount_verify_email']):
-				?><br>Email: <?php echo $user_data['email'];
-				if ($user_znote_data['active_email'] == 1) {
-					?> (Verified).<?php
-				} else {
-					?><br><strong><?= t('acc.email_not_verified') ?> <a href="?authenticate"><?= t('acc.please_verify') ?></a>.</strong><?php
-				}
-			endif; ?>
-		</p>
-		<?php
-		if ($config['twoFactorAuthenticator']) {
-			$query = db()->fetchOne("SELECT `secret` FROM `accounts` WHERE `id` = ? LIMIT 1;", [(int)$session_user_id]);
-			$status = (is_array($query) && $query['secret'] !== NULL);
-			?><p><?= t('acc.security_2fa') ?> <a href="twofa.php"><?php echo ($status) ? 'Enabled' : 'Disabled'; ?></a></p><?php
-		}
-		?>
-		<h2><?= t('common.character') ?> List: <?php echo $char_count; ?> characters.</h2>
-		<?php
-		// Echo character list!
-		$char_array = user_character_list($user_data['id']);
-		// Design and present the list
-		if ($char_array) {
-			?>
-			<table id="myaccountTable" class="table table-striped table-hover">
-				<tr class="yellow">
-					<th>NAME</th>
-					<th>LEVEL</th>
-					<th>VOCATION</th>
-					<th>TOWN</th>
-					<th>LAST LOGIN</th>
-					<th>STATUS</th>
-					<th>HIDE</th>
-				</tr>
-				<?php
-				foreach ($char_array as $value): ?>
-					<tr>
-						<td><a href="characterprofile.php?name=<?php echo $value['name']; ?>"><?php echo $value['name']; ?></a></td>
-						<td><?php echo $value['level']; ?></td>
-						<td><?php echo $value['vocation']; ?></td>
-						<td><?php echo $value['town_id']; ?></td>
-						<td><?php echo $value['lastlogin']; ?></td>
-						<td><?php echo $value['online']; ?></td>
-						<td><?php echo hide_char_to_name($value['hide_char']); ?></td>
-					</tr>
-					<?php
-				endforeach;
-				?>
-			</table>
-			<!-- FORMS TO EDIT CHARACTER-->
-			<form action="" method="post">
-				<table class="table">
-					<tr>
-						<td>
-							<select id="selected_character" name="selected_character" class="form-control">
-								<?php foreach ($char_array as $character): ?>
-									<option value="<?php echo $character['name']; ?>"><?php echo $character['name']; ?></option>
-								<?php endforeach; ?>
-							</select>
-						</td>
-						<td>
-							<select id="action" name="action" class="form-control" onChange="changedOption(this)">
-								<option value="none" selected><?= t('acc.select_action') ?></option>
-								<option value="toggle_hide"><?= t('acc.toggle_hide') ?></option>
-								<option value="change_comment"><?= t('acc.change_comment') ?></option>
-								<option value="change_gender"><?= t('acc.change_gender') ?></option>
-								<option value="change_name"><?= t('acc.change_name') ?></option>
-								<option value="delete_character" class="needconfirmation"><?= t('acc.delete_char') ?></option>
-							</select>
-						</td>
-						<td id="submit_form">
-							<?php
-								/* Form file */
-								Token::create();
-							?>
-							<input id="submit_button" type="submit" value="<?= t('common.submit') ?>" class="btn btn-primary btn-block"></input>
-						</td>
-					</tr>
-				</table>
-			</form>
-			<?php
-		} else {
-			echo "You don't have any characters. Why don't you <a href='createcharacter.php'>create one</a>?";
-		}
-		?>
-	</div>
-	<script>
-		function changedOption(e) {
-			// If selection is '<?= t('acc.change_name') ?>' add a name field in the form
-			// Else remove name field if it exists
-			if (e.value == 'change_name') {
-				var lastCell = document.getElementById('submit_form');
-				var x = document.createElement('TD');
-				x.id = "new_name";
-				x.innerHTML = '<input type="text" name="newName" placeholder="New Name" class="form-control">';
-				lastCell.parentNode.insertBefore(x, lastCell);
-			} else {
-				var child = document.getElementById('new_name');
-				if (child) {
-					child.parentNode.removeChild(child);
-				}
-			}
-		}
-	</script>
-	<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			var submitButton = document.getElementById('submit_button');
-			var actionSelect = document.getElementById('action');
-			var characterSelect = document.getElementById('selected_character');
-			if (!submitButton || !actionSelect || !characterSelect) {
-				return;
-			}
+	$legacy_twofa_status = null;
+	if ($config['twoFactorAuthenticator'] && znote_server_adapter()->supportsLegacyTwoFactor()) {
+		$query = db()->fetchOne("SELECT `secret` FROM `accounts` WHERE `id` = ? LIMIT 1;", [(int)$session_user_id]);
+		$legacy_twofa_status = (is_array($query) && $query['secret'] !== NULL);
+	}
+	$twofa2_status = znote2fa_v2_enabled() ? znote2fa_status((int)$session_user_id) : null;
+	// Backward-compatible alias for third-party themes written before 2FA v2.
+	$myaccount_status = $legacy_twofa_status;
 
-			submitButton.addEventListener('click', function (event) {
-				var selectedAction = actionSelect.options[actionSelect.selectedIndex];
-				if (selectedAction && selectedAction.classList.contains('needconfirmation')) {
-					var selectedCharacter = characterSelect.options[characterSelect.selectedIndex];
-					var name = selectedCharacter ? selectedCharacter.text : '';
-					if (!confirm('Do you really want to DELETE character: ' + name + '?')) {
-						event.preventDefault();
-					}
-				}
-			});
-		});
-	</script>
+	view('myaccount', [
+		'char_array' => $char_array,
+		'char_count' => $char_count,
+		'myaccount_status' => $myaccount_status,
+		'legacy_twofa_status' => $legacy_twofa_status,
+		'twofa2_status' => $twofa2_status,
+	]);
+	?>
 	<?php
 }
 theme_close();

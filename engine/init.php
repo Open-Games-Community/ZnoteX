@@ -42,7 +42,7 @@ if (!isset($config['TFSVersion'])) $config['TFSVersion'] = &$config['ServerEngin
 if (!isset($config['ServerEngine'])) $config['ServerEngine'] = &$config['TFSVersion'];
 
 $config['ServerEngineReal'] = $config['ServerEngine'];
-if (in_array($config['ServerEngineReal'], array('TFS_16', 'CANARY'), true)) {
+if (in_array($config['ServerEngineReal'], array('TFS_16', 'CANARY', 'BLACKTEK'), true)) {
     $config['ServerEngine'] = 'TFS_10';
     $config['TFSVersion'] = 'TFS_10';
 }
@@ -81,6 +81,14 @@ require_once 'function/users.php';
 require_once 'function/cache.php';
 require_once 'function/mail.php';
 require_once 'function/token.php';
+require_once 'function/rfc6238.php';
+require_once 'function/twofa2.php';
+require_once __DIR__ . '/adapter/ServerAdapterInterface.php';
+require_once __DIR__ . '/adapter/TFSAdapter.php';
+require_once __DIR__ . '/adapter/CanaryAdapter.php';
+require_once __DIR__ . '/adapter/OtHireAdapter.php';
+require_once __DIR__ . '/adapter/BlackTekAdapter.php';
+require_once __DIR__ . '/adapter/factory.php';
 require_once 'function/itemparser/itemlistparser.php';
 require_once 'function/settings.php';
 require_once 'function/migrations.php';
@@ -92,6 +100,7 @@ require_once 'function/landing.php';
 require_once 'function/minimap.php';
 require_once 'function/serverdata.php';
 require_once 'function/plugins.php';
+require_once 'function/plugin_settings.php';
 require_once 'function/loginwebservice.php';
 require_once 'function/payments.php';
 
@@ -141,6 +150,21 @@ if ($themeConfigFile !== null) {
 
 if (!isset($_SESSION['token'])) {
     Token::generate();
+}
+
+if (user_logged_in() === true && znote2fa_v2_enabled()) {
+	$currentTwoFactorSessionVersion = znote2fa_session_version((int)getSession('user_id'));
+	$sessionTwoFactorVersion = (int)($_SESSION['tfa2_sv'] ?? 1);
+
+	if ($sessionTwoFactorVersion !== $currentTwoFactorSessionVersion) {
+		// "Log out all devices" bumped the version stored for this account: this
+		// session was minted before that and no longer counts as logged in.
+		znote_session_destroy();
+	} else {
+		// Adopt sessions created before 2FA v2 existed. Treating their version as
+		// one means a later logout-all still invalidates them correctly.
+		$_SESSION['tfa2_sv'] = $currentTwoFactorSessionVersion;
+	}
 }
 
 if (user_logged_in() === true) {

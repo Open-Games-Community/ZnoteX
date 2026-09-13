@@ -12,8 +12,8 @@ if (!defined('ACP_ROOT')) {
 	die('Direct access denied.');
 }
 
-$isOthire   = ($config['ServerEngine'] === 'OTHIRE');
-$accNameCol = $isOthire ? '`a`.`id`' : '`a`.`name`';
+$isOthire   = (znote_server_adapter()->accountIdentityColumn() === 'id');
+$accNameCol = znote_server_adapter()->accountDisplayColumn();
 
 $search    = trim((string)($_GET['q'] ?? ''));
 $accountId = intv($_GET['id'] ?? 0);

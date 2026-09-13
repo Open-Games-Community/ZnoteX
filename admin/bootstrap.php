@@ -35,6 +35,7 @@ function acp_url(string $module = 'dashboard', array $params = []): string {
 function acp_module_roles(string $module): array {
 	$map = array(
 		'dashboard'   => array('auditor', 'content', 'moderator', 'support', 'economy', 'ops'),
+		'analytics'   => array('auditor', 'economy', 'ops'),
 		'search'      => array('auditor', 'content', 'moderator', 'support', 'economy', 'ops'),
 		'adminlog'    => array('auditor'),
 		'visitors'    => array('auditor'),

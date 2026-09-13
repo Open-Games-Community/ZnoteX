@@ -50,7 +50,7 @@ $players = db()->fetchOne("SELECT COUNT(*) AS `count` FROM `players`");
 $response['data']['players'] = (int)($players['count'] ?? 0);
 
 // Online players
-if ($config['ServerEngine'] !== 'TFS_10') {
+if (znote_server_adapter()->normalizedEngine() !== 'TFS_10') {
 	$online = db()->fetchOne("
 		SELECT COUNT(*) AS `count`, COUNT(DISTINCT `lastip`) AS `unique`
 		FROM `players`

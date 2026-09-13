@@ -128,6 +128,38 @@ from CSS alone.
 
 ---
 
+## settings.json
+
+Ship one and the plugin gets a configuration page for free - a **Settings**
+button next to it in Admin Panel > Plugins - instead of hand-coding a form:
+
+```json
+{
+  "fields": [
+    {"key": "api_key", "label": "API key", "type": "text", "default": ""},
+    {"key": "enabled", "label": "Enabled", "type": "bool", "default": "1"},
+    {"key": "mode", "label": "Mode", "type": "select", "default": "test",
+     "options": {"test": "Test", "live": "Live"}},
+    {"key": "max_items", "label": "Max items", "type": "int", "default": "10", "min": 1, "max": 100},
+    {"key": "notes", "label": "Notes", "type": "textarea", "default": ""},
+    {"key": "webhook_secret", "label": "Webhook secret", "type": "password", "default": ""}
+  ]
+}
+```
+
+Types: `text`, `textarea`, `password`, `bool`, `int` (with optional `min`/`max`),
+`select` and `checklist` (both need `options`). Every field is optional except
+`key` and `type`.
+
+Saved values live under the same namespace `$api->setting()` already reads, so
+`plugin.php` sees exactly what the generated form saved:
+
+```php
+$mode = $api->setting('mode', 'test');
+```
+
+---
+
 ## Admin pages
 
 Drop `admin/orders.php` into your plugin and it appears in the admin sidebar.

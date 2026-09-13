@@ -266,6 +266,13 @@ foreach ($plugins as $plugin) {
 							   target="_blank" rel="noopener"><?= t('acp.plg.view') ?></a>
 						<?php endif; ?>
 
+						<?php if ($running && znote_plugin_settings_has($name)): ?>
+							<a class="acp-btn acp-btn--ghost acp-btn--sm"
+							   href="<?= h(acp_url('plugin_settings', array('plugin' => $name))) ?>">
+								<i class="fa fa-sliders"></i> <?= t_default('acp.plg.settings', 'Settings') ?>
+							</a>
+						<?php endif; ?>
+
 						<?php if (!$plugin['installed']): ?>
 
 							<form method="post" style="display:inline;">

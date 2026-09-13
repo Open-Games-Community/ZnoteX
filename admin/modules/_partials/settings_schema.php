@@ -553,6 +553,37 @@ return array(
 			),
 		),
 
+		t_default('acp.sec.Two-factor authentication (v2)', 'Two-factor authentication (v2)') => array(
+			'twoFactorV2.enabled' => array(
+				'label' => t_default('acp.set.twoFactorV2.enabled.label', 'Enable website 2FA v2'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.twoFactorV2.enabled.help', 'Independent of the game engine - works on TFS, Canary, otHire or BlackTek alike. Players manage it from twofa.php.'),
+			),
+			'twoFactorV2.email_otp_enabled' => array(
+				'label' => t_default('acp.set.twoFactorV2.email_otp_enabled.label', 'Allow e-mail codes'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.twoFactorV2.email_otp_enabled.help', 'Lets a player receive a one-time code by e-mail instead of using an authenticator app. Requires the mail server to be configured.'),
+			),
+			'twoFactorV2.force_admins' => array(
+				'label' => t_default('acp.set.twoFactorV2.force_admins.label', 'Require it for admin panel access'),
+				'type'  => 'bool',
+				'help'  => t_default('acp.set.twoFactorV2.force_admins.help', 'Any account with an admin panel role is sent to set up 2FA v2 before it can use the panel.'),
+			),
+			'twoFactorV2.recovery_codes_count' => array(
+				'label' => t_default('acp.set.twoFactorV2.recovery_codes_count.label', 'Recovery codes generated at a time'),
+				'type'  => 'int',
+				'min'   => 1,
+				'max'   => 20,
+			),
+			'twoFactorV2.trusted_device_days' => array(
+				'label' => t_default('acp.set.twoFactorV2.trusted_device_days.label', '"Remember this device" duration (days)'),
+				'type'  => 'int',
+				'min'   => 0,
+				'max'   => 365,
+				'help'  => t_default('acp.set.twoFactorV2.trusted_device_days.help', '0 removes the option from the login form.'),
+			),
+		),
+
 		t_default('acp.sec.Security headers', 'Security headers') => array(
 			'security.headers_enabled' => array(
 				'label' => t_default('acp.set.security.headers_enabled.label', 'Send HTTP security headers'),

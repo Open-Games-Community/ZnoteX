@@ -51,8 +51,7 @@ foreach ([$pending, $history] as $set) {
 
 $accountNames = [];
 if ($accountIds) {
-	$isOthire = ($config['ServerEngine'] === 'OTHIRE');
-	$nameColumn = $isOthire ? '`id`' : '`name`';
+	$nameColumn = '`' . znote_server_adapter()->accountIdentityColumn() . '`';
 	$ids = array_map('intval', array_keys($accountIds));
 	$placeholders = implode(',', array_fill(0, count($ids), '?'));
 

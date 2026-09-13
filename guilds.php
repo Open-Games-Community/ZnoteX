@@ -228,7 +228,7 @@ if (user_logged_in() === true) {
 // Display the guild list
 if (empty($_GET['name'])) {
 //data_dump($guild, false, "guild data");
-$guilds = guild_list($config['ServerEngine']);
+$guilds = guild_list(znote_server_adapter()->normalizedEngine());
 
 if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 	//data_dump($guilds, false, "Guilds");
@@ -314,7 +314,7 @@ if (user_logged_in() === true) {
 								if ($gid === false) {
 									create_guild($user_id, $guildname);
 									// Re-cache the guild list
-									$guilds = guild_list($config['ServerEngine']);
+									$guilds = guild_list(znote_server_adapter()->normalizedEngine());
 									header('Location: success.php');
 									exit();
 									} else echo 'A guild with that name already exist.';

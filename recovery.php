@@ -22,7 +22,7 @@ if ($config['mailserver']['accountRecovery']) {
 			if (!$username) {
 				// Recover username
 				$salt = '';
-				if ($config['ServerEngine'] == 'TFS_03' && config('salt') === true) {
+				if (znote_server_adapter()->normalizedEngine() === 'TFS_03' && config('salt') === true) {
 					$saltdata = db()->fetchOne(
 						"SELECT `salt` FROM `accounts` WHERE `email` = ? LIMIT 1;",
 						[$email]
@@ -30,7 +30,7 @@ if ($config['mailserver']['accountRecovery']) {
 					if ($saltdata !== false) $salt .= $saltdata['salt'];
 				}
 
-				if ($config['ServerEngine'] != 'OTHIRE')
+				if (znote_server_adapter()->accountIdentityColumn() !== 'id')
 					$candidate = db()->fetchOne(
 						"SELECT `p`.`id` AS `player_id`, `a`.`id` AS `account_id`, `a`.`name`, `a`.`password`
 						FROM `players` `p`
@@ -82,7 +82,7 @@ if ($config['mailserver']['accountRecovery']) {
 				// Recover password
 				$newpass = rand(100000000, 999999999);
 				$salt = '';
-				if ($config['ServerEngine'] != 'TFS_03') {
+				if (znote_server_adapter()->normalizedEngine() !== 'TFS_03') {
 					// TFS 0.2 and 1.0
 					$password = sha1($newpass);
 				} else {
@@ -97,7 +97,7 @@ if ($config['mailserver']['accountRecovery']) {
 					$password = sha1($salt.$newpass);
 				}
 
-				if ($config['ServerEngine'] != 'OTHIRE')
+				if (znote_server_adapter()->accountIdentityColumn() !== 'id')
 					$user = db()->fetchOne(
 						"SELECT `p`.`id` AS `player_id`, `a`.`name`, `a`.`id` AS `account_id`
 						FROM `players` `p`

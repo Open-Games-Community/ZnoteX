@@ -14,7 +14,7 @@ if ($deaths) {
 		echo "<td>". getClock($death['time'], true) ."</td>";
 		if ($death['is_player'] == 1) echo "<td>". t('deaths.player') ." <a href='characterprofile.php?name=". $death['killed_by'] ."'>". $death['killed_by'] ."</a></td>";
 		else if ($death['is_player'] == 0) {
-			if ($config['ServerEngine'] == 'TFS_03') echo "<td>". t('deaths.monster') ." ". ucfirst(str_replace("a ", "", $death['killed_by'])) ."</td>";
+			if (znote_server_adapter()->normalizedEngine() === 'TFS_03') echo "<td>". t('deaths.monster') ." ". ucfirst(str_replace("a ", "", $death['killed_by'])) ."</td>";
 			else echo "<td>". t('deaths.monster') ." ". ucfirst($death['killed_by']) ."</td>";
 		}
 		else echo "<td>". $death['killed_by'] ."</td>";

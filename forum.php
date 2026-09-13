@@ -131,7 +131,7 @@ if ($admin) $yourChars = db()->fetchAll("SELECT `id`, `name`, `group_id` FROM `p
 else $yourChars = db()->fetchAll("SELECT `id`, `name`, `group_id` FROM `players` WHERE `level` >= ? AND `account_id` = ?;", [(int)$config['forum']['level'], $user_data['id']]);
 if (!$yourChars) $yourChars = array();
 $charCount = count($yourChars);
-$yourAccess = accountAccess($user_data['id'], $config['ServerEngine']);
+$yourAccess = accountAccess($user_data['id'], znote_server_adapter()->normalizedEngine());
 if ($admin) {
 	if (!empty($_POST)) {
 		$guilds = db()->fetchAll("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");

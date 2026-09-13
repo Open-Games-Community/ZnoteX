@@ -20,7 +20,7 @@ znote_security_boot((array)($config['security'] ?? array()));
 $sessionPrefix = $config['session_prefix'];
 
 $config['ServerEngineReal'] = $config['ServerEngine'] ?? 'TFS_10';
-if (in_array($config['ServerEngineReal'], array('TFS_16', 'CANARY'), true)) {
+if (in_array($config['ServerEngineReal'], array('TFS_16', 'CANARY', 'BLACKTEK'), true)) {
 	$config['ServerEngine'] = 'TFS_10';
 	$config['TFSVersion'] = 'TFS_10';
 }
@@ -31,6 +31,12 @@ if ($config['ServerEngineReal'] === 'CANARY') {
 require_once $filepath.'engine/database/connect.php';
 require_once $filepath.'engine/function/general.php';
 require_once $filepath.'engine/function/cache.php';
+require_once $filepath.'engine/adapter/ServerAdapterInterface.php';
+require_once $filepath.'engine/adapter/TFSAdapter.php';
+require_once $filepath.'engine/adapter/CanaryAdapter.php';
+require_once $filepath.'engine/adapter/OtHireAdapter.php';
+require_once $filepath.'engine/adapter/BlackTekAdapter.php';
+require_once $filepath.'engine/adapter/factory.php';
 
 // Default API config
 $config['api']['debug'] ??= false;

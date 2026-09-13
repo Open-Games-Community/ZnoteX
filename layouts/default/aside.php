@@ -39,7 +39,7 @@ if (!empty($config['powergamers']['enabled'])) {
 
 widget('serverinfo');
 
-if (!empty($config['ServerEngine']) && $config['ServerEngine'] !== 'TFS_02') {
+if (!empty($config['ServerEngine']) && znote_server_adapter()->normalizedEngine() !== 'TFS_02') {
 	widget('houses');
 }
 
