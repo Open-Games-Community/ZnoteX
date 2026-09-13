@@ -51,6 +51,10 @@ function znote_bbcode(?string $text): string {
 		return "\x00CODE" . (count($codes) - 1) . "\x00";
 	}, $text);
 
+	$text = preg_replace('/\[font(?:=[^\]]*)?\]/i', '', $text);
+	$text = preg_replace('/\[\/font\]/i', '', $text);
+	$text = preg_replace('/\[\/?(?:table|tr|td|th)(?:=[^\]]*)?\]/i', '', $text);
+
 	foreach (array('b' => 'strong', 'i' => 'em', 'u' => 'u', 's' => 'del') as $tag => $html) {
 		for ($i = 0; $i < 4; $i++) {
 			$out = preg_replace('/\[' . $tag . '\](.*?)\[\/' . $tag . '\]/is', '<' . $html . '>$1</' . $html . '>', $text);
@@ -113,10 +117,23 @@ function znote_bbcode(?string $text): string {
 	}, $text);
 
 	$text = preg_replace('/\[\*\](.*?)\[\/\*\]/is', '<li>$1</li>', $text);
-	$text = preg_replace('/\[li\](.*?)\[\/li\]/is', '<li>$1</li>', $text);
 	$text = preg_replace('/\[\*\]\s*([^\[\r\n]*)/i', '<li>$1</li>', $text);
-	$text = preg_replace('/\[(?:ul|list)(?:=[^\]]*)?\](.*?)\[\/(?:ul|list)\]/is', '<ul class="zbb-list">$1</ul>', $text);
-	$text = preg_replace('/\[ol\](.*?)\[\/ol\]/is', '<ol class="zbb-list">$1</ol>', $text);
+
+	for ($i = 0; $i < 8; $i++) {
+		$out = preg_replace('/\[li\]((?:(?!\[li\]|\[\/li\]).)*)\[\/li\]/is', '<li>$1</li>', $text);
+		if ($out === null || $out === $text) break;
+		$text = $out;
+	}
+	for ($i = 0; $i < 8; $i++) {
+		$out = preg_replace('/\[(?:ul|list)(?:=[^\]]*)?\]((?:(?!\[(?:ul|list)(?:=[^\]]*)?\]|\[\/(?:ul|list)\]).)*)\[\/(?:ul|list)\]/is', '<ul class="zbb-list">$1</ul>', $text);
+		if ($out === null || $out === $text) break;
+		$text = $out;
+	}
+	for ($i = 0; $i < 8; $i++) {
+		$out = preg_replace('/\[ol\]((?:(?!\[ol\]|\[\/ol\]).)*)\[\/ol\]/is', '<ol class="zbb-list">$1</ol>', $text);
+		if ($out === null || $out === $text) break;
+		$text = $out;
+	}
 
 	$text = nl2br($text, false);
 
