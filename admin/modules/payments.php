@@ -33,18 +33,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$failed = 0;
 	$savedKeys = array();
 
-	if (isset($_POST['pay'])) {
+	if (isset($_POST['pay']) && is_array($_POST['pay'])) {
+		$knownFields = array();
 		foreach (acp_payments_schema() as $group) {
-			foreach ($group['fields'] as $key => $field) {
-				if (($field['type'] ?? '') === 'secret' && trim((string)($_POST['pay'][$key] ?? '')) === '') {
-					continue;
-				}
-				$value = acp_payment_cast($field['type'], $_POST['pay'][$key] ?? '');
-				if (setting_set('config:' . $key, $value)) {
-					$saved++;
-					$savedKeys[] = $key;
-				} else $failed++;
+			$knownFields += $group['fields'];
+		}
+
+		foreach ($_POST['pay'] as $key => $raw) {
+			if (!isset($knownFields[$key])) {
+				continue;
 			}
+			$field = $knownFields[$key];
+			if (($field['type'] ?? '') === 'secret' && trim((string)$raw) === '') {
+				continue;
+			}
+			$value = acp_payment_cast($field['type'], $raw);
+			if (setting_set('config:' . $key, $value)) {
+				$saved++;
+				$savedKeys[] = $key;
+			} else $failed++;
 		}
 	}
 
@@ -55,10 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$points = isset($_POST['tier_points']) && is_array($_POST['tier_points']) ? $_POST['tier_points'] : array();
 
 		foreach ($_POST['tier_price'] as $i => $price) {
-			$price = intv($price);
+			$price = is_numeric($price) ? round((float)$price, 2) : 0;
 			$give  = intv($points[$i] ?? 0);
 			if ($price > 0 && $give > 0) {
-				$tiers[$price] = $give;
+				$tiers[number_format($price, 2, '.', '')] = $give;
 			}
 		}
 
@@ -185,12 +192,12 @@ $paymentEvents = znote_table_exists('znote_payment_events')
 					<?php foreach ($rows as $price => $points): ?>
 						<?php
 							$bonus = null;
-							if ($perCurrency > 0 && (int)$price > 0 && (int)$points > 0) {
-								$bonus = round(((int)$points / ((int)$price * $perCurrency) - 1) * 100);
+							if ($perCurrency > 0 && (float)$price > 0 && (int)$points > 0) {
+								$bonus = round(((int)$points / ((float)$price * $perCurrency) - 1) * 100);
 							}
 						?>
 						<tr>
-							<td><input class="acp-input" type="number" min="0" name="tier_price[]" value="<?= h($price) ?>"></td>
+							<td><input class="acp-input" type="number" min="0" step="0.01" name="tier_price[]" value="<?= h($price) ?>"></td>
 							<td><input class="acp-input" type="number" min="0" name="tier_points[]" value="<?= h($points) ?>"></td>
 							<td class="is-muted"><?= $bonus === null ? '&mdash;' : ($bonus > 0 ? '+' : '') . (int)$bonus . '%' ?></td>
 							<td><button type="button" class="acp-btn acp-btn--ghost" onclick="this.closest('tr').remove()"><i class="fa fa-times"></i></button></td>
@@ -202,11 +209,19 @@ $paymentEvents = znote_table_exists('znote_payment_events')
 				<button type="button" class="acp-btn acp-btn--ghost" onclick="addTier()"><i class="fa fa-plus"></i> <?= t('acp.pay.add_package') ?></button>
 			</div>
 			<p class="acp-hint"><?= t('acp.pay.tiers_hint') ?></p>
+			<div class="acp-actions">
+				<button class="acp-btn acp-btn--green" type="submit" <?= $hasTable ? '' : 'disabled' ?>>
+					<i class="fa fa-check"></i> <?= t('acp.pay.save_btn') ?>
+				</button>
+			</div>
 		</div>
 	</section>
+</form>
 
-	<div class="acp-grid acp-grid--2">
-		<?php foreach ($schema as $groupName => $group): ?>
+<div class="acp-grid acp-grid--2">
+	<?php foreach ($schema as $groupName => $group): ?>
+		<form method="post">
+			<?= acp_csrf_field() ?>
 			<section class="acp-card">
 				<header class="acp-card-head">
 					<h2><i class="fa <?= h($group['icon']) ?>"></i> <?= h($groupName) ?></h2>
@@ -235,6 +250,7 @@ $paymentEvents = znote_table_exists('znote_payment_events')
 
 							<?php if ($field['type'] === 'bool'): ?>
 								<label style="display:flex;align-items:center;gap:8px;font-weight:400;">
+									<input type="hidden" name="pay[<?= h($key) ?>]" value="0">
 									<input type="checkbox" id="pay_<?= h($key) ?>" name="pay[<?= h($key) ?>]" value="1"
 										   <?= ($current !== '' && $current !== '0') ? 'checked' : '' ?>>
 									<span class="is-muted"><?= t('acp.pay.enabled') ?></span>
@@ -251,17 +267,17 @@ $paymentEvents = znote_table_exists('znote_payment_events')
 							<?php endif; ?>
 						</div>
 					<?php endforeach; ?>
+
+					<div class="acp-actions">
+						<button class="acp-btn acp-btn--green" type="submit" <?= $hasTable ? '' : 'disabled' ?>>
+							<i class="fa fa-check"></i> <?= t('acp.pay.save_btn') ?>
+						</button>
+					</div>
 				</div>
 			</section>
-		<?php endforeach; ?>
-	</div>
-
-	<div class="acp-actions">
-		<button class="acp-btn acp-btn--green" type="submit" <?= $hasTable ? '' : 'disabled' ?>>
-			<i class="fa fa-check"></i> <?= t('acp.pay.save_btn') ?>
-		</button>
-	</div>
-</form>
+		</form>
+	<?php endforeach; ?>
+</div>
 
 <section class="acp-card">
 	<header class="acp-card-head">
@@ -336,7 +352,7 @@ $paymentEvents = znote_table_exists('znote_payment_events')
 function addTier() {
 	var table = document.getElementById('tierTable');
 	var row = table.insertRow(-1);
-	row.innerHTML = '<td><input class="acp-input" type="number" min="0" name="tier_price[]" value=""></td>'
+	row.innerHTML = '<td><input class="acp-input" type="number" min="0" step="0.01" name="tier_price[]" value=""></td>'
 		+ '<td><input class="acp-input" type="number" min="0" name="tier_points[]" value=""></td>'
 		+ '<td class="is-muted">&mdash;</td>'
 		+ '<td><button type="button" class="acp-btn acp-btn--ghost" onclick="this.closest(\'tr\').remove()"><i class="fa fa-times"></i></button></td>';
