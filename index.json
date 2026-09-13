@@ -36,10 +36,11 @@
     {
         "key": "account_security",
         "name": "Account Security",
-        "version": "1.2.2",
+        "version": "1.2.3",
         "author": "Alex - opengamescommunity.com",
         "description": "Account security adds a box on My Account page with the current IP adress, recent activity, 2FA Status.",
         "update": [
+		    "Update the 2FA code",
 			"Updated Plugin API.",
             "Fixed IPv6/IP display and event separator encoding.",
             "Added web session tracking with user-controlled session revocation.",
