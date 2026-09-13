@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 if (!Token::isValid($_POST['token'] ?? null)) {
 	http_response_code(400);
 	theme_open();
-	echo '<h1>Invalid request</h1><p>Reload the buy points page and try again.</p>';
+	echo '<h1>' . t('payment.invalid_request') . '</h1><p>' . t('payment.retry_hint') . '</p>';
 	theme_close();
 	exit;
 }
@@ -26,7 +26,7 @@ try {
 	error_log('Payment checkout error: ' . $e->getMessage());
 	http_response_code(400);
 	theme_open();
-	echo '<h1>Payment unavailable</h1><p>The payment could not be started. Please contact staff if this continues.</p>';
+	echo '<h1>' . t('payment.unavailable') . '</h1><p>' . t('payment.start_failed') . '</p>';
 	theme_close();
 }
 ?>

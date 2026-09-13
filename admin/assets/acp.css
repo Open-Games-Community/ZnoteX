@@ -484,10 +484,10 @@ a.acp-stat:hover {
 	font-size: 23px;
 	font-weight: 700;
 	line-height: 1.1;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	max-width: 100%;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	word-break: normal;
 }
 .acp-stat--red .acp-stat-icon { color: var(--acp-red); }
 .acp-stat--teal .acp-stat-icon { color: #25a7a7; }

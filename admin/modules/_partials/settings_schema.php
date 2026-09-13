@@ -517,6 +517,11 @@ return array(
 				'label' => t_default('acp.set.client_download_linux.label', 'Linux client URL'),
 				'type'  => 'text',
 			),
+			'downloads.entries' => array(
+				'label' => t_default('acp.set.downloads.entries.label', 'Download entries'),
+				'type'  => 'json',
+				'help'  => t_default('acp.set.downloads.entries.help', 'Enable, disable, reorder or add download rows. Sections: official, unsupported, tools, custom. Optional fields: image and description. Windows and Linux keep using the URL fields above.'),
+			),
 		),
 
 		t_default('acp.sec.Security', 'Security') => array(
@@ -689,6 +694,7 @@ return array(
 			'mailserver.accountRecovery' => array(
 				'label' => t_default('acp.set.mailserver.accountRecovery.label', 'Allow account recovery by mail'),
 				'type'  => 'bool',
+				'help'  => t_default('acp.set.mailserver.accountRecovery.help', 'Enables the Lost Account page for recovering usernames, passwords and legacy 2FA by e-mail.'),
 			),
 			'mailserver.myaccount_verify_email' => array(
 				'label' => t_default('acp.set.mailserver.myaccount_verify_email.label', 'Let players verify their e-mail'),

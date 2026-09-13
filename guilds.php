@@ -243,7 +243,7 @@ if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 	</style>
 	<table id="guildsTable" class="table table-striped table-hover">
 		<tr class="yellow">
-			<th>Logo</th>
+			<th><?= t('guild.logo_label') ?></th>
 			<th><?= t('common.description') ?></th>
 			<th><?= t('guild.data') ?></th>
 		</tr>
@@ -419,7 +419,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 			<?php 
 		endif; ?>
 		<div id="guildDescription">
-			<h1>Guild: <?php echo sanitize($_GET['name']); ?></h1>
+			<h1><?= t('guild.title_char', ['name' => sanitize($_GET['name'])]) ?></h1>
 			<p><?php echo $guild['motd']; ?></p>
 		</div>
 	</div>
@@ -427,9 +427,9 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 	<!-- Guild information -->
 	<table id="guildViewTable" class="table table-striped">
 		<tr class="yellow">
-			<th>Rank:</th>
-			<th>Name:</th>
-			<th>Level:</th>
+			<th><?= t('common.rank_label') ?></th>
+			<th><?= t('common.name_label') ?></th>
+			<th><?= t('common.level_label') ?></th>
 			<th><?= t('common.vocation_label') ?></th>
 			<th><?= t('guild.status') ?></th>
 		</tr>
@@ -589,7 +589,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 							$already_guild = get_player_guild_data($joining_player_id);
 							$already_guild_name = get_guild_name($already_guild['guild_id']);
 							
-							echo "<font color='red' size='4'>'. t('guild.you_are_already'). ' <strong>{$already_guild['rank_name']}</strong> of another guild: <strong><a href='guilds.php?name={$already_guild_name}'>{$already_guild_name}</a></strong>.<br>You need to leave that guild first before you can join another one.</font>";
+							echo '<font color="red" size="4">' . t('guild.you_are_already') . ' <strong>' . htmlspecialchars((string)$already_guild['rank_name'], ENT_QUOTES, 'UTF-8') . '</strong> ' . t('guild.of_another_guild') . ': <strong><a href="guilds.php?name=' . htmlspecialchars((string)$already_guild_name, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars((string)$already_guild_name, ENT_QUOTES, 'UTF-8') . '</a></strong>.<br>' . t('guild.leave_first') . '</font>';
 						}
 
 					} else echo '<font color="red" size="4">'. t('guild.offline_join2'). '</font>';
@@ -818,7 +818,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 			<form action="" method="post">
 				<ul>
 					<li><?= t('guild.invite_btn') ?> to guild:<br>
-						<input type="text" name="invite" placeholder="Character name">
+						<input type="text" name="invite" placeholder="<?= t('guild.char_name_placeholder') ?>">
 						<input type="submit" value="<?= t('guild.invite_btn') ?>">
 					</li>
 				</ul>
@@ -829,7 +829,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 				<ul>
 					<li><?= t('guild.change_motd') ?></li>
 					<li>
-						<textarea name="motd" placeholder="Guild Message" cols="50" rows="3"><?php echo $guild['motd']; ?></textarea><br>
+						<textarea name="motd" placeholder="<?= t('guild.message_placeholder') ?>" cols="50" rows="3"><?php echo $guild['motd']; ?></textarea><br>
 						<input type="submit" value="<?= t('guild.update_motd') ?>">
 					</li>
 				</ul>
@@ -856,7 +856,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 							}
 							?>
 							</select>
-							<input type="text" name="guildnick" maxlength="15" placeholder="leave blank to erase">
+							<input type="text" name="guildnick" maxlength="15" placeholder="<?= t('guild.leave_blank_placeholder') ?>">
 							<input type="submit" value="<?= t('guild.change_nick_btn') ?>">
 						</li>
 					</ul>
@@ -1081,7 +1081,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 				<form action="" method="post">
 					<ul>
 						<li><?= t('guild.invite_war') ?><br>
-							<input type="text" name="warinvite" placeholder="Guild name">
+							<input type="text" name="warinvite" placeholder="<?= t('guild.name_placeholder') ?>">
 							<input type="number" min="10" max="999" name="limit">
 							<input type="submit" value="<?= t('guild.invite_guild_btn') ?>">
 						</li>
@@ -1097,7 +1097,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 					<tr class="yellow">
 						<th><?= t('guild.aggressor') ?></th>
 						<th><?= t('guild.information') ?></th>
-						<th>Enemy</th>
+						<th><?= t('guild.enemy') ?></th>
 					</tr>
 					<?php
 					$i = 0;
@@ -1219,7 +1219,7 @@ view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 					<li>
 						<?= t('guild.leave_btn') ?>:<br>
 						<select name="leave_guild">
-							<option disabled>With...</option>
+							<option disabled><?= t('guild.with_placeholder') ?></option>
 						<?php
 						for ($i = 0; $i < $char_count; $i++) {
 							foreach ($players as $player) {

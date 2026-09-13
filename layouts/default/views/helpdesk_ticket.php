@@ -1,10 +1,10 @@
 <?php
 ?>
-<h1>View Ticket #
+<h1><?= t('helpdesk.view_ticket') ?>
 <?php
 	echo $ticketData['id'];
 	if ($ticketData['status'] === 'CLOSED') {
-		echo '<span style="color:red">[CLOSED]</SPAN>';
+		echo '<span style="color:red">[' . t('helpdesk.closed') . ']</span>';
 	}
 ?></h1>
 <table class="znoteTable ThreadTable table table-striped">
@@ -13,7 +13,7 @@
 			<?php
 				echo getClock($ticketData['creation'], true);
 			?>
-			 - Created by:
+			 - <?= t('helpdesk.created_by') ?>
 			 <?php
 			 	echo $ticketData['username'];
 			 ?>
@@ -35,7 +35,7 @@ if ($replies !== false) {
 					<?php
 						echo getClock($reply['created'], true);
 					?>
-					 - Posted by:
+					 - <?= t('helpdesk.posted_by') ?>
 					 <?php
 					 	echo $reply['username'];
 					 ?>

@@ -2,13 +2,13 @@
 <!-- Basic info -->
 <table class="auction_char">
 	<tr class="yellow">
-		<td>Level</td>
+		<td><?= t('common.level') ?></td>
 		<td><?= t('common.vocation') ?></td>
 		<?php if ($loadOutfits): ?>
-			<td>Image</td>
+			<td><?= t('common.image') ?></td>
 		<?php endif; ?>
-		<td>Bank</td>
-		<td>Price</td>
+		<td><?= t('auc.bank') ?></td>
+		<td><?= t('auc.price') ?></td>
 	</tr>
 	<tr>
 		<td><?php echo $character['level']; ?></td>
@@ -19,7 +19,7 @@
 			</td>
 		<?php endif; ?>
 		<td><?php echo $character['balance']; ?></td>
-		<td><?php echo $character['price']; ?> points</td>
+		<td><?= t('auc.price_points', ['price' => $character['price']]) ?></td>
 	</tr>
 	<?php if ($bidding_period): ?>
 		<tr>
@@ -33,13 +33,13 @@
 <?php
 if ($character['own'] == 0) {
 	if (is_array($account) && !empty($account)): ?>
-		<p><?= t('common.you_have') ?> <strong><?php echo $account['points']; ?></strong> shop points remaining.</p>
+		<p><?= t('common.you_have') ?> <strong><?php echo $account['points']; ?></strong> <?= t('auc.points_remaining') ?></p>
 
 		<?php if ((int)$character['bidder_account_id'] === $this_account_id): ?>
 			<p><strong><?= t('auc.so_far_good') ?></strong>
 				<br><?= t('auc.highest_bid') ?> <?php echo (int)$character['price']-$step; ?>
 			</p>
-			<p>If nobody bids higher than you, this character will be yours in:
+			<p><?= t('auc.yours_in') ?>
 				<br><?php echo toDuration((int)$character['time_end']-time()); ?>.
 			</p>
 		<?php endif; ?>
@@ -50,14 +50,14 @@ if ($character['own'] == 0) {
 			<?php if (!$bidding_period): /* Because above input is disabled */ ?>
 				<input type="hidden" name="price" value="<?php echo $character['price']; ?>">
 			<?php endif; ?>
-			<input type="submit" value="<?php echo ($bidding_period) ? 'Bid' : 'Buy'; ?>">
+			<input type="submit" value="<?php echo ($bidding_period) ? t('auc.bid_btn') : t('auc.buy_btn'); ?>">
 		</form>
 	<?php else: ?>
 		<?php if ((int)$character['bidder_account_id'] === $this_account_id): ?>
 			<p><strong><?= t('auc.so_far_good') ?></strong>
 				<br><?= t('auc.highest_bid') ?> <?php echo (int)$character['price']-$step; ?>
 			</p>
-			<p>If nobody bids higher than you, this character will be yours in:
+			<p><?= t('auc.yours_in') ?>
 				<br><?php echo toDuration((int)$character['time_end']-time()); ?>.
 			</p>
 		<?php else: ?>
@@ -67,19 +67,19 @@ if ($character['own'] == 0) {
 } else {
 	?>
 	<p><strong><?= t('auc.is_seller') ?></strong>
-		<br><strong>Name:</strong> <a href="/characterprofile.php?name=<?php echo $character['name']; ?>"><?php echo $character['name']; ?></a>
-		<br><strong>Price:</strong> <?php echo $character['price']; ?>
-		<br><strong>Bid:</strong> <?php echo $character['bid']; ?>
+		<br><strong><?= t('common.name_label') ?></strong> <a href="/characterprofile.php?name=<?php echo $character['name']; ?>"><?php echo $character['name']; ?></a>
+		<br><strong><?= t('auc.price') ?>:</strong> <?php echo $character['price']; ?>
+		<br><strong><?= t('common.bid_label') ?></strong> <?php echo $character['bid']; ?>
 		<br><strong><?= t('auc.deposit') ?></strong> <?php echo $character['deposit']; ?>
 		<?php if (!$bidding_period): ?>
-			<p>The bidding period has ended, you can wait until someone decides to instantly buy it, or you can reclaim your character to your account.</p>
+			<p><?= t('auc.bidding_ended') ?></p>
 			<form action="/auctionChar.php" method="POST">
 				<input type="hidden" name="action" value="refund">
 				<input type="hidden" name="zaid" value="<?php echo $character['zaid']; ?>">
-				<input type="submit" value="Reclaim character back to your account">
+				<input type="submit" value="<?= t('auc.reclaim_btn') ?>">
 			</form>
 		<?php else: ?>
-			<p><?= t('auc.bid_period') ?> <?php echo toDuration($character['time_end']-time()); ?>. After this period, you can reclaim your character if nobody has bid on it.</p>
+			<p><?= t('auc.bid_period') ?> <?php echo toDuration($character['time_end']-time()); ?>. <?= t('auc.reclaim_after_period') ?></p>
 		<?php endif; ?>
 	</p>
 	<?php
@@ -88,14 +88,14 @@ if ($character['own'] == 0) {
 <!-- SKILLS -->
 <table class="auction_skills">
 	<tr class="yellow"><td colspan="4"><?= t('auc.skills') ?></td></tr>
-	<tr><td>magic</td><td><?php echo $character['magic']; ?></td></tr>
-	<tr><td>fist</td><td><?php echo $character['fist']; ?></td></tr>
-	<tr><td>club</td><td><?php echo $character['club']; ?></td></tr>
-	<tr><td>sword</td><td><?php echo $character['sword']; ?></td></tr>
-	<tr><td>axe</td><td><?php echo $character['axe']; ?></td></tr>
-	<tr><td>dist</td><td><?php echo $character['dist']; ?></td></tr>
-	<tr><td>shielding</td><td><?php echo $character['shielding']; ?></td></tr>
-	<tr><td>fishing</td><td><?php echo $character['fishing']; ?></td></tr>
+	<tr><td><?= t('skill.magic') ?></td><td><?php echo $character['magic']; ?></td></tr>
+	<tr><td><?= t('skill.fist') ?></td><td><?php echo $character['fist']; ?></td></tr>
+	<tr><td><?= t('skill.club') ?></td><td><?php echo $character['club']; ?></td></tr>
+	<tr><td><?= t('skill.sword') ?></td><td><?php echo $character['sword']; ?></td></tr>
+	<tr><td><?= t('skill.axe') ?></td><td><?php echo $character['axe']; ?></td></tr>
+	<tr><td><?= t('skill.distance') ?></td><td><?php echo $character['dist']; ?></td></tr>
+	<tr><td><?= t('skill.shielding') ?></td><td><?php echo $character['shielding']; ?></td></tr>
+	<tr><td><?= t('skill.fishing') ?></td><td><?php echo $character['fishing']; ?></td></tr>
 </table>
 <!-- Player items -->
 <?php if (is_array($player_items) && !empty($player_items)): ?>
@@ -104,13 +104,13 @@ if ($character['own'] == 0) {
 			<td colspan="3"><?= t('auc.player_items') ?></td>
 		</tr>
 		<tr class="yellow">
-			<td>Image</td>
-			<td>Item</td>
-			<td>Count</td>
+			<td><?= t('common.image') ?></td>
+			<td><?= t('common.item') ?></td>
+			<td><?= t('common.count') ?></td>
 		</tr>
 		<?php foreach($player_items as $item): ?>
 			<tr>
-				<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+				<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 				<td><a href="/market.php?compare=<?php echo $item['itemtype']; ?>" target="_BLANK"><?php echo (isset($items[$item['itemtype']])) ? $items[$item['itemtype']] : $item['itemtype']; ?></a></td>
 				<td><?php echo $item['count']; ?></td>
 			</tr>
@@ -124,13 +124,13 @@ if ($character['own'] == 0) {
 			<td colspan="3"><?= t('auc.depot_items') ?></td>
 		</tr>
 		<tr class="yellow">
-			<td>Image</td>
-			<td>Item</td>
-			<td>Count</td>
+			<td><?= t('common.image') ?></td>
+			<td><?= t('common.item') ?></td>
+			<td><?= t('common.count') ?></td>
 		</tr>
 		<?php foreach($depot_items as $item): ?>
 			<tr>
-				<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+				<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$item["itemtype"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 				<td><a href="/market.php?compare=<?php echo $item['itemtype']; ?>" target="_BLANK"><?php echo (isset($items[$item['itemtype']])) ? $items[$item['itemtype']] : $item['itemtype']; ?></a></td>
 				<td><?php echo $item['count']; ?></td>
 			</tr>

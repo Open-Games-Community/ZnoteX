@@ -4,8 +4,23 @@
 <p><?= t('downloads.intro') ?></p>
 
 <p><?= t('downloads.ipchanger') ?> <a href="https://github.com/jo3bingham/tibia-ip-changer/releases/latest"><?= t('downloads.here') ?></a>.</p>
-<p><?= t('downloads.win', ['version' => ($config['client'] / 100)]) ?> <a href="<?php echo $config['client_download']; ?>"><?= t('downloads.here') ?></a>.</p>
-<p><?= t('downloads.linux', ['version' => ($config['client'] / 100)]) ?> <a href="<?php echo $config['client_download_linux']; ?>"><?= t('downloads.here') ?></a>.</p>
+
+<?php foreach (znote_download_entries_by_section() as $section => $entries): ?>
+	<h2><?= htmlspecialchars(ucwords(str_replace('_', ' ', $section)), ENT_QUOTES, 'UTF-8') ?></h2>
+	<ul>
+		<?php foreach ($entries as $entry): ?>
+			<li>
+				<?php if ($entry['image'] !== ''): ?>
+					<img src="<?= htmlspecialchars($entry['image'], ENT_QUOTES, 'UTF-8') ?>" alt="" style="max-width:96px;max-height:96px;display:block;">
+				<?php endif; ?>
+				<a href="<?= htmlspecialchars($entry['url'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($entry['label'], ENT_QUOTES, 'UTF-8') ?></a>
+				<?php if ($entry['description'] !== ''): ?>
+					<br><span><?= htmlspecialchars($entry['description'], ENT_QUOTES, 'UTF-8') ?></span>
+				<?php endif; ?>
+			</li>
+		<?php endforeach; ?>
+	</ul>
+<?php endforeach; ?>
 
 <h2><?= t('downloads.howto') ?></h2>
 <ol>

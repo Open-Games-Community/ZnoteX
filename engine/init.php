@@ -79,6 +79,7 @@ require_once 'function/translate.php';
 require_once 'function/bbcode.php';
 require_once 'function/users.php';
 require_once 'function/cache.php';
+require_once 'function/downloads.php';
 require_once 'function/mail.php';
 require_once 'function/token.php';
 require_once 'function/rfc6238.php';

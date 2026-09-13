@@ -507,8 +507,13 @@ function plugin_repository_list(bool $refresh = false): array {
 		}
 	}
 
+	$indexUrl = $cfg['index'];
+	if ($refresh) {
+		$indexUrl .= (strpos($indexUrl, '?') === false ? '?' : '&') . 'nocache=' . time();
+	}
+
 	$error = null;
-	$body  = plugin_repository_get($cfg['index'], null, $error);
+	$body  = plugin_repository_get($indexUrl, null, $error);
 
 	if ($body === false) {
 		return array('plugins' => array(), 'error' => (string)$error);
@@ -516,7 +521,7 @@ function plugin_repository_list(bool $refresh = false): array {
 
 	$data = json_decode((string)$body, true);
 	if (!is_array($data)) {
-		return array('plugins' => array(), 'error' => 'The catalogue is not valid JSON.');
+		return array('plugins' => array(), 'error' => 'The catalogue is not valid JSON: ' . json_last_error_msg() . ' | Response: ' . substr((string)$body, 0, 200));
 	}
 
 	if (isset($data['plugins']) && is_array($data['plugins'])) {

@@ -40,6 +40,22 @@
 	$config['client'] = 1098;
 	$config['client_download'] = 'http://tibiaclient.otslist.eu/download/tibia'. $config['client'] .'.exe';
 	$config['client_download_linux'] = 'http://tibiaclient.otslist.eu/download/tibia'. $config['client'] .'.tgz';
+	$config['downloads'] = array(
+		'entries' => array(
+			array('key' => 'windows_client', 'label' => 'Windows Client', 'section' => 'official', 'enabled' => true, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'linux_client', 'label' => 'Linux Client', 'section' => 'unsupported', 'enabled' => true, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'macos_client', 'label' => 'MacOS Client', 'section' => 'unsupported', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'android_client', 'label' => 'Android Client', 'section' => 'unsupported', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'ios_client', 'label' => 'iOS Client', 'section' => 'unsupported', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'bot', 'label' => 'Bot', 'section' => 'tools', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'minimap', 'label' => 'Minimap', 'section' => 'tools', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_1', 'label' => 'Custom Download 1', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_2', 'label' => 'Custom Download 2', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_3', 'label' => 'Custom Download 3', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_4', 'label' => 'Custom Download 4', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_5', 'label' => 'Custom Download 5', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+		),
+	);
 	$config['port'] = 7171;
 	$config['account_create_premdays'] = 0;
 

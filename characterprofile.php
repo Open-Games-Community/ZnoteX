@@ -47,7 +47,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 					AND `p`.`id` = ?
 			", [$user_id]);
 			$position_type = ($position_data !== false) ? $position_data['type'] : null;
-			$position = (isset($config['ingame_positions'][$position_type])) ? $config['ingame_positions'][$position_type] : 'Unknown';
+			$position = (isset($config['ingame_positions'][$position_type])) ? $config['ingame_positions'][$position_type] : t('common.unknown');
 		}
 
 		$deletion_time = db()->fetchOne("SELECT `time` FROM `znote_deleted_characters` WHERE `character_name` = ? AND `done` = '0' LIMIT 1;", [$name]);
@@ -117,7 +117,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 						}
 						$profile_account = user_data((int)$profile_data['account_id'], 'premium_ends_at');
 						$premium_until = ($profile_account !== false) ? (int)($profile_account['premium_ends_at'] ?? 0) : 0;
-						$account_status = ((bool)($config['freePremium'] ?? false) || $premium_until > time()) ? 'VIP active' : 'VIP inactive';
+						$account_status = ((bool)($config['freePremium'] ?? false) || $premium_until > time()) ? t('char.premium_active') : t('char.premium_inactive');
 						$profile_lookaddons = (int)($profile_data['lookaddons'] ?? 0);
 						$current_outfit_src = $loadOutfits
 							? $config['show_outfits']['imageServer'] . '?id=' . (int)$profile_data['looktype'] . '&addons=' . $profile_lookaddons . '&head=' . (int)$profile_data['lookhead'] . '&body=' . (int)$profile_data['lookbody'] . '&legs=' . (int)$profile_data['looklegs'] . '&feet=' . (int)$profile_data['lookfeet']
@@ -134,7 +134,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 						$level_needed = max(0, $level_next_exp - $experience_raw);
 						$detail_skill_rows = array(
 							array('label' => t('common.level'), 'value' => $playerstats['level']),
-							array('label' => 'Magic Level', 'value' => $playerstats['maglevel']),
+							array('label' => t('char.magic_level'), 'value' => $playerstats['maglevel']),
 							array('label' => t('skill.fist'), 'value' => $playerstats['skill_fist']),
 							array('label' => t('skill.club'), 'value' => $playerstats['skill_club']),
 							array('label' => t('skill.sword'), 'value' => $playerstats['skill_sword']),
@@ -144,6 +144,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 							array('label' => t('skill.fishing'), 'value' => $playerstats['skill_fishing']),
 						);
 						?>
+						<?php if (function_exists('tco_characterprofile_open')) { tco_characterprofile_open(); } ?>
 						<div id="characterProfileTable" class="cp-profile-shell">
 							<div class="cp-profile-rebuild">
 								<?php if ($deletion_time !== false): ?>
@@ -153,12 +154,12 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 								<div class="cp-profile-top">
 									<section class="cp-panel cp-info-panel">
 										<header class="cp-panel-head">
-											<h2>Character Information</h2>
+											<h2><?= t('char.info_title') ?></h2>
 										</header>
 										<div class="cp-info-list">
 											<div class="cp-info-row">
-												<span>Name</span>
-												<strong><?php echo htmlspecialchars($profile_data['name'], ENT_QUOTES, 'UTF-8'); ?> <em class="cp-status cp-status--<?php echo $profile_data['online'] ? 'online' : 'offline'; ?>"><?php echo $profile_data['online'] ? 'ON' : 'OFF'; ?></em></strong>
+												<span><?= t('common.name') ?></span>
+												<strong><?php echo htmlspecialchars($profile_data['name'], ENT_QUOTES, 'UTF-8'); ?> <em class="cp-status cp-status--<?php echo $profile_data['online'] ? 'online' : 'offline'; ?>"><?php echo $profile_data['online'] ? t('common.status_on') : t('common.status_off'); ?></em></strong>
 											</div>
 											<?php if ($position !== ''): ?>
 												<div class="cp-info-row">
@@ -168,13 +169,13 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 											<?php endif; ?>
 											<?php if ($profile_flag !== ''): ?>
 												<div class="cp-info-row">
-													<span>Country</span>
+													<span><?= t('common.country') ?></span>
 													<strong><?php echo strtoupper(htmlspecialchars($profile_flag, ENT_QUOTES, 'UTF-8')); ?> <img class="cp-flag" src="<?php echo htmlspecialchars($flags['server'] . '/' . $profile_flag . '.png', ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($profile_flag, ENT_QUOTES, 'UTF-8'); ?>"></strong>
 												</div>
 											<?php endif; ?>
 											<div class="cp-info-row">
-												<span>Sex</span>
-												<strong><?php echo ($profile_data['sex'] == 1) ? 'male' : 'female'; ?></strong>
+												<span><?= t('common.sex') ?></span>
+												<strong><?php echo ($profile_data['sex'] == 1) ? t('common.male') : t('common.female'); ?></strong>
 											</div>
 											<div class="cp-info-row">
 												<span><?= t('common.vocation') ?></span>
@@ -191,31 +192,31 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 												</div>
 											<?php endif; ?>
 											<div class="cp-info-row">
-												<span>Residence</span>
+												<span><?= t('char.residence') ?></span>
 												<strong><?php echo htmlspecialchars($config['towns'][$profile_data['town_id']] ?? (string)$profile_data['town_id'], ENT_QUOTES, 'UTF-8'); ?></strong>
 											</div>
 											<?php if (!empty($profile_houses)): ?>
 												<div class="cp-info-row">
-													<span>House</span>
+													<span><?= t('char.house_label') ?></span>
 													<strong><?php echo htmlspecialchars(implode(', ', $profile_houses), ENT_QUOTES, 'UTF-8'); ?></strong>
 												</div>
 											<?php endif; ?>
 											<?php if ($guild_exist): ?>
 												<div class="cp-info-row">
-													<span>Guild</span>
-													<strong><?php echo htmlspecialchars($guild['rank_name'], ENT_QUOTES, 'UTF-8'); ?> of <a href="guilds.php?name=<?php echo urlencode($guild_name); ?>"><?php echo htmlspecialchars($guild_name, ENT_QUOTES, 'UTF-8'); ?></a></strong>
+													<span><?= t('char.guild_label') ?></span>
+													<strong><?php echo htmlspecialchars($guild['rank_name'], ENT_QUOTES, 'UTF-8'); ?> <?= t('char.guild_of') ?> <a href="guilds.php?name=<?php echo urlencode($guild_name); ?>"><?php echo htmlspecialchars($guild_name, ENT_QUOTES, 'UTF-8'); ?></a></strong>
 												</div>
 											<?php endif; ?>
 											<div class="cp-info-row">
 												<span><?= t('char.last_login') ?></span>
-												<strong><?php echo ($profile_data['lastlogin'] != 0) ? htmlspecialchars(getClock($profile_data['lastlogin'], true, true), ENT_QUOTES, 'UTF-8') : 'Never.'; ?></strong>
+												<strong><?php echo ($profile_data['lastlogin'] != 0) ? htmlspecialchars(getClock($profile_data['lastlogin'], true, true), ENT_QUOTES, 'UTF-8') : t('char.never'); ?></strong>
 											</div>
 											<div class="cp-info-row">
-												<span>Created</span>
+												<span><?= t('char.created') ?></span>
 												<strong><?php echo htmlspecialchars(getClock($profile_znote_data['created'], true), ENT_QUOTES, 'UTF-8'); ?></strong>
 											</div>
 											<div class="cp-info-row">
-												<span>Account Status</span>
+												<span><?= t('char.account_status') ?></span>
 												<strong><?php echo htmlspecialchars($account_status, ENT_QUOTES, 'UTF-8'); ?></strong>
 											</div>
 										</div>
@@ -224,7 +225,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 									<?php if ($config['EQ_shower']['equipment']): ?>
 										<section class="cp-panel cp-equipment-panel">
 											<header class="cp-panel-head">
-												<h2>Equipment</h2>
+												<h2><?= t('char.equipment') ?></h2>
 											</header>
 											<div class="cp-equipment-stage">
 												<?php if ($loadOutfits && $current_outfit_src !== ''): ?>
@@ -242,8 +243,8 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 													<?php endforeach; endif; ?>
 												</div>
 												<div class="cp-equipment-meta">
-													<span>Soul <strong><?php echo (int)$playerstats['soul']; ?></strong></span>
-													<span>Cap <strong><?php echo number_format((int)$playerstats['cap'],0,'',','); ?></strong></span>
+													<span><?= t('skill.soul') ?> <strong><?php echo (int)$playerstats['soul']; ?></strong></span>
+													<span><?= t('skill.cap') ?> <strong><?php echo number_format((int)$playerstats['cap'],0,'',','); ?></strong></span>
 												</div>
 											</div>
 										</section>
@@ -252,21 +253,21 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 
 								<section class="cp-panel cp-details-panel">
 									<header class="cp-panel-head">
-										<h2>Character Details</h2>
+										<h2><?= t('char.details') ?></h2>
 									</header>
 									<div class="cp-bars">
 										<div class="cp-bar-block">
-											<div class="cp-bar-label"><span>Health</span><strong><?php echo number_format((int)$playerstats['health'],0,'',','); ?> / <?php echo number_format((int)$playerstats['healthmax'],0,'',','); ?></strong></div>
+											<div class="cp-bar-label"><span><?= t('skill.health') ?></span><strong><?php echo number_format((int)$playerstats['health'],0,'',','); ?> / <?php echo number_format((int)$playerstats['healthmax'],0,'',','); ?></strong></div>
 											<div class="cp-bar-track"><i class="cp-bar-fill cp-bar-fill--health" style="width: <?php echo $health_percent; ?>%;"></i></div>
 										</div>
 										<div class="cp-bar-block">
-											<div class="cp-bar-label"><span>Mana</span><strong><?php echo number_format((int)$playerstats['mana'],0,'',','); ?> / <?php echo number_format((int)$playerstats['manamax'],0,'',','); ?></strong></div>
+											<div class="cp-bar-label"><span><?= t('skill.mana') ?></span><strong><?php echo number_format((int)$playerstats['mana'],0,'',','); ?> / <?php echo number_format((int)$playerstats['manamax'],0,'',','); ?></strong></div>
 											<div class="cp-bar-track"><i class="cp-bar-fill cp-bar-fill--mana" style="width: <?php echo $mana_percent; ?>%;"></i></div>
 										</div>
 										<div class="cp-bar-block">
 											<div class="cp-bar-label"><span><?= t('skill.experience') ?> - <?= t('common.level') ?> <?php echo (int)$playerstats['level']; ?></span><strong><?php echo $level_percent; ?>% to <?php echo (int)$playerstats['level'] + 1; ?></strong></div>
 											<div class="cp-bar-track"><i class="cp-bar-fill cp-bar-fill--experience" style="width: <?php echo $level_percent; ?>%;"></i></div>
-											<div class="cp-exp-note">Need <strong><?php echo number_format($level_needed,0,'',','); ?></strong> experience to reach level <?php echo (int)$playerstats['level'] + 1; ?></div>
+											<div class="cp-exp-note"><?= t('char.need_exp', ['amount' => '<strong>' . number_format($level_needed,0,'',',') . '</strong>', 'level' => (int)$playerstats['level'] + 1]) ?></div>
 										</div>
 									</div>
 									<?php if ($config['EQ_shower']['skills']): ?>
@@ -606,8 +607,8 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 			", [$user_id]);
 			$c_achs = $config['achievements'];
 			$toggle = array(
-				'show' => '<a href="#show">Show</a>',
-				'hide' => '<a href="#hide">Hide</a>'
+				'show' => '<a href="#show">' . t('common.show') . '</a>',
+				'hide' => '<a href="#hide">' . t('common.hide') . '</a>'
 			);
 			if ($achievements !== false): ?>
 				<h3><?= t('char.achievements') ?> <label id="ac_label_hide" for="ac_toggle_hide"><?php echo $toggle['show']; ?></label></h3>
@@ -621,9 +622,9 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				<table class="achievements">
 					<thead>
 						<tr>
-							<th>Name</th>
+							<th><?= t('common.name') ?></th>
 							<th><?= t('common.description') ?></th>
-							<th>Points</th>
+							<th><?= t('common.points') ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -699,7 +700,7 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 								<?php
 								echo t('char.killed_at', ['level' => $d['level'], 'killer' => $lasthit]);
 								if ($d['unjustified']) {
-									echo " <font color='red' style='font-style: italic;'>(unjustified)</font>";
+									echo " <font color='red' style='font-style: italic;'>" . t('char.unjustified') . "</font>";
 								}
 								$mostdmg = ($d['mostdamage_by'] !== $d['killed_by']) ? true : false;
 								if ($mostdmg) {
@@ -707,13 +708,13 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 									? "<a href='characterprofile.php?name=".$d['mostdamage_by']."'>".$d['mostdamage_by']."</a>"
 									: $d['mostdamage_by'];
 
-									echo "<br>and by $mostdmg.";
+									echo "<br>" . t('char.and_by', ['name' => $mostdmg]);
 
 									if ($d['mostdamage_unjustified']) {
-										echo " <font color='red' style='font-style: italic;'>(unjustified)</font>";
+										echo " <font color='red' style='font-style: italic;'>" . t('char.unjustified') . "</font>";
 									}
 								} else {
-									echo " <b>(soloed)</b>";
+									echo " <b>" . t('char.soloed') . "</b>";
 								}
 								?>
 							</td>
@@ -756,12 +757,12 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 					if ($cquest[3] == 1) {
 						if ($completedquests != 0) {
 							if ($firstrun == 1): ?>
-								<b> Quest progression </b>
+								<b> <?= t('char.quest_progression') ?> </b>
 								<table id="characterprofileQuest" class="table table-striped table-hover">
 									<thead>
 										<tr class="yellow">
-											<th>Quest:</th>
-											<th>progression:</th>
+											<th><?= t('char.quest_label') ?></th>
+											<th><?= t('char.progression_label') ?></th>
 										</tr>
 									</thead>
 									<tbody>
@@ -824,11 +825,11 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 				<b><?= t('char.other_chars') ?></b><br>
 				<table id="characterprofileTable" class="table table-striped table-hover">
 					<tr class="yellow">
-						<th>Name:</th>
-						<th>Level:</th>
+						<th><?= t('common.name_label') ?></th>
+						<th><?= t('common.level_label') ?></th>
 						<th><?= t('common.vocation_label') ?></th>
 						<th><?= t('char.last_login_label') ?></th>
-						<th>Status:</th>
+						<th><?= t('common.status_label') ?></th>
 					</tr>
 					<?php
 					// Add character rows
@@ -838,8 +839,8 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 							<td><a href="characterprofile.php?name=<?php echo $char['name']; ?>"><?php echo $char['name']; ?></a></td>
 							<td><?php echo (int)$char['level']; ?></td>
 							<td><?php echo vocation_id_to_name($char['vocation']); ?></td>
-							<td><?php echo ($char['lastlogin'] != 0) ? getClock($char['lastlogin'], true, true) : 'Never.'; ?></td>
-							<td><?php echo ($char['online']) ? 'online' : 'offline'; ?></td>
+							<td><?php echo ($char['lastlogin'] != 0) ? getClock($char['lastlogin'], true, true) : t('char.never'); ?></td>
+							<td><?php echo ($char['online']) ? t('common.online') : t('common.offline'); ?></td>
 						</tr>
 						<?php
 					endforeach;
@@ -852,10 +853,11 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		<!-- END CHARACTER LIST -->
 
 		<p class="address"><?= t('char.address') ?> <a href="<?php echo ($config['htwrite']) ? "//" . $_SERVER['HTTP_HOST']."/" . $profile_data['name'] : "//" . $_SERVER['HTTP_HOST'] . "/characterprofile.php?name=" . $profile_data['name']; ?>"><?php echo ($config['htwrite']) ? $_SERVER['HTTP_HOST']."/". $profile_data['name'] : $_SERVER['HTTP_HOST']."/characterprofile.php?name=". $profile_data['name']; ?></a></p>
+		<?php if (function_exists('tco_characterprofile_close')) { tco_characterprofile_close(); } ?>
 
 		<?php
 	} else {
-		echo htmlentities(strip_tags($name, ENT_QUOTES)) . ' does not exist.';
+		echo t('char.does_not_exist', ['name' => htmlentities(strip_tags($name, ENT_QUOTES))]);
 	}
 } else {
 	view('character_search');

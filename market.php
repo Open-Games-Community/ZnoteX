@@ -14,7 +14,7 @@ if (is_array($items) === false):
 	<p><?= t('market.load_failed2') ?></p>
 	<p><?= t('market.tried_file') ?> <?php echo $items; ?></p>
 	<p><?= t('market.fix_path') ?></p>
-	<p>If the path is correct, make sure your web user has access to read it.</p>
+	<p><?= t('market.check_permissions') ?></p>
 	<?php
 	theme_close();
 	die();
@@ -36,21 +36,21 @@ if (!$compare) {
 	}
 	?>
 	<h1><?= t('market.title') ?></h1>
-	<p><?= t('market.hint') ?> <a target="_BLANK" href="http://znote.eu/images/depotmarket.jpg">market in depot.</a> <br>To sell an item: Place item inside your depot, click on market, search for your item and sell it.</p>
+	<p><?= t('market.hint') ?> <a target="_BLANK" href="http://znote.eu/images/depotmarket.jpg"><?= t('market.depot_link_text') ?></a> <br><?= t('market.sell_instructions') ?></p>
 	<form action="" class="market_item_search">
 		<label for="compareSearch"><?= t('market.search') ?></label>
 		<input type="text" id="compareSearch" name="compare">
 		<input type="submit" value="<?= t('common.search') ?>">
 	</form>
-	<h2>WTS: Want to sell</h2>
+	<h2><?= t('market.wts') ?></h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
 			<td><?= t('market.item_name') ?></td>
-			<td>Item</td>
-			<td>Count</td>
+			<td><?= t('common.item') ?></td>
+			<td><?= t('common.count') ?></td>
 			<td><?= t('market.price_for_1') ?></td>
-			<td>Added</td>
-			<td>By</td>
+			<td><?= t('common.added') ?></td>
+			<td><?= t('common.by') ?></td>
 			<td><?= t('market.compare') ?></td>
 		</tr>
 		<?php
@@ -58,26 +58,26 @@ if (!$compare) {
 		?>
 		<tr>
 			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 			<td><?php echo $o['amount']; ?></td>
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['created'], true, true); ?></td>
-			<td><?php echo ($o['anonymous'] == 1) ? 'Anonymous' : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
+			<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
 			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button><?= t('market.compare') ?></button></a></td>
 		</tr>
 		<?php
 		}
 		?>
 	</table>
-	<h2>WTB: Want to buy</h2>
+	<h2><?= t('market.wtb') ?></h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
 			<td><?= t('market.item_name') ?></td>
-			<td>Item</td>
-			<td>Count</td>
+			<td><?= t('common.item') ?></td>
+			<td><?= t('common.count') ?></td>
 			<td><?= t('market.price_for_1') ?></td>
-			<td>Added</td>
-			<td>By</td>
+			<td><?= t('common.added') ?></td>
+			<td><?= t('common.by') ?></td>
 			<td><?= t('market.compare') ?></td>
 		</tr>
 		<?php
@@ -85,11 +85,11 @@ if (!$compare) {
 		?>
 		<tr>
 			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 			<td><?php echo $o['amount']; ?></td>
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['created'], true, true); ?></td>
-			<td><?php echo ($o['anonymous'] == 1) ? 'Anonymous' : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
+			<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
 			<td><a href="?compare=<?php echo $o['item_id']; ?>"><button><?= t('market.compare') ?></button></a></td>
 		</tr>
 		<?php
@@ -131,19 +131,19 @@ if (!$compare) {
 
 	// Markup
 	$itemname = (isset($items[$compare])) ? $items[$compare] : $compare;
-	if (!is_string($compare)) echo "<h1>Comparing item: ". $itemname ."</h1>";
-	else echo "<h1>Search: ". stripslashes($compare) ."</h1>";
+	if (!is_string($compare)) echo "<h1>" . t('market.comparing_item', ['name' => $itemname]) . "</h1>";
+	else echo "<h1>" . t('market.search_result', ['query' => stripslashes($compare)]) . "</h1>";
 	?>
-	<a href="market.php"><button>Go back</button></a>
+	<a href="market.php"><button><?= t('market.go_back') ?></button></a>
 	<h2><?= t('market.active') ?></h2>
 	<table class="table tbl-hover">
 		<tr class="yellow">
 			<td><?= t('market.item_name') ?></td>
-			<td>Item</td>
-			<td>Count</td>
+			<td><?= t('common.item') ?></td>
+			<td><?= t('common.count') ?></td>
 			<td><?= t('market.price_for_1') ?></td>
-			<td>Added</td>
-			<td>By</td>
+			<td><?= t('common.added') ?></td>
+			<td><?= t('common.by') ?></td>
 		</tr>
 		<?php
 		foreach (($offers ? $offers : array()) as $o) {
@@ -156,11 +156,11 @@ if (!$compare) {
 				?>
 				<tr>
 					<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 					<td><?php echo $o['amount']; ?></td>
 					<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 					<td><?php echo getClock($o['created'], true, true); ?></td>
-					<td><?php echo ($o['anonymous'] == 1) ? 'Anonymous' : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
+					<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
 				</tr>
 				<?php
 			}
@@ -174,22 +174,22 @@ if (!$compare) {
 		<table class="table tbl-hover">
 			<tr class="yellow">
 				<td><?= t('market.item_name') ?></td>
-				<td>Item</td>
-				<td>Count</td>
+				<td><?= t('common.item') ?></td>
+				<td><?= t('common.count') ?></td>
 				<td><?= t('market.price_for_1') ?></td>
-				<td>Added</td>
-				<td>By</td>
+				<td><?= t('common.added') ?></td>
+				<td><?= t('common.by') ?></td>
 			</tr>
 			<?php
 			foreach ($buylist as $o) {
 				?>
 				<tr>
 					<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+					<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 					<td><?php echo $o['amount']; ?></td>
 					<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 					<td><?php echo getClock($o['created'], true, true); ?></td>
-					<td><?php echo ($o['anonymous'] == 1) ? 'Anonymous' : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
+					<td><?php echo ($o['anonymous'] == 1) ? t('market.anonymous') : "<a target='_BLANK' href='characterprofile.php?name=".$o['player_name']."'>".$o['player_name']."</a>"; ?></td>
 				</tr>
 				<?php
 			}
@@ -202,8 +202,8 @@ if (!$compare) {
 	<table class="table tbl-hover">
 		<tr class="yellow">
 			<td><?= t('market.item_name') ?></td>
-			<td>Item</td>
-			<td>Count</td>
+			<td><?= t('common.item') ?></td>
+			<td><?= t('common.count') ?></td>
 			<td><?= t('market.price_for_1') ?></td>
 			<td><?= t('market.sold') ?></td>
 		</tr>
@@ -212,7 +212,7 @@ if (!$compare) {
 		?>
 		<tr>
 			<td><?php echo (isset($items[$o['item_id']])) ? $items[$o['item_id']] : $o['item_id']; ?></td>
-			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="Item Image"></td>
+			<td><img src="<?php echo htmlspecialchars(znote_item_image_url((int)$o["item_id"]), ENT_QUOTES); ?>" alt="<?= t('market.item_image_alt') ?>"></td>
 			<td><?php echo $o['amount']; ?></td>
 			<td><?php echo number_format($o['price'], 0, "", " "); ?></td>
 			<td><?php echo getClock($o['inserted'], true, true); ?></td>

@@ -12,13 +12,13 @@
 			<input type="password" name="password_again">
 		</li>
 
-		<li>Email:<br>
+		<li><?= t('login.email') ?>:<br>
 			<input type="text" name="email">
 		</li>
 
 		<li><?= t('reg.label_country') ?><br>
 			<select name="flag">
-				<option value="">(Please choose)</option>
+				<option value=""><?= t('reg.please_choose') ?></option>
 				<?php
 				foreach(array('pl', 'se', 'br', 'us', 'gb', ) as $c)
 					echo '<option value="' . $c . '">' . $config['countries'][$c] . '</option>';
@@ -43,17 +43,16 @@
 		<li><h2><?= t('reg.rules_title') ?></h2>
 			<p><?= t('reg.rule_golden') ?></p>
 			<p><?= t('reg.rule_pwned') ?></p>
-			<p>No <a href='https://en.wikipedia.org/wiki/Cheating_in_video_games' target="_blank">cheating</a> allowed.</p>
-			<p>No <a href='https://en.wikipedia.org/wiki/Video_game_bot' target="_blank">botting</a> allowed.</p>
-			<p>The staff can delete, ban, do whatever they want with your account and your <br>
-				submitted information. (Including exposing and logging your IP).</p>
+			<p><?= t('reg.rule_no_cheating', ['link' => '<a href="https://en.wikipedia.org/wiki/Cheating_in_video_games" target="_blank">' . t('reg.cheating_word') . '</a>']) ?></p>
+			<p><?= t('reg.rule_no_botting', ['link' => '<a href="https://en.wikipedia.org/wiki/Video_game_bot" target="_blank">' . t('reg.botting_word') . '</a>']) ?></p>
+			<p><?= t('reg.rule_staff_power') ?></p>
 		</li>
 
 		<li><?= t('reg.rules_agree') ?><br>
 			<select name="selected">
-			  <option value="0">Umh...</option>
-			  <option value="1">Yes.</option>
-			  <option value="2">No.</option>
+			  <option value="0"><?= t('reg.agree_umh') ?></option>
+			  <option value="1"><?= t('reg.agree_yes') ?></option>
+			  <option value="2"><?= t('reg.agree_no') ?></option>
 			</select>
 		</li>
 		<?php

@@ -524,8 +524,13 @@ function theme_repository_list(bool $refresh = false): array {
 		}
 	}
 
+	$indexUrl = $cfg['index'];
+	if ($refresh) {
+		$indexUrl .= (strpos($indexUrl, '?') === false ? '?' : '&') . 'nocache=' . time();
+	}
+
 	$error = null;
-	$body  = theme_repository_get($cfg['index'], null, $error);
+	$body  = theme_repository_get($indexUrl, null, $error);
 
 	if ($body === false) {
 		return array('themes' => array(), 'error' => (string)$error);
@@ -533,7 +538,7 @@ function theme_repository_list(bool $refresh = false): array {
 
 	$data = json_decode((string)$body, true);
 	if (!is_array($data)) {
-		return array('themes' => array(), 'error' => 'The catalogue is not valid JSON.');
+		return array('themes' => array(), 'error' => 'The catalogue is not valid JSON: ' . json_last_error_msg() . ' | Response: ' . substr((string)$body, 0, 200));
 	}
 
 	// Accept both a bare array and {"themes": [...]}.

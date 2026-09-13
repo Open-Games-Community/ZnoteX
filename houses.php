@@ -25,9 +25,9 @@ $type = &$_GET['type'];
 <form action="" method="get" class="houselist">
 	<table>
 		<tr>
-			<td>Town</td>
-			<td>Order</td>
-			<td>Sort</td>
+			<td><?= t('common.town') ?></td>
+			<td><?= t('houses.order') ?></td>
+			<td><?= t('houses.sort') ?></td>
 		</tr>
 		<tr>
 			<td>
@@ -42,8 +42,9 @@ $type = &$_GET['type'];
 				<select name="order">
 				<?php
 				$order_allowed = array('id', 'name', 'size', 'beds', 'rent', 'owner');
+				$order_labels = array('id' => 'ID', 'name' => t('common.name'), 'size' => t('house.size'), 'beds' => t('house.beds'), 'rent' => t('house.rent'), 'owner' => t('house.owner'));
 				foreach($order_allowed as $o)
-					echo '<option value="' . $o . '"' . ($o != $order ?: ' selected') . '>' . ucfirst($o) . '</option>';
+					echo '<option value="' . $o . '"' . ($o != $order ?: ' selected') . '>' . htmlspecialchars($order_labels[$o], ENT_QUOTES, 'UTF-8') . '</option>';
 				?>
 				</select>
 			</td>
@@ -52,7 +53,7 @@ $type = &$_GET['type'];
 				<?php
 				$type_allowed = array('desc', 'asc');
 				foreach($type_allowed as $t)
-					echo '<option value="' . $t . '"' . ($t != $type ?: ' selected') . '>' . ($t == 'desc' ? 'Descending' : 'Ascending') .'</option>';
+					echo '<option value="' . $t . '"' . ($t != $type ?: ' selected') . '>' . ($t == 'desc' ? t('houses.descending') : t('houses.ascending')) .'</option>';
 				?>
 				</select>
 			</td>
@@ -119,12 +120,12 @@ if ($houses !== false || !empty($houses)) {
 	?>
 	<table id="housetable">
 		<tr class="yellow">
-			<th>Name</th>
-			<th>Size</th>
-			<th>Beds</th>
-			<th>Rent</th>
-			<th>Owner</th>
-			<th>Town</th>
+			<th><?= t('common.name') ?></th>
+			<th><?= t('house.size') ?></th>
+			<th><?= t('house.beds') ?></th>
+			<th><?= t('house.rent') ?></th>
+			<th><?= t('house.owner') ?></th>
+			<th><?= t('common.town') ?></th>
 		</tr>
 		<?php
 		foreach ($houses as $house) {

@@ -6,9 +6,9 @@
 		else echo t('acc.free_account');
 
 		if ($config['mailserver']['myaccount_verify_email']):
-			?><br>Email: <?php echo $user_data['email'];
+			?><br><?= t('login.email') ?>: <?php echo $user_data['email'];
 			if ($user_znote_data['active_email'] == 1) {
-				?> (Verified).<?php
+				?> (<?= t('acc.verified_short') ?>).<?php
 			} else {
 				?><br><strong><?= t('acc.email_not_verified') ?> <a href="?authenticate"><?= t('acc.please_verify') ?></a>.</strong><?php
 			}
@@ -20,17 +20,17 @@
 	<?php if ($legacy_twofa_status !== null): ?>
 		<p><?= t_default('twofa2.legacy_status', 'Legacy game 2FA:') ?> <a href="twofa.php"><?= $legacy_twofa_status ? t_default('common.enabled', 'Enabled') : t_default('common.disabled', 'Disabled') ?></a></p>
 	<?php endif; ?>
-	<h2><?= t('common.character') ?> List: <?php echo $char_count; ?> characters.</h2>
+	<h2><?= t('acc.char_list_count', ['count' => $char_count]) ?></h2>
 	<?php if ($char_array): ?>
 		<table id="myaccountTable" class="table table-striped table-hover">
 			<tr class="yellow">
-				<th>NAME</th>
-				<th>LEVEL</th>
-				<th>VOCATION</th>
-				<th>TOWN</th>
-				<th>LAST LOGIN</th>
-				<th>STATUS</th>
-				<th>HIDE</th>
+				<th><?= mb_strtoupper(t('common.name')) ?></th>
+				<th><?= mb_strtoupper(t('common.level')) ?></th>
+				<th><?= mb_strtoupper(t('common.vocation')) ?></th>
+				<th><?= mb_strtoupper(t('common.town')) ?></th>
+				<th><?= mb_strtoupper(t('char.last_login')) ?></th>
+				<th><?= mb_strtoupper(t('common.status')) ?></th>
+				<th><?= mb_strtoupper(t('acc.hide_col')) ?></th>
 			</tr>
 			<?php foreach ($char_array as $value): ?>
 				<tr>
@@ -76,7 +76,7 @@
 			</table>
 		</form>
 	<?php else: ?>
-		<?= "You don't have any characters. Why don't you <a href='createcharacter.php'>create one</a>?" ?>
+		<?= t('acc.no_characters') ?>
 	<?php endif; ?>
 </div>
 <script>
@@ -85,7 +85,7 @@
 			var lastCell = document.getElementById('submit_form');
 			var x = document.createElement('TD');
 			x.id = "new_name";
-			x.innerHTML = '<input type="text" name="newName" placeholder="New Name" class="form-control">';
+			x.innerHTML = '<input type="text" name="newName" placeholder="<?= htmlspecialchars(t('common.new_name_placeholder'), ENT_QUOTES, 'UTF-8') ?>" class="form-control">';
 			lastCell.parentNode.insertBefore(x, lastCell);
 		} else {
 			var child = document.getElementById('new_name');
@@ -109,7 +109,7 @@
 			if (selectedAction && selectedAction.classList.contains('needconfirmation')) {
 				var selectedCharacter = characterSelect.options[characterSelect.selectedIndex];
 				var name = selectedCharacter ? selectedCharacter.text : '';
-				if (!confirm('Do you really want to DELETE character: ' + name + '?')) {
+				if (!confirm(<?= json_encode(t('acc.confirm_delete', ['name' => '__NAME__'])) ?>.replace('__NAME__', name))) {
 					event.preventDefault();
 				}
 			}

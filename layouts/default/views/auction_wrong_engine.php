@@ -1,1 +1,1 @@
-<p>Character shop auction system is currently only available for ServerEngine TFS_10.</p>
+<p><?= t('auc.wrong_engine') ?></p>

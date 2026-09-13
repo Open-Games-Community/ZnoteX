@@ -38,7 +38,7 @@ function queststatus_progress($min, $max) {
 			<option value="<?= htmlspecialchars($char['name']) ?>"<?= $char['name'] === $selected ? ' selected' : '' ?>><?= htmlspecialchars($char['name']) ?></option>
 		<?php endforeach; ?>
 	</select>
-	<noscript><input type="submit" value="Go"></noscript>
+	<noscript><input type="submit" value="<?= t('common.go') ?>"></noscript>
 </form>
 <table id="questTable">
 	<tr class="yellow">

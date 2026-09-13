@@ -7,7 +7,7 @@
 </style>
 <table id="guildsTable" class="table table-striped">
 	<tr class="yellow">
-		<th>Logo</th>
+		<th><?= t('guild.logo_label') ?></th>
 		<th><?= t('common.description') ?></th>
 		<th><?= t('guild.data') ?></th>
 	</tr>

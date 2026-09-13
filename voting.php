@@ -20,9 +20,9 @@ if ($otservers_eu_voting['enabled']) {
 			if ($result !== false) {
 				if ($result['voted'] === true) {
 					$points = $otservers_eu_voting['points'];
-					$pointsText = $points === '1' ? 'point' : 'points';
+					$pointsText = $points === '1' ? t('voting.point_singular') : t('voting.point_plural');
 					db()->execute("UPDATE `znote_accounts` SET `points` = `points` + ? WHERE `account_id` = ?", [(int)$points, (int)$user_data['id']]);
-					echo "<p>Thank you for voting! You have been rewarded with $points $pointsText!</p>";
+					echo '<p>' . t('voting.rewarded', ['points' => $points, 'unit' => $pointsText]) . '</p>';
 				} else {
 					echo '<p>'. t('voting.not_voted'). '</p>';
 				}

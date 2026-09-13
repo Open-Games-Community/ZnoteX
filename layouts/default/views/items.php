@@ -292,8 +292,8 @@ if ($items) {
 	<?php
 	}
 } else { ?>
-	<h1>Items</h1>
-	<p>Items have currently not been loaded into the website by the server admin.</p>
+	<h1><?= t('items.title') ?></h1>
+	<p><?= t('items.not_loaded') ?></p>
 <?php }
 ?>
 <?php endif; ?>

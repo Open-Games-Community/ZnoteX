@@ -21,7 +21,7 @@ if($undelete_id) {
 }
 #endregion
 
-// Variable used to check if main page should be rendered after handling POST ('. t('acc.change_comment'). ' page)
+// Variable used to check if main page should be rendered after handling POST
 $render_page = true;
 
 // Handle GET (verify email)
@@ -56,11 +56,11 @@ if (isset($_GET['authenticate']) && $config['mailserver']['myaccount_verify_emai
 					);
 				}
 				echo '<h1>'. t('common.congrats') .'</h1> <p>'. t('acc.email_verified') .'</p>';
-				if ($verify_points > 0) echo "<p>As thanks for having a verified email, you have received <a href='/shop.php'>{$verify_points} shop points</a>!</p>";
+				if ($verify_points > 0) echo "<p>" . t('acc.verify_reward', ['points' => "<a href='/shop.php'>{$verify_points} " . t('char.shop_points2') . "</a>"]) . "</p>";
 				$user_znote_data['active_email'] = 1;
 				$user_znote_data['points'] = (int)$user_znote_data['points'] + $verify_points;
 			} else {
-				echo '<h1>'. t('acc.auth_failed'). '</h1> <p>Either the activation link is wrong, or your account is already activated.</p>';
+				echo '<h1>'. t('acc.auth_failed'). '</h1> <p>' . t('acc.auth_failed_or_activated') . '</p>';
 			}
 		} else {
 			echo '<h1>'. t('acc.auth_failed') .'</h1> <p>'. t('acc.auth_failed_text') .'</p>';
@@ -77,23 +77,23 @@ if (isset($_GET['authenticate']) && $config['mailserver']['myaccount_verify_emai
 
 			$mailer = new Mail($config['mailserver']);
 
-			$title = "Please authenticate your email at {$_SERVER['HTTP_HOST']}.";
+			$title = t('acc.mail_subject_verify', ['host' => $_SERVER['HTTP_HOST']]);
 
-			$body = "<h1>Please click on the following link to authenticate your account:</h1>";
+			$body = '<h1>' . t('acc.mail_verify_intro') . '</h1>';
 			$body .= "<p><a href='{$thisurl}'>{$thisurl}</a></p>";
-			$body .= "<p>Thank you for verifying your email and enjoy your stay at {$config['mailserver']['fromName']}.</p>";
-			$body .= "<hr><p>I am an automatic no-reply e-mail. Any emails sent back to me will be ignored.</p>";
+			$body .= '<p>' . t('acc.mail_verify_thanks', ['site' => $config['mailserver']['fromName']]) . '</p>';
+			$body .= '<hr><p>' . t('recovery.mail_noreply') . '</p>';
 
 			$user_name = (znote_server_adapter()->accountIdentityColumn() !== 'id') ? $user_data['name'] : $user_data['id'];
 			//echo "<h1>" . $title . "<h1>" . $body;
 			$mailer->sendMail($user_data['email'], $title, $body, $user_name);
 			?>
 			<h1><?= t('acc.email_sent') ?></h1>
-			<p>We have sent you an email with a verification link to your email address: <strong><?php echo $user_data['email']; ?></strong></p>
-			<p>If you can't find the email within 5 minutes, check your <strong>junk/trash inbox (spam filter)</strong> as it may be misplaced there.</p>
+			<p><?= t('acc.verify_sent_intro') ?> <strong><?php echo $user_data['email']; ?></strong></p>
+			<p><?= t('acc.check_junk_spam') ?></p>
 			<?php
 		} else {
-			echo '<h1>'. t('acc.auth_failed'). '</h1> <p>Failed to verify user when trying to send a verification email.</p>';
+			echo '<h1>'. t('acc.auth_failed'). '</h1> <p>' . t('acc.verify_send_failed') . '</p>';
 		}
 	}
 endif;
@@ -266,7 +266,7 @@ if (!empty($_POST['selected_character'])) {
 								$tks--;
 								$tkr = ((int)$tickets[0]['count'] - 1);
 								shop_update_row_count($dbid, $tkr);
-							} else if ($dbid > 0 && $tickets[0]['count'] == 1) { // '. t('common.delete'). ' record
+							} else if ($dbid > 0 && $tickets[0]['count'] == 1) { // Delete record
 								shop_delete_row_order($dbid);
 								$tks--;
 							}
@@ -302,11 +302,11 @@ if ($render_page) {
 	if ($pending_delete) {
 		foreach($pending_delete as $delete) {
 			if(new DateTime($delete['time']) > new DateTime())
-				echo '<b>CAUTION!</b> Your character with name <b>' . $delete['character_name'] . ' will be deleted on ' . $delete['time'] . '</b>. <a href="myaccount.php?cancel_delete_id=' . $delete['id'] . '">'. t('acc.cancel_op'). '</a><br/>';
+				echo '<b>' . t('acc.caution') . '</b> ' . t('acc.character_will_be_deleted', ['name' => htmlspecialchars((string)$delete['character_name'], ENT_QUOTES, 'UTF-8'), 'time' => htmlspecialchars((string)$delete['time'], ENT_QUOTES, 'UTF-8')]) . ' <a href="myaccount.php?cancel_delete_id=' . $delete['id'] . '">'. t('acc.cancel_op'). '</a><br/>';
 			else {
 				user_delete_character(user_character_id($delete['character_name']));
 				db()->execute('UPDATE `znote_deleted_characters` SET `done` = 1 WHERE `id` = ?', [(int)$delete['id']]);
-				echo '<b>'. t('common.character'). ' ' . $delete['character_name'] . ' has been deleted</b>. This operation was requested by owner of this account.';
+				echo '<b>' . t('acc.character_deleted', ['name' => htmlspecialchars((string)$delete['character_name'], ENT_QUOTES, 'UTF-8')]) . '</b>. ' . t('acc.requested_by_owner');
 				$char_count--;
 			}
 		}
