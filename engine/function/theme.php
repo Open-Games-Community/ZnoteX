@@ -1214,20 +1214,14 @@ function theme_favicon_links(?string $theme = null): string {
 		: (string)$options['favicon']['default'];
 
 	$url = theme_css_url($value);
-	$blank = ($url === '');
-	if ($blank) {
-		$url = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=';
+	if ($url === '') {
+		$url = 'assets/img/znoteX.png';
 	}
 
 	$href  = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-	$links = '<link rel="icon" href="' . $href . '">' . "\n"
-		. '<link rel="shortcut icon" href="' . $href . '">' . "\n";
-
-	if (!$blank) {
-		$links .= '<link rel="apple-touch-icon" href="' . $href . '">' . "\n";
-	}
-
-	return $links;
+	return '<link rel="icon" href="' . $href . '">' . "\n"
+		. '<link rel="shortcut icon" href="' . $href . '">' . "\n"
+		. '<link rel="apple-touch-icon" href="' . $href . '">' . "\n";
 }
 
 const THEME_IMAGE_MAX_BYTES = 4194304;

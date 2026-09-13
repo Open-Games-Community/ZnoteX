@@ -29,6 +29,10 @@ $acp_engine   = serverEngineReal();
 	<meta name="robots" content="noindex, nofollow">
 	<title><?= h($acp_title) ?> &middot; <?= h($acp_siteName) ?> ACP</title>
 
+	<link rel="icon" href="../assets/img/znoteX.png">
+	<link rel="shortcut icon" href="../assets/img/znoteX.png">
+	<link rel="apple-touch-icon" href="../assets/img/znoteX.png">
+
 	<link rel="stylesheet" href="../assets/fontawesome/css/font-awesome.min.css?acp=1">
 	<link rel="stylesheet" href="assets/acp.css?acp=4">
 
