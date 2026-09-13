@@ -858,6 +858,6 @@ if (isset($_GET['name']) === true && empty($_GET['name']) === false) {
 		echo htmlentities(strip_tags($name, ENT_QUOTES)) . ' does not exist.';
 	}
 } else {
-	header('Location: index.php');
+	view('character_search');
 }
 theme_close(); ?>

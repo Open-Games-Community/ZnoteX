@@ -1,5 +1,12 @@
 <?php
 require_once 'engine/init.php';
+
+$themeHousesPage = function_exists('theme_file') ? theme_file('pages/houses.php') : null;
+if ($themeHousesPage !== null) {
+	include $themeHousesPage;
+	exit;
+}
+
 theme_open();
 
 if ($config['log_ip'])

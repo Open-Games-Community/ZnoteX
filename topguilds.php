@@ -3,7 +3,20 @@
 	// Cache the results
 	$cache = new Cache('engine/cache/topGuilds');
 	if ($cache->hasExpired()) {
-		$guilds = db()->fetchAll("SELECT `g`.`id` AS `id`, `g`.`name` AS `name`, COUNT(`g`.`name`) as `frags` FROM `players` p LEFT JOIN `player_deaths` pd ON `pd`.`killed_by` = `p`.`name` LEFT JOIN `guild_membership` gm ON `p`.`id` = `gm`.`player_id` LEFT JOIN `guilds` g ON `gm`.`guild_id` = `g`.`id` WHERE `pd`.`unjustified` = 1 GROUP BY `name` ORDER BY `frags` DESC, `name` ASC LIMIT 0, 10;");
+		$guilds = db()->fetchAll("
+			SELECT `g`.`id` AS `id`, `g`.`name` AS `name`, COALESCE(`kills`.`frags`, 0) AS `frags`
+			FROM `guilds` g
+			LEFT JOIN (
+				SELECT `gm`.`guild_id` AS `guild_id`, COUNT(*) AS `frags`
+				FROM `player_deaths` pd
+				INNER JOIN `players` p ON `p`.`name` = `pd`.`killed_by`
+				INNER JOIN `guild_membership` gm ON `gm`.`player_id` = `p`.`id`
+				WHERE `pd`.`unjustified` = 1
+				GROUP BY `gm`.`guild_id`
+			) kills ON `kills`.`guild_id` = `g`.`id`
+			ORDER BY `frags` DESC, `g`.`name` ASC
+			LIMIT 0, 10;
+		");
 
 		$cache->setContent($guilds);
 		$cache->save();

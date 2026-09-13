@@ -4,6 +4,12 @@
 	<?= output_errors($errors) ?>
 <?php endif; ?>
 
+<?php if (!empty($successes)): ?>
+	<?php foreach ($successes as $message): ?>
+		<div class="alert-box alert-success"><p><?= h($message) ?></p></div>
+	<?php endforeach; ?>
+<?php endif; ?>
+
 <h2><?= t_default('twofa2.app_title', 'Authenticator app') ?></h2>
 <?php if ($status['totp_enabled']): ?>
 	<p><?= t_default('twofa2.app_enabled', 'Enabled.') ?></p>

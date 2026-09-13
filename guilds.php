@@ -279,6 +279,7 @@ if (isset($guilds) && !empty($guilds) && $guilds !== false) {
 
 <!-- POST action: create guild -->
 <?php
+ob_start();
 if (user_logged_in() === true) {
 	// post verifications
 	// CREATE GUILD
@@ -350,6 +351,8 @@ if (user_logged_in() === true) {
 
 	<?php
 } else echo t('guild.need_login');
+$guildCreateFormHtml = ob_get_clean();
+view('guild_create_form', ['guildCreateFormHtml' => $guildCreateFormHtml]);
 ?>
 <!-- end user-->
 
@@ -400,6 +403,7 @@ if (user_logged_in() === true) {
 		}
 	}
 	// Display the specific guild page
+	ob_start();
 	?>
 
 	<!-- Guild information above table -->
@@ -1235,5 +1239,7 @@ if (user_logged_in() === true) {
 		<?php
 		} // display form if user has a character in guild
 	} // user logged in
+	$guildOverviewHtml = ob_get_clean();
+	view('guild_overview', ['guildOverviewHtml' => $guildOverviewHtml, 'guild' => $guild]);
 } // end view specific guild
 theme_close(); ?>

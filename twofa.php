@@ -48,6 +48,7 @@ if ($twofa2Enabled) {
 
 	$accountId = (int)$session_user_id;
 	$revealedRecoveryCodes = array();
+	$successes = array();
 
 	if (empty($_POST) === false) {
 		if (isset($_POST['tfa2_totp_start'])) {
@@ -56,7 +57,7 @@ if ($twofa2Enabled) {
 		} else if (isset($_POST['tfa2_totp_confirm'])) {
 			$code = getValue($_POST['tfa2_totp_code'] ?? null);
 			if ($code !== false && znote2fa_totp_confirm($accountId, $code)) {
-				$errors[] = t_default('twofa2.totp_confirmed', 'Authenticator app enabled.');
+				$successes[] = t_default('twofa2.totp_confirmed', 'Authenticator app enabled.');
 			} else {
 				$errors[] = t_default('twofa2.totp_confirm_failed', 'That code did not match. Scan the QR code again and try once more.');
 			}
@@ -85,7 +86,7 @@ if ($twofa2Enabled) {
 			znote2fa_logout_all_devices($accountId);
 			$_SESSION['tfa2_sv'] = znote2fa_session_version($accountId); // keep this session, the one that asked, alive
 			znote2fa_trusted_cookie_clear();
-			$errors[] = t_default('twofa2.logged_out_all', 'Every other session and trusted device has been signed out.');
+			$successes[] = t_default('twofa2.logged_out_all', 'Every other session and trusted device has been signed out.');
 		}
 	}
 
@@ -97,6 +98,7 @@ if ($twofa2Enabled) {
 		'devices' => $devices,
 		'revealedRecoveryCodes' => $revealedRecoveryCodes,
 		'accountId' => $accountId,
+		'successes' => $successes,
 	]);
 }
 

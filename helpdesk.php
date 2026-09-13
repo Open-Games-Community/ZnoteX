@@ -26,69 +26,8 @@ if ($view !== false) {
 		theme_close();
 		die;
 	}
-	?>
-	<h1>View Ticket #
-	<?php
-		echo $ticketData['id'];
-		if ($ticketData['status'] === 'CLOSED') {
-			echo '<span style="color:red">[CLOSED]</SPAN>';
-		}
-	?></h1>
-	<table class="znoteTable ThreadTable table table-striped">
-		<tr class="yellow">
-			<th>
-				<?php
-					echo getClock($ticketData['creation'], true);
-				?>
-				 - Created by:
-				 <?php
-				 	echo $ticketData['username'];
-				 ?>
-			</th>
-		</tr>
-		<tr>
-			<td>
-				<p><?php echo nl2br($ticketData['message']); ?></p>
-			</td>
-		</tr>
-	</table>
-	<?php
 	$replies = db()->fetchAll("SELECT * FROM znote_tickets_replies WHERE tid = ? ORDER BY `created`;", [$view]);
-	if ($replies !== false) {
-		foreach($replies as $reply) {
-			?>
-			<table class="znoteTable ThreadTable table table-striped">
-				<tr class="yellow">
-					<th>
-						<?php
-							echo getClock($reply['created'], true);
-						?>
-						 - Posted by:
-						 <?php
-						 	echo $reply['username'];
-						 ?>
-					</th>
-				</tr>
-				<tr>
-					<td>
-						<p><?php echo nl2br($reply['message']); ?></p>
-					</td>
-				</tr>
-			</table>
-			<hr class="bighr">
-		<?php
-		}
-	}
-	?>
-
-	<?php if ($ticketData['status'] !== 'CLOSED') { ?>
-		<form action="" method="post">
-			<input type="hidden" name="username" value="<?php echo $ticketData['username']; ?>"><br>
-			<textarea class="forumReply" name="reply_text" style="width: 610px; height: 150px"></textarea><br>
-			<input name="" type="submit" value="<?= t('helpdesk.reply') ?>" class="btn btn-primary">
-		</form>
-	<?php } ?>
-	<?php
+	view('helpdesk_ticket');
 } else {
 
 	$account = db()->fetchOne("SELECT name,email FROM accounts WHERE id = ?", [$session_user_id]);
@@ -120,108 +59,35 @@ if ($view !== false) {
 			}
 		}
 	}
-	?>
-	<h1><?= t('helpdesk.latest') ?></h1>
-	<?php
 	$tickets = db()->fetchAll("SELECT id,subject,creation,status FROM znote_tickets WHERE owner = ? ORDER BY creation DESC", [$session_user_id]);
-	if ($tickets !== false) {
-		?>
-		<table>
-			<tr class="yellow">
-				<td>ID:</td>
-				<td><?= t('helpdesk.subject') ?></td>
-				<td><?= t('helpdesk.creation') ?></td>
-				<td>Status:</td>
-			</tr>
-				<?php
-				foreach ($tickets as $ticket) {
-					echo '<tr class="special">';
-						echo '<td>'. $ticket['id'] .'</td>';
-						echo '<td><a href="helpdesk.php?view='. $ticket['id'] .'">'. $ticket['subject'] .'</a></td>';
-						echo '<td>'. getClock($ticket['creation'], true) .'</td>';
-						echo '<td>'. $ticket['status'] .'</td>';
-					echo '</tr>';
-				}
-				?>
-		</table>
-		<?php
-	}
-	?>
 
-	<h1><?= t('helpdesk.title') ?></h1>
-	<?php
-	if (isset($_GET['success']) && empty($_GET['success'])) {
-		echo t('helpdesk.created');
-	} else {
+	$helpdeskCreated = isset($_GET['success']) && empty($_GET['success']);
 
-		if (empty($_POST) === false && empty($errors) === true) {
-			if ($config['log_ip']) {
-				znote_visitor_insert_detailed_data(1);
-			}
-
-			//Save ticket on database
-			$query = array(
-				'owner'   =>	$session_user_id,
-				'username'=>	getValue($_POST['username'] ?? null),
-				'subject' =>	getValue($_POST['subject'] ?? null),
-				'message' =>	getValue($_POST['message'] ?? null),
-				'ip'	  =>	getIPLong(),
-				'creation' =>	time(),
-				'status'  =>	'Open'
-			);
-
-			$fields = '`'. implode('`, `', array_keys($query)) .'`';
-			$placeholders = implode(', ', array_fill(0, count($query), '?'));
-			db()->execute("INSERT INTO `znote_tickets` ($fields) VALUES ($placeholders)", array_values($query));
-
-			header('Location: helpdesk.php?success');
-			exit();
-
-		} else if (empty($errors) === false) {
-			echo '<font color="red"><b>';
-			echo output_errors($errors);
-			echo '</b></font>';
+	if (!$helpdeskCreated && empty($_POST) === false && empty($errors) === true) {
+		if ($config['log_ip']) {
+			znote_visitor_insert_detailed_data(1);
 		}
-		?>
-		<form action="" method="post">
-			<ul>
-				<li>
-					Account Name:<br>
-					<input type="text" name="username" size="40" value="<?php echo $account['name']; ?>" disabled>
-				</li>
-				<li>
-					Email:<br>
-					<input type="text" name="email" size="40" value="<?php echo $account['email']; ?>" disabled>
-				</li>
-				<li>
-					<?= t('helpdesk.subject') ?><br>
-					<input type="text" name="subject" size="40">
-				</li>
-				<li>
-					Message:<br>
-					<textarea name="message" rows="7" cols="30"></textarea>
-				</li>
-				<?php
-				if ($config['use_captcha']) {
-					?>
-					<li>
-						 <div class="g-recaptcha" data-sitekey="<?php echo $config['captcha_site_key']; ?>"></div>
-					</li>
-					<?php
-				}
-				?>
-				<?php
-					/* Form file */
-					Token::create();
-				?>
-				<li>
-					<input type="hidden" name="username" value="<?php echo $account['name']; ?>">
-					<input type="submit" value="<?= t('helpdesk.submit') ?>">
-				</li>
-			</ul>
-		</form>
-		<?php
+
+		//Save ticket on database
+		$query = array(
+			'owner'   =>	$session_user_id,
+			'username'=>	getValue($_POST['username'] ?? null),
+			'subject' =>	getValue($_POST['subject'] ?? null),
+			'message' =>	getValue($_POST['message'] ?? null),
+			'ip'	  =>	getIPLong(),
+			'creation' =>	time(),
+			'status'  =>	'Open'
+		);
+
+		$fields = '`'. implode('`, `', array_keys($query)) .'`';
+		$placeholders = implode(', ', array_fill(0, count($query), '?'));
+		db()->execute("INSERT INTO `znote_tickets` ($fields) VALUES ($placeholders)", array_values($query));
+
+		header('Location: helpdesk.php?success');
+		exit();
 	}
+
+	view('helpdesk_list', ['helpdeskCreated' => $helpdeskCreated]);
 }
 theme_close();
 ?>

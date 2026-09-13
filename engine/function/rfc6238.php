@@ -60,35 +60,30 @@ class Base32Static {
 	}
 
 	public static function decode($input) {
-		if (empty($input)) return false;
+		if (!is_string($input) || $input === '') return false;
+
+		$input = strtoupper($input);
+		if (!preg_match('/^[A-Z2-7]+={0,6}$/', $input)) return false;
 
 		$paddingCharCount = substr_count($input, self::$map[32]);
-		$allowedValues = array(6,4,3,1,0);
+		if (!in_array($paddingCharCount, array(6, 4, 3, 1, 0), true)) return false;
+		if ($paddingCharCount > 0 && strlen($input) % 8 !== 0) return false;
 
-		if(!in_array($paddingCharCount, $allowedValues)) return false;
+		$input = rtrim($input, self::$map[32]);
+		if (!in_array(strlen($input) % 8, array(0, 2, 4, 5, 7), true)) return false;
 
-		for($i=0; $i<4; $i++){
-			if($paddingCharCount == $allowedValues[$i] &&
-				substr($input, -($allowedValues[$i])) != str_repeat(self::$map[32], $allowedValues[$i])) return false;
-		}
+		$binaryString = '';
+		$buffer = 0;
+		$bufferBits = 0;
 
-		$input = str_replace('=','', $input);
-		$input = str_split($input);
-		$binaryString = "";
+		foreach (str_split($input) as $character) {
+			$buffer = ($buffer << 5) | (int)self::$flippedMap[$character];
+			$bufferBits += 5;
 
-		for($i=0; $i < count($input); $i = $i+8) {
-			$x = "";
-
-			if(!in_array($input[$i], self::$map)) return false;
-
-			for($j=0; $j < 8; $j++) {
-				$x .= str_pad(base_convert(self::$flippedMap[$input[$i + $j] ?? ''] ?? '0', 10, 2), 5, '0', STR_PAD_LEFT);
-			}
-
-			$eightBits = str_split($x, 8);
-
-			for($z = 0; $z < count($eightBits); $z++) {
-				$binaryString .= ( ($y = chr(base_convert($eightBits[$z], 2, 10))) || ord($y) == 48 ) ? $y:"";
+			if ($bufferBits >= 8) {
+				$bufferBits -= 8;
+				$binaryString .= chr(($buffer >> $bufferBits) & 0xff);
+				$buffer &= $bufferBits > 0 ? (1 << $bufferBits) - 1 : 0;
 			}
 		}
 
@@ -169,7 +164,7 @@ class TokenAuth6238 {
 		$label = rawurlencode($username . '@' . $domain);
 		$issuer = rawurlencode($issuer);
 
-		$otpauth = "otpauth://totp/{$label}?secret={$secretkey}&issuer={$issuer}";
+		$otpauth = "otpauth://totp/{$label}?secret={$secretkey}&issuer={$issuer}&algorithm=SHA1&digits=6&period=30";
 
 		return 'https://api.qrserver.com/v1/create-qr-code/?' . http_build_query([
 			'size' => '300x300',

@@ -58,36 +58,7 @@ if (isset($_SESSION['tfa2_pending']['id'])) {
 			$errors[] = t_default('twofa2.email_missing', 'This account has no valid e-mail address. Use a recovery code or contact an administrator.');
 		}
 	}
-	?>
-	<h2><?= t('twofa.title') ?></h2>
-	<?php if (empty($errors) === false): ?>
-		<?= output_errors($errors) ?>
-	<?php endif; ?>
-	<p>
-		<?php if ($pendingStatus['totp_enabled']): ?>
-			<?= t_default('twofa2.enter_app_code', 'Enter the code from your authenticator app, or a recovery code.') ?>
-		<?php else: ?>
-			<?= t_default('twofa2.enter_email_code', 'We emailed you a verification code. Enter it below, or use a recovery code.') ?>
-		<?php endif; ?>
-	</p>
-	<form class="loginForm" method="post" action="login.php">
-		<ul>
-			<li>
-				<input type="text" name="tfa2_code" autocomplete="one-time-code" autofocus>
-			</li>
-			<?php if ((int)znote2fa_v2_config()['trusted_device_days'] > 0): ?>
-				<li>
-					<label><input type="checkbox" name="tfa2_trust" value="1"> <?= t_default('twofa2.trust_device', 'Remember this device') ?></label>
-				</li>
-			<?php endif; ?>
-			<input type="hidden" name="tfa2_email_sent" value="1">
-			<?php Token::create(); ?>
-			<li>
-				<input type="submit" value="<?= t('widget.login.submit') ?>">
-			</li>
-		</ul>
-	</form>
-	<?php
+	view('login_2fa');
 	theme_close();
 	exit();
 }
@@ -228,38 +199,11 @@ if (empty($_POST) === false && !isset($_POST['tfa2_code'])) {
 }
 
 if (empty($errors) === false) {
-	?>
-	<h2><?= t('login.failed_title') ?></h2>
-	<?php
 	header("HTTP/1.1 401 Not Found");
-	echo output_errors($errors);
 }
 
 if (empty($_POST) === true || empty($errors) === false) {
-	?>
-	<form class="loginForm" action="login.php" method="post">
-		<ul>
-			<li>
-				<?= t('widget.login.username') ?><br>
-				<input type="text" name="username" id="login_username">
-			</li>
-			<li>
-				<?= t('widget.login.password') ?><br>
-				<input type="password" name="password" id="login_password">
-			</li>
-			<?php if ($config['twoFactorAuthenticator']): ?>
-				<li>
-					<?= t('widget.login.token') ?><br>
-					<input type="password" name="authcode">
-				</li>
-			<?php endif; ?>
-			<?php Token::create(); ?>
-			<li>
-				<input type="submit" value="<?= t('widget.login.submit') ?>">
-			</li>
-		</ul>
-	</form>
-	<?php
+	view('login_form');
 }
 
 theme_close(); ?>
