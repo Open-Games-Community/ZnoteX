@@ -26,7 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done) {
 	$problems = array();
 
 	if ($accountName === '' || strlen($accountName) > 30) { $problems[] = 'The account name is required, up to 30 characters.'; }
+	if ($isOthire) {
+		if (!preg_match('/^[0-9]+$/', $accountName)) {
+			$problems[] = 'OTHire account numbers may only contain digits.';
+		}
+	} elseif (!preg_match('/^[A-Za-z0-9]+$/', $accountName)) {
+		$problems[] = 'The account name may only contain letters and numbers. Do not use @ or special characters.';
+	}
 	if (strlen($password) < 6)                            { $problems[] = 'The password must be at least 6 characters.'; }
+	if (strlen($password) > 29)                           { $problems[] = 'The password may not be longer than 29 characters.'; }
 	if ($password !== $password2)                         { $problems[] = 'The passwords do not match.'; }
 	if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) { $problems[] = 'A valid e-mail address is required.'; }
 	if ($character === '' || strlen($character) > 20)     { $problems[] = 'The character name is required, up to 20 characters.'; }
@@ -137,6 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$done) {
 					   value="<?= ih(install_get('admin_account')) ?>" required>
 				<?php if ($isOthire): ?>
 					<p class="hint">OTHire identifies accounts by number.</p>
+				<?php else: ?>
+					<p class="hint">Letters and numbers only. Do not use @ or special characters.</p>
 				<?php endif; ?>
 			</div>
 			<div class="field">

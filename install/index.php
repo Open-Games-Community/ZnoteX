@@ -39,8 +39,6 @@ if ($locked === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !insta
 	exit;
 }
 
-$error = install_take_error();
-
 // A step handles its own POST and either advances or sets an error.
 $stepFile = __DIR__ . '/steps/' . $step . '.php';
 
@@ -56,6 +54,8 @@ $content = ob_get_clean();
 if ($locked === '') {
 	$content = install_csrf_inject($content);
 }
+
+$error = install_take_error();
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
