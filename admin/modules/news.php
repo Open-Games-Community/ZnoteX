@@ -113,20 +113,6 @@ if ($action === 'add') {
 	}
 }
 
-$bbcodeHelp = [
-	'[b]' . t('acp.news.bb.bold') . '[/b]  [i]' . t('acp.news.bb.italic') . '[/i]  [u]' . t('acp.news.bb.underline') . '[/u]  [s]' . t('acp.news.bb.struck') . '[/s]',
-	'[size=5]' . t('acp.news.bb.larger') . '[/size]   (1 to 7)',
-	'[color=#4da3ff]' . t('acp.news.bb.colored') . '[/color]',
-	'[center]' . t('acp.news.bb.centered') . '[/center]  [left]..[/left]  [right]..[/right]',
-	'[ul][li]' . t('acp.news.bb.bullet') . '[/li][/ul]',
-	'[ol][li]' . t('acp.news.bb.numbered') . '[/li][/ol]',
-	'[quote]' . t('acp.news.bb.quoted') . '[/quote]',
-	'[quote=Someone]' . t('acp.news.bb.attributed') . '[/quote]',
-	'[code]' . t('acp.news.bb.code') . '[/code]',
-	'[url=https://example.com]' . t('acp.news.bb.link') . '[/url]',
-	'[img]https://example.com/image.png[/img]',
-	'[youtube]wK0w0x62PjA[/youtube]',
-];
 ?>
 
 <div class="acp-toolbar">
@@ -149,7 +135,6 @@ $bbcodeHelp = [
 </div>
 
 <?php if ($action === 'add' || $editing !== null): ?>
-	<div class="acp-grid acp-grid--2">
 		<section class="acp-card">
 			<header class="acp-card-head">
 				<h2><?= $editing !== null ? t('acp.news.edit_article') : t('acp.news.new_article') ?></h2>
@@ -202,17 +187,6 @@ $bbcodeHelp = [
 				</form>
 			</div>
 		</section>
-
-		<section class="acp-card">
-			<header class="acp-card-head">
-				<h2><?= t('acp.news.formatting') ?></h2>
-				<p><?= t('acp.news.formatting_sub') ?></p>
-			</header>
-			<div class="acp-card-body">
-				<pre class="acp-dump"><?= h(implode("\n", $bbcodeHelp)) ?></pre>
-			</div>
-		</section>
-	</div>
 
 <?php else: ?>
 
