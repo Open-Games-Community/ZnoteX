@@ -1,0 +1,1 @@
+Simple file to get the folder created for easy installation without manually creating cache folder.
