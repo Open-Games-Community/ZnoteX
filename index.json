@@ -154,5 +154,18 @@
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/bloodfang.zip",
     "url": "https://opengamescommunity.com/resources/bloodfang.1052/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/bloodfang.png"
+  },
+  {
+    "key": "tibiacom_original",
+    "name": "TibiaCOM Original",
+    "version": "1.0.0",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Original TibiaCOM Layout Responsive For Mobile by Alex.",
+    "update": [
+	  "Release Original Theme."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_original.zip",
+    "url": "https://opengamescommunity.com/resources/tibiacom-original.1055/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_original.png"
   }
 ]
