@@ -85,27 +85,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		ZnoteX is installed. <code>config.local.php</code> is written and the installer is locked.
 	</p>
 
-	<h2>Two things left</h2>
+	<h2>Before you open the site</h2>
+	<p class="lead">
+		Vocations, starting towns and starting skills come pre-filled with generic defaults.
+		Most servers change at least some of this before letting anyone create a character -
+		it is much less painful to set it now than after players have already made characters.
+	</p>
 	<ul class="checks">
 		<li>
 			<span class="state opt">1</span>
+			<span class="what">
+				Configure vocations, towns &amp; starting skills
+				<span class="detail">Admin Panel &rarr; Settings &rarr; Character creation. Each one is an editable table now, no JSON to hand-edit.</span>
+			</span>
+		</li>
+		<li>
+			<span class="state opt">2</span>
 			<span class="what">
 				Delete the <code>install/</code> folder
 				<span class="detail">It refuses to run now, but there is no reason to leave it on a public server.</span>
 			</span>
 		</li>
 		<li>
-			<span class="state opt">2</span>
+			<span class="state opt">3</span>
 			<span class="what">
-				Log in and look around
-				<span class="detail">Admin Panel &rarr; Settings covers almost everything you would otherwise edit by hand.</span>
+				Look around the rest of the panel
+				<span class="detail">Admin Panel &rarr; Settings covers almost everything else you would otherwise edit by hand.</span>
 			</span>
 		</li>
 	</ul>
 
 	<div class="actions">
-		<a class="btn" href="../index.php">Open the site</a>
+		<a class="btn green" href="../admin/index.php?p=settings#character-creation">Configure vocations &amp; towns</a>
 		<a class="btn ghost" href="../admin/index.php">Admin panel</a>
+		<a class="btn ghost" href="../index.php">Open the site</a>
 	</div>
 
 <?php else: ?>
