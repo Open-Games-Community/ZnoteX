@@ -215,5 +215,9 @@ function znote_record_update(int $online): bool {
 	setting_set('record:players', (string)$online);
 	setting_set('record:time', (string)time());
 
+	if (function_exists('znote_hook')) {
+		znote_hook('server.online_record', array('players' => $online));
+	}
+
 	return true;
 }
