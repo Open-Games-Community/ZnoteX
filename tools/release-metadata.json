@@ -1,19 +1,29 @@
 {
-  "version": "2.0.3",
+  "version": "2.0.4",
   "channel": "stable",
-  "title": "ZnoteX 2.0.3",
-  "summary": "Admin permissions, payments hardening, self-updates and developer tooling.",
-  "description": "This release adds role-based admin permissions with audit logging, hardens purchases and payment webhooks, replaces jQuery with vanilla JS, modernizes website password verification without touching game authentication, adds a configurable cache, a signed self-update system with automatic backup and rollback, Composer autoloading, PHPStan static analysis, and a stable API contract for plugins and themes.",
+  "title": "ZnoteX 2.0.4",
+  "summary": "2FA v2, multi-engine support, a generic plugin settings framework, Docker and a big round of admin panel tooling.",
+  "description": "This release adds a new TOTP-based 2FA v2 flow alongside legacy 2FA, login lockout protection, a server-adapter layer for TFS/Canary/OTHire/BlackTek, a generic settings.json framework so any plugin gets a full settings page (including color pickers) for free, and a wide set of new admin panel modules: backups, system health, a task scheduler, single-entry config/creature/item editors, serverdata overrides, mass actions, API docs and new API endpoints. It also reworks the character auction pages, improves the BBCode editor and news layout, ships a Docker development environment, a PHPUnit security test suite, 200+ new translation strings, and adds new Team/FAQ pages plus a round of installer and menu/hooks fixes.",
   "highlights": [
-    "Role-based admin permissions with audit logging for sensitive actions.",
-    "Purchases, payment webhooks and payment history are hardened against abuse.",
-    "Website password verification was modernized without touching game authentication.",
-    "jQuery was replaced with vanilla JS across the admin panel and public pages.",
-    "A configurable cache backend can be chosen from the admin panel.",
-    "Core updates can be checked, verified and installed directly from GitHub, with automatic backup and one-click rollback.",
-    "Plugins and themes declare their ZnoteX, PHP and API compatibility through a stable extension API.",
-    "CSRF protection was added to public forms.",
-    "SCEditor was enhanced with a Quote button and draft autosave."
+    "Website 2FA v2 with a proper TOTP flow (Google Authenticator, Microsoft Authenticator, Authy, ...), RFC 6238 fixes for broader app compatibility, and a legacy-2FA compatibility path.",
+    "Login lockout protection: repeated failed logins from one IP are blocked, with an admin page to view and unlock them.",
+    "A new PHPUnit security test suite covering CSRF, admin permissions, plugin sanitization, migrations, payment webhooks, guild logo paths, signed update packages, plugin settings, server adapters and 2FA v2/TOTP compatibility.",
+    "Multi-engine support via a new server-adapter layer (TFS, Canary, OTHire, BlackTek) behind one common interface, replacing scattered inline engine checks.",
+    "A generic plugin settings.json framework: any plugin gets a full settings page for free, including a proper color-swatch picker instead of typing a raw color code.",
+    "Plugin admin pages now cluster under \"Installed Plugins\" in the sidebar instead of flooding it flat.",
+    "New admin panel modules: Backups, System Health, Task Scheduler, Config/Creatures/Items single-entry editors, Serverdata Overrides, Mass Actions, an Analytics dashboard, and an API docs page that auto-discovers every /api/ endpoint.",
+    "New API endpoints: character info lookup, highscores top list, server online status.",
+    "New public Team and FAQ pages, ready to be customized per server.",
+    "The character auction (bazaar) pages were reworked: list/detail views, claim-error handling, and their own translations.",
+    "The BBCode editor now keeps formatting when pasting from any source, and news posts render full width instead of a narrow boxed editor.",
+    "Decimal amounts are now supported on the payments admin page.",
+    "New customization hooks on the market, voting and payment views.",
+    "Small installer improvements: post-install \"what to configure next\" steps and a clearer info block.",
+    "Default cache folder and default favicon are shipped out of the box.",
+    "200+ new translation strings across de/en/es/pl/pt_br - the admin panel and most public pages are now fully translatable.",
+    "Menu and hook bug fixes.",
+    "A Docker development environment (Dockerfile, docker-compose.yml, seed schemas for TFS_10 and Canary) so `docker compose up` gets a working local ZnoteX.",
+    "The plugin and theme catalogs (browsable from the admin panel) grew alongside this release: 23 community plugins are now available, including Build Simulator (equipment planner, armory and outfitter), Wheel of Fortune, Battle Pass, Daily Rewards, Loyalty Shop, PvP Ranked, Server Goals, Bounty Board, Custom Leaderboards, Guild Recruitment, Referral System, Starter Packs, Discord Notifications, Account Security, Calendar, Streamers, Patron Names, Loot Search, Forum Avatars, Boosted Creatures, Server Statistics, Purchase History and Shop Coupons - and 13 themes, including Time Sand, Void, Wildlands, Brightness, Eclipse, Bloodfang, Black Mirror and Telara, alongside the classic tibia.com-style layouts."
   ],
   "warnings": [
     "Back up the website and database independently before every production update."
@@ -22,5 +32,9 @@
     "php": ">=8.1",
     "extensions": ["curl", "json", "openssl", "zip"]
   },
-  "migrations": []
+  "migrations": [
+    { "file": "SQL/migrations/2.0.2_twofa_v2.sql" },
+    { "file": "SQL/migrations/2.0.3_login_attempts.sql" },
+    { "file": "SQL/migrations/2.0.4_serverdata_overrides.sql" }
+  ]
 }
