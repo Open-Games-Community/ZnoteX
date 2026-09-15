@@ -151,12 +151,8 @@ function acp_parse_module_header(string $file): array {
 	return $meta;
 }
 
-function acp_modules(): array {
-	static $modules = null;
-	if ($modules !== null) {
-		return $modules;
-	}
-
+/** Every admin/modules/*.php file, parsed into a nav entry each. */
+function acp_modules_core(): array {
 	$modules = [];
 
 	foreach (glob(ACP_ROOT . '/modules/*.php') ?: [] as $file) {
@@ -166,7 +162,6 @@ function acp_modules(): array {
 		}
 
 		$meta = acp_parse_module_header($file);
-
 		$group = $meta['group'] ?? 'Other';
 
 		$modules[$key] = [
@@ -183,9 +178,17 @@ function acp_modules(): array {
 		];
 	}
 
-	// Modules contributed by enabled plugins, listed beside the built-in ones.
-	// Their key is prefixed with the plugin name, so a plugin can never shadow
-	// a core module by choosing the same filename.
+	return $modules;
+}
+
+/**
+ * Modules contributed by enabled plugins, listed beside the built-in ones.
+ * Their key is prefixed with the plugin name, so a plugin can never shadow a
+ * core module by choosing the same filename.
+ */
+function acp_modules_from_plugins(): array {
+	$modules = [];
+
 	if (function_exists('znote_plugin_admin_modules')) {
 		foreach (znote_plugin_admin_modules() as $key => $file) {
 			$meta = acp_parse_module_header($file);
@@ -204,12 +207,21 @@ function acp_modules(): array {
 		}
 	}
 
-	// A plugin's generic settings.json config used to only be reachable from
-	// its row on the Plugins list page, off on its own away from the same
-	// plugin's custom admin pages (Slots, Storage Watch, ...) that already
-	// show up under "Installed Plugins" above. Listing it right there too -
-	// same group, same place - means everything about one plugin lives in
-	// one spot instead of two.
+	return $modules;
+}
+
+/**
+ * A plugin's generic settings.json config used to only be reachable from its
+ * row on the Plugins list page, off on its own away from the same plugin's
+ * custom admin pages (Slots, Storage Watch, ...) that already show up under
+ * "Installed Plugins". Listing it right there too - same group, same place -
+ * means everything about one plugin lives in one spot instead of two.
+ * $existingKeys is what acp_modules_core()/acp_modules_from_plugins() already
+ * produced, so a plugin that names its own page "settings" is never clobbered.
+ */
+function acp_modules_plugin_settings(array $existingKeys): array {
+	$modules = [];
+
 	if (function_exists('znote_plugins') && function_exists('znote_plugin_settings_has')) {
 		foreach (znote_plugins() as $name => $plugin) {
 			if (!$plugin['enabled'] || !$plugin['installed'] || !$plugin['compatible'] || !znote_plugin_settings_has($name)) {
@@ -217,7 +229,7 @@ function acp_modules(): array {
 			}
 
 			$key = $name . '__settings';
-			if (isset($modules[$key])) {
+			if (isset($existingKeys[$key])) {
 				continue;
 			}
 
@@ -234,6 +246,18 @@ function acp_modules(): array {
 			);
 		}
 	}
+
+	return $modules;
+}
+
+function acp_modules(): array {
+	static $modules = null;
+	if ($modules !== null) {
+		return $modules;
+	}
+
+	$modules = acp_modules_core() + acp_modules_from_plugins();
+	$modules += acp_modules_plugin_settings($modules);
 
 	uasort($modules, static function (array $a, array $b): int {
 		$ga = ACP_GROUP_ORDER[$a['group']] ?? 900;

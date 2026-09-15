@@ -45,8 +45,11 @@ function acp_analytics_plugin_errors(int $sinceDays): int {
 		if (strpos($line, '[ZnoteX plugin]') === false) {
 			continue;
 		}
-		if (preg_match($pattern, $line, $m) && ($ts = strtotime($m[1])) !== false && $ts < $cutoff) {
-			continue;
+		if (preg_match($pattern, $line, $m)) {
+			$ts = strtotime($m[1]);
+			if ($ts !== false && $ts < $cutoff) {
+				continue;
+			}
 		}
 		$count++;
 	}

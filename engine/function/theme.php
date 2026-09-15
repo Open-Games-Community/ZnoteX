@@ -501,52 +501,46 @@ function theme_repository_notes($value): string {
 	return trim(implode("\n", $lines));
 }
 
+/** The on-disk cache, if it's still fresh (or $refresh forces past it). */
+function theme_repository_cached(Cache $cache, bool $refresh): ?array {
+	if ($refresh || $cache->hasExpired()) {
+		return null;
+	}
+	$cached = $cache->load();
+	return is_array($cached) ? $cached : null;
+}
+
 /**
- * The catalogue, normalised and cached on disk so opening the page does not
- * hit the network every time.
- *
- * @return array{themes: array, error: string}
+ * Fetches and JSON-decodes the catalogue index. Accepts both a bare array
+ * and {"themes": [...]}. Returns null (with $error set) on any failure.
  */
-function theme_repository_list(bool $refresh = false): array {
-	$cfg = theme_repository_config();
-
-	if (!$cfg['enabled'] || $cfg['index'] === '') {
-		return array('themes' => array(), 'error' => '');
-	}
-
-	$cache = new Cache('engine/cache/layout_repository');
-	$cache->useMemory(false);
-
-	if (!$refresh && !$cache->hasExpired()) {
-		$cached = $cache->load();
-		if (is_array($cached)) {
-			return array('themes' => $cached, 'error' => '', 'cached' => true);
-		}
-	}
-
-	$indexUrl = $cfg['index'];
+function theme_repository_fetch_raw(string $indexUrl, bool $refresh, ?string &$error): ?array {
 	if ($refresh) {
 		$indexUrl .= (strpos($indexUrl, '?') === false ? '?' : '&') . 'nocache=' . time();
 	}
 
-	$error = null;
-	$body  = theme_repository_get($indexUrl, null, $error);
-
+	$body = theme_repository_get($indexUrl, null, $error);
 	if ($body === false) {
-		return array('themes' => array(), 'error' => (string)$error);
+		return null;
 	}
 
 	$data = json_decode((string)$body, true);
 	if (!is_array($data)) {
-		return array('themes' => array(), 'error' => 'The catalogue is not valid JSON: ' . json_last_error_msg() . ' | Response: ' . substr((string)$body, 0, 200));
+		$error = 'The catalogue is not valid JSON: ' . json_last_error_msg() . ' | Response: ' . substr((string)$body, 0, 200);
+		return null;
 	}
 
-	// Accept both a bare array and {"themes": [...]}.
 	if (isset($data['themes']) && is_array($data['themes'])) {
 		$data = $data['themes'];
 	}
 
+	return $data;
+}
+
+/** Raw catalogue entries, validated and reshaped into the theme-list format the rest of the admin panel expects. */
+function theme_repository_normalize_entries(array $data): array {
 	$themes = array();
+
 	foreach ($data as $entry) {
 		if (!is_array($entry)) {
 			continue;
@@ -582,6 +576,38 @@ function theme_repository_list(bool $refresh = false): array {
 	}
 
 	ksort($themes);
+
+	return $themes;
+}
+
+/**
+ * The catalogue, normalised and cached on disk so opening the page does not
+ * hit the network every time.
+ *
+ * @return array{themes: array, error: string}
+ */
+function theme_repository_list(bool $refresh = false): array {
+	$cfg = theme_repository_config();
+
+	if (!$cfg['enabled'] || $cfg['index'] === '') {
+		return array('themes' => array(), 'error' => '');
+	}
+
+	$cache = new Cache('engine/cache/layout_repository');
+	$cache->useMemory(false);
+
+	$cached = theme_repository_cached($cache, $refresh);
+	if ($cached !== null) {
+		return array('themes' => $cached, 'error' => '', 'cached' => true);
+	}
+
+	$error = null;
+	$data  = theme_repository_fetch_raw($cfg['index'], $refresh, $error);
+	if ($data === null) {
+		return array('themes' => array(), 'error' => (string)$error);
+	}
+
+	$themes = theme_repository_normalize_entries($data);
 
 	$cache->setContent($themes);
 	$cache->save();
