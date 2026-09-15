@@ -34,7 +34,7 @@ $acp_engine   = serverEngineReal();
 	<link rel="apple-touch-icon" href="../assets/img/znoteX.png">
 
 	<link rel="stylesheet" href="../assets/fontawesome/css/font-awesome.min.css?acp=1">
-	<link rel="stylesheet" href="assets/acp.css?acp=5">
+	<link rel="stylesheet" href="assets/acp.css?acp=6">
 
 	<script>
 		// Applied before first paint so the theme never flashes light-then-dark.

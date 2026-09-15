@@ -1112,3 +1112,28 @@ a.acp-stat:hover {
 	font-size: 13px;
 	padding: 2px 0;
 }
+
+.acp-progress-bar {
+	height: 10px;
+	border-radius: 6px;
+	background: var(--acp-line);
+	overflow: hidden;
+}
+.acp-progress-fill {
+	height: 100%;
+	width: 0%;
+	background: var(--acp-green);
+	transition: width .25s ease;
+}
+.acp-progress-log {
+	margin-top: 10px;
+	max-height: 200px;
+	overflow-y: auto;
+	padding: 10px 12px;
+	border: 1px solid var(--acp-line);
+	border-radius: 6px;
+	background: var(--acp-bg-2, rgba(0, 0, 0, .12));
+	font-family: monospace;
+	font-size: 12px;
+	line-height: 1.6;
+}

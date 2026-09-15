@@ -33,8 +33,8 @@
     "extensions": ["curl", "json", "openssl", "zip"]
   },
   "migrations": [
-    { "file": "SQL/migrations/2.0.2_twofa_v2.sql" },
-    { "file": "SQL/migrations/2.0.3_login_attempts.sql" },
-    { "file": "SQL/migrations/2.0.4_serverdata_overrides.sql" }
+    { "file": "SQL/migrations/2.0.2_twofa_v2.sql", "type": "expand" },
+    { "file": "SQL/migrations/2.0.3_login_attempts.sql", "type": "expand" },
+    { "file": "SQL/migrations/2.0.4_serverdata_overrides.sql", "type": "expand" }
   ]
 }
