@@ -1,6 +1,6 @@
 <div class="well myaccount_widget widget" id="loginContainer">
 	<div class="header">
-		<?= t('widget.account.welcome', ['name' => $user_data['name']]) ?>
+		<?= t('widget.account.welcome', ['name' => $user_data['name'] ?? '']) ?>
 	</div>
 	<div class="body">
 		<ul class="linkbuttons">

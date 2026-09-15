@@ -8,7 +8,62 @@ if (lws_is_request()) {
 logged_in_redirect();
 theme_open();
 
-if (empty($_POST) === false) {
+// ---------------------------------------------------------------------------
+// Step 2 of login: website 2FA v2 (independent of the game engine).
+//
+// Reached only after user_login() + the legacy TFS 2FA already succeeded, see
+// below. The pending account id lives in the session, never in the form, so a
+// visitor cannot skip straight here with an arbitrary account id.
+// ---------------------------------------------------------------------------
+if (isset($_POST['tfa2_code']) && isset($_SESSION['tfa2_pending']['id'])) {
+	$pending = $_SESSION['tfa2_pending'];
+
+	if (!Token::isValid($_POST['token'] ?? null)) {
+		$errors[] = t('login.token_invalid');
+	} else if ((int)$pending['until'] < time()) {
+		unset($_SESSION['tfa2_pending']);
+		$errors[] = t_default('twofa2.expired', 'That verification step expired. Please log in again.');
+	} else {
+		$accountId = (int)$pending['id'];
+		$code = getValue($_POST['tfa2_code'] ?? null);
+
+		if ($code !== false && znote2fa_verify_login_input($accountId, $code)) {
+			unset($_SESSION['tfa2_pending']);
+			setSession('user_id', $accountId);
+			$_SESSION['tfa2_sv'] = znote2fa_session_version($accountId);
+			Token::generate();
+
+			if (!empty($_POST['tfa2_trust']) && (int)znote2fa_v2_config()['trusted_device_days'] > 0) {
+				znote2fa_trusted_device_issue($accountId);
+			}
+
+			header('Location: myaccount.php');
+			exit();
+		}
+
+		$errors[] = t_default('twofa2.wrong_code', 'That code is not valid. It may have expired, or you may have mistyped it.');
+	}
+}
+
+if (isset($_SESSION['tfa2_pending']['id'])) {
+	$pendingStatus = znote2fa_status((int)$_SESSION['tfa2_pending']['id']);
+
+	if (empty($_POST['tfa2_email_sent']) && $pendingStatus['email_otp_enabled'] && !$pendingStatus['totp_enabled']) {
+		$pendingUser = user_data((int)$_SESSION['tfa2_pending']['id'], 'email', 'name');
+		if (is_array($pendingUser) && !empty($pendingUser['email'])) {
+			if (!znote2fa_email_send_code((int)$_SESSION['tfa2_pending']['id'], (string)$pendingUser['email'], (string)($pendingUser['name'] ?? ''))) {
+				$errors[] = t_default('twofa2.email_delivery_failed', 'The verification e-mail could not be sent. Try again later or use a recovery code.');
+			}
+		} else {
+			$errors[] = t_default('twofa2.email_missing', 'This account has no valid e-mail address. Use a recovery code or contact an administrator.');
+		}
+	}
+	view('login_2fa');
+	theme_close();
+	exit();
+}
+
+if (empty($_POST) === false && !isset($_POST['tfa2_code'])) {
 
 	if ($config['log_ip']) {
 		znote_visitor_insert_detailed_data(5);
@@ -17,11 +72,17 @@ if (empty($_POST) === false) {
 	$username = $_POST['username'];
 	$password = $_POST['password'];
 
-	if (empty($username) || empty($password)) {
+	$loginGuardIp = znote_login_guard_ip();
+	$loginGuardLockedFor = znote_login_guard_lockout_remaining($loginGuardIp);
+
+	if ($loginGuardLockedFor > 0) {
+		$errors[] = t('login.too_many_attempts', ['minutes' => (int)ceil($loginGuardLockedFor / 60)]);
+	} else if (empty($username) || empty($password)) {
 		$errors[] = t('login.empty_fields');
 	} else if (strlen($username) > 32 || strlen($password) > 64) {
 			$errors[] = t('login.too_long');
 	} else if (user_exist($username) === false) {
+		znote_login_guard_record($loginGuardIp, (string)$username, false);
 		$errors[] = t('login.not_found');
 	} /*else if (user_activated($username) === false) {
 		$errors[] = t('login.not_activated');
@@ -29,13 +90,15 @@ if (empty($_POST) === false) {
 		$errors[] = t('login.token_invalid');
 	} else {
 
-		// Starting login. TFS_16 and CANARY are normalised to TFS_10 by engine/init.php.
-		if (in_array($config['ServerEngine'], array('TFS_02', 'OTHIRE', 'TFS_10'), true)) $login = user_login($username, $password);
-		else if ($config['ServerEngine'] == 'TFS_03') $login = user_login_03($username, $password);
-		else $login = false;
+		// Starting login. Delegated to the server adapter, which knows whether
+		// this engine identifies an account by name or id and which password
+		// scheme it uses (see engine/adapter/).
+		$login = znote_server_adapter()->login($username, $password);
 		if ($login === false) {
+			znote_login_guard_record($loginGuardIp, (string)$username, false);
 			$errors[] = t('login.wrong_combo');
 		} else {
+			znote_login_guard_record($loginGuardIp, (string)$username, true);
 			// Check if user have access to login
 			$status = false;
 			if ($config['mailserver']['register']) {
@@ -52,7 +115,7 @@ if (empty($_POST) === false) {
 
 			if ($status) {
 				// Regular login success, now lets check authentication token code
-				if ($config['ServerEngine'] == 'TFS_10' && $config['twoFactorAuthenticator']) {
+				if (znote_server_adapter()->supportsLegacyTwoFactor() && $config['twoFactorAuthenticator']) {
 					require_once("engine/function/rfc6238.php");
 
 					// Two factor authentication code / token
@@ -112,7 +175,17 @@ if (empty($_POST) === false) {
 				}
 
 				if ($status) {
+					$loginNameRow = user_data($login, 'id', 'name');
+					$isAdminAccount = has_admin_panel_access(is_array($loginNameRow) ? $loginNameRow : array());
+
+					if (znote2fa_required((int)$login, $isAdminAccount) && !znote2fa_trusted_device_check((int)$login)) {
+						$_SESSION['tfa2_pending'] = array('id' => (int)$login, 'until' => time() + 300);
+						header('Location: login.php');
+						exit();
+					}
+
 					setSession('user_id', $login);
+					$_SESSION['tfa2_sv'] = znote2fa_session_version((int)$login);
 					Token::generate();
 
 					// if IP is not set (etc acc created before Znote AAC was in use)
@@ -134,38 +207,11 @@ if (empty($_POST) === false) {
 }
 
 if (empty($errors) === false) {
-	?>
-	<h2><?= t('login.failed_title') ?></h2>
-	<?php
 	header("HTTP/1.1 401 Not Found");
-	echo output_errors($errors);
 }
 
 if (empty($_POST) === true || empty($errors) === false) {
-	?>
-	<form class="loginForm" action="login.php" method="post">
-		<ul>
-			<li>
-				<?= t('widget.login.username') ?><br>
-				<input type="text" name="username" id="login_username">
-			</li>
-			<li>
-				<?= t('widget.login.password') ?><br>
-				<input type="password" name="password" id="login_password">
-			</li>
-			<?php if ($config['twoFactorAuthenticator']): ?>
-				<li>
-					<?= t('widget.login.token') ?><br>
-					<input type="password" name="authcode">
-				</li>
-			<?php endif; ?>
-			<?php Token::create(); ?>
-			<li>
-				<input type="submit" value="<?= t('widget.login.submit') ?>">
-			</li>
-		</ul>
-	</form>
-	<?php
+	view('login_form');
 }
 
 theme_close(); ?>

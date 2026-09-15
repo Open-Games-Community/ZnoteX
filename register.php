@@ -92,16 +92,10 @@ if (empty($_POST) === false) {
 }
 
 ?>
-<h1><?= t('reg.heading') ?></h1>
+<?php view('register_header'); ?>
 <?php
 if (isset($_GET['success']) && empty($_GET['success'])) {
-	if ($config['mailserver']['register']) {
-		?>
-		<h1><?= t('reg.email_required') ?></h1>
-		<p>We have sent you an email with an activation link to your submitted email address.</p>
-		<p>If you can't find the email within 5 minutes, check your <strong>junk/trash inbox (spam filter)</strong> as it may be mislocated there.</p>
-		<?php
-	} else echo t('reg.created');
+	view('register_success', ['emailRequired' => (bool)$config['mailserver']['register']]);
 } elseif (isset($_GET['authenticate']) && empty($_GET['authenticate'])) {
 	// Authenticate user, fetch user id and activation key
 	$auid = (isset($_GET['u']) && (int)$_GET['u'] > 0) ? (int)$_GET['u'] : false;
@@ -116,9 +110,9 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 		if ($active == 0 || $active_email == 0) {
 			db()->execute("UPDATE `znote_accounts` SET `active` = '1', `active_email` = '1' WHERE `id` = ? LIMIT 1;", [$userId]);
 		}
-		echo '<h1>'. t('common.congrats') .'</h1> <p>'. t('reg.created') .'</p>';
+		view('register_authenticate_result', ['ok' => true]);
 	} else {
-		echo '<h1>'. t('acc.auth_failed') .'</h1> <p>'. t('acc.auth_failed_text') .'</p>';
+		view('register_authenticate_result', ['ok' => false]);
 	}
 } else {
 	if (empty($_POST) === false && empty($errors) === true) {
@@ -158,75 +152,7 @@ if (isset($_GET['success']) && empty($_GET['success'])) {
 		echo output_errors($errors);
 		echo '</b></font>';
 	}
-?>
-	<form action="" method="post">
-		<ul>
-			<li><?= t('reg.label_name') ?><br>
-				<input type="text" name="username">
-			</li>
-
-			<li><?= t('reg.label_pw') ?><br>
-				<input type="password" name="password">
-			</li>
-			
-			<li><?= t('reg.label_pw2') ?><br>
-				<input type="password" name="password_again">
-			</li>
-			
-			<li>Email:<br>
-				<input type="text" name="email">
-			</li>
-			
-			<li><?= t('reg.label_country') ?><br>
-				<select name="flag">
-					<option value="">(Please choose)</option>
-					<?php
-					foreach(array('pl', 'se', 'br', 'us', 'gb', ) as $c)
-						echo '<option value="' . $c . '">' . $config['countries'][$c] . '</option>';
-
-						echo '<option value="">----------</option>';
-						foreach($config['countries'] as $code => $c)
-							echo '<option value="' . $code . '">' . $c . '</option>';
-					?>
-				</select>
-			</li>
-			
-			<?php
-			if ($config['use_captcha']) {
-				?>
-				<li>
-					 <div class="g-recaptcha" data-sitekey="<?php echo $config['captcha_site_key']; ?>"></div>
-				</li>
-				<?php
-			}
-			?>
-
-			<li><h2><?= t('reg.rules_title') ?></h2>
-				<p><?= t('reg.rule_golden') ?></p>
-				<p><?= t('reg.rule_pwned') ?></p>
-				<p>No <a href='https://en.wikipedia.org/wiki/Cheating_in_video_games' target="_blank">cheating</a> allowed.</p>
-				<p>No <a href='https://en.wikipedia.org/wiki/Video_game_bot' target="_blank">botting</a> allowed.</p>
-				<p>The staff can delete, ban, do whatever they want with your account and your <br>
-					submitted information. (Including exposing and logging your IP).</p>
-			</li>
-
-			<li><?= t('reg.rules_agree') ?><br>
-				<select name="selected">
-				  <option value="0">Umh...</option>
-				  <option value="1">Yes.</option>
-				  <option value="2">No.</option>
-				</select>
-			</li>
-			<?php
-				/* Form file */
-				Token::create();
-			?>
-			<li>
-				<input type="submit" value="<?= t('reg.submit') ?>">
-			</li>
-		</ul>
-	</form>
-<?php
+	view('register_form');
 }
 theme_close();
 ?>

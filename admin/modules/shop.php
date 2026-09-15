@@ -255,6 +255,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$deleted ? acp_flash_success(t('acp.shp.removed')) : acp_flash_error(t('acp.shp.remove_failed'));
 		acp_redirect('shop');
 	}
+
+	if (in_array($shopAction, ['bulk_enable', 'bulk_disable', 'bulk_delete'], true)) {
+		$ids = array_values(array_filter(array_map('intv', (array)($_POST['ids'] ?? []))));
+
+		if (!$ids) {
+			acp_flash_error(t('acp.shp.bulk_none_selected'));
+			acp_redirect('shop');
+		}
+
+		$placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+		if ($shopAction === 'bulk_delete') {
+			$done = db()->execute("DELETE FROM `znote_shop_offers` WHERE `id` IN ({$placeholders});", $ids);
+		} else {
+			$active = ($shopAction === 'bulk_enable') ? 1 : 0;
+			$done = db()->execute("
+				UPDATE `znote_shop_offers` SET `active` = ?, `updated_at` = ? WHERE `id` IN ({$placeholders});
+			", array_merge([$active, $now], $ids));
+		}
+
+		if ($done !== false) {
+			acp_log('shop.offer_bulk_' . $shopAction, implode(',', $ids), ['count' => count($ids)]);
+			acp_flash_success(t('acp.shp.bulk_done', ['n' => count($ids)]));
+		} else {
+			acp_flash_error(t('acp.shp.bulk_failed'));
+		}
+
+		acp_redirect('shop');
+	}
 }
 
 $offers = db()->fetchAll("SELECT * FROM `znote_shop_offers` ORDER BY `active` DESC, `sort_order` ASC, `id` ASC;");
@@ -353,10 +382,42 @@ if ($itemImageTemplate !== '') {
 	</header>
 	<div class="acp-card-body is-flush">
 		<?php if ($offers): ?>
+			<form id="acpShopBulkForm" method="post">
+				<?= acp_csrf_field() ?>
+				<input type="hidden" name="shop_offer_action" id="acpShopBulkAction" value="">
+			</form>
+
+			<div class="acp-toolbar" id="acpShopBulkBar" hidden>
+				<span class="is-muted"><span id="acpShopBulkCount">0</span> <?= h(t_default('acp.shp.bulk_selected', 'selected')) ?></span>
+				<div class="acp-actions is-tight">
+					<button type="submit" form="acpShopBulkForm" class="acp-btn acp-btn--sm"
+							onclick="document.getElementById('acpShopBulkAction').value='bulk_enable';">
+						<i class="fa fa-eye"></i> <?= h(t_default('acp.shp.bulk_enable', 'Show selected')) ?>
+					</button>
+					<button type="submit" form="acpShopBulkForm" class="acp-btn acp-btn--ghost acp-btn--sm"
+							onclick="document.getElementById('acpShopBulkAction').value='bulk_disable';">
+						<i class="fa fa-eye-slash"></i> <?= h(t_default('acp.shp.bulk_disable', 'Hide selected')) ?>
+					</button>
+					<button type="submit" form="acpShopBulkForm" class="acp-btn acp-btn--red acp-btn--sm"
+							onclick="document.getElementById('acpShopBulkAction').value='bulk_delete'; return confirm('<?= h(t_default('acp.shp.bulk_confirm_delete', 'Delete every selected offer? This cannot be undone.')) ?>');">
+						<i class="fa fa-trash"></i> <?= h(t_default('acp.shp.bulk_delete', 'Delete selected')) ?>
+					</button>
+				</div>
+			</div>
+			<?php if (count($offers) > 8): ?>
+				<div class="acp-toolbar">
+					<div style="display:flex;gap:8px;flex:1 1 320px;max-width:460px;">
+						<input class="acp-input" type="search" data-acp-search-input="acpShopOfferTable"
+							   placeholder="<?= h(t_default('acp.shp.search_placeholder', 'Search offers...')) ?>">
+					</div>
+					<span class="is-muted" data-acp-search-count="acpShopOfferTable"></span>
+				</div>
+			<?php endif; ?>
 			<div class="acp-table-wrap">
-				<table class="acp-table acp-shop-offers-table">
+				<table class="acp-table acp-shop-offers-table" data-sortable id="acpShopOfferTable">
 					<thead>
 						<tr>
+							<th><input type="checkbox" id="acpShopBulkAll" aria-label="<?= h(t_default('acp.shp.bulk_select_all', 'Select all')) ?>"></th>
 							<th>#</th>
 							<th><?= h(t('acp.shp.col_preview')) ?></th>
 							<th><?= h(t('acp.shp.col_offer')) ?></th>
@@ -367,7 +428,8 @@ if ($itemImageTemplate !== '') {
 					</thead>
 					<tbody>
 						<?php foreach ($offers as $offer): ?>
-							<tr>
+							<tr data-acp-search="<?= h(strtolower((string)($offer['description'] ?? ''))) ?>">
+								<td><input type="checkbox" class="acp-shop-bulk-check" form="acpShopBulkForm" name="ids[]" value="<?= intv($offer['id'] ?? 0) ?>"></td>
 								<td class="is-muted"><?= intv($offer['id'] ?? 0) ?></td>
 								<td><?= acp_shop_offer_preview($offer, $items) ?></td>
 								<td>
@@ -410,3 +472,27 @@ if ($itemImageTemplate !== '') {
 		<?php endif; ?>
 	</div>
 </section>
+
+<script>
+(function () {
+	var all   = document.getElementById('acpShopBulkAll');
+	var boxes = Array.prototype.slice.call(document.querySelectorAll('.acp-shop-bulk-check'));
+	var bar   = document.getElementById('acpShopBulkBar');
+	var count = document.getElementById('acpShopBulkCount');
+	if (!all || !bar) return;
+
+	function refresh() {
+		var checked = boxes.filter(function (b) { return b.checked; });
+		bar.hidden = checked.length === 0;
+		if (count) count.textContent = checked.length;
+		all.checked = checked.length > 0 && checked.length === boxes.length;
+		all.indeterminate = checked.length > 0 && checked.length < boxes.length;
+	}
+
+	all.addEventListener('change', function () {
+		boxes.forEach(function (b) { if (!b.closest('tr').hidden) b.checked = all.checked; });
+		refresh();
+	});
+	boxes.forEach(function (b) { b.addEventListener('change', refresh); });
+})();
+</script>

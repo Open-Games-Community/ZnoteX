@@ -24,6 +24,14 @@ if (!function_exists('esc')) {
 	}
 }
 
+// Scheduled maintenance (engine/function/scheduler.php) normally runs off
+// public-page traffic (page.footer) - the admin panel never fires that hook,
+// so a site with only admin visitors still needs this call to run its due
+// tasks.
+if (function_exists('scheduler_tick')) {
+	scheduler_tick();
+}
+
 function acp_site(string $path = ''): string {
 	return '../' . ltrim($path, '/');
 }
@@ -32,35 +40,29 @@ function acp_url(string $module = 'dashboard', array $params = []): string {
 	return 'index.php?' . http_build_query(array_merge(['p' => $module], $params));
 }
 
-function acp_module_roles(string $module): array {
-	$map = array(
-		'dashboard'   => array('auditor', 'content', 'moderator', 'support', 'economy', 'ops'),
-		'search'      => array('auditor', 'content', 'moderator', 'support', 'economy', 'ops'),
-		'adminlog'    => array('auditor'),
-		'visitors'    => array('auditor'),
-		'news'        => array('content'),
-		'changelog'   => array('content'),
-		'menus'       => array('content'),
-		'landing'     => array('content'),
-		'gallery'     => array('moderator', 'support'),
-		'reports'     => array('moderator', 'support'),
-		'helpdesk'    => array('support'),
-		'feedback'    => array('support'),
-		'accounts'    => array('economy'),
-		'auction'     => array('economy'),
-		'shop'        => array('economy'),
-		'shop_orders' => array('economy'),
-		'serverinfo'  => array('ops'),
-		'minimap'     => array('ops'),
-	);
-	return $map[$module] ?? array();
+/**
+ * Every scoped account gets Dashboard and Search for free, whatever else it
+ * was granted - otherwise an account limited to, say, just "news" would land
+ * on an access-denied wall the moment it logs in, since dashboard is the
+ * default page.
+ */
+function acp_module_free_for_any_role(): array {
+	return array('dashboard', 'search');
 }
 
 function acp_can_module(string $module, ?array $account = null): bool {
 	$account = $account ?? ($GLOBALS['user_data'] ?? null);
 	$roles = admin_roles($account);
 	if (in_array('owner', $roles, true)) return true;
-	return array_intersect($roles, acp_module_roles($module)) !== array();
+	if ($roles === array()) return false;
+	if (in_array($module, acp_module_free_for_any_role(), true)) return true;
+	return in_array(strtolower($module), $roles, true);
+}
+
+/** Literal Owner only - never satisfied by a granted module, even 'settings'. */
+function acp_is_owner(?array $account = null): bool {
+	$account = $account ?? ($GLOBALS['user_data'] ?? null);
+	return in_array('owner', admin_roles($account), true);
 }
 
 function acp_editor_assets(): void {
@@ -118,8 +120,8 @@ const ACP_GROUP_ORDER = [
 	'Server Info' => 40,
 	'Economy'     => 50,
 	'Support'     => 60,
+	'Operations'  => 65,
 	'Settings'    => 70,
-	'Update'      => 80,
 ];
 
 function acp_parse_module_header(string $file): array {
@@ -149,12 +151,8 @@ function acp_parse_module_header(string $file): array {
 	return $meta;
 }
 
-function acp_modules(): array {
-	static $modules = null;
-	if ($modules !== null) {
-		return $modules;
-	}
-
+/** Every admin/modules/*.php file, parsed into a nav entry each. */
+function acp_modules_core(): array {
 	$modules = [];
 
 	foreach (glob(ACP_ROOT . '/modules/*.php') ?: [] as $file) {
@@ -164,7 +162,6 @@ function acp_modules(): array {
 		}
 
 		$meta = acp_parse_module_header($file);
-
 		$group = $meta['group'] ?? 'Other';
 
 		$modules[$key] = [
@@ -181,9 +178,17 @@ function acp_modules(): array {
 		];
 	}
 
-	// Modules contributed by enabled plugins, listed beside the built-in ones.
-	// Their key is prefixed with the plugin name, so a plugin can never shadow
-	// a core module by choosing the same filename.
+	return $modules;
+}
+
+/**
+ * Modules contributed by enabled plugins, listed beside the built-in ones.
+ * Their key is prefixed with the plugin name, so a plugin can never shadow a
+ * core module by choosing the same filename.
+ */
+function acp_modules_from_plugins(): array {
+	$modules = [];
+
 	if (function_exists('znote_plugin_admin_modules')) {
 		foreach (znote_plugin_admin_modules() as $key => $file) {
 			$meta = acp_parse_module_header($file);
@@ -201,6 +206,58 @@ function acp_modules(): array {
 			);
 		}
 	}
+
+	return $modules;
+}
+
+/**
+ * A plugin's generic settings.json config used to only be reachable from its
+ * row on the Plugins list page, off on its own away from the same plugin's
+ * custom admin pages (Slots, Storage Watch, ...) that already show up under
+ * "Installed Plugins". Listing it right there too - same group, same place -
+ * means everything about one plugin lives in one spot instead of two.
+ * $existingKeys is what acp_modules_core()/acp_modules_from_plugins() already
+ * produced, so a plugin that names its own page "settings" is never clobbered.
+ */
+function acp_modules_plugin_settings(array $existingKeys): array {
+	$modules = [];
+
+	if (function_exists('znote_plugins') && function_exists('znote_plugin_settings_has')) {
+		foreach (znote_plugins() as $name => $plugin) {
+			if (!$plugin['enabled'] || !$plugin['installed'] || !$plugin['compatible'] || !znote_plugin_settings_has($name)) {
+				continue;
+			}
+
+			$key = $name . '__settings';
+			if (isset($existingKeys[$key])) {
+				continue;
+			}
+
+			$modules[$key] = array(
+				'key'         => $key,
+				'file'        => ACP_ROOT . '/modules/plugin_settings.php',
+				'title'       => (string)($plugin['name'] ?? ucwords(str_replace('_', ' ', $name))) . ' Settings',
+				'icon'        => 'fa-sliders',
+				'group'       => 'Installed Plugins',
+				'order'       => 5,
+				'description' => t_default('acp.mod.plugin_settings.desc', "This plugin's own configuration fields."),
+				'url'         => acp_url('plugin_settings', array('plugin' => $name)),
+				'target'      => null,
+			);
+		}
+	}
+
+	return $modules;
+}
+
+function acp_modules(): array {
+	static $modules = null;
+	if ($modules !== null) {
+		return $modules;
+	}
+
+	$modules = acp_modules_core() + acp_modules_from_plugins();
+	$modules += acp_modules_plugin_settings($modules);
 
 	uasort($modules, static function (array $a, array $b): int {
 		$ga = ACP_GROUP_ORDER[$a['group']] ?? 900;
@@ -222,6 +279,66 @@ function acp_nav_groups(): array {
 		$groups[$module['group']][$key] = $module;
 	}
 	return $groups;
+}
+
+/**
+ * Splits one group's modules into standalone links and per-plugin clusters,
+ * so a sidebar group with several plugins each contributing 2-3 pages shows
+ * one row per plugin (expanding to its pages) instead of every page flattened
+ * into the group - the more plugins are installed, the more this matters.
+ *
+ * A plugin-contributed key is always "<plugin>__<page>" (see
+ * znote_plugin_admin_modules() and the settings.json injection above); core
+ * modules never contain "__", so they always end up in 'plain'.
+ */
+function acp_nav_cluster(array $groupModules): array {
+	$plain = [];
+	$plugins = [];
+
+	foreach ($groupModules as $key => $module) {
+		$sep = strpos($key, '__');
+		if ($sep === false) {
+			$plain[$key] = $module;
+			continue;
+		}
+
+		$pluginKey = substr($key, 0, $sep);
+		if (!isset($plugins[$pluginKey])) {
+			$manifest = function_exists('znote_plugins') ? (znote_plugins()[$pluginKey] ?? null) : null;
+			$plugins[$pluginKey] = [
+				'label' => (string)($manifest['name'] ?? ucwords(str_replace('_', ' ', $pluginKey))),
+				'items' => [],
+			];
+		}
+
+		$plugins[$pluginKey]['items'][$key] = $module;
+	}
+
+	// A plugin with only one page gains nothing from being nested - it is
+	// the same click count either way, just with an extra level in between -
+	// so it goes back to a plain, top-level link instead.
+	foreach ($plugins as $pluginKey => $cluster) {
+		if (count($cluster['items']) === 1) {
+			$plain += $cluster['items'];
+			unset($plugins[$pluginKey]);
+		}
+	}
+
+	// "Build Simulator Slots" under the "Build Simulator" cluster reads
+	// better as just "Slots" - only strips the prefix when it is actually
+	// there, so a plugin with differently-worded titles is untouched.
+	foreach ($plugins as $pluginKey => &$cluster) {
+		$prefix = $cluster['label'] . ' ';
+		foreach ($cluster['items'] as &$module) {
+			if (stripos($module['title'], $prefix) === 0) {
+				$module['title'] = substr($module['title'], strlen($prefix));
+			}
+		}
+		unset($module);
+	}
+	unset($cluster);
+
+	return ['plain' => $plain, 'plugins' => $plugins];
 }
 
 /**
@@ -470,6 +587,116 @@ function acp_verify_csrf(): bool {
 		&& is_string($_POST['csrf_token'])
 		&& hash_equals(acp_csrf(), $_POST['csrf_token']);
 }
+
+/**
+ * Dynamic add/remove-row key-value table fields, shared by any module that
+ * needs an editable list of rows (originally built for settings.php's
+ * 'table' schema field type, also used by the serverdata single-record
+ * editors). Lives here rather than in one module file since only the active
+ * module's own file is included per request (see admin/index.php).
+ */
+
+/** Convert a decoded JSON/array value into editable table rows. */
+function acp_table_rows_from_json(array $field, array $decoded): array {
+	$shape = $field['json_shape'] ?? 'map';
+
+	if ($shape === 'list') {
+		$rows = array();
+		foreach ($decoded as $value) {
+			if (!is_array($value)) continue;
+			$row = array();
+			foreach ($field['columns'] as $colKey => $colDef) {
+				$v = $value[$colKey] ?? null;
+				$row[$colKey] = acp_table_cell_to_string($colDef, $v);
+			}
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
+	$rowKey      = $field['row_key'] ?? 'id';
+	$valueColumn = $field['value_column'] ?? null;
+	$rows        = array();
+
+	foreach ($decoded as $key => $value) {
+		$row = array($rowKey => (string)$key);
+
+		if ($valueColumn !== null) {
+			$row[$valueColumn] = is_scalar($value) ? (string)$value : '';
+		} else {
+			foreach ($field['columns'] as $colKey => $colDef) {
+				if ($colKey === $rowKey) continue;
+				$v = is_array($value) ? ($value[$colKey] ?? null) : null;
+				$row[$colKey] = acp_table_cell_to_string($colDef, $v);
+			}
+		}
+
+		$rows[] = $row;
+	}
+
+	return $rows;
+}
+
+/** Convert one stored cell value into the string used to populate a form input. */
+function acp_table_cell_to_string(array $colDef, $v): string {
+	switch ($colDef['type'] ?? 'text') {
+		case 'nullable_int':
+			return ($v === false || $v === null) ? '' : (string)(int)$v;
+		case 'bool':
+			return !empty($v) ? '1' : '';
+		default:
+			return ($v === null) ? '' : (string)$v;
+	}
+}
+
+/** Render the form control for one table cell (name attribute pre-built by the caller). */
+function acp_table_cell_input(array $colDef, string $name, string $value): string {
+	$type = $colDef['type'] ?? 'text';
+
+	if ($type === 'bool') {
+		return '<label style="display:flex;align-items:center;justify-content:center;">'
+			. '<input type="checkbox" name="' . h($name) . '" value="1" ' . ($value !== '' ? 'checked' : '') . '>'
+			. '</label>';
+	}
+
+	if ($type === 'select') {
+		$html = '<select class="acp-input" name="' . h($name) . '">';
+		foreach (($colDef['options'] ?? array()) as $optValue => $optLabel) {
+			$html .= '<option value="' . h((string)$optValue) . '" ' . ((string)$optValue === $value ? 'selected' : '') . '>' . h((string)$optLabel) . '</option>';
+		}
+		$html .= '</select>';
+		return $html;
+	}
+
+	if ($type === 'textarea') {
+		return '<textarea class="acp-textarea" name="' . h($name) . '" rows="2">' . h($value) . '</textarea>';
+	}
+
+	$inputType = in_array($type, array('int', 'nullable_int'), true) ? 'number' : 'text';
+	return '<input class="acp-input" type="' . h($inputType) . '" name="' . h($name) . '" value="' . h($value) . '">';
+}
+
+/** Convert one posted cell value back into its typed PHP value for storage. */
+function acp_table_cell_from_post(array $colDef, $v) {
+	switch ($colDef['type'] ?? 'text') {
+		case 'nullable_int':
+			$v = trim((string)$v);
+			return ($v === '') ? false : (int)$v;
+		case 'int':
+			return (int)trim((string)$v);
+		case 'bool':
+			return !empty($v);
+		default:
+			return trim((string)$v);
+	}
+}
+
+/**
+ * acp_table_json_from_rows() (the reverse conversion) is NOT here - the
+ * map-shape branch's key validation differs per caller (settings.php requires
+ * numeric row keys for its vocation/town id fields; the serverdata editors
+ * need arbitrary text keys for item attributes), so each defines its own.
+ */
 
 function acp_card_open(string $title = '', string $subtitle = '', string $extraClass = ''): void {
 	echo '<section class="acp-card ' . h($extraClass) . '">';

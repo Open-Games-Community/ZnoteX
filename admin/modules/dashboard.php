@@ -13,8 +13,7 @@ if (!defined('ACP_ROOT')) {
 }
 
 // OTHIRE has no accounts.name column - it identifies accounts by number.
-$isOthire   = ($config['ServerEngine'] === 'OTHIRE');
-$accNameCol = $isOthire ? '`a`.`id`' : '`a`.`name`';
+$accNameCol = znote_server_adapter()->accountDisplayColumn();
 
 // ---------------------------------------------------------------------------
 // Counters. acp_count() returns 0 for a table this engine does not have,
@@ -25,9 +24,7 @@ $statPlayers  = acp_count("SELECT COUNT(*) AS `c` FROM `players`;");
 $statGuilds   = acp_count("SELECT COUNT(*) AS `c` FROM `guilds`;");
 $statHouses   = acp_count("SELECT COUNT(*) AS `c` FROM `houses`;");
 
-$statOnline = ($config['ServerEngine'] === 'TFS_10')
-	? acp_count("SELECT COUNT(*) AS `c` FROM `players_online`;")
-	: acp_count("SELECT COUNT(*) AS `c` FROM `players` WHERE `online` > 0;");
+$statOnline = znote_server_adapter()->onlineCount();
 
 $statPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote_accounts`;");
 $statOrders = acp_count("SELECT COUNT(*) AS `c` FROM `znote_shop_orders`;");
@@ -74,6 +71,30 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 	acp_log('system.version_sync', $version, ['from' => $oldVersion]);
 	$znote['version'] = $version;
 }
+
+$obSteps = array(
+	array(
+		'done'  => !empty($config['twoFactorAuthenticator']),
+		'label' => t_default('acp.dash.ob_2fa', 'Enable two-factor authentication'),
+		'url'   => acp_url('settings') . '#set_twoFactorAuthenticator',
+	),
+	array(
+		'done'  => function_exists('znote_backups_list') && count(znote_backups_list()) > 0,
+		'label' => t_default('acp.dash.ob_backup', 'Create your first backup'),
+		'url'   => acp_url('backups'),
+	),
+	array(
+		'done'  => function_exists('scheduler_enabled') && scheduler_enabled('backups'),
+		'label' => t_default('acp.dash.ob_scheduler', 'Turn on automatic backups'),
+		'url'   => acp_url('scheduler'),
+	),
+	array(
+		'done'  => function_exists('znote_migrations_pending') && !znote_migrations_pending(),
+		'label' => t_default('acp.dash.ob_migrations', 'Apply pending database migrations'),
+		'url'   => acp_url('migrations'),
+	),
+);
+$obRemaining = count(array_filter($obSteps, static fn(array $s): bool => !$s['done']));
 ?>
 
 <div class="acp-stats">
@@ -86,6 +107,41 @@ if (is_array($znote) && ($znote['version'] ?? null) !== $version) {
 	acp_stat(t('acp.dash.stat_points'), $statPoints, 'fa-diamond', acp_url('shop'), 'purple');
 	?>
 </div>
+
+<?php if ($obRemaining > 0): ?>
+	<section class="acp-card">
+		<header class="acp-card-head">
+			<h2><?= t_default('acp.dash.ob_title', 'Getting started') ?></h2>
+			<p><?= h(t_default('acp.dash.ob_sub', '{n} step(s) left - this card goes away once they are all done.', ['n' => $obRemaining])) ?></p>
+		</header>
+		<div class="acp-card-body is-flush">
+			<div class="acp-table-wrap">
+				<table class="acp-table">
+					<tbody>
+						<?php foreach ($obSteps as $step): ?>
+							<tr>
+								<td>
+									<i class="fa <?= $step['done'] ? 'fa-check-circle' : 'fa-circle-o' ?> is-muted"></i>
+									&nbsp;<?= h($step['label']) ?>
+								</td>
+								<td class="is-num">
+									<span class="acp-pill <?= $step['done'] ? 'acp-pill--green' : 'acp-pill--amber' ?>">
+										<?= $step['done'] ? t('acp.dash.enabled') : t_default('acp.dash.ob_todo', 'To do') ?>
+									</span>
+								</td>
+								<td class="is-nowrap is-num">
+									<?php if (!$step['done']): ?>
+										<a href="<?= h($step['url']) ?>"><?= t('acp.dash.review') ?></a>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+<?php endif; ?>
 
 <div class="acp-grid acp-grid--2">
 

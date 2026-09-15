@@ -3,6 +3,7 @@ require_once 'engine/init.php';
 theme_open();
 
 $otservers_eu_voting = $config['otservers_eu_voting'];
+$votingMessage = '';
 
 if ($otservers_eu_voting['enabled']) {
 	if (user_logged_in()) {
@@ -10,7 +11,7 @@ if ($otservers_eu_voting['enabled']) {
 		if (!$isRewardRequest) {
 			$result = vote($user_data['id'], $otservers_eu_voting);
 			if ($result === false) {
-				echo '<p>'. t('voting.request_failed'). '</p>';
+				$votingMessage = t('voting.request_failed');
 			} else {
 				header('Location: ' . $result['voteLink']);
 				die;
@@ -20,14 +21,14 @@ if ($otservers_eu_voting['enabled']) {
 			if ($result !== false) {
 				if ($result['voted'] === true) {
 					$points = $otservers_eu_voting['points'];
-					$pointsText = $points === '1' ? 'point' : 'points';
+					$pointsText = $points === '1' ? t('voting.point_singular') : t('voting.point_plural');
 					db()->execute("UPDATE `znote_accounts` SET `points` = `points` + ? WHERE `account_id` = ?", [(int)$points, (int)$user_data['id']]);
-					echo "<p>Thank you for voting! You have been rewarded with $points $pointsText!</p>";
+					$votingMessage = t('voting.rewarded', ['points' => $points, 'unit' => $pointsText]);
 				} else {
-					echo '<p>'. t('voting.not_voted'). '</p>';
+					$votingMessage = t('voting.not_voted');
 				}
 			} else {
-				echo '<p>'. t('voting.cannot_verify'). '</p>';
+				$votingMessage = t('voting.cannot_verify');
 			}
 		}
 	} else {
@@ -35,9 +36,10 @@ if ($otservers_eu_voting['enabled']) {
 		die;
 	}
 } else {
-	echo '<p>'. t('voting.disabled'). '</p>';
+	$votingMessage = t('voting.disabled');
 }
 
+view('voting');
 theme_close();
 
 function vote($otUserId, $otservers_eu_voting) {

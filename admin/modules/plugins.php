@@ -195,7 +195,17 @@ foreach ($plugins as $plugin) {
 
 	<?php else: ?>
 
-		<table class="acp-table">
+		<?php if (count($plugins) > 6): ?>
+			<div class="acp-toolbar">
+				<div style="display:flex;gap:8px;flex:1 1 320px;max-width:460px;">
+					<input class="acp-input" type="search" data-acp-search-input="acpPluginTable"
+						   placeholder="<?= h(t_default('acp.plg.search_placeholder', 'Search plugins...')) ?>">
+				</div>
+				<span class="is-muted" data-acp-search-count="acpPluginTable"></span>
+			</div>
+		<?php endif; ?>
+
+		<table class="acp-table" id="acpPluginTable">
 			<thead>
 				<tr>
 					<th><?= t('acp.plg.col_plugin') ?></th>
@@ -215,7 +225,7 @@ foreach ($plugins as $plugin) {
 
 				$running = $plugin['installed'] && $plugin['enabled'] && $plugin['compatible'];
 			?>
-				<tr>
+				<tr data-acp-search="<?= h(strtolower($plugin['name'] . ' ' . $name . ' ' . ($plugin['description'] ?? ''))) ?>">
 					<td>
 						<strong><?= h($plugin['name']) ?></strong>
 						<?php if ($plugin['description'] !== ''): ?>
@@ -264,6 +274,13 @@ foreach ($plugins as $plugin) {
 							<a class="acp-btn acp-btn--ghost acp-btn--sm"
 							   href="<?= h(acp_site(znote_plugin_url($name, $plugin['page_list'][0]))) ?>"
 							   target="_blank" rel="noopener"><?= t('acp.plg.view') ?></a>
+						<?php endif; ?>
+
+						<?php if ($running && znote_plugin_settings_has($name)): ?>
+							<a class="acp-btn acp-btn--ghost acp-btn--sm"
+							   href="<?= h(acp_url('plugin_settings', array('plugin' => $name))) ?>">
+								<i class="fa fa-sliders"></i> <?= t_default('acp.plg.settings', 'Settings') ?>
+							</a>
 						<?php endif; ?>
 
 						<?php if (!$plugin['installed']): ?>

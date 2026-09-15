@@ -1,7 +1,7 @@
 <?php
 /**
  * Title: Error Log
- * Icon: fa-bug
+ * Icon: fa-exclamation-triangle
  * Group: Overview
  * Order: 40
  * Description: Tail the PHP error log - website, plugin and theme errors all land here.
@@ -67,16 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$newPath = trim((string) ($_POST['path'] ?? ''));
 		if (setting_set('error_log:path', $newPath)) {
 			acp_log('error_log.path_save', $newPath);
-			acp_flash_success('Log path saved.');
+			acp_flash_success(t_default('acp.error_log.saved', 'Log path saved.'));
 		} else {
-			acp_flash_error('The log path could not be saved.');
+			acp_flash_error(t_default('acp.error_log.save_failed', 'The log path could not be saved.'));
 		}
 	} elseif ($do === 'reset_path') {
 		if (setting_set('error_log:path', '')) {
 			acp_log('error_log.path_reset');
-			acp_flash_success('Reverted to the auto-detected path.');
+			acp_flash_success(t_default('acp.error_log.reset', 'Reverted to the auto-detected path.'));
 		} else {
-			acp_flash_error('The log path could not be reset.');
+			acp_flash_error(t_default('acp.error_log.reset_failed', 'The log path could not be reset.'));
 		}
 	}
 	acp_redirect($module);
@@ -94,35 +94,35 @@ $configured = trim((string) setting('error_log:path', ''));
 		<i class="fa fa-exclamation-triangle"></i>
 		<span>
 			<?php if ($path === ''): ?>
-				PHP is not configured with an <code>error_log</code> file for this request - it is very likely logging to the web server's own error log instead (e.g. Apache's log under XAMPP, WAMP, Uniform Server, or a Linux host), which lives outside this site's folder and cannot be found automatically.
+				<?= t_default('acp.error_log.not_configured', "PHP is not configured with an <code>error_log</code> file for this request - it is very likely logging to the web server's own error log instead (e.g. Apache's log under XAMPP, WAMP, Uniform Server, or a Linux host), which lives outside this site's folder and cannot be found automatically.") ?>
 			<?php else: ?>
-				The configured path <code><?= h($path) ?></code> does not exist or is not readable from PHP.
+				<?= t_default('acp.error_log.path_missing', 'The configured path <code>{path}</code> does not exist or is not readable from PHP.', ['path' => h($path)]) ?>
 			<?php endif; ?>
-			Paste the correct path below - check your stack's control panel (XAMPP: <code>apache/logs/error.log</code>, WAMP: <code>logs/apache_error.log</code>, Uniform Server: its <code>logs</code> folder) or your <code>php.ini</code>'s <code>error_log</code> directive.
+			<?= t_default('acp.error_log.help', "Paste the correct path below - check your stack's control panel (XAMPP: <code>apache/logs/error.log</code>, WAMP: <code>logs/apache_error.log</code>, Uniform Server: its <code>logs</code> folder) or your <code>php.ini</code>'s <code>error_log</code> directive.") ?>
 		</span>
 	</div>
 <?php endif; ?>
 
 <section class="acp-card">
 	<header class="acp-card-head">
-		<h2>Log file</h2>
-		<p>PHP's <code>ini_get('error_log')</code> for this request: <code><?= h(acp_error_log_ini_path() !== '' ? acp_error_log_ini_path() : '(empty - using the SAPI default)') ?></code></p>
+		<h2><?= t_default('acp.error_log.title', 'Log file') ?></h2>
+		<p><?= t_default('acp.error_log.ini_get_label', "PHP's <code>ini_get('error_log')</code> for this request:") ?> <code><?= h(acp_error_log_ini_path() !== '' ? acp_error_log_ini_path() : t_default('acp.error_log.empty_sapi_default', '(empty - using the SAPI default)')) ?></code></p>
 	</header>
 	<div class="acp-card-body">
 		<form method="post" class="acp-row">
 			<?= acp_csrf_field() ?>
 			<input type="hidden" name="do" value="save_path">
 			<div class="acp-field" style="flex:2;min-width:280px;">
-				<label class="acp-label" for="path">Path to the error log</label>
+				<label class="acp-label" for="path"><?= t_default('acp.error_log.path_label', 'Path to the error log') ?></label>
 				<input class="acp-input" id="path" name="path" value="<?= h($configured) ?>" placeholder="<?= h(acp_error_log_ini_path()) ?>">
 			</div>
 			<div class="acp-actions">
-				<button class="acp-btn" type="submit"><i class="fa fa-check"></i> Save</button>
+				<button class="acp-btn" type="submit"><i class="fa fa-check"></i> <?= t_default('acp.error_log.save', 'Save') ?></button>
 				<?php if ($configured !== ''): ?>
 					<form method="post" style="display:inline">
 						<?= acp_csrf_field() ?>
 						<input type="hidden" name="do" value="reset_path">
-						<button class="acp-btn acp-btn--ghost" type="submit">Use auto-detected path</button>
+						<button class="acp-btn acp-btn--ghost" type="submit"><?= t_default('acp.error_log.use_auto_detected', 'Use auto-detected path') ?></button>
 					</form>
 				<?php endif; ?>
 			</div>
@@ -133,22 +133,22 @@ $configured = trim((string) setting('error_log:path', ''));
 <?php if ($hasFile): ?>
 	<section class="acp-card">
 		<header class="acp-card-head">
-			<h2>Latest entries</h2>
+			<h2><?= t_default('acp.error_log.latest_entries', 'Latest entries') ?></h2>
 			<p>
 				<code><?= h($path) ?></code>
-				&middot; <?= h(number_format(@filesize($path) ?: 0)) ?> bytes
-				&middot; last modified <?= h(date('Y-m-d H:i:s', @filemtime($path) ?: time())) ?>
+				&middot; <?= h(number_format(@filesize($path) ?: 0)) ?> <?= t_default('acp.error_log.bytes', 'bytes') ?>
+				&middot; <?= t_default('acp.error_log.last_modified', 'last modified') ?> <?= h(date('Y-m-d H:i:s', @filemtime($path) ?: time())) ?>
 			</p>
 		</header>
 		<div class="acp-card-body">
 			<div class="acp-row" style="margin-bottom:12px">
 				<?php foreach (array('100', '300', '1000') as $n): ?>
-					<a class="acp-btn <?= $linesWant === (int) $n ? '' : 'acp-btn--ghost' ?> acp-btn--sm" href="<?= h(acp_url($module, array('lines' => $n))) ?>">Last <?= $n ?></a>
+					<a class="acp-btn <?= $linesWant === (int) $n ? '' : 'acp-btn--ghost' ?> acp-btn--sm" href="<?= h(acp_url($module, array('lines' => $n))) ?>"><?= t_default('acp.error_log.last_n', 'Last {n}', ['n' => $n]) ?></a>
 				<?php endforeach; ?>
-				<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url($module, array('lines' => (string) $linesWant))) ?>"><i class="fa fa-refresh"></i> Refresh</a>
+				<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url($module, array('lines' => (string) $linesWant))) ?>"><i class="fa fa-refresh"></i> <?= t_default('acp.error_log.refresh', 'Refresh') ?></a>
 			</div>
 			<?php if (!$rows): ?>
-				<?php acp_empty('The log file is empty.', 'fa-file-text-o'); ?>
+				<?php acp_empty(t_default('acp.error_log.empty', 'The log file is empty.'), 'fa-file-text-o'); ?>
 			<?php else: ?>
 				<div class="acp-table-wrap" style="max-height:70vh;overflow:auto">
 					<table class="acp-table">

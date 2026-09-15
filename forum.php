@@ -131,7 +131,7 @@ if ($admin) $yourChars = db()->fetchAll("SELECT `id`, `name`, `group_id` FROM `p
 else $yourChars = db()->fetchAll("SELECT `id`, `name`, `group_id` FROM `players` WHERE `level` >= ? AND `account_id` = ?;", [(int)$config['forum']['level'], $user_data['id']]);
 if (!$yourChars) $yourChars = array();
 $charCount = count($yourChars);
-$yourAccess = accountAccess($user_data['id'], $config['ServerEngine']);
+$yourAccess = accountAccess($user_data['id'], znote_server_adapter()->normalizedEngine());
 if ($admin) {
 	if (!empty($_POST)) {
 		$guilds = db()->fetchAll("SELECT `id`, `name` FROM `guilds` ORDER BY `name`;");
@@ -363,10 +363,10 @@ if ($admin && !empty($_POST)) {
 						<td>
 							<select name="admin_category_closed" class="span12">
 								<?php
-								if ($category['closed'] == 1) echo '<option value="1" selected>Yes</option>';
-								else echo '<option value="1">Yes</option>';
-								if ($category['closed'] == 0) echo '<option value="0" selected>No</option>';
-								else echo '<option value="0">No</option>';
+								if ($category['closed'] == 1) echo '<option value="1" selected>' . t('common.yes') . '</option>';
+								else echo '<option value="1">' . t('common.yes') . '</option>';
+								if ($category['closed'] == 0) echo '<option value="0" selected>' . t('common.no') . '</option>';
+								else echo '<option value="0">' . t('common.no') . '</option>';
 								?>
 							</select>
 						</td>
@@ -376,10 +376,10 @@ if ($admin && !empty($_POST)) {
 						<td>
 							<select name="admin_category_hidden" class="span12">
 								<?php
-								if ($category['hidden'] == 1) echo '<option value="1" selected>Yes</option>';
-								else echo '<option value="1">Yes</option>';
-								if ($category['hidden'] == 0) echo '<option value="0" selected>No</option>';
-								else echo '<option value="0">No</option>';
+								if ($category['hidden'] == 1) echo '<option value="1" selected>' . t('common.yes') . '</option>';
+								else echo '<option value="1">' . t('common.yes') . '</option>';
+								if ($category['hidden'] == 0) echo '<option value="0" selected>' . t('common.no') . '</option>';
+								else echo '<option value="0">' . t('common.no') . '</option>';
 								?>
 							</select>
 						</td>
@@ -421,7 +421,7 @@ if ($admin && !empty($_POST)) {
 		// Then delete the category
 		db()->execute("DELETE FROM `znote_forum` WHERE `id` = ? LIMIT 1;", [$admin_category_id]);
 		acp_log('forum.board_delete', '#' . $admin_category_id);
-		echo '<h1>Board, associated threads and all their associated posts deleted.</h1>';
+		echo '<h1>' . t('forum.board_and_threads_deleted') . '</h1>';
 	}
 
 	// delete post
@@ -572,7 +572,7 @@ if (!empty($_GET)) {
 		if ($access) {
 			db()->execute("UPDATE `znote_forum_posts` SET `text` = ?, `updated` = ? WHERE `id` = ?;", [$update_post_text, time(), $update_post_id]);
 			if ($admin) acp_log('forum.post_update', '#' . (int)$update_post_id);
-			echo '<h1>post has been updated.</h1>';
+			echo '<h1>' . t('forum.post_updated') . '</h1>';
 		} else echo "<p class='znf-alert'>" . t('forum.edit_post_denied') . "</p>";
 	}
 
@@ -671,7 +671,7 @@ if (!empty($_GET)) {
 			if ($access) {
 				$threadPlayer = ($config['forum']['outfit_avatars'] || $config['forum']['player_position']) ? db()->fetchOne("SELECT `id`, `group_id`, `sex`, `lookbody`, `lookfeet`, `lookhead`, `looklegs`, `looktype`, `lookaddons` FROM `players` WHERE `id` = ?;", [$threadData['player_id']]) : false;
 				?>
-				<nav class="znf-crumbs"><a href="forum.php">Forum</a> <span>/</span> <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></nav>
+				<nav class="znf-crumbs"><a href="forum.php"><?= t('forum.title') ?></a> <span>/</span> <a href="?cat=<?php echo $getCat; ?>"><?php echo $getForum; ?></a></nav>
 				<h1 id="ThreadTitle" class="znf-title"><?php echo "<a href='?forum=". $getForum ."&cat=". $getCat ."&thread=". $threadData['id'] ."'>". $threadData['title'] ."</a>"; ?></h1>
 				<article class="znf-post is-op">
 					<div class="znf-post__side avatar">
@@ -824,19 +824,20 @@ if (!empty($_GET)) {
 							<form action="" method="post">
 								<input name="reply_thread" type="hidden" value="<?php echo $threadData['id']; ?>">
 								<?php znote_forum_editor('reply_text', '', 200); ?>
-								<?php znote_forum_character_picker($yourChars, 'reply_cid', 'Post Reply', 'btn btn-primary'); ?>
+								<?php znote_forum_character_picker($yourChars, 'reply_cid', t('forum.reply_btn'), 'btn btn-primary'); ?>
 							</form>
 						</div>
 						<?php
-					} else echo '<p class="znf-note">You don\'t have permission to post on this thread. [Thread: Closed]</p>';
+					} else echo '<p class="znf-note">' . t('forum.thread_closed_note') . '</p>';
 				} else {
-					?><p class="znf-note">You must have a character on your account that is level <?php echo (int)$config['forum']['level']; ?>+ to reply to this thread.</p><?php
+					?><p class="znf-note"><?= t('forum.level_required', ['level' => (int)$config['forum']['level']]) ?></p><?php
 				}
-			} else echo '<p class="znf-alert">Your permission to access this thread has been denied.</p>';
+			} else echo '<p class="znf-alert">' . t('forum.perm_denied3') . '</p>';
 		} else {
 			?>
 			<h1><?= t('forum.thread_unavailable') ?></h1>
-			<p>Thread is unavailable for you, or do not exist any more.
+			<p><?= t('forum.thread_unavailable_text') ?></p>
+			<p>
 				<?php
 				if ($_GET['cat'] > 0 && !empty($_GET['forum'])) {
 					$tmpCat = getValue($_GET['cat'] ?? null);
@@ -886,7 +887,7 @@ if (!empty($_GET)) {
 						<span class="znote-postas-single"><?php echo htmlspecialchars($charData[$new_thread_cid]['name'], ENT_QUOTES, 'UTF-8'); ?></span>
 					</div>
 
-					<input class="znote-newthread-title form-control" name="create_thread_title" type="text" placeholder="Thread title" maxlength="60" required>
+					<input class="znote-newthread-title form-control" name="create_thread_title" type="text" placeholder="<?= t('forum.thread_title_placeholder') ?>" maxlength="60" required>
 
 					<?php znote_forum_editor('create_thread_text', '', 300); ?>
 
@@ -988,8 +989,8 @@ if (!empty($_GET)) {
 					</div>
 					<?php
 				} else echo '<p class="znf-note">'. t('forum.board_closed'). '</p>';
-			} else echo '<p class="znf-note">You must have a character on your account that is level '. (int)$config['forum']['level'] .'+ to create new threads.</p>';
-		} else echo '<p class="znf-alert">Your permission to access this board has been denied.<br>If you are trying to access a Guild Board, you need level: '. (int)$config['forum']['level'] .'+</p>';
+			} else echo '<p class="znf-note">'. t('forum.level_required_new_thread', ['level' => (int)$config['forum']['level']]) .'</p>';
+		} else echo '<p class="znf-alert">'. t('forum.board_access_denied', ['level' => (int)$config['forum']['level']]) .'</p>';
 
 	}
 } else {
@@ -1113,15 +1114,15 @@ if (!empty($_GET)) {
 			<div class="znf-field">
 				<label for="admin_board_create_closed"><?= t('forum.closed') ?></label>
 				<select id="admin_board_create_closed" name="admin_board_create_closed">
-					<option value="0">No</option>
-					<option value="1">Yes</option>
+					<option value="0"><?= t('common.no') ?></option>
+					<option value="1"><?= t('common.yes') ?></option>
 				</select>
 			</div>
 			<div class="znf-field">
 				<label for="admin_board_create_hidden"><?= t('forum.hidden') ?></label>
 				<select id="admin_board_create_hidden" name="admin_board_create_hidden">
-					<option value="0">No</option>
-					<option value="1">Yes</option>
+					<option value="0"><?= t('common.no') ?></option>
+					<option value="1"><?= t('common.yes') ?></option>
 				</select>
 			</div>
 			<div class="znf-field">

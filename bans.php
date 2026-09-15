@@ -18,8 +18,8 @@ theme_open();
  *   $ipBanCount     how many address bans are active, as a number only
  */
 
-$engine   = $config['ServerEngine'];
-$isModern = in_array($engine, array('TFS_10'), true); // TFS_16 and CANARY normalise to this
+$engine   = znote_server_adapter()->normalizedEngine();
+$isModern = ($engine === 'TFS_10'); // TFS_16, Canary and BlackTek normalise to this
 
 $bansSupported = true;
 $accountBans   = array();

@@ -166,14 +166,14 @@ if ($house !== false) {
 										echo "<b><font color='orange'>". t('house.already_higher') ."</font></b>";
 									}
 								} else {
-									echo "<b><font color='red'>Too low bid amount, someone else has a higher bid active.</font></b>";
+									echo "<b><font color='red'>" . t('house.bid_too_low') . "</font></b>";
 								}
 							}
-						} else echo "<b><font color='red'>'. t('house.not_enough2'). '</font></b>";
-					} else echo "<b><font color='red'>Your character is to low level, must be higher level than ", $config['houseConfig']['levelToBuyHouse']-1 ," to buy a house.</font></b>";
+						} else echo "<b><font color='red'>" . t('house.not_enough2') . "</font></b>";
+					} else echo "<b><font color='red'>" . t('house.level_too_low', ['level' => $config['houseConfig']['levelToBuyHouse'] - 1]) . "</font></b>";
 				} else echo "<b><font color='red'>". t('house.too_many') ."</font></b>";
-			} else echo "<b><font color='red'>'. t('house.need_premium2'). '</font></b>";
-		} else echo "<b><font color='red'>You may only bid on houses for characters on your account.</font></b>";
+			} else echo "<b><font color='red'>" . t('house.need_premium2') . "</font></b>";
+		} else echo "<b><font color='red'>" . t('house.own_char_only') . "</font></b>";
 	}
 
 	////////////////////////////////////////
@@ -306,13 +306,13 @@ if ($house !== false) {
 		?>
 		<h2><?= t('house.on_auction2') ?></h2>
 		<?php
-		if ($house['highest_bidder'] == 0) echo "<b>'. t('house.no_bidders2'). '</b>";
+		if ($house['highest_bidder'] == 0) echo "<b>" . t('house.no_bidders2') . "</b>";
 		else {
 			$bidder = db()->fetchOne("SELECT `name` FROM `players` WHERE `id` = ? LIMIT 1;", [$house['highest_bidder']]);
-			echo "<b>This house have bidders! If you want this house, now is your chance!</b>";
-			echo "<br><b>'. t('house.active_bid'). '</b> {$house['last_bid']}gp";
-			echo "<br><b>'. t('house.active_bid_by'). '</b> <a href='characterprofile.php?name={$bidder['name']}' target='_BLANK'>{$bidder['name']}</a>";
-			echo "<br><b>'. t('house.bid_ends'). '</b> ". getClock($house['bid_end'], true);
+			echo "<b>" . t('house.has_bidders') . "</b>";
+			echo "<br><b>" . t('house.active_bid') . "</b> {$house['last_bid']}gp";
+			echo "<br><b>" . t('house.active_bid_by') . "</b> <a href=\"characterprofile.php?name=" . htmlspecialchars((string)$bidder['name'], ENT_QUOTES, 'UTF-8') . "\" target=\"_BLANK\">" . htmlspecialchars((string)$bidder['name'], ENT_QUOTES, 'UTF-8') . "</a>";
+			echo "<br><b>" . t('house.bid_ends') . "</b> ". getClock($house['bid_end'], true);
 		}
 
 		if ($house['bid_end'] == 0 || $house['bid_end'] > time()) {
@@ -333,7 +333,7 @@ if ($house !== false) {
 							}
 							?>
 						</select>
-						<input type="text" name="amount" placeholder="Min bid: <?php echo $minbid + 1; ?>">
+						<input type="text" name="amount" placeholder="<?= t('house.min_bid', ['amount' => $minbid + 1]) ?>">
 						<input type="submit" value="<?= t('house.bid_submit') ?>">
 					</form>
 					<?php if ($house['owner'] == 0 && isset($house['points'])): ?>

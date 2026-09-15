@@ -10,7 +10,7 @@ theme_open();
  * view only has to read $killersMode - it never touches the database.
  */
 
-$engine = $config['ServerEngine'];
+$engine = znote_server_adapter()->normalizedEngine();
 
 if (in_array($engine, array('TFS_02', 'TFS_10', 'OTHIRE'), true)) {
 	$killersMode = 'modern';

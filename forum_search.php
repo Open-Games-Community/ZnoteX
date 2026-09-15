@@ -58,14 +58,14 @@ if ($text !== false) {
 <h1><?= t('fsearch.title') ?></h1>
 <form method="" type="get">
 	<select name="type">
-		<option value="1" <?php if ($type == 1) echo "selected"; ?>>Title</option>
-		<option value="2" <?php if ($type == 2) echo "selected"; ?>>Post</option>
+		<option value="1" <?php if ($type == 1) echo "selected"; ?>><?= t('fsearch.option_title') ?></option>
+		<option value="2" <?php if ($type == 2) echo "selected"; ?>><?= t('fsearch.option_post') ?></option>
 		<option value="3" <?php if ($type == 3) echo "selected"; ?>><?= t('fsearch.author_threads') ?></option>
 		<option value="4" <?php if ($type == 4) echo "selected"; ?>><?= t('fsearch.author_posts') ?></option>
 		<option value="5" <?php if ($type == 5) echo "selected"; ?>><?= t('fsearch.latest_posts2') ?></option>
 		<option value="6" <?php if ($type == 6) echo "selected"; ?>><?= t('fsearch.latest_threads2') ?></option>
 	</select>
-	<input type="text" name="text" value="<?php if ($text !== false) echo implode(' ', $text); ?>">
+	<input type="text" name="text" placeholder="<?= t('fsearch.search_placeholder') ?>" value="<?php if ($text !== false) echo implode(' ', $text); ?>">
 	<input type="submit" value="<?= t('common.search') ?>">
 </form>
 <?php
@@ -203,9 +203,9 @@ if ($type !== false && $text !== false && $type <= 4 || $type > 4 && $type <= 6)
 			?>
 			<table class="znoteTable" id="forumThreadTable">
 				<tr class="yellow">
-					<th>Char</th>
-					<th>Thread</th>
-					<th>Post</th>
+					<th><?= t('fsearch.col_char') ?></th>
+					<th><?= t('fsearch.col_thread') ?></th>
+					<th><?= t('fsearch.col_post') ?></th>
 				</tr>
 				<?php
 				foreach ($results as $result) {

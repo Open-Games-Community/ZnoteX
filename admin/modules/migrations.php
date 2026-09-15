@@ -2,8 +2,8 @@
 /**
  * Title: Migrations
  * Icon: fa-database
- * Group: Settings
- * Order: 20
+ * Group: Operations
+ * Order: 30
  * Description: Apply SQL updates from SQL/migrations without phpMyAdmin.
  */
 

@@ -7,7 +7,7 @@
 	// Optional item browser page.
 	$config['items'] = false;
 
-	// Server engine: TFS_02, TFS_03, OTHIRE, TFS_10, TFS_16 or CANARY.
+	// Server engine: TFS_02, TFS_03, OTHIRE, TFS_10, TFS_16, CANARY or BLACKTEK.
 	$config['ServerEngine'] = 'TFS_10';
 	$config['CustomVersion'] = false;
 
@@ -40,6 +40,51 @@
 	$config['client'] = 1098;
 	$config['client_download'] = 'http://tibiaclient.otslist.eu/download/tibia'. $config['client'] .'.exe';
 	$config['client_download_linux'] = 'http://tibiaclient.otslist.eu/download/tibia'. $config['client'] .'.tgz';
+	$config['downloads'] = array(
+		'entries' => array(
+			array('key' => 'windows_client', 'label' => 'Windows Client', 'section' => 'official', 'enabled' => true, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'linux_client', 'label' => 'Linux Client', 'section' => 'unsupported', 'enabled' => true, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'macos_client', 'label' => 'MacOS Client', 'section' => 'unsupported', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'android_client', 'label' => 'Android Client', 'section' => 'unsupported', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'ios_client', 'label' => 'iOS Client', 'section' => 'unsupported', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'bot', 'label' => 'Bot', 'section' => 'tools', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'minimap', 'label' => 'Minimap', 'section' => 'tools', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_1', 'label' => 'Custom Download 1', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_2', 'label' => 'Custom Download 2', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_3', 'label' => 'Custom Download 3', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_4', 'label' => 'Custom Download 4', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+			array('key' => 'custom_5', 'label' => 'Custom Download 5', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
+		),
+	);
+
+	// Editable from Admin Panel > Settings > Content. Starts with a few
+	// generic questions about the site itself; replace them with whatever
+	// fits your server.
+	$config['faq'] = array(
+		'entries' => array(
+			array(
+				'question' => 'What is this website?',
+				'answer'   => 'This is the official website for our Open Tibia server, built with ZnoteX. Here you can create an account, download the client, check the highscores, read the news and manage everything about your characters.',
+			),
+			array(
+				'question' => 'How do I start playing?',
+				'answer'   => 'Download the client from the Downloads page, create a free account, create a character, then log in with the client using your account name and password.',
+			),
+			array(
+				'question' => 'I forgot my password, what do I do?',
+				'answer'   => 'Use the "Forgot password" link on the login page to recover access to your account.',
+			),
+			array(
+				'question' => 'How can I support the server?',
+				'answer'   => 'Check the Shop page - donations there help keep the server running and usually come with in-game rewards.',
+			),
+			array(
+				'question' => 'I found a bug or need help, who do I contact?',
+				'answer'   => 'Open a ticket on the Support page, or reach out to a staff member listed on the Team page.',
+			),
+		),
+	);
+
 	$config['port'] = 7171;
 	$config['account_create_premdays'] = 0;
 
@@ -393,6 +438,25 @@
 
 	// Two-factor authentication requires TFS 1.2+.
 	$config['twoFactorAuthenticator'] = false;
+
+	// Website 2FA v2 - independent of the game engine. Stores everything in
+	// znote_2fa* tables, so it works the same on TFS, Canary, otHire or BlackTek.
+	$config['twoFactorV2'] = array(
+		'enabled' => false,
+		'email_otp_enabled' => true, // Lets a player receive a one-time code by e-mail instead of using an authenticator app. Requires mailserver to be configured.
+		'force_admins' => false, // Accounts with panel access (page_admin_access) must set up 2FA v2 before they can use the account.
+		'recovery_codes_count' => 10,
+		'trusted_device_days' => 30, // "Remember this device" duration. 0 disables the option.
+	);
+
+	// Login attempt tracking / IP lockout. Every attempt is logged; an IP that
+	// fails too many times within the window is locked out for a while.
+	$config['login_guard'] = array(
+		'enabled' => true,
+		'threshold' => 5, // Failed attempts allowed in the window below before an IP is locked out.
+		'window_minutes' => 15, // How far back failed attempts are counted.
+		'lockout_minutes' => 15, // How long a locked-out IP has to wait.
+	);
 
 	function getClock($time = false, $format = false, $adjust = true) {
 		if ($time === false) $time = time();

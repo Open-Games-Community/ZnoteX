@@ -77,5 +77,14 @@ if (function_exists('znote_hook_filter')) {
 $GLOBALS['page_title'] = $page_title;
 
 theme_open();
-include $file;
+if ($pluginName !== '') {
+	ob_start();
+	include $file;
+	$pluginContent = ob_get_clean();
+	echo function_exists('theme_wrap_plugin_page')
+		? theme_wrap_plugin_page($pluginContent, $page_title, $pluginName, $requested)
+		: $pluginContent;
+} else {
+	include $file;
+}
 theme_close();

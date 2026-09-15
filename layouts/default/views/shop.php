@@ -296,9 +296,9 @@ foreach ($shop_list as $key => $offer) {
 	document.addEventListener('DOMContentLoaded', function () {
 		document.querySelectorAll('.needconfirmation').forEach(function (button) {
 			button.addEventListener('click', function (event) {
-				var itemName = this.getAttribute('data-item-name') || 'this offer';
+				var itemName = this.getAttribute('data-item-name') || <?= json_encode(t('shop.this_offer')) ?>;
 				var itemCost = this.getAttribute('data-item-cost') || '0';
-				if (!confirm('Do you really want to purchase ' + itemName + ' for ' + itemCost + ' points?')) {
+				if (!confirm(<?= json_encode(t('shop.confirm_purchase', ['name' => '__NAME__', 'cost' => '__COST__'])) ?>.replace('__NAME__', itemName).replace('__COST__', itemCost))) {
 					event.preventDefault();
 				}
 			});

@@ -20,6 +20,11 @@ if (!has_admin_panel_access($user_data ?? null)) {
 	exit;
 }
 
+if (znote2fa_setup_incomplete((int)$session_user_id, true)) {
+	header('Location: ../twofa.php');
+	exit;
+}
+
 require_once ACP_ROOT . '/bootstrap.php';
 
 $acp_modules = acp_modules();

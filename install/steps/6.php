@@ -12,12 +12,8 @@ if (!defined('ZNOTE_INSTALL')) { http_response_code(403); die('Direct access den
 
 /**
  * The file we are about to write, also shown for manual copying.
- *
- * $includeAdmin is false when page_admin_access is being written straight into
- * config.php instead - it must appear in exactly one of the two files, since
- * config.local.php is included last and would otherwise win.
  */
-function install_config_contents(bool $includeAdmin = true): string {
+function install_config_contents(): string {
 	$quote = static function (string $value): string {
 		return "'" . str_replace(array('\\', "'"), array('\\\\', "\\'"), $value) . "'";
 	};
@@ -50,42 +46,20 @@ function install_config_contents(bool $includeAdmin = true): string {
 		$out .= '$config[\'server_path\']  = ' . $quote($path) . ';' . $nl;
 	}
 
-	if ($includeAdmin) {
-		$out .= $nl . '// Admin access is granted by character name.' . $nl;
-		$out .= '$config[\'page_admin_access\'] = array(' . $nl;
-		$out .= "\t" . $quote($admin) . ',' . $nl;
-		$out .= ');' . $nl;
-	} else {
-		$out .= $nl . '// page_admin_access was written straight into config.php instead.' . $nl;
-	}
+	$out .= $nl . '// Admin access is granted by account name.' . $nl;
+	$out .= '$config[\'page_admin_access\'] = array(' . $nl;
+	$out .= "\t" . $quote($admin) . ',' . $nl;
+	$out .= ');' . $nl;
 
 	return $out;
 }
 
 $written    = false;
 $writeErr   = '';
-$adminNote  = '';
-$adminInMain = ($_SERVER['REQUEST_METHOD'] === 'POST')
-	? !empty($_POST['admin_in_config'])
-	: false;
 
-$contents = install_config_contents(!$adminInMain);
+$contents = install_config_contents();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-	// Do this first: if it fails we fall back to config.local.php rather than
-	// finishing with an admin who cannot reach the panel.
-	if ($adminInMain) {
-		$result = install_write_admin_to_config((string)install_get('admin_account'));
-		if ($result !== '') {
-			$adminNote   = $result . ' The admin name went to config.local.php instead.';
-			$adminInMain = false;
-			$contents    = install_config_contents(true);
-		} else {
-			$adminNote = 'The admin name was written into config.php, and config.php.bak keeps the previous version.';
-		}
-	}
-
 	$target = install_config_file();
 
 	if (@file_put_contents($target, $contents) === false) {
@@ -111,31 +85,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		ZnoteX is installed. <code>config.local.php</code> is written and the installer is locked.
 	</p>
 
-	<?php if ($adminNote !== ''): ?>
-		<p class="info"><?= ih($adminNote) ?></p>
-	<?php endif; ?>
-
-	<h2>Two things left</h2>
+	<h2>Before you open the site</h2>
+	<p class="lead">
+		Vocations, starting towns and starting skills come pre-filled with generic defaults.
+		Most servers change at least some of this before letting anyone create a character -
+		it is much less painful to set it now than after players have already made characters.
+	</p>
 	<ul class="checks">
 		<li>
 			<span class="state opt">1</span>
+			<span class="what">
+				Configure vocations, towns &amp; starting skills
+				<span class="detail">Admin Panel &rarr; Settings &rarr; Character creation. Each one is an editable table now, no JSON to hand-edit.</span>
+			</span>
+		</li>
+		<li>
+			<span class="state opt">2</span>
 			<span class="what">
 				Delete the <code>install/</code> folder
 				<span class="detail">It refuses to run now, but there is no reason to leave it on a public server.</span>
 			</span>
 		</li>
 		<li>
-			<span class="state opt">2</span>
+			<span class="state opt">3</span>
 			<span class="what">
-				Log in and look around
-				<span class="detail">Admin Panel &rarr; Settings covers almost everything you would otherwise edit by hand.</span>
+				Look around the rest of the panel
+				<span class="detail">Admin Panel &rarr; Settings covers almost everything else you would otherwise edit by hand.</span>
 			</span>
 		</li>
 	</ul>
 
 	<div class="actions">
-		<a class="btn" href="../index.php">Open the site</a>
+		<a class="btn green" href="../admin/index.php?p=settings#character-creation">Configure vocations &amp; towns</a>
 		<a class="btn ghost" href="../admin/index.php">Admin panel</a>
+		<a class="btn ghost" href="../index.php">Open the site</a>
 	</div>
 
 <?php else: ?>
@@ -165,21 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	</div>
 
 	<form method="post">
-		<div class="field">
-			<label style="display:flex;align-items:flex-start;gap:9px;font-weight:400;">
-				<input type="checkbox" name="admin_in_config" value="1" style="margin-top:4px;width:auto;">
-				<span>
-					Put the admin name in <code>config.php</code> instead of <code>config.local.php</code>
-					<span class="detail" style="display:block;color:var(--muted);font-size:12.5px;">
-						Only the <code>page_admin_access</code> array is touched, a <code>.bak</code> is kept,
-						and the result is syntax-checked before saving. Be aware that a future ZnoteX update
-						replacing <code>config.php</code> would take the name with it and lock you out of the
-						panel &mdash; which is exactly what <code>config.local.php</code> avoids.
-					</span>
-				</span>
-			</label>
-		</div>
-
 		<div class="actions">
 			<button class="btn green" type="submit">Write the config and finish</button>
 			<a class="btn ghost" href="<?= install_url(5) ?>">Back</a>

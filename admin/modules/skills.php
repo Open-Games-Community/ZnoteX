@@ -16,7 +16,7 @@ function acp_skill_value(?array $skills, int $index): int {
 	return (is_array($skills) && isset($skills[$index]['value'])) ? (int)$skills[$index]['value'] : 0;
 }
 
-$isTfs10 = ($config['ServerEngine'] === 'TFS_10');
+$isTfs10 = (znote_server_adapter()->normalizedEngine() === 'TFS_10');
 
 // ---------------------------------------------------------------------------
 // Save

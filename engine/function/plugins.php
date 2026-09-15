@@ -490,40 +490,46 @@ function plugin_repository_notes($value): string {
 		: (is_string($value) || is_numeric($value) ? trim((string)$value) : '');
 }
 
-function plugin_repository_list(bool $refresh = false): array {
-	$cfg = plugin_repository_config();
+/** The on-disk cache, if it's still fresh (or $refresh forces past it). */
+function plugin_repository_cached(Cache $cache, bool $refresh): ?array {
+	if ($refresh || $cache->hasExpired()) {
+		return null;
+	}
+	$cached = $cache->load();
+	return is_array($cached) ? $cached : null;
+}
 
-	if (!$cfg['enabled'] || $cfg['index'] === '') {
-		return array('plugins' => array(), 'error' => '');
+/**
+ * Fetches and JSON-decodes the catalogue index. Accepts both a bare array
+ * and {"plugins": [...]}. Returns null (with $error set) on any failure.
+ */
+function plugin_repository_fetch_raw(string $indexUrl, bool $refresh, ?string &$error): ?array {
+	if ($refresh) {
+		$indexUrl .= (strpos($indexUrl, '?') === false ? '?' : '&') . 'nocache=' . time();
 	}
 
-	$cache = new Cache('engine/cache/plugin_repository');
-	$cache->useMemory(false);
-
-	if (!$refresh && !$cache->hasExpired()) {
-		$cached = $cache->load();
-		if (is_array($cached)) {
-			return array('plugins' => $cached, 'error' => '', 'cached' => true);
-		}
-	}
-
-	$error = null;
-	$body  = plugin_repository_get($cfg['index'], null, $error);
-
+	$body = plugin_repository_get($indexUrl, null, $error);
 	if ($body === false) {
-		return array('plugins' => array(), 'error' => (string)$error);
+		return null;
 	}
 
 	$data = json_decode((string)$body, true);
 	if (!is_array($data)) {
-		return array('plugins' => array(), 'error' => 'The catalogue is not valid JSON.');
+		$error = 'The catalogue is not valid JSON: ' . json_last_error_msg() . ' | Response: ' . substr((string)$body, 0, 200);
+		return null;
 	}
 
 	if (isset($data['plugins']) && is_array($data['plugins'])) {
 		$data = $data['plugins'];
 	}
 
+	return $data;
+}
+
+/** Raw catalogue entries, validated and reshaped into the plugin-list format the rest of the admin panel expects. */
+function plugin_repository_normalize_entries(array $data): array {
 	$plugins = array();
+
 	foreach ($data as $entry) {
 		if (!is_array($entry)) {
 			continue;
@@ -559,6 +565,32 @@ function plugin_repository_list(bool $refresh = false): array {
 	}
 
 	ksort($plugins);
+
+	return $plugins;
+}
+
+function plugin_repository_list(bool $refresh = false): array {
+	$cfg = plugin_repository_config();
+
+	if (!$cfg['enabled'] || $cfg['index'] === '') {
+		return array('plugins' => array(), 'error' => '');
+	}
+
+	$cache = new Cache('engine/cache/plugin_repository');
+	$cache->useMemory(false);
+
+	$cached = plugin_repository_cached($cache, $refresh);
+	if ($cached !== null) {
+		return array('plugins' => $cached, 'error' => '', 'cached' => true);
+	}
+
+	$error = null;
+	$data  = plugin_repository_fetch_raw($cfg['index'], $refresh, $error);
+	if ($data === null) {
+		return array('plugins' => array(), 'error' => (string)$error);
+	}
+
+	$plugins = plugin_repository_normalize_entries($data);
 
 	$cache->setContent($plugins);
 	$cache->save();

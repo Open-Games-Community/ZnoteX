@@ -3,7 +3,7 @@ znote_csrf_protect_public_post();
 theme_open();
 
 if (isset($_GET['callback']) && $_GET['callback'] === 'processing') {
-	echo '<script>alert("Seu pagamento está sendo processado pelo PagSeguro...");</script>';
+	echo '<script>alert(' . json_encode(t('shop.payment_processing')) . ');</script>';
 }
 
 // Import from config:

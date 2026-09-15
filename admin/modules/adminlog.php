@@ -30,7 +30,8 @@ if (!in_array($days, array('1', '7', '30', '90', 'all'), true)) {
 	$days = 'all';
 }
 
-$q      = trim((string)($_GET['q'] ?? ''));
+$target = trim((string)($_GET['target'] ?? ''));
+$q      = $target !== '' ? $target : trim((string)($_GET['q'] ?? ''));
 $action = trim((string)($_GET['action'] ?? ''));
 $page   = max(1, intv($_GET['page'] ?? 1));
 $perPage = 40;
@@ -42,7 +43,10 @@ if ($hasTable) {
 		$where[]  = "`created` >= ?";
 		$params[] = time() - ((int)$days * 86400);
 	}
-	if ($q !== '') {
+	if ($target !== '') {
+		$where[]  = "`target` = ?";
+		$params[] = $target;
+	} elseif ($q !== '') {
 		$like     = '%' . $q . '%';
 		$where[]  = "(`target` LIKE ? OR `admin_name` LIKE ? OR `action` LIKE ? OR `details` LIKE ?)";
 		$params[] = $like;
@@ -158,7 +162,7 @@ function acp_log_query(array $overrides = array()): array {
 	<div class="acp-card-body is-flush">
 		<?php if ($rows): ?>
 			<div class="acp-table-wrap">
-				<table class="acp-table">
+				<table class="acp-table" data-sortable>
 					<thead>
 						<tr>
 							<th><?= t('acp.log.col_date') ?></th>

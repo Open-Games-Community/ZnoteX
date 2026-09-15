@@ -20,7 +20,7 @@ class Mail {
             $mail->SMTPDebug  = !empty($this->_config['debug']) ? 2 : 0;
             $mail->Host       = $this->_config['host'];
             $mail->Port       = (int)$this->_config['port'];
-            $mail->SMTPAuth   = true;
+            $mail->SMTPAuth   = ($this->_config['username'] ?? '') !== '';
             $mail->Username   = $this->_config['username'];
             $mail->Password   = $this->_config['password'];
             $mail->CharSet    = 'UTF-8';

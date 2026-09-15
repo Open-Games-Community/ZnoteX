@@ -486,12 +486,13 @@ function set_ingame_position03($name, $acctype) {
 
 // Set rule violation.
 // Return true if success, query error die if failed, and false if $config['website_char'] is not recognized.
+
 function set_rule_violation($charname, $typeid, $actionid, $reasonid, $time, $comment) {
 	$charid = user_character_id($charname);
 	$typeid = (int)$typeid;
 	$actionid = (int)$actionid;
 	$reasonid = (int)$reasonid;
-	$time = (int)($time + time());
+	$time = ($time === null) ? 0 : (int)($time + time());
 
 	if (engineIsTFS16()) {
 		$data = db()->fetchOne("SELECT `account_id`, " . sqlIpSelect('lastip', 'lastip') . " FROM `players` WHERE `id` = ?;", [(int)$charid]);
@@ -915,6 +916,38 @@ function user_account_add_premdays($accid, $days) {
 			SET `premdays` = `premdays` + ?
 			WHERE `id` = ?;
 		", [$days, $accid]);
+	}
+
+	return false;
+}
+
+function user_accounts_add_premdays_all($days) {
+	$days = (int)$days;
+
+	if ($days <= 0) {
+		return false;
+	}
+
+	if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'premium_ends_at')) {
+		return db()->execute("
+			UPDATE `accounts`
+			SET `premium_ends_at` = GREATEST(`premium_ends_at`, UNIX_TIMESTAMP()) + (? * 86400);
+		", [$days]);
+	}
+
+	if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'lastday') && znote_column_exists('accounts', 'premdays')) {
+		return db()->execute("
+			UPDATE `accounts`
+			SET `premdays` = GREATEST(0, CEIL((GREATEST(`lastday` + (`premdays` * 86400), UNIX_TIMESTAMP()) - UNIX_TIMESTAMP()) / 86400)) + ?,
+				`lastday` = UNIX_TIMESTAMP();
+		", [$days]);
+	}
+
+	if (function_exists('znote_column_exists') && znote_column_exists('accounts', 'premdays')) {
+		return db()->execute("
+			UPDATE `accounts`
+			SET `premdays` = `premdays` + ?;
+		", [$days]);
 	}
 
 	return false;

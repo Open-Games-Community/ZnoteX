@@ -19,9 +19,9 @@ if ($cache->hasExpired()) {
 	</div>
 	<div class="body">
 		<ul>
-			<li><a href="onlinelist.php"><?= t('widget.serverinfo.online', ['count' => $asideServerInfo['online']]) ?></a></li>
-			<li><?= t('widget.serverinfo.accounts', ['count' => $asideServerInfo['accounts']]) ?></li>
-			<li><?= t('widget.serverinfo.players', ['count' => $asideServerInfo['players']]) ?></li>
+			<li><a href="onlinelist.php"><?= t('widget.serverinfo.online', ['count' => $asideServerInfo['online'] ?? 0]) ?></a></li>
+			<li><?= t('widget.serverinfo.accounts', ['count' => $asideServerInfo['accounts'] ?? 0]) ?></li>
+			<li><?= t('widget.serverinfo.players', ['count' => $asideServerInfo['players'] ?? 0]) ?></li>
 		</ul>
 	</div>
 </div>

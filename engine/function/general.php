@@ -471,19 +471,17 @@ function admin_roles($user_data): array {
 	}
 
 	$assignments = (array)config('page_admin_roles');
-	$roles = array();
 	foreach ($assignments as $account => $assigned) {
 		if ((string)$account === (string)$identity) {
-			$roles = is_array($assigned) ? $assigned : array($assigned);
-			break;
+			$modules = is_array($assigned) ? $assigned : array($assigned);
+			return array_values(array_unique(array_filter(array_map(
+				static fn($module) => strtolower(trim((string)$module)),
+				$modules
+			), static fn($module) => $module !== '')));
 		}
 	}
 
-	$allowed = array('owner', 'auditor', 'content', 'moderator', 'support', 'economy', 'ops');
-	return array_values(array_unique(array_intersect(
-		$allowed,
-		array_map(static fn($role) => strtolower(trim((string)$role)), $roles)
-	)));
+	return array();
 }
 
 function has_admin_panel_access($user_data): bool {
