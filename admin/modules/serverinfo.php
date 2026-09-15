@@ -139,11 +139,19 @@ $maxUpload = min(
 <?php endif; ?>
 
 <div class="acp-grid acp-grid--2">
+	<?php
+	$editorModules = array('config' => 'config_editor', 'items' => 'items_editor', 'creatures' => 'creatures_editor');
+	?>
 	<?php foreach ($status as $key => $row): ?>
 		<section class="acp-card">
 			<header class="acp-card-head">
 				<h2><?= h($row['label']) ?></h2>
 				<p><?= h($row['help']) ?></p>
+				<?php if ($row['cached'] && isset($editorModules[$key])): ?>
+					<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url($editorModules[$key])) ?>">
+						<i class="fa fa-pencil"></i> <?= t_default('acp.srv.edit_entries', 'Edit entries') ?>
+					</a>
+				<?php endif; ?>
 			</header>
 			<div class="acp-card-body">
 

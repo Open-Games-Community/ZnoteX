@@ -21,10 +21,10 @@
  *   ]
  * }
  *
- * Supported types: text, textarea, password, bool, int, select, checklist.
+ * Supported types: text, textarea, password, bool, int, select, checklist, color.
  */
 
-const ZNOTE_PLUGIN_SETTINGS_TYPES = array('text', 'textarea', 'password', 'bool', 'int', 'select', 'checklist');
+const ZNOTE_PLUGIN_SETTINGS_TYPES = array('text', 'textarea', 'password', 'bool', 'int', 'select', 'checklist', 'color');
 
 function znote_plugin_settings_file(string $plugin): string {
 	return ZNOTE_PLUGIN_DIR . '/' . $plugin . '/settings.json';
@@ -134,6 +134,13 @@ function znote_plugin_settings_sanitize_field(array $field, $raw): ?string {
 		case 'select':
 			$value = (string)$raw;
 			return array_key_exists($value, $field['options']) ? $value : null;
+
+		case 'color':
+			$value = trim((string)$raw);
+			if ($value === '') {
+				return '';
+			}
+			return preg_match('/^#[0-9a-f]{6}$/i', $value) ? $value : null;
 
 		case 'checklist':
 			$chosen = is_array($raw) ? $raw : array();

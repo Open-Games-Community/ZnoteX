@@ -56,6 +56,35 @@
 			array('key' => 'custom_5', 'label' => 'Custom Download 5', 'section' => 'custom', 'enabled' => false, 'url' => '', 'image' => '', 'description' => ''),
 		),
 	);
+
+	// Editable from Admin Panel > Settings > Content. Starts with a few
+	// generic questions about the site itself; replace them with whatever
+	// fits your server.
+	$config['faq'] = array(
+		'entries' => array(
+			array(
+				'question' => 'What is this website?',
+				'answer'   => 'This is the official website for our Open Tibia server, built with ZnoteX. Here you can create an account, download the client, check the highscores, read the news and manage everything about your characters.',
+			),
+			array(
+				'question' => 'How do I start playing?',
+				'answer'   => 'Download the client from the Downloads page, create a free account, create a character, then log in with the client using your account name and password.',
+			),
+			array(
+				'question' => 'I forgot my password, what do I do?',
+				'answer'   => 'Use the "Forgot password" link on the login page to recover access to your account.',
+			),
+			array(
+				'question' => 'How can I support the server?',
+				'answer'   => 'Check the Shop page - donations there help keep the server running and usually come with in-game rewards.',
+			),
+			array(
+				'question' => 'I found a bug or need help, who do I contact?',
+				'answer'   => 'Open a ticket on the Support page, or reach out to a staff member listed on the Team page.',
+			),
+		),
+	);
+
 	$config['port'] = 7171;
 	$config['account_create_premdays'] = 0;
 
@@ -418,6 +447,15 @@
 		'force_admins' => false, // Accounts with panel access (page_admin_access) must set up 2FA v2 before they can use the account.
 		'recovery_codes_count' => 10,
 		'trusted_device_days' => 30, // "Remember this device" duration. 0 disables the option.
+	);
+
+	// Login attempt tracking / IP lockout. Every attempt is logged; an IP that
+	// fails too many times within the window is locked out for a while.
+	$config['login_guard'] = array(
+		'enabled' => true,
+		'threshold' => 5, // Failed attempts allowed in the window below before an IP is locked out.
+		'window_minutes' => 15, // How far back failed attempts are counted.
+		'lockout_minutes' => 15, // How long a locked-out IP has to wait.
 	);
 
 	function getClock($time = false, $format = false, $adjust = true) {

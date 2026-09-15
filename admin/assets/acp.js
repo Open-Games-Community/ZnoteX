@@ -60,10 +60,23 @@
 				});
 			}
 		});
+
+		// Same collapse behaviour, one level down: a plugin's own sub-list of
+		// pages inside a group. Already open when one of its pages is the
+		// current one (server-rendered with is-open), closed otherwise.
+		Array.prototype.slice.call(nav.querySelectorAll('.acp-nav-plugin')).forEach(function (cluster) {
+			var button = cluster.querySelector('.acp-nav-plugin-label');
+			if (!button) { return; }
+			button.addEventListener('click', function () {
+				var open = cluster.classList.toggle('is-open');
+				button.setAttribute('aria-expanded', open ? 'true' : 'false');
+			});
+		});
 	}
 
 	if (filter && nav) {
 		var links = Array.prototype.slice.call(nav.querySelectorAll('.acp-nav-link'));
+		var clusters = Array.prototype.slice.call(nav.querySelectorAll('.acp-nav-plugin'));
 		var groups = Array.prototype.slice.call(nav.querySelectorAll('.acp-nav-group'));
 		var noMatch = nav.querySelector('.acp-nav-nomatch');
 
@@ -75,6 +88,19 @@
 				var match = q === '' || (link.getAttribute('data-title') || '').indexOf(q) !== -1;
 				link.parentNode.hidden = !match;
 				if (match) { hits++; }
+			});
+
+			// A plugin's own <li> never matches .acp-nav-link (it is the
+			// cluster wrapper, not a page), so it needs its own visibility
+			// pass based on whether any page inside it just matched above.
+			clusters.forEach(function (cluster) {
+				var visible = cluster.querySelectorAll('.acp-nav-link:not([hidden])').length > 0;
+				cluster.hidden = !visible;
+				if (q !== '' && visible) {
+					cluster.classList.add('is-open');
+					var pbutton = cluster.querySelector('.acp-nav-plugin-label');
+					if (pbutton) { pbutton.setAttribute('aria-expanded', 'true'); }
+				}
 			});
 
 			groups.forEach(function (group) {
@@ -195,6 +221,148 @@
 		if (message && !window.confirm(message)) {
 			e.preventDefault();
 		}
+	});
+})();
+
+/*
+ * Click-to-sort for any <table class="acp-table" data-sortable>. Sorts the
+ * rows currently in the DOM - on a paginated list that is only the current
+ * page, which is fine: the point is letting an admin re-order what is on
+ * screen (highest points first, most recent first), not a full-dataset sort.
+ */
+(function () {
+	function cellText(row, index) {
+		var cell = row.children[index];
+		if (!cell) return '';
+		return (cell.getAttribute('data-sort-value') || cell.textContent || '').trim();
+	}
+
+	function looksNumeric(value) {
+		return value !== '' && !isNaN(parseFloat(value.replace(/[^0-9.\-]/g, ''))) && /^[\s0-9.,\-]+$/.test(value);
+	}
+
+	Array.prototype.slice.call(document.querySelectorAll('table.acp-table[data-sortable]')).forEach(function (table) {
+		var thead = table.querySelector('thead');
+		var tbody = table.querySelector('tbody');
+		if (!thead || !tbody) return;
+
+		var headers = Array.prototype.slice.call(thead.querySelectorAll('th'));
+
+		headers.forEach(function (th, index) {
+			if (th.textContent.trim() === '') return; // icon/action-only columns stay unsortable
+
+			th.classList.add('acp-th-sortable');
+			th.setAttribute('role', 'button');
+			th.setAttribute('tabindex', '0');
+
+			var sort = function () {
+				var dir = th.getAttribute('data-sort-dir') === 'asc' ? 'desc' : 'asc';
+				headers.forEach(function (h) {
+					h.removeAttribute('data-sort-dir');
+					h.classList.remove('is-sorted-asc', 'is-sorted-desc');
+				});
+				th.setAttribute('data-sort-dir', dir);
+				th.classList.add(dir === 'asc' ? 'is-sorted-asc' : 'is-sorted-desc');
+
+				var rows = Array.prototype.slice.call(tbody.querySelectorAll(':scope > tr'));
+				var numeric = rows.length > 0 && looksNumeric(cellText(rows[0], index));
+
+				rows.sort(function (a, b) {
+					var av = cellText(a, index);
+					var bv = cellText(b, index);
+					var cmp;
+					if (numeric) {
+						cmp = (parseFloat(av.replace(/[^0-9.\-]/g, '')) || 0) - (parseFloat(bv.replace(/[^0-9.\-]/g, '')) || 0);
+					} else {
+						cmp = av.localeCompare(bv, undefined, { sensitivity: 'base', numeric: true });
+					}
+					return dir === 'asc' ? cmp : -cmp;
+				});
+
+				rows.forEach(function (row) { tbody.appendChild(row); });
+			};
+
+			th.addEventListener('click', sort);
+			th.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sort(); }
+			});
+		});
+	});
+})();
+
+/*
+ * Client-side row filter for small lists (plugins, shop offers - anything
+ * that is already fully rendered on the page, not a paginated server query).
+ * Usage: <input data-acp-search-input="tableId"> filters
+ * #tableId tbody tr[data-acp-search] by substring match, and optionally
+ * updates a live count in [data-acp-search-count="tableId"].
+ */
+(function () {
+	Array.prototype.slice.call(document.querySelectorAll('[data-acp-search-input]')).forEach(function (input) {
+		var tableId = input.getAttribute('data-acp-search-input');
+		var table = document.getElementById(tableId);
+		if (!table) return;
+
+		var rows  = Array.prototype.slice.call(table.querySelectorAll('tbody tr[data-acp-search]'));
+		var count = document.querySelector('[data-acp-search-count="' + tableId + '"]');
+
+		input.addEventListener('keyup', function () {
+			var needle = input.value.trim().toLowerCase();
+			var shown = 0;
+			rows.forEach(function (row) {
+				var match = needle === '' || (row.getAttribute('data-acp-search') || '').indexOf(needle) !== -1;
+				row.hidden = !match;
+				if (match) shown++;
+			});
+			if (count) count.textContent = needle === '' ? '' : (shown + ' / ' + rows.length);
+		});
+	});
+})();
+
+/*
+ * Dynamic add/remove-row tables: any element with data-acp-table-add="key"
+ * clones the row template registered as data-acp-table-template="key" into
+ * the matching [data-acp-table="key"] container; data-acp-table-remove
+ * removes its own row. Shared by settings.php's 'table' schema fields and
+ * the serverdata single-record editors (items/creatures attribute rows).
+ */
+(function () {
+	document.addEventListener('click', function (e) {
+		var addBtn = e.target.closest('[data-acp-table-add]');
+		if (addBtn) {
+			var key = addBtn.getAttribute('data-acp-table-add');
+			var container = document.querySelector('[data-acp-table="' + key + '"]');
+			var template = document.querySelector('template[data-acp-table-template="' + key + '"]');
+			if (!container || !template) return;
+			var body = container.querySelector('[data-acp-table-body]') || container;
+			// <tr> fragments only parse correctly inside a <tbody> wrapper; anything
+			// else (the permissions table's plain <div> account blocks) parses fine
+			// in a generic <div>.
+			var wrapper = document.createElement(body.tagName === 'TBODY' ? 'tbody' : 'div');
+			var nextIndex = body.children.length;
+			var html = template.innerHTML.split('__ROWIDX__').join(String(nextIndex));
+			wrapper.innerHTML = html;
+			body.appendChild(wrapper.firstElementChild);
+			return;
+		}
+
+		var removeBtn = e.target.closest('[data-acp-table-remove]');
+		if (removeBtn) {
+			var row = removeBtn.closest('tr, .acp-perm-account');
+			if (row) row.remove();
+		}
+	});
+})();
+
+/* Ctrl+K / Cmd+K jumps focus to the top-bar search, from anywhere in the panel. */
+(function () {
+	document.addEventListener('keydown', function (e) {
+		if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'k') return;
+		var input = document.getElementById('acpTopSearch');
+		if (!input) return;
+		e.preventDefault();
+		input.focus();
+		input.select();
 	});
 })();
 

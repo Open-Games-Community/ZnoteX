@@ -48,6 +48,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	acp_redirect('accounts', array('id' => $id));
 }
 
+// ------------------------------------------------------ Bulk (selected rows)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['do'] ?? '') === 'bulk_points') {
+	$ids = array_values(array_unique(array_filter(array_map('intv', (array)($_POST['ids'] ?? [])))));
+	$delta = intv($_POST['bulk_points'] ?? 0);
+
+	if (!$ids) {
+		acp_flash_error(t_default('acp.acc.bulk_none_selected', 'Select at least one account first.'));
+		acp_redirect('accounts', array('q' => $search));
+	}
+	if ($delta === 0) {
+		acp_flash_error(t('acp.mpts.zero_value'));
+		acp_redirect('accounts', array('q' => $search));
+	}
+
+	$placeholders = implode(',', array_fill(0, count($ids), '?'));
+	$updated = db()->execute("
+		UPDATE `znote_accounts` SET `points` = GREATEST(0, `points` + ?) WHERE `account_id` IN ({$placeholders});
+	", array_merge([$delta], $ids));
+
+	if ($updated !== false) {
+		acp_log('accounts.bulk_points', implode(',', $ids), ['delta' => $delta, 'count' => count($ids)]);
+		acp_flash_success(t_default('acp.acc.bulk_points_done', '{delta} points applied to {n} account(s).', ['delta' => ($delta >= 0 ? '+' : '') . $delta, 'n' => count($ids)]));
+	} else {
+		acp_flash_error(t('acp.mpts.failed'));
+	}
+
+	acp_redirect('accounts', array('q' => $search));
+}
+
 // ---------------------------------------------------------------------------
 // One account
 // ---------------------------------------------------------------------------
@@ -88,6 +117,8 @@ if ($accountId > 0) {
 // ---------------------------------------------------------------------------
 // Search / listing
 // ---------------------------------------------------------------------------
+const ACP_ACCOUNTS_PER_PAGE = 50;
+
 $results = array();
 if ($account === null) {
 	$where = '';
@@ -104,6 +135,12 @@ if ($account === null) {
 		}
 	}
 
+	$totalRow  = db()->fetchOne("SELECT COUNT(*) AS `n` FROM `accounts` `a` {$where};", $params);
+	$total     = is_array($totalRow) ? (int)$totalRow['n'] : 0;
+	$pageCount = max(1, (int)ceil($total / ACP_ACCOUNTS_PER_PAGE));
+	$page      = max(1, min($pageCount, intv($_GET['ap'] ?? 1)));
+	$offset    = ($page - 1) * ACP_ACCOUNTS_PER_PAGE;
+
 	$results = db()->fetchAll("
 		SELECT `a`.`id`, {$accNameCol} AS `account_name`, `a`.`email`,
 		       `za`.`points`, `za`.`created`,
@@ -112,9 +149,18 @@ if ($account === null) {
 		LEFT JOIN `znote_accounts` `za` ON `za`.`account_id` = `a`.`id`
 		{$where}
 		ORDER BY `a`.`id` DESC
-		LIMIT 50;
+		LIMIT {$offset}, " . ACP_ACCOUNTS_PER_PAGE . ";
 	", $params);
 	$results = is_array($results) ? $results : array();
+}
+
+/** Keep the current search when building a paging link. */
+function acp_accounts_page_url(int $page, string $search): string {
+	$params = ['ap' => $page];
+	if ($search !== '') {
+		$params['q'] = $search;
+	}
+	return acp_url('accounts', $params);
 }
 ?>
 
@@ -125,9 +171,14 @@ if ($account === null) {
 			<strong><?= h((string)$account['account_name']) ?></strong>
 			<span class="acp-pill acp-pill--grey">#<?= (int)$account['id'] ?></span>
 		</div>
-		<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('accounts')) ?>">
-			<i class="fa fa-arrow-left"></i> <?= t('acp.acc.all_accounts') ?>
-		</a>
+		<div class="acp-actions is-tight">
+			<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('adminlog', array('target' => '#' . (int)$account['id']))) ?>">
+				<i class="fa fa-history"></i> <?= t_default('acp.acc.view_history', 'Admin log for this account') ?>
+			</a>
+			<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('accounts')) ?>">
+				<i class="fa fa-arrow-left"></i> <?= t('acp.acc.all_accounts') ?>
+			</a>
+		</div>
 	</div>
 
 	<div class="acp-grid acp-grid--2">
@@ -219,6 +270,9 @@ if ($account === null) {
 										<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('skills', array('name' => (string)$char['name']))) ?>">
 											<i class="fa fa-bolt"></i> <?= t('acp.acc.skills') ?>
 										</a>
+										<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('adminlog', array('target' => (string)$char['name']))) ?>" title="<?= h(t_default('acp.acc.view_history', 'Admin log for this account')) ?>">
+											<i class="fa fa-history"></i>
+										</a>
 									</td>
 								</tr>
 							<?php endforeach; ?>
@@ -278,7 +332,10 @@ if ($account === null) {
 			<?php endif; ?>
 		</form>
 		<span class="is-muted">
-			<?= $search !== '' ? t('acp.acc.match_count', ['n' => count($results)]) : t('acp.acc.newest_50') ?>
+			<?= $search !== '' ? t('acp.acc.match_count', ['n' => $total]) : t_default('acp.acc.total_count', '{n} accounts', ['n' => $total]) ?>
+			<?php if ($pageCount > 1): ?>
+				&middot; <?= t('acp.lay.page_of', ['page' => (int)$page, 'pageCount' => (int)$pageCount]) ?>
+			<?php endif; ?>
 		</span>
 	</div>
 
@@ -288,14 +345,32 @@ if ($account === null) {
 		</header>
 		<div class="acp-card-body is-flush">
 			<?php if ($results): ?>
+				<form id="acpAccBulkForm" method="post">
+					<?= acp_csrf_field() ?>
+					<input type="hidden" name="do" value="bulk_points">
+					<input type="hidden" name="q" value="<?= h($search) ?>">
+				</form>
+
+				<div class="acp-toolbar" id="acpAccBulkBar" hidden>
+					<span class="is-muted"><span id="acpAccBulkCount">0</span> <?= h(t_default('acp.acc.bulk_selected', 'selected')) ?></span>
+					<div class="acp-actions is-tight">
+						<input class="acp-input" form="acpAccBulkForm" name="bulk_points" type="number" step="1"
+							   placeholder="<?= h(t_default('acp.acc.bulk_points_placeholder', '+/- points')) ?>" style="width:120px;">
+						<button type="submit" form="acpAccBulkForm" class="acp-btn acp-btn--sm">
+							<i class="fa fa-diamond"></i> <?= h(t_default('acp.acc.bulk_apply', 'Apply to selected')) ?>
+						</button>
+					</div>
+				</div>
+
 				<div class="acp-table-wrap">
-					<table class="acp-table">
+					<table class="acp-table" data-sortable>
 						<thead>
-							<tr><th>#</th><th><?= t('acp.acc.col_account') ?></th><th><?= t('acp.acc.col_email') ?></th><th class="is-num"><?= t('acp.acc.col_chars') ?></th><th class="is-num"><?= t('acp.acc.col_points') ?></th><th><?= t('acp.acc.col_registered') ?></th><th class="is-num">&nbsp;</th></tr>
+							<tr><th><input type="checkbox" id="acpAccBulkAll" aria-label="<?= h(t_default('acp.acc.bulk_select_all', 'Select all')) ?>"></th><th>#</th><th><?= t('acp.acc.col_account') ?></th><th><?= t('acp.acc.col_email') ?></th><th class="is-num"><?= t('acp.acc.col_chars') ?></th><th class="is-num"><?= t('acp.acc.col_points') ?></th><th><?= t('acp.acc.col_registered') ?></th><th class="is-num">&nbsp;</th></tr>
 						</thead>
 						<tbody>
 							<?php foreach ($results as $row): ?>
 								<tr>
+									<td><input type="checkbox" class="acp-acc-bulk-check" form="acpAccBulkForm" name="ids[]" value="<?= (int)$row['id'] ?>"></td>
 									<td class="is-muted"><?= (int)$row['id'] ?></td>
 									<td><?= h((string)$row['account_name']) ?></td>
 									<td class="is-muted"><?= h((string)$row['email']) ?></td>
@@ -312,10 +387,58 @@ if ($account === null) {
 						</tbody>
 					</table>
 				</div>
+
+				<script>
+				(function () {
+					var all   = document.getElementById('acpAccBulkAll');
+					var boxes = Array.prototype.slice.call(document.querySelectorAll('.acp-acc-bulk-check'));
+					var bar   = document.getElementById('acpAccBulkBar');
+					var count = document.getElementById('acpAccBulkCount');
+					if (!all || !bar) return;
+
+					function refresh() {
+						var checked = boxes.filter(function (b) { return b.checked; });
+						bar.hidden = checked.length === 0;
+						if (count) count.textContent = checked.length;
+						all.checked = checked.length > 0 && checked.length === boxes.length;
+						all.indeterminate = checked.length > 0 && checked.length < boxes.length;
+					}
+
+					all.addEventListener('change', function () {
+						boxes.forEach(function (b) { b.checked = all.checked; });
+						refresh();
+					});
+					boxes.forEach(function (b) { b.addEventListener('change', refresh); });
+				})();
+				</script>
 			<?php else: ?>
 				<?php acp_empty($search !== '' ? t('acp.acc.no_match', ['search' => $search]) : t('acp.acc.no_accounts_yet'), 'fa-address-card-o'); ?>
 			<?php endif; ?>
 		</div>
 	</section>
+
+	<?php if ($pageCount > 1): ?>
+		<nav class="acp-actions" style="justify-content:center;margin:18px 0 24px;" aria-label="<?= h(t_default('acp.pagination_label', 'Pages')) ?>">
+			<a class="acp-btn acp-btn--ghost acp-btn--sm<?= $page <= 1 ? ' is-disabled' : '' ?>"
+			   href="<?= h(acp_accounts_page_url(max(1, $page - 1), $search)) ?>"
+			   <?= $page <= 1 ? 'aria-disabled="true" tabindex="-1"' : '' ?>>
+				<i class="fa fa-angle-left"></i> <?= t('acp.lay.previous') ?>
+			</a>
+
+			<?php for ($p = 1; $p <= $pageCount; $p++): ?>
+				<?php if ($p === $page): ?>
+					<span class="acp-btn acp-btn--sm"><?= $p ?></span>
+				<?php else: ?>
+					<a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_accounts_page_url($p, $search)) ?>"><?= $p ?></a>
+				<?php endif; ?>
+			<?php endfor; ?>
+
+			<a class="acp-btn acp-btn--ghost acp-btn--sm<?= $page >= $pageCount ? ' is-disabled' : '' ?>"
+			   href="<?= h(acp_accounts_page_url(min($pageCount, $page + 1), $search)) ?>"
+			   <?= $page >= $pageCount ? 'aria-disabled="true" tabindex="-1"' : '' ?>>
+				<?= t('acp.lay.next') ?> <i class="fa fa-angle-right"></i>
+			</a>
+		</nav>
+	<?php endif; ?>
 
 <?php endif; ?>

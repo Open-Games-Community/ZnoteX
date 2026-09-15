@@ -4,7 +4,7 @@
  * Icon: fa-users
  * Group: Players
  * Order: 20
- * Description: Punish, move and maintain characters and their accounts.
+ * Description: Ban, punish, move and maintain characters and their accounts.
  */
 
 if (!defined('ACP_ROOT')) {
@@ -42,13 +42,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$type    = intv($_POST['ban_type']   ?? 0) - $enc;
 			$action  = intv($_POST['ban_action'] ?? 0) - $enc;
 			$reason  = intv($_POST['ban_reason'] ?? 0) - $enc;
-			$time    = intv($_POST['ban_time']   ?? 0) - $enc;
 			$comment = substr(trim((string)($_POST['ban_comment'] ?? '')), 0, 60);
+
+			$banUnitSeconds = ['minutes' => 60, 'hours' => 3600, 'days' => 86400, 'weeks' => 604800];
+			$banUnit  = (string)($_POST['ban_duration_unit'] ?? 'hours');
+			$banValue = max(0, intv($_POST['ban_duration_value'] ?? 0));
+			$forever  = !empty($_POST['ban_forever']);
+
+			if (!$forever && $banValue <= 0) {
+				acp_flash_error(t('acp.plr.err_invalid_duration'));
+				acp_redirect('players');
+			}
+
+			$time = $forever ? null : ($banValue * ($banUnitSeconds[$banUnit] ?? 3600));
 
 			if (set_rule_violation($char, $type, $action, $reason, $time, $comment)) {
 				acp_log('player.violation', $char, [
 					'type' => $type, 'action' => $action, 'reason' => $reason,
-					'time' => $time, 'comment' => $comment,
+					'time' => $forever ? 'forever' : $time, 'comment' => $comment,
 				]);
 				acp_flash_success(t('acp.plr.violation_set', ['char' => h($char)]));
 			} else {
@@ -289,57 +300,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		acp_redirect('players');
 	}
-
-	// ------------------------------------------------------------ Teleport
-	if (isset($_POST['from'], $_POST['to'])) {
-		$from = (string)$_POST['from'];
-		$to   = (string)$_POST['to'];
-
-		$where = '';
-		$fail  = false;
-
-		if ($from === 'only') {
-			$target = trim((string)($_POST['player_name'] ?? ''));
-			if ($target === '' || !user_character_exist($target)) {
-				acp_flash_error(t('acp.plr.err_invalid_teleport_char'));
-				$fail = true;
-			} else {
-				$where = "WHERE `name` = '" . esc($target) . "'";
-			}
-		}
-
-		if (!$fail) {
-			$set = null;
-
-			if ($to === 'home') {
-				$set = '`posx`=0, `posy`=0, `posz`=0';
-			} elseif ($to === 'town') {
-				$set = '`posx`=0, `posy`=0, `posz`=0, `town_id`=' . intv($_POST['town'] ?? 0);
-			} elseif ($to === 'xyz') {
-				$set = '`posx`=' . intv($_POST['x'] ?? 0)
-					. ', `posy`=' . intv($_POST['y'] ?? 0)
-					. ', `posz`=' . intv($_POST['z'] ?? 0);
-			}
-
-			// Anything else would have produced "UPDATE players SET " and a
-			// SQL error, so refuse instead of guessing.
-			if ($set === null) {
-				acp_flash_error(t('acp.plr.err_unknown_destination'));
-			} else {
-				if ($from === 'only') {
-					db()->execute("UPDATE `players` SET {$set} WHERE `name` = ?;", [$target]);
-				} else {
-					db()->execute("UPDATE `players` SET {$set};");
-				}
-				acp_log('player.teleport', $from === 'only' ? $target : 'ALL', ['destination' => $to]);
-				acp_flash_success($from === 'only'
-					? t('acp.plr.tp_one_done')
-					: t('acp.plr.tp_all_done'));
-			}
-		}
-
-		acp_redirect('players');
-	}
 }
 ?>
 
@@ -519,16 +479,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 					</select>
 				</div>
 				<div class="acp-field">
-					<label class="acp-label" for="ban_time"><?= h(t('acp.plr.duration_label')) ?></label>
-					<select class="acp-select" id="ban_time" name="ban_time">
-						<?php foreach (($config['ban_time'] ?? []) as $seconds => $label): ?>
-							<option value="<?= (int)$seconds + $enc ?>"><?= h($label) ?></option>
-						<?php endforeach; ?>
+					<label class="acp-label" for="ban_comment"><?= h(t('acp.plr.comment_label')) ?></label>
+					<input class="acp-input" id="ban_comment" name="ban_comment" maxlength="60" placeholder="<?= h(t('acp.plr.comment_placeholder')) ?>">
+				</div>
+			</div>
+
+			<div class="acp-row">
+				<div class="acp-field">
+					<label class="acp-label" for="ban_duration_value"><?= h(t('acp.plr.duration_label')) ?></label>
+					<input class="acp-input" id="ban_duration_value" name="ban_duration_value" type="number" min="1" step="1" value="1">
+				</div>
+				<div class="acp-field">
+					<label class="acp-label" for="ban_duration_unit">&nbsp;</label>
+					<select class="acp-select" id="ban_duration_unit" name="ban_duration_unit">
+						<option value="minutes"><?= h(t('acp.plr.unit_minutes')) ?></option>
+						<option value="hours" selected><?= h(t('acp.plr.unit_hours')) ?></option>
+						<option value="days"><?= h(t('acp.plr.unit_days')) ?></option>
+						<option value="weeks"><?= h(t('acp.plr.unit_weeks')) ?></option>
 					</select>
 				</div>
 				<div class="acp-field">
-					<label class="acp-label" for="ban_comment"><?= h(t('acp.plr.comment_label')) ?></label>
-					<input class="acp-input" id="ban_comment" name="ban_comment" maxlength="60" placeholder="<?= h(t('acp.plr.comment_placeholder')) ?>">
+					<label class="acp-label" for="ban_forever">&nbsp;</label>
+					<label style="display:flex;align-items:center;gap:8px;font-weight:400;min-height:34px;">
+						<input type="checkbox" id="ban_forever" name="ban_forever" value="1">
+						<span><?= h(t('acp.plr.forever_label')) ?></span>
+					</label>
 				</div>
 			</div>
 
@@ -539,63 +514,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	</div>
 </section>
 
-<!-- ------------------------------------------------------------ Teleport -->
-<section class="acp-card">
-	<header class="acp-card-head">
-		<h2><?= h(t('acp.plr.teleport_title')) ?></h2>
-		<p><?= h(t('acp.plr.teleport_sub')) ?></p>
-	</header>
-	<div class="acp-card-body">
-		<form method="post" data-confirm="<?= h(t('acp.plr.teleport_confirm')) ?>">
-			<?= acp_csrf_field() ?>
-			<div class="acp-row">
-				<div class="acp-field">
-					<label class="acp-label" for="tp_from"><?= h(t('acp.plr.who_label')) ?></label>
-					<select class="acp-select" id="tp_from" name="from">
-						<option value="only"><?= h(t('acp.plr.tp_one_option')) ?></option>
-						<option value="all"><?= h(t('acp.plr.tp_all_option')) ?></option>
-					</select>
-				</div>
-				<div class="acp-field">
-					<label class="acp-label" for="player_name"><?= h(t('acp.plr.character_label')) ?></label>
-					<input class="acp-input" id="player_name" name="player_name" placeholder="<?= h(t('acp.plr.tp_char_placeholder')) ?>">
-				</div>
-				<div class="acp-field">
-					<label class="acp-label" for="tp_to"><?= h(t('acp.plr.destination_label')) ?></label>
-					<select class="acp-select" id="tp_to" name="to">
-						<option value="home"><?= h(t('acp.plr.dest_home')) ?></option>
-						<option value="town"><?= h(t('acp.plr.dest_town')) ?></option>
-						<option value="xyz"><?= h(t('acp.plr.dest_xyz')) ?></option>
-					</select>
-				</div>
-			</div>
+<script>
+(function () {
+	var forever = document.getElementById('ban_forever');
+	var value   = document.getElementById('ban_duration_value');
+	var unit    = document.getElementById('ban_duration_unit');
+	if (!forever || !value || !unit) return;
 
-			<div class="acp-row">
-				<div class="acp-field">
-					<label class="acp-label" for="tp_town"><?= h(t('acp.plr.town_label')) ?></label>
-					<select class="acp-select" id="tp_town" name="town">
-						<?php foreach (($config['towns'] ?? []) as $tid => $tname): ?>
-							<option value="<?= (int)$tid ?>"><?= h($tname) ?></option>
-						<?php endforeach; ?>
-					</select>
-				</div>
-				<div class="acp-field">
-					<label class="acp-label" for="tp_x">X</label>
-					<input class="acp-input" id="tp_x" name="x" type="number" value="0">
-				</div>
-				<div class="acp-field">
-					<label class="acp-label" for="tp_y">Y</label>
-					<input class="acp-input" id="tp_y" name="y" type="number" value="0">
-				</div>
-				<div class="acp-field">
-					<label class="acp-label" for="tp_z">Z</label>
-					<input class="acp-input" id="tp_z" name="z" type="number" value="7">
-				</div>
-			</div>
-
-			<div class="acp-actions">
-				<button class="acp-btn" type="submit"><i class="fa fa-location-arrow"></i> <?= h(t('acp.plr.teleport_btn')) ?></button>
-			</div>
-		</form>
-	</div>
-</section>
+	forever.addEventListener('change', function () {
+		value.disabled = forever.checked;
+		unit.disabled  = forever.checked;
+	});
+})();
+</script>

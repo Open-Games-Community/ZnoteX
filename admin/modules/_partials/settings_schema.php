@@ -167,24 +167,133 @@ return array(
 				'help'       => t_default('acp.set.available_towns.help', 'Options come from the towns list below.'),
 			),
 			'towns' => array(
-				'label' => t_default('acp.set.towns.label', 'Towns'),
-				'type'  => 'json',
-				'help'  => t_default('acp.set.towns.help', 'Map of town id to name: {"1":"Rookgaard","8":"Thais"}. In RME press CTRL+T to see ids.'),
+				'label'   => t_default('acp.set.towns.label', 'Towns'),
+				'type'    => 'table',
+				'row_key' => 'id',
+				'value_column' => 'name',
+				'columns' => array(
+					'id'   => array('label' => t_default('acp.set.towns.col_id', 'ID'), 'type' => 'int'),
+					'name' => array('label' => t_default('acp.set.towns.col_name', 'Name'), 'type' => 'text'),
+				),
+				'help' => t_default('acp.set.towns.help', 'One row per town. In RME press CTRL+T to see ids.'),
 			),
 			'vocations' => array(
-				'label' => t_default('acp.set.vocations.label', 'Vocations'),
-				'type'  => 'json',
-				'help'  => t_default('acp.set.vocations.help', 'Each entry: {"name":"Knight","fromVoc":4}. fromVoc is the base vocation id, or false for a base vocation.'),
+				'label'   => t_default('acp.set.vocations.label', 'Vocations'),
+				'type'    => 'table',
+				'row_key' => 'id',
+				'columns' => array(
+					'id'      => array('label' => t_default('acp.set.vocations.col_id', 'ID'), 'type' => 'int'),
+					'name'    => array('label' => t_default('acp.set.vocations.col_name', 'Name'), 'type' => 'text'),
+					'fromVoc' => array('label' => t_default('acp.set.vocations.col_fromvoc', 'Base vocation ID (blank = base)'), 'type' => 'nullable_int'),
+				),
+				'help' => t_default('acp.set.vocations.help', 'One row per vocation. fromVoc is the base vocation id this one promotes from, leave blank for a base vocation.'),
 			),
 			'vocations_gain' => array(
-				'label' => t_default('acp.set.vocations_gain.label', 'Per-level stat gains'),
-				'type'  => 'json',
-				'help'  => t_default('acp.set.vocations_gain.help', 'Per vocation id: {"hp":15,"mp":5,"cap":25}. Used to compute starting health/mana/cap.'),
+				'label'   => t_default('acp.set.vocations_gain.label', 'Per-level stat gains'),
+				'type'    => 'table',
+				'row_key' => 'id',
+				'columns' => array(
+					'id'  => array('label' => t_default('acp.set.vocations_gain.col_id', 'Vocation ID'), 'type' => 'int'),
+					'hp'  => array('label' => t_default('acp.set.vocations_gain.col_hp', 'HP per level'), 'type' => 'int'),
+					'mp'  => array('label' => t_default('acp.set.vocations_gain.col_mp', 'MP per level'), 'type' => 'int'),
+					'cap' => array('label' => t_default('acp.set.vocations_gain.col_cap', 'Capacity per level'), 'type' => 'int'),
+				),
+				'help' => t_default('acp.set.vocations_gain.help', 'One row per vocation id. Used to compute starting health/mana/cap.'),
 			),
-			'player' => array(
-				'label' => t_default('acp.set.player.label', 'Starting character (level, stats, skills, outfits)'),
-				'type'  => 'json',
-				'help'  => t_default('acp.set.player.help', 'The full base/create block: starting level, base health/mana/cap/soul, per-vocation skills and the default male/female outfits.'),
+			'player.base.level' => array(
+				'label' => t_default('acp.set.player.base.level.label', 'Base level'),
+				'type'  => 'int',
+				'help'  => t_default('acp.set.player.base.level.help', 'Used with vocation stat gains to calculate health/mana/cap at any level.'),
+			),
+			'player.base.health' => array(
+				'label' => t_default('acp.set.player.base.health.label', 'Base health'),
+				'type'  => 'int',
+			),
+			'player.base.mana' => array(
+				'label' => t_default('acp.set.player.base.mana.label', 'Base mana'),
+				'type'  => 'int',
+			),
+			'player.base.cap' => array(
+				'label' => t_default('acp.set.player.base.cap.label', 'Base capacity'),
+				'type'  => 'int',
+			),
+			'player.base.soul' => array(
+				'label' => t_default('acp.set.player.base.soul.label', 'Base soul'),
+				'type'  => 'int',
+			),
+			'player.create.level' => array(
+				'label' => t_default('acp.set.player.create.level.label', 'Starting level (new character)'),
+				'type'  => 'int',
+			),
+			'player.create.novocation.level' => array(
+				'label' => t_default('acp.set.player.create.novocation.level.label', 'No-vocation starting level'),
+				'type'  => 'int',
+				'help'  => t_default('acp.set.player.create.novocation.help', 'Special-case settings for vocation id 0 (No vocation).'),
+			),
+			'player.create.novocation.forceTown' => array(
+				'label' => t_default('acp.set.player.create.novocation.forcetown.label', 'Force no-vocation town'),
+				'type'  => 'bool',
+			),
+			'player.create.novocation.townId' => array(
+				'label' => t_default('acp.set.player.create.novocation.townid.label', 'No-vocation town ID'),
+				'type'  => 'int',
+			),
+			'player.create.skills' => array(
+				'label'   => t_default('acp.set.player.create.skills.label', 'Starting skills per vocation'),
+				'type'    => 'table',
+				'row_key' => 'id',
+				'columns' => array(
+					'id'      => array('label' => t_default('acp.set.player.create.skills.col_id', 'Vocation ID'), 'type' => 'int'),
+					'magic'   => array('label' => t_default('acp.set.player.create.skills.col_magic', 'Magic'), 'type' => 'int'),
+					'fist'    => array('label' => t_default('acp.set.player.create.skills.col_fist', 'Fist'), 'type' => 'int'),
+					'club'    => array('label' => t_default('acp.set.player.create.skills.col_club', 'Club'), 'type' => 'int'),
+					'sword'   => array('label' => t_default('acp.set.player.create.skills.col_sword', 'Sword'), 'type' => 'int'),
+					'axe'     => array('label' => t_default('acp.set.player.create.skills.col_axe', 'Axe'), 'type' => 'int'),
+					'dist'    => array('label' => t_default('acp.set.player.create.skills.col_dist', 'Distance'), 'type' => 'int'),
+					'shield'  => array('label' => t_default('acp.set.player.create.skills.col_shield', 'Shielding'), 'type' => 'int'),
+					'fishing' => array('label' => t_default('acp.set.player.create.skills.col_fishing', 'Fishing'), 'type' => 'int'),
+				),
+				'help' => t_default('acp.set.player.create.skills.help', 'One row per vocation id: 0 = No vocation, 1 = Sorcerer, 2 = Druid, 3 = Paladin, 4 = Knight. Extra ids such as 9 are custom/other vocations from the Vocations table above.'),
+			),
+			'player.create.male_outfit.id' => array(
+				'label' => t_default('acp.set.player.create.male_outfit.id.label', 'Male outfit - looktype ID'),
+				'type'  => 'int',
+			),
+			'player.create.male_outfit.head' => array(
+				'label' => t_default('acp.set.player.create.male_outfit.head.label', 'Male outfit - head color'),
+				'type'  => 'int',
+			),
+			'player.create.male_outfit.body' => array(
+				'label' => t_default('acp.set.player.create.male_outfit.body.label', 'Male outfit - body color'),
+				'type'  => 'int',
+			),
+			'player.create.male_outfit.legs' => array(
+				'label' => t_default('acp.set.player.create.male_outfit.legs.label', 'Male outfit - legs color'),
+				'type'  => 'int',
+			),
+			'player.create.male_outfit.feet' => array(
+				'label' => t_default('acp.set.player.create.male_outfit.feet.label', 'Male outfit - feet color'),
+				'type'  => 'int',
+			),
+			'player.create.female_outfit.id' => array(
+				'label' => t_default('acp.set.player.create.female_outfit.id.label', 'Female outfit - looktype ID'),
+				'type'  => 'int',
+			),
+			'player.create.female_outfit.head' => array(
+				'label' => t_default('acp.set.player.create.female_outfit.head.label', 'Female outfit - head color'),
+				'type'  => 'int',
+			),
+			'player.create.female_outfit.body' => array(
+				'label' => t_default('acp.set.player.create.female_outfit.body.label', 'Female outfit - body color'),
+				'type'  => 'int',
+			),
+			'player.create.female_outfit.legs' => array(
+				'label' => t_default('acp.set.player.create.female_outfit.legs.label', 'Female outfit - legs color'),
+				'type'  => 'int',
+			),
+			'player.create.female_outfit.feet' => array(
+				'label' => t_default('acp.set.player.create.female_outfit.feet.label', 'Female outfit - feet color'),
+				'type'  => 'int',
 			),
 		),
 
@@ -230,6 +339,16 @@ return array(
 				'label' => t_default('acp.set.contact_info.label', 'Contact page text'),
 				'type'  => 'textarea',
 				'help'  => t_default('acp.set.contact_info.help', 'Shown on contact.php. Plain text, line breaks are kept. Leave empty to use the translation default.'),
+			),
+			'faq.entries' => array(
+				'label'      => t_default('acp.set.faq.entries.label', 'FAQ questions'),
+				'type'       => 'table',
+				'json_shape' => 'list',
+				'columns'    => array(
+					'question' => array('label' => t_default('acp.set.faq.entries.col_question', 'Question'), 'type' => 'text'),
+					'answer'   => array('label' => t_default('acp.set.faq.entries.col_answer', 'Answer'), 'type' => 'textarea'),
+				),
+				'help' => t_default('acp.set.faq.entries.help', 'Shown on faq.php as an accordion, in this order. Add, remove or reorder rows freely. Add faq.php as a menu link (Admin Panel > Menus) to point visitors at it, e.g. from Support.'),
 			),
 		),
 
@@ -518,9 +637,58 @@ return array(
 				'type'  => 'text',
 			),
 			'downloads.entries' => array(
-				'label' => t_default('acp.set.downloads.entries.label', 'Download entries'),
-				'type'  => 'json',
-				'help'  => t_default('acp.set.downloads.entries.help', 'Enable, disable, reorder or add download rows. Sections: official, unsupported, tools, custom. Optional fields: image and description. Windows and Linux keep using the URL fields above.'),
+				'label'      => t_default('acp.set.downloads.entries.label', 'Download entries'),
+				'type'       => 'table',
+				'json_shape' => 'list',
+				'columns'    => array(
+					'key'         => array('label' => t_default('acp.set.downloads.entries.col_key', 'Key'), 'type' => 'text'),
+					'label'       => array('label' => t_default('acp.set.downloads.entries.col_label', 'Label'), 'type' => 'text'),
+					'section'     => array('label' => t_default('acp.set.downloads.entries.col_section', 'Section'), 'type' => 'select', 'options' => array(
+						'official'     => t_default('acp.set.downloads.entries.sec_official', 'Official'),
+						'unsupported'  => t_default('acp.set.downloads.entries.sec_unsupported', 'Unsupported'),
+						'tools'        => t_default('acp.set.downloads.entries.sec_tools', 'Tools'),
+						'custom'       => t_default('acp.set.downloads.entries.sec_custom', 'Custom'),
+					)),
+					'enabled'     => array('label' => t_default('acp.set.downloads.entries.col_enabled', 'Enabled'), 'type' => 'bool'),
+					'url'         => array('label' => t_default('acp.set.downloads.entries.col_url', 'URL'), 'type' => 'text'),
+					'image'       => array('label' => t_default('acp.set.downloads.entries.col_image', 'Image'), 'type' => 'text'),
+					'description' => array('label' => t_default('acp.set.downloads.entries.col_description', 'Description'), 'type' => 'text'),
+				),
+				'help' => t_default('acp.set.downloads.entries.help', 'Enable, disable, reorder or add download rows. Windows and Linux keep using the URL fields above.'),
+			),
+		),
+
+		t_default('acp.sec.Permissions', 'Permissions') => array(
+			'admin_access' => array(
+				'label' => t_default('acp.set.admin_access.label', 'Admin panel access'),
+				'type'  => 'permissions',
+				'help'  => t_default('acp.set.admin_access.help', 'Owners see and change everything. A scoped account only sees the categories its roles allow - everything else is hidden from the sidebar and refused if opened directly.'),
+			),
+		),
+
+		t_default('acp.sec.Login Protection', 'Login Protection') => array(
+			'login_guard.enabled' => array(
+				'label' => t_default('acp.set.login_guard.enabled.label', 'Lock out an IP after too many failed logins'),
+				'type'  => 'bool',
+			),
+			'login_guard.threshold' => array(
+				'label' => t_default('acp.set.login_guard.threshold.label', 'Failed attempts allowed'),
+				'type'  => 'int',
+				'min'   => 1,
+				'max'   => 100,
+			),
+			'login_guard.window_minutes' => array(
+				'label' => t_default('acp.set.login_guard.window_minutes.label', 'Counting window (minutes)'),
+				'type'  => 'int',
+				'min'   => 1,
+				'max'   => 1440,
+				'help'  => t_default('acp.set.login_guard.window_minutes.help', 'Failed attempts older than this many minutes no longer count toward the lockout.'),
+			),
+			'login_guard.lockout_minutes' => array(
+				'label' => t_default('acp.set.login_guard.lockout_minutes.label', 'Lockout duration (minutes)'),
+				'type'  => 'int',
+				'min'   => 1,
+				'max'   => 1440,
 			),
 		),
 

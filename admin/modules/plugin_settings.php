@@ -92,6 +92,14 @@ $values = znote_plugin_settings_get($plugin);
 						<?php endforeach; ?>
 					</select>
 
+				<?php elseif ($field['type'] === 'color'): ?>
+					<div class="acp-inline" style="gap:8px;">
+						<input type="color" value="<?= h($value !== '' ? $value : '#000000') ?>"
+							onchange="document.getElementById('<?= h($id) ?>').value=this.value;">
+						<input type="text" id="<?= h($id) ?>" name="<?= h($key) ?>" value="<?= h($value) ?>" class="acp-input"
+							placeholder="<?= h(t_default('acp.plgset.color_placeholder', 'blank = theme default')) ?>" maxlength="7" style="max-width:110px;">
+					</div>
+
 				<?php elseif ($field['type'] === 'checklist'):
 					$chosen = array_flip(array_filter(explode(',', $value)));
 				?>

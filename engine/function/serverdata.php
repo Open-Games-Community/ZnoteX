@@ -131,8 +131,13 @@ function serverdata_load(string $key)
 	}
 
 	$loaded = $cache->load();
+	$loaded = is_array($loaded) ? $loaded : false;
 
-	return is_array($loaded) ? $loaded : false;
+	if (function_exists('serverdata_apply_overrides')) {
+		$loaded = serverdata_apply_overrides($key, $loaded);
+	}
+
+	return $loaded;
 }
 
 function serverdata_store(string $key, array $value): bool

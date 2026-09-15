@@ -30,6 +30,7 @@ if ($config['ServerEngineReal'] === 'CANARY') {
 
 require_once $filepath.'engine/database/connect.php';
 require_once $filepath.'engine/function/general.php';
+require_once $filepath.'engine/function/users.php';
 require_once $filepath.'engine/function/cache.php';
 require_once $filepath.'engine/adapter/ServerAdapterInterface.php';
 require_once $filepath.'engine/adapter/TFSAdapter.php';

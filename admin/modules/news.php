@@ -195,7 +195,7 @@ if ($action === 'add') {
 		<div class="acp-card-body is-flush">
 			<?php if ($news): ?>
 				<div class="acp-table-wrap">
-					<table class="acp-table">
+					<table class="acp-table" data-sortable>
 						<thead>
 							<tr>
 								<th><?= t('acp.news.col_date') ?></th>

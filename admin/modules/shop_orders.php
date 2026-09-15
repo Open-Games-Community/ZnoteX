@@ -1,7 +1,7 @@
 <?php
 /**
  * Title: Shop Pending / History
- * Icon: fa-history
+ * Icon: fa-list-alt
  * Group: Economy
  * Order: 15
  * Description: Pending shop deliveries and completed purchase history.
@@ -22,7 +22,12 @@ $historyPages = max(1, (int)ceil($historyTotal / $historyPerPage));
 $historyPage = min($historyPage, $historyPages);
 $historyOffset = ($historyPage - 1) * $historyPerPage;
 
-$pending = db()->fetchAll("SELECT * FROM `znote_shop_orders` ORDER BY `id` DESC LIMIT 100;");
+$pendingPerPage = 50;
+$pendingPages   = max(1, (int)ceil($pendingTotal / $pendingPerPage));
+$pendingPage    = max(1, min($pendingPages, intv($_GET['ppage'] ?? 1)));
+$pendingOffset  = ($pendingPage - 1) * $pendingPerPage;
+
+$pending = db()->fetchAll("SELECT * FROM `znote_shop_orders` ORDER BY `id` ASC LIMIT {$pendingOffset}, {$pendingPerPage};");
 $history = db()->fetchAll("SELECT * FROM `znote_shop_logs` ORDER BY `id` DESC LIMIT {$historyOffset}, {$historyPerPage};");
 
 $pending = is_array($pending) ? $pending : [];
@@ -94,7 +99,7 @@ $historyPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote
 	<div class="acp-card-body is-flush">
 		<?php if ($pending): ?>
 			<div class="acp-table-wrap">
-				<table class="acp-table">
+				<table class="acp-table" data-sortable>
 					<thead>
 						<tr>
 							<th>#</th>
@@ -131,6 +136,15 @@ $historyPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote
 		<?php else: ?>
 			<?php acp_empty(t('acp.sord.pending_empty'), 'fa-check-circle'); ?>
 		<?php endif; ?>
+		<?php if ($pendingPages > 1): ?>
+			<div class="acp-toolbar">
+				<span class="is-muted"><?= $pendingPage ?> / <?= $pendingPages ?></span>
+				<div class="acp-actions is-tight">
+					<?php if ($pendingPage > 1): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['ppage' => $pendingPage - 1, 'page' => $historyPage])) ?>"><?= t('common.previous') ?></a><?php endif; ?>
+					<?php if ($pendingPage < $pendingPages): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['ppage' => $pendingPage + 1, 'page' => $historyPage])) ?>"><?= t('common.next') ?></a><?php endif; ?>
+				</div>
+			</div>
+		<?php endif; ?>
 	</div>
 </section>
 
@@ -142,7 +156,7 @@ $historyPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote
 	<div class="acp-card-body is-flush">
 		<?php if ($history): ?>
 			<div class="acp-table-wrap">
-				<table class="acp-table">
+				<table class="acp-table" data-sortable>
 					<thead>
 						<tr>
 							<th>#</th>
@@ -185,8 +199,8 @@ $historyPoints = acp_count("SELECT COALESCE(SUM(`points`), 0) AS `c` FROM `znote
 			<div class="acp-toolbar">
 				<span class="is-muted"><?= $historyPage ?> / <?= $historyPages ?></span>
 				<div class="acp-actions is-tight">
-					<?php if ($historyPage > 1): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['page' => $historyPage - 1])) ?>"><?= t('common.previous') ?></a><?php endif; ?>
-					<?php if ($historyPage < $historyPages): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['page' => $historyPage + 1])) ?>"><?= t('common.next') ?></a><?php endif; ?>
+					<?php if ($historyPage > 1): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['page' => $historyPage - 1, 'ppage' => $pendingPage])) ?>"><?= t('common.previous') ?></a><?php endif; ?>
+					<?php if ($historyPage < $historyPages): ?><a class="acp-btn acp-btn--ghost acp-btn--sm" href="<?= h(acp_url('shop_orders', ['page' => $historyPage + 1, 'ppage' => $pendingPage])) ?>"><?= t('common.next') ?></a><?php endif; ?>
 				</div>
 			</div>
 		<?php endif; ?>

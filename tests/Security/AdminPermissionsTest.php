@@ -14,8 +14,8 @@ final class AdminPermissionsTest extends TestCase
 			'ServerEngine' => 'TFS_10',
 			'page_admin_access' => ['OwnerAccount'],
 			'page_admin_roles' => [
-				'ModeratorAccount' => ['moderator'],
-				'SupportAccount' => 'support',
+				'ModeratorAccount' => ['gallery', 'reports'],
+				'SupportAccount' => 'helpdesk',
 			],
 		];
 	}
@@ -26,16 +26,16 @@ final class AdminPermissionsTest extends TestCase
 		$this->assertSame(['owner'], $roles);
 	}
 
-	public function testAssignedRoleIsHonoured(): void
+	public function testAssignedModulesAreHonoured(): void
 	{
 		$roles = \admin_roles(['name' => 'ModeratorAccount']);
-		$this->assertSame(['moderator'], $roles);
+		$this->assertSame(['gallery', 'reports'], $roles);
 	}
 
-	public function testASingleAssignedRoleStringIsNormalisedToAnArray(): void
+	public function testASingleAssignedModuleStringIsNormalisedToAnArray(): void
 	{
 		$roles = \admin_roles(['name' => 'SupportAccount']);
-		$this->assertSame(['support'], $roles);
+		$this->assertSame(['helpdesk'], $roles);
 	}
 
 	public function testUnknownAccountGetsNoRoles(): void
@@ -65,16 +65,22 @@ final class AdminPermissionsTest extends TestCase
 		$this->assertTrue(\acp_can_module('settings', ['name' => 'OwnerAccount']));
 	}
 
-	public function testRoleOnlyReachesItsOwnModules(): void
+	public function testAScopedAccountOnlyReachesItsGrantedModules(): void
 	{
 		$this->assertTrue(\acp_can_module('gallery', ['name' => 'ModeratorAccount']));
 		$this->assertFalse(\acp_can_module('accounts', ['name' => 'ModeratorAccount']));
 	}
 
-	public function testModuleWithNoRoleMappingIsOwnerOnly(): void
+	public function testAScopedAccountAlwaysReachesDashboardAndSearch(): void
 	{
-		// 'update' intentionally has no entry in acp_module_roles(), so only
-		// the owner bypass in acp_can_module() may reach it - not any role.
+		$this->assertTrue(\acp_can_module('dashboard', ['name' => 'ModeratorAccount']));
+		$this->assertTrue(\acp_can_module('search', ['name' => 'ModeratorAccount']));
+	}
+
+	public function testAnUngrantedAccountReachesNoModuleAtAll(): void
+	{
+		// 'update' was never granted to anyone in this fixture, so only the
+		// owner bypass in acp_can_module() may reach it.
 		$this->assertFalse(\acp_can_module('update', ['name' => 'ModeratorAccount']));
 		$this->assertFalse(\acp_can_module('update', ['name' => 'SupportAccount']));
 	}

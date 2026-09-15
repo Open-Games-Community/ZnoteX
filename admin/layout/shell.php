@@ -34,7 +34,7 @@ $acp_engine   = serverEngineReal();
 	<link rel="apple-touch-icon" href="../assets/img/znoteX.png">
 
 	<link rel="stylesheet" href="../assets/fontawesome/css/font-awesome.min.css?acp=1">
-	<link rel="stylesheet" href="assets/acp.css?acp=4">
+	<link rel="stylesheet" href="assets/acp.css?acp=5">
 
 	<script>
 		// Applied before first paint so the theme never flashes light-then-dark.
@@ -64,32 +64,56 @@ $acp_engine   = serverEngineReal();
 		</div>
 
 		<nav class="acp-nav" id="acpNav" aria-label="<?= h(t('acp.shell.nav_label')) ?>">
-			<?php foreach ($acp_groups as $groupName => $groupModules): ?>
+			<?php
+			// A little helper, inline since it is only ever used right here:
+			// renders one nav link <li>, identical whether it sits directly in
+			// a group or inside a plugin's sub-list.
+			$acp_nav_link = function (string $key, array $mod, string $groupName): void {
+				$isExternal = !empty($mod['url']);
+				$href       = $isExternal ? $mod['url'] : acp_url($key);
+				$badge      = acp_badge($key);
+				$active     = (!$isExternal && $key === $GLOBALS['acp_page']);
+				?>
+				<li>
+					<a class="acp-nav-link<?= $active ? ' is-active' : '' ?>"
+					   href="<?= h($href) ?>"
+					   data-title="<?= h(strtolower($mod['title'] . ' ' . $groupName)) ?>"
+					   <?= $isExternal ? 'target="' . h($mod['target'] ?? '_self') . '"' : '' ?>>
+						<i class="fa <?= h($mod['icon']) ?>"></i>
+						<span class="acp-nav-text"><?= h($mod['title']) ?></span>
+						<?php if ($badge !== null): ?>
+							<span class="acp-nav-badge"><?= (int)$badge ?></span>
+						<?php elseif ($isExternal): ?>
+							<i class="fa fa-external-link acp-nav-ext"></i>
+						<?php endif; ?>
+					</a>
+				</li>
+				<?php
+			};
+			?>
+			<?php foreach ($acp_groups as $groupName => $groupModules):
+				$acp_cluster = acp_nav_cluster($groupModules);
+			?>
 				<div class="acp-nav-group">
 					<button type="button" class="acp-nav-group-label" aria-expanded="true">
 						<span><?= h($groupName) ?></span>
 						<i class="fa fa-angle-down"></i>
 					</button>
 					<ul>
-						<?php foreach ($groupModules as $key => $mod):
-							$isExternal = !empty($mod['url']);
-							$href       = $isExternal ? $mod['url'] : acp_url($key);
-							$badge      = acp_badge($key);
-							$active     = (!$isExternal && $key === $acp_page);
+						<?php foreach ($acp_cluster['plain'] as $key => $mod): $acp_nav_link($key, $mod, $groupName); endforeach; ?>
+
+						<?php foreach ($acp_cluster['plugins'] as $pluginKey => $cluster):
+							$pluginActive = array_key_exists($acp_page, $cluster['items']);
 						?>
-							<li>
-								<a class="acp-nav-link<?= $active ? ' is-active' : '' ?>"
-								   href="<?= h($href) ?>"
-								   data-title="<?= h(strtolower($mod['title'] . ' ' . $groupName)) ?>"
-								   <?= $isExternal ? 'target="' . h($mod['target'] ?? '_self') . '"' : '' ?>>
-									<i class="fa <?= h($mod['icon']) ?>"></i>
-									<span class="acp-nav-text"><?= h($mod['title']) ?></span>
-									<?php if ($badge !== null): ?>
-										<span class="acp-nav-badge"><?= (int)$badge ?></span>
-									<?php elseif ($isExternal): ?>
-										<i class="fa fa-external-link acp-nav-ext"></i>
-									<?php endif; ?>
-								</a>
+							<li class="acp-nav-plugin<?= $pluginActive ? ' is-open' : '' ?>">
+								<button type="button" class="acp-nav-plugin-label" aria-expanded="<?= $pluginActive ? 'true' : 'false' ?>">
+									<i class="fa fa-plug"></i>
+									<span class="acp-nav-text"><?= h($cluster['label']) ?></span>
+									<i class="fa fa-angle-right acp-nav-caret"></i>
+								</button>
+								<ul>
+									<?php foreach ($cluster['items'] as $key => $mod): $acp_nav_link($key, $mod, $groupName . ' ' . $cluster['label']); endforeach; ?>
+								</ul>
 							</li>
 						<?php endforeach; ?>
 					</ul>
@@ -113,9 +137,10 @@ $acp_engine   = serverEngineReal();
 			<form class="acp-top-search" method="get" action="index.php" role="search">
 				<input type="hidden" name="p" value="search">
 				<i class="fa fa-search"></i>
-				<input type="search" name="q" list="acpSearchList"
+				<input type="search" id="acpTopSearch" name="q" list="acpSearchList"
 					   value="<?= h($acp_page === 'search' ? ($_GET['q'] ?? '') : '') ?>"
 					   placeholder="<?= h(t('acp.shell.search_the_panel')) ?>" autocomplete="off" aria-label="<?= h(t('acp.shell.search_the_panel')) ?>">
+				<kbd class="acp-search-kbd" aria-hidden="true">Ctrl K</kbd>
 				<datalist id="acpSearchList">
 					<?php foreach (array_slice(acp_search_index(), 0, 300) as $acp_hit): ?>
 						<option value="<?= h($acp_hit['title']) ?>"></option>
@@ -144,6 +169,17 @@ $acp_engine   = serverEngineReal();
 		<main class="acp-content">
 
 			<div class="acp-page-head">
+				<?php if ($acp_page !== 'dashboard'): ?>
+					<nav class="acp-breadcrumb" aria-label="<?= h(t_default('acp.shell.breadcrumb_label', 'Breadcrumb')) ?>">
+						<a href="<?= h(acp_url('dashboard')) ?>"><?= h(t('acp.mod.dashboard.title')) ?></a>
+						<?php if (!empty($acp_module['group'])): ?>
+							<span class="acp-breadcrumb-sep">/</span>
+							<span><?= h($acp_module['group']) ?></span>
+						<?php endif; ?>
+						<span class="acp-breadcrumb-sep">/</span>
+						<span class="acp-breadcrumb-current"><?= h($acp_title) ?></span>
+					</nav>
+				<?php endif; ?>
 				<h1><?= h($acp_title) ?></h1>
 				<?php if (!empty($acp_module['description'])): ?>
 					<p><?= h($acp_module['description']) ?></p>
@@ -177,6 +213,6 @@ $acp_engine   = serverEngineReal();
 	</section>
 </div>
 
-<script src="assets/acp.js?acp=2"></script>
+<script src="assets/acp.js?acp=3"></script>
 </body>
 </html>

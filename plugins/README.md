@@ -232,6 +232,8 @@ the difference between an extension point and a landmine.
 | `shop.purchased` | notify | after the points are taken | `account_id`, `offer_id`, `type`, `itemid`, `count`, `points` |
 | `account.registered` | notify | after an account is created | `name`, `email` |
 | `character.created` | notify | after a character is created | `name`, `account_id`, `vocation` |
+| `character.renamed` | notify | after an admin renames a character | `player_id`, `old_name`, `new_name` |
+| `payment.completed` | notify | after a real-money payment is recorded | `provider`, `reference`, `provider_reference`, `account_id`, `price`, `currency` |
 
 `shop.price` is the one to reach for when you want to change what something
 costs. Its result is used for all three of the affordability check, the points

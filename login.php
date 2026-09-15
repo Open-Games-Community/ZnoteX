@@ -72,11 +72,17 @@ if (empty($_POST) === false && !isset($_POST['tfa2_code'])) {
 	$username = $_POST['username'];
 	$password = $_POST['password'];
 
-	if (empty($username) || empty($password)) {
+	$loginGuardIp = znote_login_guard_ip();
+	$loginGuardLockedFor = znote_login_guard_lockout_remaining($loginGuardIp);
+
+	if ($loginGuardLockedFor > 0) {
+		$errors[] = t('login.too_many_attempts', ['minutes' => (int)ceil($loginGuardLockedFor / 60)]);
+	} else if (empty($username) || empty($password)) {
 		$errors[] = t('login.empty_fields');
 	} else if (strlen($username) > 32 || strlen($password) > 64) {
 			$errors[] = t('login.too_long');
 	} else if (user_exist($username) === false) {
+		znote_login_guard_record($loginGuardIp, (string)$username, false);
 		$errors[] = t('login.not_found');
 	} /*else if (user_activated($username) === false) {
 		$errors[] = t('login.not_activated');
@@ -89,8 +95,10 @@ if (empty($_POST) === false && !isset($_POST['tfa2_code'])) {
 		// scheme it uses (see engine/adapter/).
 		$login = znote_server_adapter()->login($username, $password);
 		if ($login === false) {
+			znote_login_guard_record($loginGuardIp, (string)$username, false);
 			$errors[] = t('login.wrong_combo');
 		} else {
+			znote_login_guard_record($loginGuardIp, (string)$username, true);
 			// Check if user have access to login
 			$status = false;
 			if ($config['mailserver']['register']) {
