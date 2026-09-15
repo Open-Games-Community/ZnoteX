@@ -557,6 +557,194 @@ function znote_update_preflight(array $latest): array
 	return array('ok' => znote_update_checks_pass($checks), 'checks' => $checks, 'stage' => $stage, 'manifest' => $manifest);
 }
 
+function znote_update_check_state_file(): string
+{
+	return znote_update_storage() . '/check_progress.json';
+}
+
+function znote_update_check_state_load(): ?array
+{
+	$file = znote_update_check_state_file();
+	if (!is_file($file)) {
+		return null;
+	}
+	$data = json_decode((string)file_get_contents($file), true);
+	return is_array($data) ? $data : null;
+}
+
+function znote_update_check_state_save(array $state): void
+{
+	file_put_contents(znote_update_check_state_file(), json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
+function znote_update_check_state_clear(): void
+{
+	$file = znote_update_check_state_file();
+	if (is_file($file)) {
+		unlink($file);
+	}
+}
+
+function znote_update_check_finish(array $checks, array $manifest): array
+{
+	znote_update_check_state_clear();
+	return array('ok' => znote_update_checks_pass($checks), 'phase' => 'done', 'checks' => $checks, 'manifest' => $manifest);
+}
+
+function znote_update_check_start(array $latest): array
+{
+	if (empty($latest['ok'])) {
+		return znote_update_check_finish(array(znote_update_check('Release metadata', false, (string)($latest['error'] ?? 'Unknown error.'))), array());
+	}
+
+	$manifest = $latest['manifest'];
+	$version = (string)$manifest['version'];
+	$requires = is_array($manifest['requirements'] ?? null) ? $manifest['requirements'] : array();
+
+	$checks = array();
+	$checks[] = znote_update_check_version($version);
+	$checks[] = znote_update_check('Digital signature', true, 'update.json has a valid ZnoteX RSA/SHA-256 signature.');
+	$checks[] = znote_update_check_php_version($requires);
+	foreach (znote_update_check_extensions($requires) as $check) {
+		$checks[] = $check;
+	}
+
+	$storageOk = znote_update_prepare_storage() && is_writable(znote_update_storage());
+	$rootOk = is_writable(znote_update_root());
+	$checks[] = znote_update_check('Update storage', $storageOk, $storageOk ? 'Writable.' : 'engine/update is not writable.');
+	$checks[] = znote_update_check('Website files', $rootOk, $rootOk ? 'The website root is writable.' : 'The website root is not writable by PHP.');
+	$checks[] = znote_update_check_disk_space($manifest);
+
+	$download = $storageOk ? znote_update_download_package($latest) : array('ok' => false, 'error' => 'Storage is unavailable.');
+	$checks[] = znote_update_check('ZIP checksum', !empty($download['ok']), !empty($download['ok']) ? 'The downloaded package matches its signed SHA-256 checksum.' : (string)($download['error'] ?? 'Download failed.'));
+
+	$stage = znote_update_storage() . '/staging/' . preg_replace('/[^0-9A-Za-z._-]/', '-', $version);
+
+	if (empty($download['ok']) || !class_exists('ZipArchive')) {
+		$checks[] = znote_update_check('Package contents', false, !empty($download['ok']) ? 'The PHP Zip extension is required.' : 'The ZIP was not validated.');
+		return znote_update_check_finish($checks, $manifest);
+	}
+
+	if (is_dir($stage)) {
+		znote_update_remove_tree($stage);
+	}
+	if (!mkdir($stage, 0750, true) && !is_dir($stage)) {
+		$checks[] = znote_update_check('Package contents', false, 'The staging directory cannot be created.');
+		return znote_update_check_finish($checks, $manifest);
+	}
+
+	$zip = new ZipArchive();
+	if ($zip->open($download['file']) !== true) {
+		$checks[] = znote_update_check('Package contents', false, 'The ZIP package cannot be opened.');
+		return znote_update_check_finish($checks, $manifest);
+	}
+	$total = $zip->numFiles;
+	$zip->close();
+
+	znote_update_check_state_save(array(
+		'phase'    => 'extract',
+		'cursor'   => 0,
+		'seen'     => array(),
+		'zip_file' => $download['file'],
+		'stage'    => $stage,
+		'manifest' => $manifest,
+		'checks'   => $checks,
+	));
+
+	return array('ok' => true, 'phase' => 'extract', 'cursor' => 0, 'total' => $total, 'message' => 'Extracting package...');
+}
+
+function znote_update_check_step_extract(array $state, int $batchSize): array
+{
+	$zip = new ZipArchive();
+	if ($zip->open($state['zip_file']) !== true) {
+		$state['checks'][] = znote_update_check('Package contents', false, 'The ZIP package cannot be opened.');
+		return znote_update_check_finish($state['checks'], $state['manifest']);
+	}
+
+	$total = $zip->numFiles;
+	$end = min($total, $state['cursor'] + $batchSize);
+	for ($index = $state['cursor']; $index < $end; $index++) {
+		$raw = (string)$zip->getNameIndex($index);
+		if (str_ends_with(str_replace('\\', '/', $raw), '/')) {
+			continue;
+		}
+		$entry = znote_update_extract_entry($zip, $index, $raw, $state['manifest']['files'], $state['seen'], $state['stage']);
+		if (!$entry['ok']) {
+			$zip->close();
+			$state['checks'][] = znote_update_check('Package contents', false, $entry['error']);
+			return znote_update_check_finish($state['checks'], $state['manifest']);
+		}
+		$state['seen'][$entry['path']] = true;
+	}
+	$zip->close();
+
+	$state['cursor'] = $end;
+	if ($state['cursor'] < $total) {
+		znote_update_check_state_save($state);
+		return array('ok' => true, 'phase' => 'extract', 'cursor' => $state['cursor'], 'total' => $total, 'message' => 'Extracting package (' . $state['cursor'] . '/' . $total . ')...');
+	}
+
+	$validated = count($state['seen']) === count($state['manifest']['files']);
+	$state['checks'][] = znote_update_check('Package contents', $validated, $validated ? count($state['manifest']['files']) . ' signed files validated; no protected or unexpected file found.' : 'The ZIP does not contain every signed file.');
+	$state['checks'][] = znote_update_check_migrations($state['manifest'], $state['stage']);
+
+	$tracked = array();
+	$installedFile = znote_update_storage() . '/installed.json';
+	if (is_file($installedFile)) {
+		$installed = json_decode((string)file_get_contents($installedFile), true);
+		$tracked = is_array($installed['files'] ?? null) ? $installed['files'] : array();
+	}
+	if ($tracked === array()) {
+		$state['checks'][] = znote_update_check('Local modifications', true, 'No locally modified managed file will be overwritten.');
+		return znote_update_check_finish($state['checks'], $state['manifest']);
+	}
+
+	$state['phase'] = 'localmods';
+	$state['cursor'] = 0;
+	$state['tracked'] = $tracked;
+	$state['tracked_paths'] = array_keys($tracked);
+	$state['conflicts'] = array();
+	znote_update_check_state_save($state);
+	return array('ok' => true, 'phase' => 'localmods', 'cursor' => 0, 'total' => count($state['tracked_paths']), 'message' => 'Package validated. Checking for local modifications...');
+}
+
+function znote_update_check_step_localmods(array $state, int $batchSize): array
+{
+	$total = count($state['tracked_paths']);
+	foreach (array_slice($state['tracked_paths'], $state['cursor'], $batchSize) as $path) {
+		$target = znote_update_root() . '/' . znote_update_path((string)$path);
+		if (is_file($target) && hash_file('sha256', $target) !== (string)$state['tracked'][$path]) {
+			$state['conflicts'][] = (string)$path;
+		}
+	}
+	$state['cursor'] = min($total, $state['cursor'] + $batchSize);
+	if ($state['cursor'] < $total) {
+		znote_update_check_state_save($state);
+		return array('ok' => true, 'phase' => 'localmods', 'cursor' => $state['cursor'], 'total' => $total, 'message' => 'Checking local files (' . $state['cursor'] . '/' . $total . ')...');
+	}
+
+	$conflicts = $state['conflicts'];
+	$state['checks'][] = znote_update_check('Local modifications', $conflicts === array(), $conflicts === array() ? 'No locally modified managed file will be overwritten.' : 'Modified files would be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)));
+	return znote_update_check_finish($state['checks'], $state['manifest']);
+}
+
+function znote_update_check_step(int $batchSize = 60): array
+{
+	$state = znote_update_check_state_load();
+	if ($state === null) {
+		return array('ok' => false, 'error' => 'No check is in progress.');
+	}
+
+	switch ($state['phase']) {
+		case 'extract':   return znote_update_check_step_extract($state, $batchSize);
+		case 'localmods': return znote_update_check_step_localmods($state, $batchSize);
+	}
+
+	znote_update_check_state_clear();
+	return array('ok' => false, 'error' => 'Unknown check phase.');
+}
+
 function znote_update_backup(array $files, string $version): array
 {
 	$id = gmdate('Ymd-His') . '-from-' . preg_replace('/[^0-9A-Za-z._-]/', '-', $version);
@@ -678,6 +866,9 @@ function znote_update_copy_files(array $files, string $stage): array
 
 function znote_update_install(array $latest): array
 {
+	@set_time_limit(0);
+	@ini_set('max_execution_time', '0');
+
 	$preflight = znote_update_preflight($latest);
 	if (!$preflight['ok']) {
 		return array('ok' => false, 'error' => 'The pre-installation check is not fully green.', 'checks' => $preflight['checks']);
@@ -731,6 +922,173 @@ function znote_update_backups(): array
 	}
 	usort($result, static fn(array $a, array $b): int => strcmp((string)$b['journal']['created_at'], (string)$a['journal']['created_at']));
 	return $result;
+}
+
+function znote_update_progress_file(): string
+{
+	return znote_update_storage() . '/progress.json';
+}
+
+function znote_update_progress_load(): ?array
+{
+	$file = znote_update_progress_file();
+	if (!is_file($file)) {
+		return null;
+	}
+	$data = json_decode((string)file_get_contents($file), true);
+	return is_array($data) ? $data : null;
+}
+
+function znote_update_progress_save(array $progress): void
+{
+	file_put_contents(znote_update_progress_file(), json_encode($progress, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+}
+
+function znote_update_install_cleanup(): void
+{
+	$file = znote_update_progress_file();
+	if (is_file($file)) {
+		unlink($file);
+	}
+	$lock = znote_update_storage() . '/maintenance.lock';
+	if (is_file($lock)) {
+		unlink($lock);
+	}
+}
+
+function znote_update_install_start(array $latest): array
+{
+	$preflight = znote_update_preflight($latest);
+	if (!$preflight['ok']) {
+		return array('ok' => false, 'error' => 'The pre-installation check is not fully green.', 'checks' => $preflight['checks']);
+	}
+
+	$manifest = $preflight['manifest'];
+	$paths = array_keys($manifest['files']);
+
+	$id = gmdate('Ymd-His') . '-from-' . preg_replace('/[^0-9A-Za-z._-]/', '-', znote_update_current_version());
+	$backupDir = znote_update_storage() . '/backups/' . $id;
+	if (!mkdir($backupDir, 0750, true) && !is_dir($backupDir)) {
+		return array('ok' => false, 'error' => 'The backup directory cannot be created.');
+	}
+
+	znote_update_progress_save(array(
+		'phase'          => 'backup',
+		'cursor'         => 0,
+		'paths'          => $paths,
+		'total'          => count($paths),
+		'stage'          => $preflight['stage'],
+		'manifest'       => $manifest,
+		'backup_id'      => $id,
+		'backup_dir'     => $backupDir,
+		'backup_journal' => array('id' => $id, 'version' => znote_update_current_version(), 'created_at' => gmdate(DATE_ATOM), 'files' => array()),
+	));
+
+	$lock = znote_update_storage() . '/maintenance.lock';
+	file_put_contents($lock, json_encode(array('version' => $manifest['version'], 'started_at' => gmdate(DATE_ATOM))));
+
+	return array('ok' => true, 'phase' => 'backup', 'cursor' => 0, 'total' => count($paths), 'message' => 'Starting backup...');
+}
+
+function znote_update_install_step_backup(array $progress, int $batchSize): array
+{
+	foreach (array_slice($progress['paths'], $progress['cursor'], $batchSize) as $path) {
+		$source = znote_update_root() . '/' . $path;
+		$exists = is_file($source);
+		$progress['backup_journal']['files'][$path] = $exists;
+		if (!$exists) {
+			continue;
+		}
+		$target = $progress['backup_dir'] . '/files/' . $path;
+		if (!is_dir(dirname($target)) && !mkdir(dirname($target), 0750, true) && !is_dir(dirname($target))) {
+			znote_update_install_cleanup();
+			return array('ok' => false, 'error' => 'A backup directory cannot be created: ' . $path . '. No files were changed.');
+		}
+		if (!copy($source, $target)) {
+			znote_update_install_cleanup();
+			return array('ok' => false, 'error' => 'A managed file cannot be backed up: ' . $path . '. No files were changed.');
+		}
+	}
+
+	$doneCount = min($progress['total'], $progress['cursor'] + $batchSize);
+	$message = 'Backing up files (' . $doneCount . '/' . $progress['total'] . ')...';
+	$progress['cursor'] = $doneCount;
+	if ($progress['cursor'] >= $progress['total']) {
+		file_put_contents($progress['backup_dir'] . '/backup.json', json_encode($progress['backup_journal'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+		$progress['phase'] = 'migrate';
+		$progress['cursor'] = 0;
+		$message = 'Backup complete (' . $progress['total'] . ' files). Applying database migrations...';
+	}
+	znote_update_progress_save($progress);
+	return array('ok' => true, 'phase' => $progress['phase'], 'cursor' => $progress['cursor'], 'total' => $progress['total'], 'message' => $message);
+}
+
+function znote_update_install_step_migrate(array $progress, array $manifest): array
+{
+	$result = znote_update_apply_migrations($manifest, $progress['stage']);
+	if (!$result['ok']) {
+		znote_update_install_cleanup();
+		return array('ok' => false, 'error' => $result['error'] . ' No files were changed.');
+	}
+	$progress['phase'] = 'copy';
+	$progress['cursor'] = 0;
+	znote_update_progress_save($progress);
+	return array('ok' => true, 'phase' => 'copy', 'cursor' => 0, 'total' => $progress['total'], 'message' => 'Database migrations applied.');
+}
+
+function znote_update_install_step_copy(array $progress, array $manifest, int $batchSize): array
+{
+	$batch = array_slice($progress['paths'], $progress['cursor'], $batchSize);
+	$files = array();
+	foreach ($batch as $path) {
+		$files[$path] = $manifest['files'][$path];
+	}
+
+	$backup = array('ok' => true, 'id' => $progress['backup_id'], 'directory' => $progress['backup_dir'], 'journal' => $progress['backup_journal']);
+	$copied = znote_update_copy_files($files, $progress['stage']);
+	if (!$copied['ok']) {
+		$restored = znote_update_restore_backup($backup);
+		znote_update_install_cleanup();
+		return array('ok' => false, 'error' => $copied['error'] . ($restored['ok'] ? ' The file backup was restored.' : ' Automatic restoration failed: ' . $restored['error']));
+	}
+
+	$progress['cursor'] = min($progress['total'], $progress['cursor'] + $batchSize);
+	if ($progress['cursor'] < $progress['total']) {
+		znote_update_progress_save($progress);
+		return array('ok' => true, 'phase' => 'copy', 'cursor' => $progress['cursor'], 'total' => $progress['total'], 'message' => 'Installing files (' . $progress['cursor'] . '/' . $progress['total'] . ')...');
+	}
+
+	file_put_contents(znote_update_storage() . '/installed.json', json_encode(array(
+		'version'      => (string)$manifest['version'],
+		'installed_at' => gmdate(DATE_ATOM),
+		'backup'       => (string)$progress['backup_id'],
+		'files'        => $manifest['files'],
+	), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+	if (function_exists('znote_cache_flush')) {
+		znote_cache_flush();
+	}
+
+	$result = array('ok' => true, 'phase' => 'done', 'cursor' => $progress['total'], 'total' => $progress['total'], 'version' => (string)$manifest['version'], 'backup' => (string)$progress['backup_id'], 'message' => 'ZnoteX was updated to version ' . $manifest['version'] . '.');
+	znote_update_install_cleanup();
+	return $result;
+}
+
+function znote_update_install_step(int $batchSize = 40): array
+{
+	$progress = znote_update_progress_load();
+	if ($progress === null) {
+		return array('ok' => false, 'error' => 'No update is in progress.');
+	}
+	$manifest = $progress['manifest'];
+
+	switch ($progress['phase']) {
+		case 'backup':  return znote_update_install_step_backup($progress, $batchSize);
+		case 'migrate': return znote_update_install_step_migrate($progress, $manifest);
+		case 'copy':    return znote_update_install_step_copy($progress, $manifest, $batchSize);
+	}
+
+	znote_update_install_cleanup();
+	return array('ok' => false, 'error' => 'Unknown install phase.');
 }
 
 function znote_update_rollback_latest(): array
