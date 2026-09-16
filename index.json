@@ -36,7 +36,7 @@
     {
         "key": "account_security",
         "name": "Account Security",
-        "version": "1.2.4",
+        "version": "1.2.5",
         "author": "Alex - opengamescommunity.com",
         "description": "Account security adds a box on My Account page with the current IP adress, recent activity, 2FA Status.",
         "update": [
@@ -166,7 +166,7 @@
     {
         "key": "wheel_of_fortune",
         "name": "Wheel of Fortune",
-        "version": "1.1.6",
+        "version": "1.1.7",
         "author": "Alex - opengamescommunity.com",
         "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
         "update": [
