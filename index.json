@@ -166,10 +166,11 @@
     {
         "key": "wheel_of_fortune",
         "name": "Wheel of Fortune",
-        "version": "1.1.5",
+        "version": "1.1.6",
         "author": "Alex - opengamescommunity.com",
         "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
         "update": [
+			"Patch Fix: modified :before CSS rule that was moving others plugins on buypoints page.",
 			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
