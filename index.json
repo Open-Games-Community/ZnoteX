@@ -2,10 +2,11 @@
   {
     "key": "tibiacom_v1",
     "name": "TibiaCOM v1",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "author": "Alex - opengamescommunity.com",
     "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
     "update": [
+	  "Fixed BBCode on news/changelogs, added a max-width for streamers plugin on top, cache bust style.",
 	  "Update For Docker",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
@@ -19,10 +20,11 @@
   {
     "key": "old_school",
     "name": "Old School",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "author": "Hemrenus321",
     "description": "old_school theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Removed a CSS making weird stream plugin, BBCode for news & changelog, cache bust CSS.",
 	  "Update thhe 2FA",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
@@ -36,7 +38,7 @@
   {
     "key": "time_sand",
     "name": "Time Sand",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "author": "Alex - opengamescommunity.com",
     "description": "Time Sand theme by alexv45 for ZnoteX.",
     "update": [
@@ -66,10 +68,11 @@
   {
     "key": "void",
     "name": "Void",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "author": "Alex - opengamescommunity.com",
     "description": "Void theme by alexv45 for ZnoteX.",
     "update": [
+	  "Small fix on CSS.",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
@@ -158,10 +161,11 @@
   {
     "key": "tibiacom_original",
     "name": "TibiaCOM Original",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "author": "Alex - opengamescommunity.com",
     "description": "Original TibiaCOM Layout Responsive For Mobile by Alex.",
     "update": [
+	  "Cache Bust, max width for Streamers plugin, fixed starter packs, wheel of fortune plugins.",
 	  "Release Original Theme."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_original.zip",
