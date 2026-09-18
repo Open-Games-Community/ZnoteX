@@ -215,10 +215,11 @@
     {
         "key": "forum_avatars",
         "name": "Forum Avatars",
-        "version": "1.0.4",
+        "version": "1.0.5",
         "author": "Alex - opengamescommunity.com",
         "description": "Show a custom avatar (image upload, max 2MB), outfit or a basic icon on forum.",
         "update": [
+		    "Removed FontAwesome icons, not used by all themes.",
 			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
             "Migrated SQL to prepared statements (db()).",
