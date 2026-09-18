@@ -145,8 +145,8 @@
             "Migrated SQL to prepared statements (db()).",
             "Update Image Path selection, requires last update ZnoteX."
         ],
-        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.png",
-        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_pack.zip",
+        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_packs.png",
+        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_packs.zip",
         "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
     },
     {
