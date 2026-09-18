@@ -146,19 +146,7 @@ $textValue = static function ($value): string {
 	<?php acp_card_open('Pre-installation check', $preflight !== null && $preflight['ok'] ? 'Every check passed. The update can be installed.' : 'Installation is blocked until every failed check is resolved.'); ?>
 		<div id="acpPreflightCardBody">
 			<?php if ($preflight !== null): ?>
-				<table class="acp-table">
-					<thead><tr><th style="width:52px;">Status</th><th>Check</th><th>Result</th></tr></thead>
-					<tbody>
-					<?php foreach ($preflight['checks'] as $check): ?>
-						<tr>
-							<td style="font-size:20px;color:<?= !$check['ok'] ? 'var(--acp-red)' : (!empty($check['warn']) ? 'var(--acp-amber)' : 'var(--acp-green)') ?>;"><i class="fa <?= !$check['ok'] ? 'fa-times-circle' : (!empty($check['warn']) ? 'fa-exclamation-triangle' : 'fa-check-circle') ?>"></i></td>
-							<td><strong><?= h($check['label']) ?></strong></td>
-							<td><?= h($check['detail']) ?></td>
-						</tr>
-					<?php endforeach; ?>
-					</tbody>
-				</table>
-				<div id="acpInstallIdle" style="margin-top:18px;">
+				<div id="acpInstallIdle">
 					<button class="acp-btn <?= $preflight['ok'] ? 'acp-btn--green' : 'acp-btn--ghost' ?>" type="button" id="acpInstallBtn" data-csrf="<?= h(acp_csrf()) ?>" <?= $preflight['ok'] ? '' : 'disabled' ?>><i class="fa fa-cloud-download"></i> Install version <?= h((string)($manifest['version'] ?? '')) ?></button>
 					<noscript>
 						<form method="post" style="margin-top:12px;">
@@ -173,6 +161,25 @@ $textValue = static function ($value): string {
 					<p><span id="acpInstallPct">0%</span> - <span id="acpInstallPhase">Starting...</span></p>
 					<div class="acp-progress-log" id="acpInstallLog"></div>
 				</div>
+				<table class="acp-table" style="margin-top:18px;">
+					<thead><tr><th style="width:52px;">Status</th><th>Check</th><th>Result</th></tr></thead>
+					<tbody>
+					<?php foreach ($preflight['checks'] as $check): ?>
+						<tr>
+							<td style="font-size:20px;color:<?= !$check['ok'] ? 'var(--acp-red)' : (!empty($check['warn']) ? 'var(--acp-amber)' : 'var(--acp-green)') ?>;"><i class="fa <?= !$check['ok'] ? 'fa-times-circle' : (!empty($check['warn']) ? 'fa-exclamation-triangle' : 'fa-check-circle') ?>"></i></td>
+							<td><strong><?= h($check['label']) ?></strong></td>
+							<td>
+								<?= h($check['detail']) ?>
+								<?php if (!empty($check['items'])): ?>
+									<div class="acp-scroll-list">
+										<?php foreach ($check['items'] as $item): ?><div><?= h($item) ?></div><?php endforeach; ?>
+									</div>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
 			<?php endif; ?>
 		</div>
 	<?php acp_card_close(); ?>
@@ -220,23 +227,26 @@ $textValue = static function ($value): string {
 		var rows = result.checks.map(function (check) {
 			var color = !check.ok ? 'var(--acp-red)' : (check.warn ? 'var(--acp-amber)' : 'var(--acp-green)');
 			var icon = !check.ok ? 'fa-times-circle' : (check.warn ? 'fa-exclamation-triangle' : 'fa-check-circle');
+			var items = (check.items && check.items.length)
+				? '<div class="acp-scroll-list">' + check.items.map(function (item) { return '<div>' + escapeHtml(item) + '</div>'; }).join('') + '</div>'
+				: '';
 			return '<tr><td style="font-size:20px;color:' + color + ';"><i class="fa ' + icon + '"></i></td>'
 				+ '<td><strong>' + escapeHtml(check.label) + '</strong></td>'
-				+ '<td>' + escapeHtml(check.detail) + '</td></tr>';
+				+ '<td>' + escapeHtml(check.detail) + items + '</td></tr>';
 		}).join('');
 
 		var version = (result.manifest && result.manifest.version) ? result.manifest.version : '';
 
 		preflightBody.innerHTML =
-			'<table class="acp-table"><thead><tr><th style="width:52px;">Status</th><th>Check</th><th>Result</th></tr></thead><tbody>' + rows + '</tbody></table>'
-			+ '<div id="acpInstallIdle" style="margin-top:18px;">'
+			'<div id="acpInstallIdle">'
 			+ '<button class="acp-btn ' + (result.ok ? 'acp-btn--green' : 'acp-btn--ghost') + '" type="button" id="acpInstallBtn" data-csrf="' + escapeHtml(csrf) + '"' + (result.ok ? '' : ' disabled') + '><i class="fa fa-cloud-download"></i> Install version ' + escapeHtml(version) + '</button>'
 			+ '</div>'
 			+ '<div id="acpInstallProgress" hidden style="margin-top:18px;">'
 			+ '<div class="acp-progress-bar"><div class="acp-progress-fill" id="acpInstallFill"></div></div>'
 			+ '<p><span id="acpInstallPct">0%</span> - <span id="acpInstallPhase">Starting...</span></p>'
 			+ '<div class="acp-progress-log" id="acpInstallLog"></div>'
-			+ '</div>';
+			+ '</div>'
+			+ '<table class="acp-table" style="margin-top:18px;"><thead><tr><th style="width:52px;">Status</th><th>Check</th><th>Result</th></tr></thead><tbody>' + rows + '</tbody></table>';
 
 		preflightCard.hidden = false;
 		bindInstall();

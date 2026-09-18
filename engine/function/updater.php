@@ -738,8 +738,9 @@ function znote_update_check_step_localmods(array $state, int $batchSize): array
 		true, // informational only - never blocks the install
 		$conflicts === array()
 			? 'No locally modified managed file will be overwritten.'
-			: count($conflicts) . ' locally modified file(s) - you can proceed, but these will be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)) . (count($conflicts) > 8 ? ', ...' : ''),
-		$conflicts !== array()
+			: count($conflicts) . ' locally modified file(s) - you can proceed, but these will be overwritten (see list below).',
+		$conflicts !== array(),
+		$conflicts
 	);
 	return znote_update_check_finish($state['checks'], $state['manifest']);
 }

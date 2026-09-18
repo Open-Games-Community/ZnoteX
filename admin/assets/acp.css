@@ -696,6 +696,20 @@ a.acp-stat:hover {
 }
 .acp-inline-form { display: inline-block; margin: 0; }
 
+.acp-scroll-list {
+	max-height: 200px;
+	overflow-y: auto;
+	margin-top: 8px;
+	padding: 8px 10px;
+	border: 1px solid var(--acp-line);
+	border-radius: var(--acp-radius);
+	background: var(--acp-panel-2);
+	font-family: monospace;
+	font-size: 12px;
+	line-height: 1.7;
+	color: var(--acp-muted);
+}
+
 .acp-pill {
 	display: inline-block;
 	padding: 2px 9px;
