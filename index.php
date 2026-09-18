@@ -19,6 +19,20 @@ theme_open();
 		$changelogCache = new Cache('engine/cache/changelog');
 		$changelogCache->useMemory(false);
 		$changelogs = $changelogCache->load();
+
+		if ($changelogs === false || $changelogs === null) {
+			$changelogs = db()->fetchAll("
+				SELECT `id`, `text`, `time`, `report_id`, `status`
+				FROM `znote_changelog`
+				ORDER BY `id` DESC;
+			");
+			if (is_array($changelogs)) {
+				$changelogCache->setContent($changelogs);
+				$changelogCache->save();
+			} else {
+				$changelogs = false;
+			}
+		}
 	}
 
 	$newsCache = new Cache('engine/cache/news');

@@ -5,13 +5,16 @@
  * Prepared by support.php: $srtGrp - staff grouped by in-game position.
  */
 ?>
-<h1><?= t('support.title') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('support.title') ?></div>
+<div class="znx-acct-table-wrap">
 <?php
 $writeHeader = true;
 if (!empty($srtGrp)) {
 	foreach (array_reverse($srtGrp) as $grpName => $grpList) {
 		?>
-		<table id="supportTable" class="table table-striped">
+		<table id="supportTable" class="znx-acct-table">
 			<?php if ($writeHeader) {
 			$writeHeader = false; ?>
 			<tr class="yellow">
@@ -35,4 +38,7 @@ if (!empty($srtGrp)) {
 		<?php
 	}
 }
-echo'</table>'; 
+?>
+</div>
+
+</div><!-- .znx-acct -->

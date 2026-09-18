@@ -27,29 +27,34 @@ if ($spells) {
 	// Render HTML
 	?>
 
-	<h1 id="spells"><?= t('spells.title') ?><?php if ($getVoc !== 'all') echo ' ('.$configVoc[$getVoc]['name'].')';?></h1>
+	<div class="znx-acct">
 
-	<form action="#spells" class="filter_spells">
+	<div class="znx-acct-head" id="spells"><?= t('spells.title') ?><?php if ($getVoc !== 'all') echo ' ('.$configVoc[$getVoc]['name'].')';?></div>
+
+	<form action="#spells" class="znx-acct-toolbar filter_spells">
+		<div class="znx-acct-toolbar__field">
 		<label for="vocation"><?= t('spells.filter_voc') ?></label>
-		<select id="vocation" name="vocation">
+		<select id="vocation" name="vocation" class="znx-acct-select">
 			<option value="all"><?= t('spells.all') ?></option>
 			<?php foreach ($config['vocations'] as $id => $vocation): ?>
 				<option value="<?php echo $id; ?>" <?php if ($getVoc === $id) echo "selected"; ?>><?php echo $vocation['name']; ?></option>
 			<?php endforeach; ?>
 		</select>
-		<input type="submit" value="<?= t('common.search') ?>">
+		</div>
+		<div class="znx-acct-toolbar__submit"><button type="submit" class="znx-acct-btn"><?= t('common.search') ?></button></div>
 	</form>
 
-	<h2><?= t('spells.types') ?></h2>
-	<ul>
+	<div class="znx-acct-head"><?= t('spells.types') ?></div>
+	<div class="znx-pill-nav">
 		<?php foreach ($types as $type): ?>
-		<li><a href="#spell_<?php echo $type; ?>"><?php echo ucfirst($type); ?></a></li>
+		<a href="#spell_<?php echo $type; ?>"><?php echo ucfirst($type); ?></a>
 		<?php endforeach; ?>
-	</ul>
+	</div>
 
-	<h2 id="spell_instant"><?= t('spells.instant') ?></h2>
-	<a href="#spells"><?= t('spells.jump_top') ?></a>
-	<table class="table tbl-hover">
+	<div class="znx-acct-head" id="spell_instant"><?= t('spells.instant') ?></div>
+	<div class="znx-jump-top"><a href="#spells"><?= t('spells.jump_top') ?></a></div>
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td><?= t('common.name') ?></td>
@@ -82,10 +87,12 @@ if ($spells) {
 			<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 
-	<h2 id="spell_rune"><?= t('spells.runes') ?></h2>
-	<a href="#spells"><?= t('spells.jump_top') ?></a>
-	<table class="table tbl-hover">
+	<div class="znx-acct-head" id="spell_rune"><?= t('spells.runes') ?></div>
+	<div class="znx-jump-top"><a href="#spells"><?= t('spells.jump_top') ?></a></div>
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td><?= t('common.name') ?></td>
@@ -118,11 +125,13 @@ if ($spells) {
 			<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 
 	<?php if (isset($spells['conjure'])): ?>
-	<h2 id="spell_conjure"><?= t('spells.conjure') ?></h2>
-	<a href="#spells"><?= t('spells.jump_top') ?></a>
-	<table class="table tbl-hover">
+	<div class="znx-acct-head" id="spell_conjure"><?= t('spells.conjure') ?></div>
+	<div class="znx-jump-top"><a href="#spells"><?= t('spells.jump_top') ?></a></div>
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td><?= t('common.name') ?></td>
@@ -161,13 +170,18 @@ if ($spells) {
 			<?php endforeach; ?>
 		</tbody>
 	</table>
-	<a href="#spells"><?= t('spells.jump_top') ?></a>
+	</div>
+	<div class="znx-jump-top"><a href="#spells"><?= t('spells.jump_top') ?></a></div>
 	<?php endif; ?>
+
+	</div><!-- .znx-acct -->
 	<?php
 } else {
 	?>
-	<h1><?= t('spells.title') ?></h1>
-	<p><?= h(t('spells.not_loaded')) ?></p>
+	<div class="znx-acct">
+	<div class="znx-acct-head"><?= t('spells.title') ?></div>
+	<div class="znx-empty-box"><?= h(t('spells.not_loaded')) ?></div>
+	</div>
 	<?php
 }
 

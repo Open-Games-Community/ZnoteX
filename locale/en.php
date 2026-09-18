@@ -337,7 +337,7 @@ return array(
 	'success.back' => 'back',
 	'success.go' => 'Go',
 	'contact.title' => 'Contact',
-	'contact.text' => 'TODO: Edit the contact details here.',
+	'contact.text' => 'Add contact details on the Admin Panel.',
 	'blank.title' => 'Blank',
 	'blank.text' => 'This is a blank sample page.',
 	'team.title' => 'Team',

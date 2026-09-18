@@ -1,8 +1,12 @@
 <?php
-if ($deaths) {
 ?>
-<h1><?= t('deaths.latest') ?></h1>
-<table id="deathsTable" class="table table-striped">
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('deaths.latest') ?></div>
+
+<?php if ($deaths): ?>
+<div class="znx-acct-table-wrap">
+<table id="deathsTable" class="znx-acct-table">
 	<tr class="yellow">
 		<th><?= t('killers.victim') ?></th>
 		<th><?= t('common.time') ?></th>
@@ -21,5 +25,9 @@ if ($deaths) {
 		echo '</tr>';
 	} ?>
 </table>
-<?php
-} else echo t('deaths.none');
+</div>
+<?php else: ?>
+<div class="znx-empty-box"><?= t('deaths.none') ?></div>
+<?php endif; ?>
+
+</div><!-- .znx-acct -->

@@ -1,6 +1,9 @@
-<div id="myaccount">
-	<h1><?= t('acc.page_title') ?></h1>
-	<p><?= t('acc.welcome') ?> <?php echo $user_data['name']; ?><br>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('acc.page_title') ?></div>
+
+<div class="znx-acct-info">
+	<p><?= t('acc.welcome') ?> <strong><?php echo $user_data['name']; ?></strong><br>
 		<?php
 		if ($user_data['premdays'] != 0) echo t('acc.premium_days', ['days' => $user_data['premdays']]);
 		else echo t('acc.free_account');
@@ -14,15 +17,23 @@
 			}
 		endif; ?>
 	</p>
-	<?php if ($twofa2_status !== null): ?>
-		<p><?= t_default('twofa2.website_status', 'Website 2FA:') ?> <a href="twofa.php"><?= $twofa2_status['any_enabled'] ? t_default('common.enabled', 'Enabled') : t_default('common.disabled', 'Disabled') ?></a></p>
+
+	<?php if ($twofa2_status !== null || $legacy_twofa_status !== null): ?>
+		<div class="znx-acct-2fa">
+			<?php if ($twofa2_status !== null): ?>
+				<span class="znx-acct-2fa__row"><?= t_default('twofa2.website_status', 'Website 2FA:') ?> <a href="twofa.php" class="znx-acct-badge <?= $twofa2_status['any_enabled'] ? 'is-on' : 'is-off' ?>"><?= $twofa2_status['any_enabled'] ? t_default('common.enabled', 'Enabled') : t_default('common.disabled', 'Disabled') ?></a></span>
+			<?php endif; ?>
+			<?php if ($legacy_twofa_status !== null): ?>
+				<span class="znx-acct-2fa__row"><?= t_default('twofa2.legacy_status', 'Legacy game 2FA:') ?> <a href="twofa.php" class="znx-acct-badge <?= $legacy_twofa_status ? 'is-on' : 'is-off' ?>"><?= $legacy_twofa_status ? t_default('common.enabled', 'Enabled') : t_default('common.disabled', 'Disabled') ?></a></span>
+			<?php endif; ?>
+		</div>
 	<?php endif; ?>
-	<?php if ($legacy_twofa_status !== null): ?>
-		<p><?= t_default('twofa2.legacy_status', 'Legacy game 2FA:') ?> <a href="twofa.php"><?= $legacy_twofa_status ? t_default('common.enabled', 'Enabled') : t_default('common.disabled', 'Disabled') ?></a></p>
-	<?php endif; ?>
-	<h2><?= t('acc.char_list_count', ['count' => $char_count]) ?></h2>
-	<?php if ($char_array): ?>
-		<table id="myaccountTable" class="table table-striped table-hover">
+</div>
+
+<div class="znx-acct-head"><?= t('acc.char_list_count', ['count' => $char_count]) ?></div>
+<?php if ($char_array): ?>
+		<div class="znx-acct-table-wrap">
+		<table id="myaccountTable" class="znx-acct-table">
 			<tr class="yellow">
 				<th><?= mb_strtoupper(t('common.name')) ?></th>
 				<th><?= mb_strtoupper(t('common.level')) ?></th>
@@ -31,6 +42,7 @@
 				<th><?= mb_strtoupper(t('char.last_login')) ?></th>
 				<th><?= mb_strtoupper(t('common.status')) ?></th>
 				<th><?= mb_strtoupper(t('acc.hide_col')) ?></th>
+				<th></th>
 			</tr>
 			<?php foreach ($char_array as $value): ?>
 				<tr>
@@ -41,78 +53,17 @@
 					<td><?php echo $value['lastlogin']; ?></td>
 					<td><?php echo $value['online']; ?></td>
 					<td><?php echo hide_char_to_name($value['hide_char']); ?></td>
+					<td><a href="page.php?p=editcharacter&character=<?php echo urlencode($value['name']); ?>" class="znx-acct-edit-btn"><?= t_default('acc.edit_char', 'Edit') ?></a></td>
 				</tr>
 			<?php endforeach; ?>
 		</table>
-		<!-- FORMS TO EDIT CHARACTER-->
-		<form action="" method="post">
-			<table class="table">
-				<tr>
-					<td>
-						<select id="selected_character" name="selected_character" class="form-control">
-							<?php foreach ($char_array as $character): ?>
-								<option value="<?php echo $character['name']; ?>"><?php echo $character['name']; ?></option>
-							<?php endforeach; ?>
-						</select>
-					</td>
-					<td>
-						<select id="action" name="action" class="form-control" onChange="changedOption(this)">
-							<option value="none" selected><?= t('acc.select_action') ?></option>
-							<option value="toggle_hide"><?= t('acc.toggle_hide') ?></option>
-							<option value="change_comment"><?= t('acc.change_comment') ?></option>
-							<option value="change_gender"><?= t('acc.change_gender') ?></option>
-							<option value="change_name"><?= t('acc.change_name') ?></option>
-							<option value="delete_character" class="needconfirmation"><?= t('acc.delete_char') ?></option>
-						</select>
-					</td>
-					<td id="submit_form">
-						<?php
-							/* Form file */
-							Token::create();
-						?>
-						<input id="submit_button" type="submit" value="<?= t('common.submit') ?>" class="btn btn-primary btn-block"></input>
-					</td>
-				</tr>
-			</table>
-		</form>
+		</div>
 	<?php else: ?>
-		<?= t('acc.no_characters') ?>
+		<div class="znx-empty-box"><?= t('acc.no_characters') ?></div>
 	<?php endif; ?>
-</div>
-<script>
-	function changedOption(e) {
-		if (e.value == 'change_name') {
-			var lastCell = document.getElementById('submit_form');
-			var x = document.createElement('TD');
-			x.id = "new_name";
-			x.innerHTML = '<input type="text" name="newName" placeholder="<?= htmlspecialchars(t('common.new_name_placeholder'), ENT_QUOTES, 'UTF-8') ?>" class="form-control">';
-			lastCell.parentNode.insertBefore(x, lastCell);
-		} else {
-			var child = document.getElementById('new_name');
-			if (child) {
-				child.parentNode.removeChild(child);
-			}
-		}
-	}
-</script>
-<script>
-	document.addEventListener('DOMContentLoaded', function () {
-		var submitButton = document.getElementById('submit_button');
-		var actionSelect = document.getElementById('action');
-		var characterSelect = document.getElementById('selected_character');
-		if (!submitButton || !actionSelect || !characterSelect) {
-			return;
-		}
 
-		submitButton.addEventListener('click', function (event) {
-			var selectedAction = actionSelect.options[actionSelect.selectedIndex];
-			if (selectedAction && selectedAction.classList.contains('needconfirmation')) {
-				var selectedCharacter = characterSelect.options[characterSelect.selectedIndex];
-				var name = selectedCharacter ? selectedCharacter.text : '';
-				if (!confirm(<?= json_encode(t('acc.confirm_delete', ['name' => '__NAME__'])) ?>.replace('__NAME__', name))) {
-					event.preventDefault();
-				}
-			}
-		});
-	});
-</script>
+</div><!-- .znx-acct -->
+
+<div id="myaccount">
+	<h2 class="sr-only"><?= t_default('acc.plugins_heading', 'Account plugins') ?></h2>
+</div>

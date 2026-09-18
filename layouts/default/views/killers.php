@@ -13,11 +13,14 @@
  */
 ?>
 
+<div class="znx-acct">
+
 <?php if ($killersMode === 'modern'): ?>
 
-	<h1><?= t('killers.biggest_murders') ?></h1>
+	<div class="znx-acct-head"><?= t('killers.biggest_murders') ?></div>
 	<?php if ($killers): ?>
-		<table id="killersTable" class="table table-striped">
+		<div class="znx-acct-table-wrap">
+		<table id="killersTable" class="znx-acct-table">
 			<tr class="yellow">
 				<th><?= t('common.name') ?></th>
 				<th><?= t('killers.kills') ?></th>
@@ -31,13 +34,15 @@
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<?= t('killers.no_kills') ?>
+		<div class="znx-empty-box"><?= t('killers.no_kills') ?></div>
 	<?php endif; ?>
 
-	<h1><?= t('killers.biggest_victims') ?></h1>
+	<div class="znx-acct-head"><?= t('killers.biggest_victims') ?></div>
 	<?php if ($victims): ?>
-		<table id="victimsTable" class="table table-striped">
+		<div class="znx-acct-table-wrap">
+		<table id="victimsTable" class="znx-acct-table">
 			<tr class="yellow">
 				<th><?= t('common.name') ?></th>
 				<th><?= t('killers.deaths') ?></th>
@@ -51,13 +56,15 @@
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<?= t('killers.no_kills') ?>
+		<div class="znx-empty-box"><?= t('killers.no_kills') ?></div>
 	<?php endif; ?>
 
-	<h1><?= t('killers.latest_kills') ?></h1>
+	<div class="znx-acct-head"><?= t('killers.latest_kills') ?></div>
 	<?php if ($latests): ?>
-		<table id="killersTable" class="table table-striped">
+		<div class="znx-acct-table-wrap">
+		<table id="killersTable" class="znx-acct-table">
 			<tr class="yellow">
 				<th><?= t('killers.killer') ?></th>
 				<th><?= t('common.time') ?></th>
@@ -75,15 +82,17 @@
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<?= t('killers.no_kills') ?>
+		<div class="znx-empty-box"><?= t('killers.no_kills') ?></div>
 	<?php endif; ?>
 
 <?php elseif ($killersMode === 'legacy'): ?>
 
 	<?php if ($deaths): ?>
-		<h1><?= t('killers.latest') ?></h1>
-		<table id="deathsTable" class="table table-striped">
+		<div class="znx-acct-head"><?= t('killers.latest') ?></div>
+		<div class="znx-acct-table-wrap">
+		<table id="deathsTable" class="znx-acct-table">
 			<tr class="yellow">
 				<th><?= t('killers.killer') ?></th>
 				<th><?= t('common.time') ?></th>
@@ -102,8 +111,11 @@
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<?= t('killers.no_deaths') ?>
+		<div class="znx-empty-box"><?= t('killers.no_deaths') ?></div>
 	<?php endif; ?>
 
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

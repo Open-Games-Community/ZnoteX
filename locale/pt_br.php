@@ -337,7 +337,7 @@ return array(
 	'success.back' => 'voltar',
 	'success.go' => 'Ir',
 	'contact.title' => 'Contato',
-	'contact.text' => 'TODO: edite aqui os dados de contato.',
+	'contact.text' => 'Adicione os dados de contato no Painel de Administração.',
 	'blank.title' => 'Em branco',
 	'blank.text' => 'Esta é uma página de exemplo em branco.',
 	'team.title' => 'Equipe',

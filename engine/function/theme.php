@@ -159,8 +159,11 @@ function theme_asset(string $relative): string {
 	$urlRelative = znote_extension_url_path($relative);
 
 	foreach (theme_chain() as $theme) {
-		if (is_file(theme_root() . '/' . $theme . '/assets/' . $relative)) {
-			return 'layouts/' . $theme . '/assets/' . $urlRelative;
+		$diskPath = theme_root() . '/' . $theme . '/assets/' . $relative;
+		if (is_file($diskPath)) {
+			$mtime = @filemtime($diskPath);
+			$suffix = $mtime !== false ? '?v=' . $mtime : '';
+			return 'layouts/' . $theme . '/assets/' . $urlRelative . $suffix;
 		}
 	}
 

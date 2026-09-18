@@ -337,7 +337,7 @@ return array(
 	'success.back' => 'wróć',
 	'success.go' => 'Przejdź',
 	'contact.title' => 'Kontakt',
-	'contact.text' => 'TODO: tutaj wpisz dane kontaktowe.',
+	'contact.text' => 'Dodaj dane kontaktowe w Panelu Administracyjnym.',
 	'blank.title' => 'Pusta',
 	'blank.text' => 'To jest pusta strona przykładowa.',
 	'team.title' => 'Zespół',

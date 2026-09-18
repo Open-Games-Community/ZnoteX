@@ -9,38 +9,37 @@
  * The password write happens in changepassword.php, never here.
  */
 ?>
-<h1><?= t('changepw.title') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('changepw.title') ?></div>
 
 <?php if ($formState === 'success'): ?>
 
-	<?= t('changepw.success') ?><br>
-	<?= t('changepw.relogin') ?>
+	<div class="znx-acct-info znx-editchar-notice znx-editchar-notice--ok"><?= t('changepw.success') ?><br><?= t('changepw.relogin') ?></div>
 
 <?php else: ?>
 
 	<?php if ($formState === 'errors'): ?>
-		<font color="red"><b><?= output_errors($errors) ?></b></font>
+		<div class="znx-acct-info znx-editchar-notice znx-editchar-notice--error"><?= output_errors($errors) ?></div>
 	<?php endif; ?>
 
-	<form action="" method="post">
-		<ul>
-			<li>
-				<?= t('changepw.current') ?><br>
-				<input type="password" name="current_password">
-			</li>
-			<li>
-				<?= t('changepw.new') ?><br>
-				<input type="password" name="new_password">
-			</li>
-			<li>
-				<?= t('changepw.new_again') ?><br>
-				<input type="password" name="new_password_again">
-			</li>
-			<?php Token::create(); ?>
-			<li>
-				<input type="submit" value="<?= t('changepw.title') ?>">
-			</li>
-		</ul>
+	<form action="" method="post" class="znx-editchar-box">
+		<div class="znx-settings-field">
+			<label><?= t('changepw.current') ?></label>
+			<input type="password" name="current_password" class="znx-acct-select">
+		</div>
+		<div class="znx-settings-field">
+			<label><?= t('changepw.new') ?></label>
+			<input type="password" name="new_password" class="znx-acct-select">
+		</div>
+		<div class="znx-settings-field">
+			<label><?= t('changepw.new_again') ?></label>
+			<input type="password" name="new_password_again" class="znx-acct-select">
+		</div>
+		<?php Token::create(); ?>
+		<button type="submit" class="znx-acct-btn"><?= t('changepw.title') ?></button>
 	</form>
 
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

@@ -417,7 +417,7 @@ body.acp {
 /* Alerts */
 .acp-flash {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	gap: 12px;
 	margin-bottom: 14px;
 	padding: 14px 16px;
@@ -427,7 +427,14 @@ body.acp {
 	background: #fde8e8;
 	color: #bb2f2f;
 }
-.acp-flash .fa { font-size: 22px; }
+.acp-flash .fa { font-size: 22px; flex: 0 0 auto; margin-top: 1px; }
+.acp-flash span {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	white-space: normal;
+}
 .acp-flash--success {
 	background: #e6f5ed;
 	border-color: #c0e2cf;

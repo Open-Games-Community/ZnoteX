@@ -62,6 +62,40 @@ $topPoints = db()->fetchAll("
 	LIMIT 10;
 ");
 
+$recentShopPurchases = znote_table_exists('znote_shop_logs')
+	? db()->fetchAll("
+		SELECT `l`.`account_id`, {$accNameCol} AS `account_name`, `l`.`itemid`, `l`.`type`, `l`.`count`, `l`.`points`, `l`.`time`
+		FROM `znote_shop_logs` `l`
+		LEFT JOIN `accounts` `a` ON `a`.`id` = `l`.`account_id`
+		ORDER BY `l`.`id` DESC
+		LIMIT 8;
+	")
+	: false;
+$recentShopPurchases = is_array($recentShopPurchases) ? $recentShopPurchases : array();
+
+$shopItemNames = function_exists('getItemList') ? getItemList() : array();
+$shopOrderTypes = array(
+	1 => t('acp.sord.type_item'),
+	2 => t('acp.sord.type_premium'),
+	3 => t('acp.sord.type_gender'),
+	4 => t('acp.sord.type_name'),
+	5 => t('acp.sord.type_outfit'),
+	6 => t('acp.sord.type_mount'),
+	7 => t('acp.sord.type_custom'),
+	8 => t('acp.sord.type_custom'),
+);
+
+$recentPointsPurchases = znote_table_exists('znote_payment_transactions')
+	? db()->fetchAll("
+		SELECT `t`.`account_id`, {$accNameCol} AS `account_name`, `t`.`provider`, `t`.`price`, `t`.`currency`, `t`.`points`, `t`.`credited`, `t`.`created_at`
+		FROM `znote_payment_transactions` `t`
+		LEFT JOIN `accounts` `a` ON `a`.`id` = `t`.`account_id`
+		ORDER BY `t`.`id` DESC
+		LIMIT 8;
+	")
+	: false;
+$recentPointsPurchases = is_array($recentPointsPurchases) ? $recentPointsPurchases : array();
+
 // znote row: keep the stored version in step with the running one, the way
 // the old admin.php did on every visit.
 $znote = user_znote_data('version', 'installed', 'cached');
@@ -320,4 +354,87 @@ $obRemaining = count(array_filter($obSteps, static fn(array $s): bool => !$s['do
 			<?php endif; ?>
 		</div>
 	</section>
+</div>
+
+<div class="acp-grid acp-grid--2">
+
+	<!-- ------------------------------------------- Recent shop purchases -->
+	<section class="acp-card">
+		<header class="acp-card-head"><h2><?= t_default('acp.dash.recent_shop', 'Recent Shop Purchases') ?></h2></header>
+		<div class="acp-card-body is-flush">
+			<?php if ($recentShopPurchases): ?>
+				<div class="acp-table-wrap">
+					<table class="acp-table">
+						<thead>
+							<tr>
+								<th><?= t('acp.dash.col_account') ?></th>
+								<th><?= t('acp.sord.col_item') ?></th>
+								<th class="is-num"><?= t('acp.sord.col_points') ?></th>
+								<th><?= t('acp.sord.col_date') ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ($recentShopPurchases as $row):
+								$itemId = intv($row['itemid'] ?? 0);
+							?>
+								<tr>
+									<td><?= $row['account_name'] !== null ? h($row['account_name']) : '<span class="is-muted">'. t('acp.sord.deleted_account', ['id' => (int)($row['account_id'] ?? 0)]) .'</span>' ?></td>
+									<td>
+										<?php if ($itemId > 0): ?>
+											<?= h($shopItemNames[$itemId] ?? t('acp.sord.item_unknown')) ?>
+										<?php else: ?>
+											<span class="acp-pill acp-pill--grey"><?= h($shopOrderTypes[(int)($row['type'] ?? 0)] ?? t('acp.sord.type_unknown')) ?></span>
+										<?php endif; ?>
+									</td>
+									<td class="is-num"><?= (int)($row['points'] ?? 0) ?></td>
+									<td class="is-nowrap is-muted"><?= h(getClock((int)($row['time'] ?? 0), true)) ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			<?php else: ?>
+				<?php acp_empty(t('acp.sord.history_empty'), 'fa-shopping-cart'); ?>
+			<?php endif; ?>
+		</div>
+	</section>
+
+	<!-- ----------------------------------------- Recent points purchases -->
+	<section class="acp-card">
+		<header class="acp-card-head"><h2><?= t_default('acp.dash.recent_points', 'Recent Points Purchases') ?></h2></header>
+		<div class="acp-card-body is-flush">
+			<?php if ($recentPointsPurchases): ?>
+				<div class="acp-table-wrap">
+					<table class="acp-table">
+						<thead>
+							<tr>
+								<th><?= t('acp.dash.col_account') ?></th>
+								<th><?= t_default('acp.dash.col_provider', 'Provider') ?></th>
+								<th class="is-num"><?= t_default('acp.dash.col_amount', 'Amount') ?></th>
+								<th class="is-num"><?= t('acp.dash.col_points') ?></th>
+								<th><?= t('acp.sord.col_date') ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ($recentPointsPurchases as $row): ?>
+								<tr>
+									<td><?= $row['account_name'] !== null ? h($row['account_name']) : '<span class="is-muted">'. t('acp.sord.deleted_account', ['id' => (int)($row['account_id'] ?? 0)]) .'</span>' ?></td>
+									<td><?= h(ucfirst((string)($row['provider'] ?? ''))) ?></td>
+									<td class="is-num"><?= h(number_format((float)($row['price'] ?? 0), 2, '.', '')) ?> <?= h((string)($row['currency'] ?? '')) ?></td>
+									<td class="is-num">
+										<strong><?= (int)($row['points'] ?? 0) ?></strong>
+										<?= !empty($row['credited']) ? ' <span class="acp-pill acp-pill--green">'. t_default('acp.dash.credited', 'Credited') .'</span>' : ' <span class="acp-pill acp-pill--amber">'. t_default('acp.dash.pending', 'Pending') .'</span>' ?>
+									</td>
+									<td class="is-nowrap is-muted"><?= !empty($row['created_at']) ? h(getClock((int)$row['created_at'], true)) : '&mdash;' ?></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			<?php else: ?>
+				<?php acp_empty(t_default('acp.dash.no_points_purchases', 'No point purchases yet.'), 'fa-credit-card'); ?>
+			<?php endif; ?>
+		</div>
+	</section>
+
 </div>
