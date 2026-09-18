@@ -2,6 +2,9 @@
 
 # ZnoteX
 
+<img width="114" height="30" alt="index_f089e12e" src="https://github.com/user-attachments/assets/8a521795-fb9b-48c3-877b-977bea4ca716" />
+
+
 **A complete website for your Open Tibia server.**
 
 Version 2.0.5 · Maintained by [Open Games Community](https://opengamescommunity.com)
