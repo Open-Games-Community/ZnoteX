@@ -319,9 +319,9 @@ function znote_update_build_latest_result(array $release, array $manifest): arra
 	);
 }
 
-function znote_update_check(string $label, bool $ok, string $detail): array
+function znote_update_check(string $label, bool $ok, string $detail, bool $warn = false, array $items = array()): array
 {
-	return array('label' => $label, 'ok' => $ok, 'detail' => $detail);
+	return array('label' => $label, 'ok' => $ok, 'warn' => $warn, 'detail' => $detail, 'items' => $items);
 }
 
 function znote_update_remove_tree(string $path): void
@@ -507,7 +507,15 @@ function znote_update_check_local_modifications(): array
 			}
 		}
 	}
-	return znote_update_check('Local modifications', $conflicts === array(), $conflicts === array() ? 'No locally modified managed file will be overwritten.' : 'Modified files would be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)));
+	return znote_update_check(
+		'Local modifications',
+		true, // informational only - never blocks the install
+		$conflicts === array()
+			? 'No locally modified managed file will be overwritten.'
+			: count($conflicts) . ' locally modified file(s) - you can proceed, but these will be overwritten (see list below).',
+		$conflicts !== array(),
+		$conflicts
+	);
 }
 
 function znote_update_checks_pass(array $checks): bool
@@ -725,7 +733,14 @@ function znote_update_check_step_localmods(array $state, int $batchSize): array
 	}
 
 	$conflicts = $state['conflicts'];
-	$state['checks'][] = znote_update_check('Local modifications', $conflicts === array(), $conflicts === array() ? 'No locally modified managed file will be overwritten.' : 'Modified files would be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)));
+	$state['checks'][] = znote_update_check(
+		'Local modifications',
+		true, // informational only - never blocks the install
+		$conflicts === array()
+			? 'No locally modified managed file will be overwritten.'
+			: count($conflicts) . ' locally modified file(s) - you can proceed, but these will be overwritten: ' . implode(', ', array_slice($conflicts, 0, 8)) . (count($conflicts) > 8 ? ', ...' : ''),
+		$conflicts !== array()
+	);
 	return znote_update_check_finish($state['checks'], $state['manifest']);
 }
 

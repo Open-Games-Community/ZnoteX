@@ -151,7 +151,7 @@ $textValue = static function ($value): string {
 					<tbody>
 					<?php foreach ($preflight['checks'] as $check): ?>
 						<tr>
-							<td style="font-size:20px;color:<?= $check['ok'] ? 'var(--acp-green)' : 'var(--acp-red)' ?>;"><i class="fa <?= $check['ok'] ? 'fa-check-circle' : 'fa-times-circle' ?>"></i></td>
+							<td style="font-size:20px;color:<?= !$check['ok'] ? 'var(--acp-red)' : (!empty($check['warn']) ? 'var(--acp-amber)' : 'var(--acp-green)') ?>;"><i class="fa <?= !$check['ok'] ? 'fa-times-circle' : (!empty($check['warn']) ? 'fa-exclamation-triangle' : 'fa-check-circle') ?>"></i></td>
 							<td><strong><?= h($check['label']) ?></strong></td>
 							<td><?= h($check['detail']) ?></td>
 						</tr>
@@ -218,8 +218,8 @@ $textValue = static function ($value): string {
 
 	function renderPreflight(result) {
 		var rows = result.checks.map(function (check) {
-			var color = check.ok ? 'var(--acp-green)' : 'var(--acp-red)';
-			var icon = check.ok ? 'fa-check-circle' : 'fa-times-circle';
+			var color = !check.ok ? 'var(--acp-red)' : (check.warn ? 'var(--acp-amber)' : 'var(--acp-green)');
+			var icon = !check.ok ? 'fa-times-circle' : (check.warn ? 'fa-exclamation-triangle' : 'fa-check-circle');
 			return '<tr><td style="font-size:20px;color:' + color + ';"><i class="fa ' + icon + '"></i></td>'
 				+ '<td><strong>' + escapeHtml(check.label) + '</strong></td>'
 				+ '<td>' + escapeHtml(check.detail) + '</td></tr>';
