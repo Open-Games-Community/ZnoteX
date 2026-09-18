@@ -133,8 +133,8 @@
         "url": "https://opengamescommunity.com/resources/purchase-history.1037/"
     },
     {
-        "key": "starter_pack",
-        "name": "Starter Pack",
+        "key": "starter_packs",
+        "name": "Starter Packs",
         "version": "1.0.7",
         "author": "Alex - opengamescommunity.com",
         "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
