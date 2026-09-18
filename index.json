@@ -133,22 +133,22 @@
         "url": "https://opengamescommunity.com/resources/purchase-history.1037/"
     },
     {
-        "key": "starter_packs",
-        "name": "Starter Packs",
-        "version": "1.0.7",
-        "author": "Alex - opengamescommunity.com",
-        "description": "Starter Packs are packs available to purchase directly from buy points website, they appear above.",
-        "update": [
-		    "Fix the Order to show, added it under tables of payment currencies.",
-			"Updated Plugin API.",
-            "Updated plugin install SQL from utf8 to utf8mb4.",
-            "Migrated SQL to prepared statements (db()).",
-            "Update Image Path selection, requires last update ZnoteX."
-        ],
-        "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_packs.png",
-        "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_packs.zip",
-        "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
-    },
+	  "key": "starter_packs",
+	  "name": "Starter Packs",
+	  "version": "1.1.0",
+	  "author": "Alex - opengamescommunity.com",
+	  "description": "Starter Packs are purchasable bundles displayed below the Buy Points payment options.",
+	  "update": [
+		"Moved Starter Packs below all Buy Points payment tables.",
+		"Updated Plugin API.",
+		"Updated plugin install SQL from utf8 to utf8mb4.",
+		"Migrated SQL to prepared statements (db()).",
+		"Update Image Path selection, requires last update ZnoteX."
+	  ],
+	  "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_packs.png",
+	  "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/starter_packs.zip",
+	  "url": "https://opengamescommunity.com/resources/starter-pack.1038/"
+	},
     {
         "key": "boosted_creatures",
         "name": "Boosted Creatures",
