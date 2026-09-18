@@ -176,5 +176,18 @@
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_original.zip",
     "url": "https://opengamescommunity.com/resources/tibiacom-original.1055/",
     "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_original.png"
+  },
+  {
+    "key": "realm",
+    "name": "Realm",
+    "version": "1.0.3",
+    "author": "Alex - opengamescommunity.com",
+    "description": "Realm Theme for ZnoteX.",
+    "update": [
+	  "Release Realm Theme."
+    ],
+    "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/realm.zip",
+    "url": "https://opengamescommunity.com/resources/realm.1058/",
+    "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/realm.png"
   }
 ]
