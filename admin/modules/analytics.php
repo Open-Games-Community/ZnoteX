@@ -18,6 +18,18 @@ if (!defined('ACP_ROOT')) {
 	die('Direct access denied.');
 }
 
+function acp_country_flag_emoji(string $code): string {
+	$code = strtoupper($code);
+	if (!preg_match('/^[A-Z]{2}$/', $code)) {
+		return '';
+	}
+	$flag = '';
+	foreach (str_split($code) as $letter) {
+		$flag .= mb_chr(0x1F1E6 + (ord($letter) - 65), 'UTF-8');
+	}
+	return $flag;
+}
+
 function acp_analytics_period_count(string $table, string $column, int $since): int {
 	if (!znote_table_exists($table) || !znote_column_exists($table, $column)) {
 		return 0;
@@ -276,7 +288,7 @@ $maxDaily = max(1, ...array_map(static fn($d) => (int)$d['count'], $stats['accou
 					<tbody>
 						<?php foreach ($stats['top_countries'] as $row): ?>
 							<tr>
-								<td><?= translate_flag(strtolower((string)$row['flag'])) ?> <?= h(strtoupper((string)$row['flag'])) ?></td>
+								<td><?= h(acp_country_flag_emoji((string)$row['flag'])) ?> <?= h(strtoupper((string)$row['flag'])) ?></td>
 								<td class="is-num"><?= (int)$row['c'] ?></td>
 							</tr>
 						<?php endforeach; ?>

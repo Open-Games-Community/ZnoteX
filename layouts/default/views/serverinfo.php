@@ -6,19 +6,22 @@
  */
 ?>
 
-<h1><?= t('srv.title') ?></h1>
-<p><?= t('srv.intro') ?> <b><?php echo $config['site_title']; ?></b></p>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('srv.title') ?></div>
+<div class="znx-acct-info"><?= t('srv.intro') ?> <b><?php echo $config['site_title']; ?></b></div>
 
 <?php minimap_render(); ?>
 
-<?php 
+<?php
 if (
-	($stagesData && isset($stagesData['enabled']) && $stagesData['enabled']) 
+	($stagesData && isset($stagesData['enabled']) && $stagesData['enabled'])
 	|| (isset($luaConfig['experienceStages']) && $luaConfig['experienceStages'] === true)
-): 
+):
 	$stages = true; ?>
-	<h2><?= t('srv.rates') ?></h2>
-	<table class="table tbl-hover">
+	<div class="znx-acct-head"><?= t('srv.rates') ?></div>
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td><?= t('srv.min_level') ?></td>
@@ -34,10 +37,12 @@ if (
 			<?php endforeach; ?>
 		</tbody>
 	</table>
+	</div>
 <?php endif; ?>
 
 <?php if ($luaConfig): ?>
-	<table class="table tbl-hover">
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<?php if (!$stages): ?>
@@ -57,9 +62,11 @@ if (
 			</tr>
 		</tbody>
 	</table>
+	</div>
 
-	<h2><?= t('srv.misc') ?></h2>
-	<table class="table tbl-hover">
+	<div class="znx-acct-head"><?= t('srv.misc') ?></div>
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td colspan="2"><?= t('srv.connection') ?></td>
@@ -78,8 +85,10 @@ if (
 			</tr>
 		</tbody>
 	</table>
+	</div>
 
-	<table class="table tbl-hover">
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td colspan="2"><?= t('srv.pvp') ?></td>
@@ -140,8 +149,10 @@ if (
 			</tr>
 		</tbody>
 	</table>
+	</div>
 
-	<table class="table tbl-hover">
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tbody>
 			<tr class="yellow">
 				<td colspan="2"><?= t('srv.other') ?></td>
@@ -194,6 +205,9 @@ if (
 			<?php endif; ?>
 		</tbody>
 	</table>
+	</div>
 <?php else: ?>
-	<p><?= h(t('srv.not_imported')) ?></p>
-<?php endif;
+	<div class="znx-empty-box"><?= h(t('srv.not_imported')) ?></div>
+<?php endif; ?>
+
+</div><!-- .znx-acct -->

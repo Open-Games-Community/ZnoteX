@@ -1,9 +1,13 @@
 <?php ?>
 
-<h1><?= t('contact.title') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('contact.title') ?></div>
 <?php $contactInfo = trim((string)($config['contact_info'] ?? '')); ?>
 <?php if ($contactInfo !== ''): ?>
-	<p><?= nl2br(htmlspecialchars($contactInfo, ENT_QUOTES, 'UTF-8')) ?></p>
+	<div class="znx-acct-info"><?= nl2br(htmlspecialchars($contactInfo, ENT_QUOTES, 'UTF-8')) ?></div>
 <?php else: ?>
-	<p><?= t('contact.text') ?></p>
+	<div class="znx-empty-box"><?= t('contact.text') ?></div>
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

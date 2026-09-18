@@ -1,2 +1,6 @@
 <?php
-echo $guildOverviewHtml;
+?>
+<div class="znx-guild-overview">
+<?php echo $guildOverviewHtml; ?>
+</div>
+

@@ -1,9 +1,11 @@
-<?php
+<?php ?>
 
-if (!empty($guilds) && $guilds !== false) {
-	?>
-	<h3><center><?= t('topguilds.title') ?></center></h3>
-	<table id="onlinelistTable" class="table table-striped table-hover">
+<div class="znx-acct">
+
+<?php if (!empty($guilds) && $guilds !== false): ?>
+	<div class="znx-acct-head"><?= t('topguilds.title') ?></div>
+	<div class="znx-acct-table-wrap">
+	<table id="onlinelistTable" class="znx-acct-table">
 	    <tr class="yellow">
 			<th>#</th>
 	        <th><?= t('online.label_name') ?></th>
@@ -24,7 +26,9 @@ if (!empty($guilds) && $guilds !== false) {
 	    	<?php
 		endforeach; ?>
 	</table>
-	<?php
-} else {
-	echo '<h1>'. t('topguilds.no_frags') .'</h1>';
-}
+	</div>
+<?php else: ?>
+	<div class="znx-acct-head"><?= t('topguilds.no_frags') ?></div>
+<?php endif; ?>
+
+</div><!-- .znx-acct -->

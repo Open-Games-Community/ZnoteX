@@ -33,24 +33,27 @@ function znote_ban_remaining(int $expires): string {
 	return t('bans.less_hour');
 }
 ?>
-<h1><?= t('bans.title') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('bans.title') ?></div>
 
 <?php if (!$bansSupported): ?>
 
-	<p><?= t('bans.unsupported') ?></p>
+	<div class="znx-empty-box"><?= t('bans.unsupported') ?></div>
 
 <?php else: ?>
 
-	<p class="txt">
+	<div class="znx-acct-info">
 		<?= t('bans.intro') ?>
 		<?php if ($ipBanCount > 0): ?>
 			<?= t('bans.ip_count', ['count' => (int)$ipBanCount]) ?>
 		<?php endif; ?>
-	</p>
+	</div>
 
-	<h2><?= t('bans.accounts') ?></h2>
+	<div class="znx-acct-head"><?= t('bans.accounts') ?></div>
 	<?php if ($accountBans): ?>
-		<table class="table table-striped">
+		<div class="znx-acct-table-wrap">
+		<table class="znx-acct-table">
 			<tr class="yellow">
 				<td><?= t('common.character') ?></td>
 				<td><?= t('common.reason') ?></td>
@@ -70,13 +73,15 @@ function znote_ban_remaining(int $expires): string {
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<p><?= t('bans.none') ?></p>
+		<div class="znx-empty-box"><?= t('bans.none') ?></div>
 	<?php endif; ?>
 
-	<h2><?= t('bans.namelocks') ?></h2>
+	<div class="znx-acct-head"><?= t('bans.namelocks') ?></div>
 	<?php if ($nameLocks): ?>
-		<table class="table table-striped">
+		<div class="znx-acct-table-wrap">
+		<table class="znx-acct-table">
 			<tr class="yellow">
 				<td><?= t('common.character') ?></td>
 				<td><?= t('common.reason') ?></td>
@@ -94,8 +99,11 @@ function znote_ban_remaining(int $expires): string {
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<p><?= t('bans.no_namelocks') ?></p>
+		<div class="znx-empty-box"><?= t('bans.no_namelocks') ?></div>
 	<?php endif; ?>
 
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

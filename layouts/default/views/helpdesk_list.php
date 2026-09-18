@@ -1,8 +1,11 @@
 <?php
 ?>
-<h1><?= t('helpdesk.latest') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('helpdesk.latest') ?></div>
 <?php if ($tickets !== false): ?>
-	<table>
+	<div class="znx-acct-table-wrap">
+	<table class="znx-acct-table">
 		<tr class="yellow">
 			<td>ID:</td>
 			<td><?= t('helpdesk.subject') ?></td>
@@ -20,50 +23,49 @@
 			}
 			?>
 	</table>
+	</div>
 <?php endif; ?>
 
-<h1><?= t('helpdesk.title') ?></h1>
+<div class="znx-acct-head"><?= t('helpdesk.title') ?></div>
 <?php if ($helpdeskCreated): ?>
-	<?= t('helpdesk.created') ?>
+	<div class="znx-acct-info"><?= t('helpdesk.created') ?></div>
 <?php else: ?>
 	<?php if (empty($errors) === false): ?>
-		<font color="red"><b><?= output_errors($errors) ?></b></font>
+		<div class="znx-acct-info znx-editchar-notice znx-editchar-notice--error"><?= output_errors($errors) ?></div>
 	<?php endif; ?>
-	<form action="" method="post">
-		<ul>
-			<li>
-				Account Name:<br>
-				<input type="text" name="username" size="40" value="<?php echo $account['name']; ?>" disabled>
-			</li>
-			<li>
-				Email:<br>
-				<input type="text" name="email" size="40" value="<?php echo $account['email']; ?>" disabled>
-			</li>
-			<li>
-				<?= t('helpdesk.subject') ?><br>
-				<input type="text" name="subject" size="40">
-			</li>
-			<li>
-				Message:<br>
-				<textarea name="message" rows="7" cols="30"></textarea>
-			</li>
-			<?php
-			if ($config['use_captcha']) {
-				?>
-				<li>
-					 <div class="g-recaptcha" data-sitekey="<?php echo $config['captcha_site_key']; ?>"></div>
-				</li>
-				<?php
-			}
+	<form action="" method="post" class="znx-editchar-box">
+		<div class="znx-settings-field">
+			<label>Account Name</label>
+			<input type="text" name="username" size="40" value="<?php echo $account['name']; ?>" disabled class="znx-acct-select">
+		</div>
+		<div class="znx-settings-field">
+			<label>Email</label>
+			<input type="text" name="email" size="40" value="<?php echo $account['email']; ?>" disabled class="znx-acct-select">
+		</div>
+		<div class="znx-settings-field">
+			<label><?= t('helpdesk.subject') ?></label>
+			<input type="text" name="subject" size="40" class="znx-acct-select">
+		</div>
+		<div class="znx-settings-field">
+			<label>Message</label>
+			<textarea name="message" rows="7" cols="30" class="znx-editchar-textarea"></textarea>
+		</div>
+		<?php
+		if ($config['use_captcha']) {
 			?>
+			<div class="znx-settings-field">
+				 <div class="g-recaptcha" data-sitekey="<?php echo $config['captcha_site_key']; ?>"></div>
+			</div>
 			<?php
-				/* Form file */
-				Token::create();
-			?>
-			<li>
-				<input type="hidden" name="username" value="<?php echo $account['name']; ?>">
-				<input type="submit" value="<?= t('helpdesk.submit') ?>">
-			</li>
-		</ul>
+		}
+		?>
+		<?php
+			/* Form file */
+			Token::create();
+		?>
+		<input type="hidden" name="username" value="<?php echo $account['name']; ?>">
+		<button type="submit" class="znx-acct-btn"><?= t('helpdesk.submit') ?></button>
 	</form>
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

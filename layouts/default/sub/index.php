@@ -1,33 +1,6 @@
 <?php
 if (!empty($config['UseChangelogTicker'])) {
-	//////////////////////
-	// Changelog ticker //
-	// Load from cache
-	$changelogCache = new Cache('engine/cache/changelog');
-	$changelogCache->useMemory(false);
-	$changelogs = $changelogCache->load();
-
-	if (isset($changelogs) && !empty($changelogs) && $changelogs !== false) {
-		?>
-		<div class="well">
-			<table id="changelogTable">
-				<tr class="yellow">
-					<td colspan="2"><?= h(t('news.changelog_ticker')) ?> (<a href="changelog.php"><?= h(t('news.changelog_full')) ?></a>)</td>
-				</tr>
-				<?php
-				for ($i = 0; $i < count($changelogs) && $i < 5; $i++) {
-					?>
-					<tr>
-						<td><?= getClock($changelogs[$i]['time'] ?? 0, true, true); ?></td>
-						<td><?= $changelogs[$i]['text'] ?? ''; ?></td>
-					</tr>
-					<?php
-				}
-				?>
-			</table>
-		</div>
-		<?php
-	} else echo h(t('news.no_changelogs'));
+	theme_include('parts/changelog-ticker.php', array('changelogs' => $changelogs ?? false));
 }
 
 $page = isset($page) && is_numeric($page) ? (int)$page : 0;
@@ -99,6 +72,7 @@ if ($news) {
 		}
 
 	} else { // We want to view latest news or a page of news.
+		echo '<div class="znx-section-head">' . h(t_default('news.section_title', 'Latest News')) . '</div>';
 		for ($i = $current; $i < $current + $config['news_per_page']; $i++) {
 			if (isset($news[$i])) {
 				?>
@@ -126,25 +100,11 @@ if ($news) {
 			}
 		}
 
-		echo '<select name="newspage" onchange="location = this.options[this.selectedIndex].value;">';
-
-		for ($i = 0; $i < $page_amount; $i++) {
-
-			if ($i == $page) {
-
-				echo '<option value="index.php?page='.$i.'" selected>' . h(t('common.page_n', ['n' => $i])) . '</option>';
-
-			} else {
-
-				echo '<option value="index.php?page='.$i.'">' . h(t('common.page_n', ['n' => $i])) . '</option>';
-			}
-		}
-
-		echo '</select>';
+		theme_include('parts/pagination.php', array('page' => $page, 'page_amount' => $page_amount, 'baseUrl' => 'index.php'));
 
 	}
 
 } else {
-	echo '<p>' . h(t('news.none')) . '</p>';
+	echo '<div class="znx-empty-box">' . h(t('news.none')) . '</div>';
 }
 ?>

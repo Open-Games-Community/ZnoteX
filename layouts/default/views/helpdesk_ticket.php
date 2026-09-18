@@ -1,13 +1,16 @@
 <?php
 ?>
-<h1><?= t('helpdesk.view_ticket') ?>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('helpdesk.view_ticket') ?>
 <?php
 	echo $ticketData['id'];
 	if ($ticketData['status'] === 'CLOSED') {
 		echo '<span style="color:red">[' . t('helpdesk.closed') . ']</span>';
 	}
-?></h1>
-<table class="znoteTable ThreadTable table table-striped">
+?></div>
+<div class="znx-acct-table-wrap">
+<table class="znx-acct-table">
 	<tr class="yellow">
 		<th>
 			<?php
@@ -25,11 +28,13 @@
 		</td>
 	</tr>
 </table>
+</div>
 <?php
 if ($replies !== false) {
 	foreach($replies as $reply) {
 		?>
-		<table class="znoteTable ThreadTable table table-striped">
+		<div class="znx-acct-table-wrap">
+		<table class="znx-acct-table">
 			<tr class="yellow">
 				<th>
 					<?php
@@ -47,16 +52,18 @@ if ($replies !== false) {
 				</td>
 			</tr>
 		</table>
-		<hr class="bighr">
+		</div>
 	<?php
 	}
 }
 ?>
 
 <?php if ($ticketData['status'] !== 'CLOSED') { ?>
-	<form action="" method="post">
-		<input type="hidden" name="username" value="<?php echo $ticketData['username']; ?>"><br>
-		<textarea class="forumReply" name="reply_text" style="width: 610px; height: 150px"></textarea><br>
-		<input name="" type="submit" value="<?= t('helpdesk.reply') ?>" class="btn btn-primary">
+	<form action="" method="post" class="znx-editchar-box">
+		<input type="hidden" name="username" value="<?php echo $ticketData['username']; ?>">
+		<textarea class="znx-editchar-textarea forumReply" name="reply_text"></textarea>
+		<button type="submit" class="znx-acct-btn"><?= t('helpdesk.reply') ?></button>
 	</form>
 <?php } ?>
+
+</div><!-- .znx-acct -->

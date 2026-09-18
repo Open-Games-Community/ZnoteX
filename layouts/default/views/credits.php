@@ -1,9 +1,11 @@
 <?php ?>
 
-<h1>ZnoteX</h1>
-<p><?= t('credits.znotex_text') ?></p>
+<div class="znx-acct">
 
-<h2><?= t('credits.maintained') ?></h2>
+<div class="znx-acct-head">ZnoteX</div>
+<div class="znx-acct-info"><?= t('credits.znotex_text') ?></div>
+
+<div class="znx-acct-head"><?= t('credits.maintained') ?></div>
 <div class="developers">
 	<div class="developer">
 		<div class="avatar"><img src="<?php echo $creditsMaintainer['avatar']; ?>" alt="<?= t('credits.avatar_of', ['name' => $creditsMaintainer['login']]) ?>"></div>
@@ -12,12 +14,14 @@
 	</div>
 </div>
 
-<h1>Znote AAC</h1>
-<p><?= t('credits.znote_text') ?></p>
-<p><?= t('credits.ot_website') ?> <a href="https://otland.net/members/znote.5993/">Znote</a> <?= t('credits.from_community') ?> <a href="https://otland.net">otland.net</a>.</p>
-<p><?= t('credits.opensource') ?></p>
+<div class="znx-acct-head">Znote AAC</div>
+<div class="znx-acct-info">
+	<p><?= t('credits.znote_text') ?></p>
+	<p><?= t('credits.ot_website') ?> <a href="https://otland.net/members/znote.5993/">Znote</a> <?= t('credits.from_community') ?> <a href="https://otland.net">otland.net</a>.</p>
+	<p><?= t('credits.opensource') ?></p>
+</div>
 
-<h2><?= t('credits.developers') ?></h2>
+<div class="znx-acct-head"><?= t('credits.developers') ?></div>
 <?php // If CURL isn't enabled show default version.
 if(!function_exists('curl_version')):
 	?>
@@ -72,8 +76,8 @@ if(!function_exists('curl_version')):
 endif;
 ?>
 
-<h2><?= t('credits.thanks') ?></h2>
-<p>
+<div class="znx-acct-head"><?= t('credits.thanks') ?></div>
+<div class="znx-acct-info">
 	<a href="https://otland.net/members/chris.13882/">Chris</a> - <?= t('credits.thanks_chris') ?>
 	<br><a href="https://otland.net/members/kiwi-dan.152/">Kiwi Dan</a> - <?= t('credits.thanks_kiwidan') ?>
 	<br><a href="https://otland.net/members/amoaz.26626/">Amoaz</a> - <?= t('credits.thanks_amoaz') ?>
@@ -82,7 +86,7 @@ endif;
 	<br><a href="https://otland.net/members/mark.1/">Mark</a> - <?= t('credits.thanks_mark') ?>
 	<br><a href="https://github.com/tedbro">Tedbro</a>, <a href="https://github.com/exura">Exura</a>, <a href="https://github.com/PrinterLUA">PrinterLUA</a> - <?= t('credits.thanks_bugreporters') ?>
 	<br><a href="https://github.com/Nottinghster">Nottinghster</a> - <?= t('credits.thanks_nottinghster') ?>
-</p>
+</div>
 <style>
 .contributors {
 	margin-top: 10px;
@@ -96,3 +100,5 @@ endif;
 	text-align: center;
 }
 </style>
+
+</div><!-- .znx-acct -->

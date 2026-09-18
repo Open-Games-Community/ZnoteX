@@ -11,26 +11,7 @@
 	if ($config['allowSubPages'] && ($f = theme_file('sub/index.php')) !== null) include $f;
 	else {
 		if ($config['UseChangelogTicker']) {
-			// Changelog ticker
-			if (isset($changelogs) && !empty($changelogs) && $changelogs !== false) {
-				?>
-				<table id="changelogTable">
-					<tr class="yellow">
-						<td colspan="2"><?= t('news.changelog_ticker') ?> (<a href="changelog.php"><?= t('news.changelog_full') ?></a>)</td>
-					</tr>
-					<?php
-					for ($i = 0; $i < count($changelogs) && $i < 5; $i++) {
-						?>
-						<tr>
-							<td><?php echo getClock($changelogs[$i]['time'], true, true); ?></td>
-							<td><?php echo $changelogs[$i]['text']; ?></td>
-						</tr>
-						<?php
-					}
-					?>
-				</table>
-				<?php
-			} else echo t('news.no_changelogs');
+			theme_include('parts/changelog-ticker.php', array('changelogs' => $changelogs ?? false));
 		}
 
 		// Design and present the list
@@ -80,6 +61,7 @@
 
 			} else { // We want to view latest news or a page of news.
 
+				echo '<div class="znx-section-head">' . h(t_default('news.section_title', 'Latest News')) . '</div>';
 				for ($i = $current; $i < $current + $config['news_per_page']; $i++) {
 					if (isset($news[$i])) {
 						?>
@@ -97,25 +79,11 @@
 					}
 				}
 
-				echo '<select name="newspage" onchange="location = this.options[this.selectedIndex].value;">';
-
-				for ($i = 0; $i < $page_amount; $i++) {
-
-					if ($i == $page) {
-
-						echo '<option value="index.php?page='.$i.'" selected>'. t('common.page_n', ['n' => $i]) .'</option>';
-
-					} else {
-
-						echo '<option value="index.php?page='.$i.'">'. t('common.page_n', ['n' => $i]) .'</option>';
-					}
-				}
-
-				echo '</select>';
+				theme_include('parts/pagination.php', array('page' => $page, 'page_amount' => $page_amount, 'baseUrl' => 'index.php'));
 
 			}
 
 		} else {
-			echo '<p>'. t('news.none') .'</p>';
+			echo '<div class="znx-empty-box">'. h(t('news.none')) .'</div>';
 		}
 	}

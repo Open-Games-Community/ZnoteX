@@ -1,29 +1,22 @@
 {
-  "version": "2.0.4",
+  "version": "2.0.5",
   "channel": "stable",
-  "title": "ZnoteX 2.0.4",
-  "summary": "2FA v2, multi-engine support, a generic plugin settings framework, Docker and a big round of admin panel tooling.",
-  "description": "This release adds a new TOTP-based 2FA v2 flow alongside legacy 2FA, login lockout protection, a server-adapter layer for TFS/Canary/OTHire/BlackTek, a generic settings.json framework so any plugin gets a full settings page (including color pickers) for free, and a wide set of new admin panel modules: backups, system health, a task scheduler, single-entry config/creature/item editors, serverdata overrides, mass actions, API docs and new API endpoints. It also reworks the character auction pages, improves the BBCode editor and news layout, ships a Docker development environment, a PHPUnit security test suite, 200+ new translation strings, and adds new Team/FAQ pages plus a round of installer and menu/hooks fixes.",
+  "title": "ZnoteX 2.0.5",
+  "summary": "BBCode paste fix, a plugin-page CSS crash fix, an overhauled default theme, and a more useful admin dashboard/analytics/plugins experience.",
+  "description": "This release fixes a News/BBCode bug where pasted images lost their size formatting, and a fatal error that made some installed plugins' admin pages render completely unstyled (white, no CSS). It also modernizes the default theme end to end - account pages, character management, guilds, downloads, highscores, market, support/helpdesk and more all move to a consistent, theme-adaptive card/table/button design with no hardcoded colors, plus a new dedicated character-management page (replacing the old two-dropdown editor) and a new Houses page for the default theme. On the admin side, the Dashboard gains two new activity boxes, Analytics' \"Top countries\" no longer misaligns rows depending on which flag icons happen to exist, plugin updates now report the real database error instead of a message cut off at 60 characters (and no longer fail on a stray file BOM), and long admin error messages wrap instead of being clipped.",
   "highlights": [
-    "Website 2FA v2 with a proper TOTP flow (Google Authenticator, Microsoft Authenticator, Authy, ...), RFC 6238 fixes for broader app compatibility, and a legacy-2FA compatibility path.",
-    "Login lockout protection: repeated failed logins from one IP are blocked, with an admin page to view and unlock them.",
-    "A new PHPUnit security test suite covering CSRF, admin permissions, plugin sanitization, migrations, payment webhooks, guild logo paths, signed update packages, plugin settings, server adapters and 2FA v2/TOTP compatibility.",
-    "Multi-engine support via a new server-adapter layer (TFS, Canary, OTHire, BlackTek) behind one common interface, replacing scattered inline engine checks.",
-    "A generic plugin settings.json framework: any plugin gets a full settings page for free, including a proper color-swatch picker instead of typing a raw color code.",
-    "Plugin admin pages now cluster under \"Installed Plugins\" in the sidebar instead of flooding it flat.",
-    "New admin panel modules: Backups, System Health, Task Scheduler, Config/Creatures/Items single-entry editors, Serverdata Overrides, Mass Actions, an Analytics dashboard, and an API docs page that auto-discovers every /api/ endpoint.",
-    "New API endpoints: character info lookup, highscores top list, server online status.",
-    "New public Team and FAQ pages, ready to be customized per server.",
-    "The character auction (bazaar) pages were reworked: list/detail views, claim-error handling, and their own translations.",
-    "The BBCode editor now keeps formatting when pasting from any source, and news posts render full width instead of a narrow boxed editor.",
-    "Decimal amounts are now supported on the payments admin page.",
-    "New customization hooks on the market, voting and payment views.",
-    "Small installer improvements: post-install \"what to configure next\" steps and a clearer info block.",
-    "Default cache folder and default favicon are shipped out of the box.",
-    "200+ new translation strings across de/en/es/pl/pt_br - the admin panel and most public pages are now fully translatable.",
-    "Menu and hook bug fixes.",
-    "A Docker development environment (Dockerfile, docker-compose.yml, seed schemas for TFS_10 and Canary) so `docker compose up` gets a working local ZnoteX.",
-    "The plugin and theme catalogs (browsable from the admin panel) grew alongside this release: 23 community plugins are now available, including Build Simulator (equipment planner, armory and outfitter), Wheel of Fortune, Battle Pass, Daily Rewards, Loyalty Shop, PvP Ranked, Server Goals, Bounty Board, Custom Leaderboards, Guild Recruitment, Referral System, Starter Packs, Discord Notifications, Account Security, Calendar, Streamers, Patron Names, Loot Search, Forum Avatars, Boosted Creatures, Server Statistics, Purchase History and Shop Coupons - and 13 themes, including Time Sand, Void, Wildlands, Brightness, Eclipse, Bloodfang, Black Mirror and Telara, alongside the classic tibia.com-style layouts."
+    "Fixed: pasting an image into a News post via the BBCode editor lost its explicit width/height, which could resize or break its layout - image dimensions are now preserved on paste.",
+    "Fixed: some installed plugins' admin pages rendered as a blank white page with no CSS, caused by a missing acp_color_field() helper the plugin settings framework depended on.",
+    "Fixed: plugin install/update could fail with a confusing, truncated error (\"...first: CREATE TABLE...\") when the plugin's install.sql file started with a UTF-8 BOM; the BOM is now stripped automatically and the full failing statement plus the real database error is shown instead of a 60-character snippet.",
+    "Fixed: long admin panel error/flash messages (e.g. a failed plugin update) were visually clipped instead of wrapping onto multiple lines.",
+    "Fixed: the Analytics \"Top countries\" list could look misaligned because it reused the site-language flag icons (only 5 exist: de/es/pl/pt/uk); every country now gets a same-width flag emoji instead, so rows always line up regardless of country.",
+    "Default theme (motor) overhaul: My Account, Character List, Settings, Change Password, Create Character, Downloads, Who's Online, Highscores, Guilds/Top Guilds/Latest Deaths/Kill Statistics/Bans, Server Information, Creatures, Monster Loot, Spells, Item Market, Support, Contact, Vote for Us, Credits and the Helpdesk pages all move to a consistent card/title-banner/table styling using the theme's own CSS variables - no hardcoded colors, so the look follows whatever the theme defines.",
+    "New: a dedicated Character Management page replaces the old select-a-character/select-an-action dropdown combo on My Account - each character gets a per-row Edit button leading to a page with Change Name, Change Gender, Visibility, Comment and Delete Character as clearly separated actions, including remaining-ticket counts for name/gender changes.",
+    "New: a proper Houses page for the default theme (town/order/sort filters plus a styled results table) where previously it fell back to unstyled generic markup.",
+    "The account Guild page (guild list, Create Guild, and the full guild management/overview screen) now uses the same styled cards, tables and forms as the rest of the modernized theme.",
+    "The Downloads page dropped the outdated \"you need an IP changer\" instructions and reworked the client/tool cards so each one shows a compact Download button instead of one long clickable sentence.",
+    "New: two Dashboard boxes - \"Recent Shop Purchases\" (from the completed shop-purchase log) and \"Recent Points Purchases\" (from real-money top-ups) - each showing the account, what was bought/paid, and when.",
+    "The Contact page's placeholder text (shown until an admin sets contact_info) no longer says \"TODO: Edit the contact details here.\" - it now points the admin at the Admin Panel, in all 5 shipped languages."
   ],
   "warnings": [
     "Back up the website and database independently before every production update."
@@ -32,9 +25,5 @@
     "php": ">=8.1",
     "extensions": ["curl", "json", "openssl", "zip"]
   },
-  "migrations": [
-    { "file": "SQL/migrations/2.0.2_twofa_v2.sql", "type": "expand" },
-    { "file": "SQL/migrations/2.0.3_login_attempts.sql", "type": "expand" },
-    { "file": "SQL/migrations/2.0.4_serverdata_overrides.sql", "type": "expand" }
-  ]
+  "migrations": []
 }

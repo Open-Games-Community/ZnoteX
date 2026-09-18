@@ -2,7 +2,9 @@
 // End cache
 
 ?>
-<h1><?= t('online.heading') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('online.heading') ?></div>
 
 <?php
 /**
@@ -10,21 +12,22 @@
  * The record lives in znote_config, not in a table of its own.
  */
 if (!empty($onlineRecord['players'])): ?>
-	<p class="txt">
+	<div class="znx-acct-info">
 		<?php if (!empty($onlineBroken)): ?>
 			<strong><?= t('online.new_record') ?></strong>
 			<?= t('online.new_record_line', ['count' => (int)$onlineNow]) ?>
 		<?php else: ?>
 			<?= t('online.record_line', ['count' => (int)$onlineRecord['players'], 'date' => htmlspecialchars(getClock((int)$onlineRecord['time'], true), ENT_QUOTES, 'UTF-8')]) ?>
 		<?php endif; ?>
-	</p>
+	</div>
 <?php endif; ?>
 <?php
 
 // Players currently logged in
 if (!empty($array) && $array !== false): ?>
-	<h2><?= t('online.currently') ?></h2>
-	<table id="onlinelistTable" class="table table-striped table-hover">
+	<div class="znx-acct-head"><?= t('online.currently') ?></div>
+	<div class="znx-acct-table-wrap">
+	<table id="onlinelistTable" class="znx-acct-table">
 		<tr class="yellow">
 			<?php if ($loadOutfits) echo "<th>". t('common.outfit') ."</th>"; ?>
 			<th><?= t('online.label_name') ?></th>
@@ -50,10 +53,11 @@ if (!empty($array) && $array !== false): ?>
 			<?php
 		endforeach; ?>
 	</table>
+	</div>
 	<?php
 else:
 	?>
-	<p><?= t('online.nobody') ?></p>
+	<div class="znx-empty-box"><?= t('online.nobody') ?></div>
 	<?php
 endif;
 
@@ -61,8 +65,9 @@ endif;
 if ($history["enabled"]) {
 	$time = time();
 	if (!empty($recents) && $recents !== false): ?>
-		<h2><?= t('online.past_days', ['days' => $history['days']]) ?></h2>
-		<table id="recentlistTable" class="table table-striped table-hover">
+		<div class="znx-acct-head"><?= t('online.past_days', ['days' => $history['days']]) ?></div>
+		<div class="znx-acct-table-wrap">
+		<table id="recentlistTable" class="znx-acct-table">
 			<tr class="yellow">
 				<?php if ($loadOutfits) echo "<th>". t('common.outfit') ."</th>"; ?>
 				<th><?= t('online.label_name') ?></th>
@@ -89,11 +94,14 @@ if ($history["enabled"]) {
 				<?php
 			endforeach; ?>
 		</table>
+		</div>
 		<?php
 	else:
 		?>
-		<p><?= t('online.nobody_past_days', ['days' => $history['days']]) ?></p>
+		<div class="znx-empty-box"><?= t('online.nobody_past_days', ['days' => $history['days']]) ?></div>
 		<?php
 	endif;
 }
+?>
 
+</div><!-- .znx-acct -->

@@ -39,20 +39,26 @@ $lootParam = isset($_GET['lootrate']) ? '&lootrate' : '';
 	}
 </script>
 
-<p>
-	<a href="monster_loot.php<?= $lootParam ? '?lootrate' : '' ?>"><?= t('loot.hide_none') ?></a> |
-	<a href="?hidefail<?= $lootParam ?>"><?= t('loot.hide_notfound') ?></a> |
-	<a href="?hideempty<?= $lootParam ?>"><?= t('loot.hide_empty') ?></a> |
-	<a href="?hideempty&amp;hidefail<?= $lootParam ?>"><?= t('loot.hide_all') ?></a> |
-	<a href="monster_loot.php"><?= t('loot.normal_rate') ?></a> |
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t_default('loot.title', 'Monster Loot') ?></div>
+
+<div class="znx-pill-nav">
+	<a href="monster_loot.php<?= $lootParam ? '?lootrate' : '' ?>"><?= t('loot.hide_none') ?></a>
+	<a href="?hidefail<?= $lootParam ?>"><?= t('loot.hide_notfound') ?></a>
+	<a href="?hideempty<?= $lootParam ?>"><?= t('loot.hide_empty') ?></a>
+	<a href="?hideempty&amp;hidefail<?= $lootParam ?>"><?= t('loot.hide_all') ?></a>
+	<a href="monster_loot.php"><?= t('loot.normal_rate') ?></a>
 	<a href="?lootrate"><?= t('loot.server_rate') ?></a>
-</p>
+</div>
 
 <?php if ($monsterLootError !== ''): ?>
 
-	<b><?= htmlspecialchars($monsterLootError, ENT_QUOTES, 'UTF-8') ?></b>
+	<div class="znx-empty-box"><?= htmlspecialchars($monsterLootError, ENT_QUOTES, 'UTF-8') ?></div>
 
 <?php else: ?>
+
+	<div class="znx-acct-info">
 
 	<?php $i = 0; foreach ($monsterList as $monster): $i++; ?>
 
@@ -87,4 +93,8 @@ $lootParam = isset($_GET['lootrate']) ? '&lootrate' : '';
 
 	<?php endforeach; ?>
 
+	</div>
+
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

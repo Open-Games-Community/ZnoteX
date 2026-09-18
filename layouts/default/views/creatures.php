@@ -6,18 +6,23 @@
  * $creatureRace, $creatureError. Nothing is read from disk here.
  */
 ?>
-<h1><?= t('creatures.title') ?></h1>
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('creatures.title') ?></div>
 
 <?php if ($creatureError !== ''): ?>
 
-	<p><?= htmlspecialchars($creatureError, ENT_QUOTES, 'UTF-8') ?></p>
+	<div class="znx-empty-box"><?= htmlspecialchars($creatureError, ENT_QUOTES, 'UTF-8') ?></div>
 
 <?php else: ?>
 
-	<form action="" method="get">
-		<input type="text" name="search" placeholder="<?= t('creatures.placeholder') ?>"
+	<form action="" method="get" class="znx-acct-toolbar">
+		<div class="znx-acct-toolbar__field">
+		<input type="text" name="search" placeholder="<?= t('creatures.placeholder') ?>" class="znx-acct-select"
 			   value="<?= htmlspecialchars($creatureSearch, ENT_QUOTES, 'UTF-8') ?>">
-		<select name="race">
+		</div>
+		<div class="znx-acct-toolbar__field">
+		<select name="race" class="znx-acct-select">
 			<option value=""><?= t('creatures.all_races') ?></option>
 			<?php foreach ($creatureRaces as $race): ?>
 				<option value="<?= htmlspecialchars($race, ENT_QUOTES, 'UTF-8') ?>"
@@ -26,16 +31,18 @@
 				</option>
 			<?php endforeach; ?>
 		</select>
-		<input type="submit" value="<?= t('common.search') ?>" class="btn btn-info">
+		</div>
+		<div class="znx-acct-toolbar__submit"><button type="submit" class="znx-acct-btn"><?= t('common.search') ?></button></div>
 		<?php if ($creatureSearch !== '' || $creatureRace !== ''): ?>
-			<a href="creatures.php" class="btn"><?= t('common.clear') ?></a>
+			<div class="znx-acct-toolbar__submit"><a href="creatures.php" class="znx-acct-edit-btn"><?= t('common.clear') ?></a></div>
 		<?php endif; ?>
 	</form>
 
-	<p class="txt"><?= count($creatures) ?> creature<?= count($creatures) === 1 ? '' : 's' ?>.</p>
+	<div class="znx-acct-info"><?= count($creatures) ?> creature<?= count($creatures) === 1 ? '' : 's' ?>.</div>
 
 	<?php if ($creatures): ?>
-		<table class="table table-striped table-hover">
+		<div class="znx-acct-table-wrap">
+		<table class="znx-acct-table">
 			<tr class="yellow">
 				<td>Name</td>
 				<td>Race</td>
@@ -53,8 +60,11 @@
 				</tr>
 			<?php endforeach; ?>
 		</table>
+		</div>
 	<?php else: ?>
-		<p><?= t('creatures.no_match') ?></p>
+		<div class="znx-empty-box"><?= t('creatures.no_match') ?></div>
 	<?php endif; ?>
 
 <?php endif; ?>
+
+</div><!-- .znx-acct -->

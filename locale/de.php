@@ -337,7 +337,7 @@ return array(
 	'success.back' => 'zurück',
 	'success.go' => 'Gehe',
 	'contact.title' => 'Kontakt',
-	'contact.text' => 'TODO: Hier die Kontaktdaten eintragen.',
+	'contact.text' => 'Kontaktdaten im Admin-Panel hinzufügen.',
 	'blank.title' => 'Leer',
 	'blank.text' => 'Dies ist eine leere Beispielseite.',
 	'team.title' => 'Team',

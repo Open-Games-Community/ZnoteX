@@ -5,7 +5,12 @@
 		cursor: pointer;
 	}
 </style>
-<table id="guildsTable" class="table table-striped">
+<div class="znx-acct">
+
+<div class="znx-acct-head"><?= t('nav.guilds') ?></div>
+
+<div class="znx-acct-table-wrap">
+<table id="guildsTable" class="znx-acct-table">
 	<tr class="yellow">
 		<th><?= t('guild.logo_label') ?></th>
 		<th><?= t('common.description') ?></th>
@@ -36,3 +41,6 @@
 		}
 		?>
 </table>
+</div>
+
+</div><!-- .znx-acct -->

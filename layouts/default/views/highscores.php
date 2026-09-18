@@ -4,11 +4,14 @@ if ($vocGroups) {
 	$vocGroup = (is_array($vocGroups[$vocation])) ? $vocGroups[$vocation] : $vocGroups[$vocGroups[$vocation]];
 	?>
 
-	<h1><?= t('highscores.heading', ['what' => skillName($type) .", ". (($vocation === 'all') ? t('vocation.any_lower') : vocation_id_to_name($vocation))]) ?></h1>
+	<div class="znx-acct">
 
-	<form action="" method="GET">
+	<div class="znx-acct-head"><?= t('highscores.heading', ['what' => skillName($type) .", ". (($vocation === 'all') ? t('vocation.any_lower') : vocation_id_to_name($vocation))]) ?></div>
 
-		<select name="type">
+	<form action="" method="GET" class="znx-acct-toolbar">
+
+		<div class="znx-acct-toolbar__field">
+		<select name="type" class="znx-acct-select">
 			<option value="7" <?php if ($type == 7) echo "selected"; ?>><?= t('skill.experience') ?></option>
 			<option value="8" <?php if ($type == 8) echo "selected"; ?>><?= t('skill.magic') ?></option>
 			<option value="5" <?php if ($type == 5) echo "selected"; ?>><?= t('skill.shield') ?></option>
@@ -19,8 +22,10 @@ if ($vocGroups) {
 			<option value="6" <?php if ($type == 6) echo "selected"; ?>><?= t('skill.fishing') ?></option>
 			<option value="9" <?php if ($type == 9) echo "selected"; ?>><?= t('skill.fist') ?></option>
 		</select>
+		</div>
 
-		<select name="vocation">
+		<div class="znx-acct-toolbar__field">
+		<select name="vocation" class="znx-acct-select">
 			<option value="all" <?php if (!is_int($vocation)) echo "selected"; ?>><?= t('vocation.any') ?></option>
 			<?php
 			foreach ($configVocations as $v_id => $v_data) {
@@ -31,8 +36,10 @@ if ($vocGroups) {
 			}
 			?>
 		</select>
+		</div>
 
-		<select name="page">
+		<div class="znx-acct-toolbar__field">
+		<select name="page" class="znx-acct-select">
 			<?php
 			$pages = ($vocGroup[$type] !== false) ? ceil(min(($highscore['rows'] / $highscore['rowsPerPage']), (count($vocGroup[$type]) / $highscore['rowsPerPage']))) : 1;
 			for ($i = 0; $i < $pages; $i++) {
@@ -42,11 +49,13 @@ if ($vocGroups) {
 			}
 			?>
 		</select>
+		</div>
 
-		<input type="submit" value="<?= t('common.view') ?>" class="btn btn-info">
+		<div class="znx-acct-toolbar__submit"><button type="submit" class="znx-acct-btn"><?= t('common.view') ?></button></div>
 	</form>
 
-	<table id="highscoresTable" class="table table-striped table-hover">
+	<div class="znx-acct-table-wrap">
+	<table id="highscoresTable" class="znx-acct-table">
 
 		<tr class="yellow">
 			<?php if ($loadOutfits) echo "<td>". t('common.outfit') ."</td>"; ?>
@@ -85,5 +94,8 @@ if ($vocGroups) {
 		}
 		?>
 	</table>
+	</div>
+
+	</div><!-- .znx-acct -->
 	<?php
 }

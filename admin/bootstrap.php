@@ -108,6 +108,12 @@ function acp_editor(string $name, string $value = '', array $options = []): void
 	acp_editor_assets();
 }
 
+function acp_color_field(string $name, $value = '', string $placeholder = '', string $style = ''): void {
+	$styleAttr = $style !== '' ? ' style="' . h($style) . '"' : '';
+	?>
+	<input class="acp-input" type="text" name="<?= h($name) ?>" value="<?= h($value) ?>" placeholder="<?= h($placeholder) ?>"<?= $styleAttr ?>>
+	<?php
+}
 function acp_redirect(string $module = 'dashboard', array $params = []): void {
 	header('Location: ' . acp_url($module, $params));
 	exit;

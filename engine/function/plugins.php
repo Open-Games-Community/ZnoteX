@@ -274,7 +274,9 @@ function znote_plugin_install_sql(string $name): string {
 		return '';
 	}
 
-	$sql = preg_replace('/^--.*$/m', '', (string)file_get_contents($file));
+	$sql = (string)file_get_contents($file);
+	$sql = preg_replace('/^\xEF\xBB\xBF/', '', $sql); // a leading UTF-8 BOM breaks the first statement
+	$sql = preg_replace('/^--.*$/m', '', $sql);
 	$failed = array();
 
 	foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
@@ -282,7 +284,8 @@ function znote_plugin_install_sql(string $name): string {
 			continue;
 		}
 		if (!db()->rawExecute($statement)) {
-			$failed[] = substr($statement, 0, 60);
+			$dbError = trim((string)db()->connection()->error);
+			$failed[] = $statement . ($dbError !== '' ? ' -- ' . $dbError : '');
 		}
 	}
 

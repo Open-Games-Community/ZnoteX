@@ -99,10 +99,20 @@ function znote_bbcode_apply_size(string $text): string {
 }
 
 function znote_bbcode_apply_images(string $text): string {
-	return preg_replace_callback('/\[img(?:=[^\]]*)?\]([^\[]+?)\[\/img\]/is', static function ($m) {
-		$url = znote_bbcode_url($m[1]);
-		return ($url === '') ? '' : '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">'
-			. '<img src="' . $url . '" alt="" class="zbb-img"></a>';
+	return preg_replace_callback('/\[img(?:=([0-9]{1,4})x([0-9]{1,4}))?\]([^\[]+?)\[\/img\]/is', static function ($m) {
+		$url = znote_bbcode_url($m[3]);
+		if ($url === '') return '';
+
+		$w = (int)($m[1] ?? 0);
+		$h = (int)($m[2] ?? 0);
+		if (($w <= 0 || $h <= 0 || $w > 4000 || $h > 4000) && preg_match('~/letters/letter_martel_[a-z]\.gif(?:[?#].*)?$~i', $url)) {
+			$w = 48;
+			$h = 48;
+		}
+		$dim = ($w > 0 && $w <= 4000 && $h > 0 && $h <= 4000) ? ' width="' . $w . '" height="' . $h . '"' : '';
+
+		return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">'
+			. '<img src="' . $url . '" alt=""' . $dim . ' class="zbb-img" style="max-width:100%;height:auto"></a>';
 	}, $text);
 }
 
