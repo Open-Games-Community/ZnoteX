@@ -2,16 +2,16 @@
   {
     "key": "tibiacom_v1",
     "name": "TibiaCOM v1",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "author": "Alex - opengamescommunity.com",
     "description": "Tibia.com styled layout, imported from an older Znote install. Scroll content boxes, left navigation and the monster-of-the-week sidebar.",
     "update": [
+	  "Adjusted all plugins layout (css) styled to the theme.",
 	  "Fixed BBCode on news/changelogs, added a max-width for streamers plugin on top, cache bust style.",
 	  "Update For Docker",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
-      "Improved character profile compatibility.",
-      "Added visible profile blocks and separators."
+      "Improved character profile compatibility."
     ],
     "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/layouts/tibiacom_v1.zip",
     "url": "https://opengamescommunity.com/resources/znotex-tibiacomv1.1024/",
@@ -20,10 +20,11 @@
   {
     "key": "old_school",
     "name": "Old School",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "author": "Hemrenus321",
     "description": "old_school theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Adjusted all plugins layout (css) styled to the theme.",
 	  "Removed a CSS making weird stream plugin, BBCode for news & changelog, cache bust CSS.",
 	  "Update thhe 2FA",
 	  "Update API.",
@@ -84,10 +85,11 @@
   {
     "key": "telara",
     "name": "Telara",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "author": "Alex - opengamescommunity.com",
     "description": "Telara theme converted by alexv45 for ZnoteX.",
     "update": [
+	  "Adjusted all plugins layout (css) styled to the theme.",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Telara Layout."
@@ -115,10 +117,11 @@
   {
     "key": "brightness",
     "name": "Brightness",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "Alex - opengamescommunity.com",
     "description": "Brightness theme by alexv45 for ZnoteX.",
     "update": [
+	  "Adjusted all plugins layout (css) styled to the theme.",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
@@ -130,10 +133,11 @@
   {
     "key": "wildlands",
     "name": "Wildlands",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "author": "Alex - opengamescommunity.com",
     "description": "Wildlands theme by alexv45 for ZnoteX.",
     "update": [
+	  "Adjusted all plugins layout (css) styled to the theme, fixed myaccount Tab view.",
 	  "Update API.",
 	  "Update SQL Statement & Securiy.",
       "Update new image path method."
@@ -161,10 +165,11 @@
   {
     "key": "tibiacom_original",
     "name": "TibiaCOM Original",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "Alex - opengamescommunity.com",
     "description": "Original TibiaCOM Layout Responsive For Mobile by Alex.",
     "update": [
+	  "Adjusted all plugins layout (css) styled to the theme, fixed myaccount plugins view.",
 	  "Cache Bust, max width for Streamers plugin, fixed starter packs, wheel of fortune plugins.",
 	  "Release Original Theme."
     ],
