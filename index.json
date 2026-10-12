@@ -167,15 +167,15 @@
     {
         "key": "wheel_of_fortune",
         "name": "Wheel of Fortune",
-        "version": "1.1.7",
+        "version": "1.1.8",
         "author": "Alex - opengamescommunity.com",
         "description": "Wheel of Fortune, small popup bottom right of website, spin and get rewards (points, premium days, item id..)",
         "update": [
+			"Fixed Wheel that was not spinning on the new update.",
 			"Patch Fix: modified :before CSS rule that was moving others plugins on buypoints page.",
 			"Updated Plugin API.",
             "Updated plugin install SQL from utf8 to utf8mb4.",
-            "Migrated SQL to prepared statements (db()).",
-            "Update icons."
+            "Migrated SQL to prepared statements (db())."
         ],
         "screenshot": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.png",
         "download": "https://raw.githubusercontent.com/Open-Games-Community/ZnoteX/plugins/wheel_of_fortune.zip",
